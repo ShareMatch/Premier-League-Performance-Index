@@ -57,16 +57,31 @@ const MarketAnalysis: React.FC<MarketAnalysisProps> = ({ teams }) => {
                     disabled={loading}
                     className="bg-[#3AA189]/80 hover:bg-[#3AA189] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
-                    <SparkleIcon className="w-5 h-5" />
+                    <SparkleIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                     <span>{loading ? 'Analyzing...' : 'Get AI Market Analysis'}</span>
                 </button>
             </div>
 
             {error && <p className="text-center text-red-400 mt-4">{error}</p>}
             
-            {analysis && (
-                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-center">
-                    <p className="text-gray-300 italic whitespace-pre-wrap">{analysis}</p>
+            {loading && (
+                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 animate-pulse">
+                    <div className="h-3 bg-gray-700 rounded w-1/3 mb-3"></div>
+                    <div className="space-y-2">
+                        <div className="h-2 bg-gray-700 rounded w-full"></div>
+                        <div className="h-2 bg-gray-700 rounded w-5/6"></div>
+                        <div className="h-2 bg-gray-700 rounded w-3/4"></div>
+                    </div>
+                </div>
+            )}
+            
+            {analysis && !loading && (
+                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left">
+                    <h3 className="text-sm font-bold text-[#3AA189] flex items-center gap-2 mb-2">
+                        <SparkleIcon className="w-4 h-4" />
+                        AI Market Commentary
+                    </h3>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{analysis}</p>
                 </div>
             )}
         </div>
