@@ -38,10 +38,10 @@ const App: React.FC = () => {
       const teamIndex = Math.floor(Math.random() * currentTeams.length);
       const change = (Math.random() * 0.2 - 0.1);
       
-      // FIX: Explicitly setting the return type of the map callback to `Team` resolves a TypeScript
-      // type inference issue where `lastChange` was being inferred as a generic `string`.
-      // This ensures `updatedTeams` is correctly typed as `Team[]`, which in turn fixes both downstream type errors.
-      const updatedTeams = currentTeams.map((team, index): Team => {
+      // FIX: The original complex and mutable update logic was causing a type inference issue where 
+      // `lastChange` was incorrectly inferred as `string`. Refactoring to a single, immutable `map` 
+      // operation resolves the type error and makes the code cleaner.
+      const updatedTeams = currentTeams.map((team, index) => {
         if (index === teamIndex) {
           const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
       
