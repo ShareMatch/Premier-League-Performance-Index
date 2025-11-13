@@ -1,0 +1,6 @@
+
+{
+  "name": "Premier League Performance Index",
+  "description": "An application that displays a live marketplace for the Premier League Performance Index. Invest in tokenised assets representing each team's performance. The winning team's index settles at 100, with others at 0.1.",
+  "requestFramePermissions": []
+}
