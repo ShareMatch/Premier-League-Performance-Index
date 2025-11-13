@@ -38,7 +38,8 @@ const App: React.FC = () => {
       const teamIndex = Math.floor(Math.random() * currentTeams.length);
       const teamToUpdate = { ...currentTeams[teamIndex] };
       const change = (Math.random() * 0.2 - 0.1);
-      const direction = change > 0 ? 'up' : 'down';
+      // FIX: Explicitly type `direction` to prevent it from being widened to `string`.
+      const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
       
       let newBid = parseFloat((teamToUpdate.bid + change).toFixed(1));
       let newOffer = parseFloat((teamToUpdate.offer + change).toFixed(1));
