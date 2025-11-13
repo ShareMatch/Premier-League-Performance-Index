@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Team, Order } from './types';
 import Header from './components/Header';
 import OrderBook from './components/OrderBook';
 import Footer from './components/Footer';
 import TradeSlip from './components/TradeSlip';
+import MarketAnalysis from './components/MarketAnalysis';
 
 const INITIAL_TEAMS: Team[] = [
   { id: 1, name: 'Manchester City', bid: 35.5, offer: 36.0, lastChange: 'none' },
@@ -36,29 +36,33 @@ const App: React.FC = () => {
   const simulatePriceChange = useCallback(() => {
     setTeams(currentTeams => {
       const teamIndex = Math.floor(Math.random() * currentTeams.length);
-      const teamToUpdate = { ...currentTeams[teamIndex] };
       const change = (Math.random() * 0.2 - 0.1);
-      // FIX: Explicitly type `direction` to prevent it from being widened to `string`.
-      const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
       
-      let newBid = parseFloat((teamToUpdate.bid + change).toFixed(1));
-      let newOffer = parseFloat((teamToUpdate.offer + change).toFixed(1));
+      // FIX: The original complex and mutable update logic was causing a type inference issue where 
+      // `lastChange` was incorrectly inferred as `string`. Refactoring to a single, immutable `map` 
+      // operation resolves the type error and makes the code cleaner.
+      const updatedTeams = currentTeams.map((team, index) => {
+        if (index === teamIndex) {
+          const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
+      
+          let newBid = parseFloat((team.bid + change).toFixed(1));
+          let newOffer = parseFloat((team.offer + change).toFixed(1));
 
-      // Ensure bid and offer don't go below 0.1 and bid is less than offer
-      if (newBid < 0.1) newBid = 0.1;
-      if (newOffer < newBid + 0.2) newOffer = parseFloat((newBid + 0.2).toFixed(1));
-      
-      teamToUpdate.bid = newBid;
-      teamToUpdate.offer = newOffer;
-      teamToUpdate.lastChange = direction;
+          // Ensure bid and offer don't go below 0.1 and bid is less than offer
+          if (newBid < 0.1) newBid = 0.1;
+          if (newOffer < newBid + 0.2) newOffer = parseFloat((newBid + 0.2).toFixed(1));
+          
+          return {
+            ...team,
+            bid: newBid,
+            offer: newOffer,
+            lastChange: direction
+          };
+        }
+        return { ...team, lastChange: 'none' };
+      });
 
-      const newTeams = [...currentTeams];
-      newTeams[teamIndex] = teamToUpdate;
-      
-      // Reset lastChange for other teams to 'none' to stop animation
-      const updatedTeams = newTeams.map((team, index) => 
-        index === teamIndex ? teamToUpdate : { ...team, lastChange: 'none' }
-      );
+      const teamToUpdate = updatedTeams[teamIndex];
 
       // If the selected order's team has updated, update the order as well
       if (selectedOrder && selectedOrder.team.id === teamToUpdate.id) {
@@ -92,6 +96,7 @@ const App: React.FC = () => {
         <div className="flex-grow">
           <Header />
           <main className="mt-6">
+            <MarketAnalysis teams={teams} />
             <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
           </main>
           <Footer />
