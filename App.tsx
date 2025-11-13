@@ -4,7 +4,6 @@ import Header from './components/Header';
 import OrderBook from './components/OrderBook';
 import Footer from './components/Footer';
 import TradeSlip from './components/TradeSlip';
-import MarketAnalysis from './components/MarketAnalysis';
 
 const INITIAL_TEAMS: Team[] = [
   { id: 1, name: 'Manchester City', bid: 35.5, offer: 36.0, lastChange: 'none' },
@@ -96,7 +95,6 @@ const App: React.FC = () => {
         <div className="flex-grow">
           <Header />
           <main className="mt-6">
-            <MarketAnalysis teams={teams} />
             <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
           </main>
           <Footer />
