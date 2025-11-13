@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Order } from '../types';
 
@@ -59,7 +58,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-5 flex flex-col gap-4 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700 h-full">
+    <div className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg text-gray-200">Transaction Slip</h2>
       </div>
@@ -110,7 +109,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
         <button onClick={() => addShares(100)} className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 text-sm transition-colors">+ 100</button>
       </div>
 
-      <div className="mt-auto">
+      <div className="mt-4">
         <button
           onClick={handleConfirm}
           disabled={!shares || shares <= 0 || countdown !== null}
