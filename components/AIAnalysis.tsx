@@ -34,13 +34,25 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
                 .map(t => `${t.name}: ${t.offer.toFixed(1)}`)
                 .join(', ');
 
-            const prompt = `Based on these Premier League winner market prices (${teamData}), act as a sharp sports betting analyst. Provide a brief market commentary. Identify one potentially undervalued team and one that might be overvalued, explaining why in a sentence each. Keep the total response under 100 words.`;
+            const prompt = `You are a sharp sports betting analyst. 
+            
+            Here are the current market prices (implied probability %) for the Premier League winner: 
+            ${teamData}
+            
+            TASK:
+            1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders (Man City, Arsenal, Liverpool, etc.).
+            2. Compare the real-world sentiment/news with these market prices.
+            3. Identify ONE "Best Buy" (undervalued team) and ONE "Sell" (overvalued team).
+            4. Provide a concise, data-driven rationale for each trade based on the *latest* news you found.
+            
+            Keep the response concise (under 150 words) and focused on actionable trading advice.`;
 
             const response = await ai.models.generateContent({
                 model: 'gemini-2.0-flash',
                 contents: prompt,
                 config: {
-                    systemInstruction: "You are an expert sports betting analyst specializing in the English Premier League. Your analysis is concise, insightful, and data-driven. Do not use markdown formatting.",
+                    tools: [{ googleSearch: {} }],
+                    systemInstruction: "You are an expert sports betting analyst. Use Google Search to ground your analysis in real-time data.",
                 }
             });
 
