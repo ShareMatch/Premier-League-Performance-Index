@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import { Eye, EyeOff } from 'lucide-react';
 import type { Team } from '../types';
 
 interface AIAnalysisProps {
@@ -16,11 +17,13 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
     const [analysis, setAnalysis] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isVisible, setIsVisible] = useState(true);
 
     const getAnalysis = async () => {
         setLoading(true);
         setError('');
         setAnalysis('');
+        setIsVisible(true);
         try {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) {
@@ -68,15 +71,25 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
 
     return (
         <div className="my-6">
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-4">
                 <button
                     onClick={getAnalysis}
                     disabled={loading}
                     className="bg-[#3AA189]/80 hover:bg-[#3AA189] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
                     <SparkleIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                    <span>{loading ? 'Analyzing...' : 'Get AI Market Analysis'}</span>
+                    <span>{loading ? 'Analyzing...' : analysis ? 'Regenerate Analysis' : 'Get AI Market Analysis'}</span>
                 </button>
+
+                {analysis && !loading && (
+                    <button
+                        onClick={() => setIsVisible(!isVisible)}
+                        className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full inline-flex items-center gap-2 transition-all duration-300"
+                    >
+                        {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        <span>{isVisible ? 'Hide' : 'Show'}</span>
+                    </button>
+                )}
             </div>
 
             {error && <p className="text-center text-red-400 mt-4">{error}</p>}
@@ -92,8 +105,8 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
                 </div>
             )}
 
-            {analysis && !loading && (
-                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left">
+            {analysis && !loading && isVisible && (
+                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
                     <h3 className="text-sm font-bold text-[#3AA189] flex items-center gap-2 mb-2">
                         <SparkleIcon className="w-4 h-4" />
                         AI Market Commentary
