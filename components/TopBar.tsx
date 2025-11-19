@@ -42,22 +42,22 @@ const TopBar: React.FC = () => {
     };
 
     return (
-        <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+        <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-6 flex-shrink-0">
             {/* Left: Search */}
             <div className="flex items-center w-1/3">
                 <div className="relative w-full max-w-md">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
                     <input
                         type="text"
                         placeholder="Search assets..."
-                        className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3AA189]/50 text-gray-800 placeholder-gray-500"
+                        className="w-full pl-10 pr-4 py-2 bg-gray-800 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3AA189]/50 text-gray-200 placeholder-gray-500"
                     />
                 </div>
             </div>
 
             {/* Right: Date, Balance, Avatar */}
             <div className="flex items-center gap-6">
-                <div className="text-sm font-medium text-gray-600 hidden lg:block">
+                <div className="text-sm font-medium text-gray-400 hidden lg:block">
                     {formatTime(currentTime)}
                 </div>
 
@@ -73,19 +73,19 @@ const TopBar: React.FC = () => {
                     </button>
 
                     {isBalanceOpen && (
-                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                            <div className="px-4 py-2 border-b border-gray-100">
-                                <p className="text-xs text-gray-500 uppercase font-semibold">Total Balance</p>
-                                <p className="text-xl font-bold text-gray-900">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                        <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-2 border-b border-gray-700">
+                                <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
                             </div>
                             <div className="px-4 py-2">
                                 <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-600">Available</span>
-                                    <span className="font-medium text-gray-900">{(balance * 0.8).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span className="text-gray-400">Available</span>
+                                    <span className="font-medium text-gray-200">{(balance * 0.8).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">In Orders</span>
-                                    <span className="font-medium text-gray-900">{(balance * 0.2).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span className="text-gray-400">In Orders</span>
+                                    <span className="font-medium text-gray-200">{(balance * 0.2).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                             </div>
                         </div>
@@ -102,19 +102,19 @@ const TopBar: React.FC = () => {
                     </button>
 
                     {isAvatarOpen && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 z-50 py-1 animate-in fade-in slide-in-from-top-2">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                                <p className="text-sm font-bold text-gray-900">testuser123</p>
-                                <p className="text-xs text-gray-500">Last logged in: Today</p>
+                        <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-1 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-3 border-b border-gray-700">
+                                <p className="text-sm font-bold text-white">testuser123</p>
+                                <p className="text-xs text-gray-400">Last logged in: Today</p>
                             </div>
                             <div className="py-1">
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                     <Settings className="h-4 w-4" /> Settings
                                 </a>
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                     <FileText className="h-4 w-4" /> Portfolio
                                 </a>
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                     <Shield className="h-4 w-4" /> Rules & Regulations
                                 </a>
                             </div>

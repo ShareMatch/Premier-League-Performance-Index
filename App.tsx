@@ -120,8 +120,10 @@ const App: React.FC = () => {
             <div className="flex-grow min-w-0 flex flex-col h-full">
               <Header />
               <main className="mt-6 flex-grow">
+                <div className="mb-6">
+                  <AIAnalysis teams={teams} />
+                </div>
                 <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
-                <AIAnalysis teams={teams} />
               </main>
               <Footer />
             </div>
