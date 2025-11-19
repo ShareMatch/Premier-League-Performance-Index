@@ -19,3 +19,13 @@ export const fetchTeams = async () => {
     // return { data, error };
     return { data: [], error: null };
 };
+
+export const getUserBalance = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', userId)
+        .single();
+
+    return { data, error };
+};
