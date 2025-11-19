@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import TradeSlip from './components/TradeSlip';
 import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
+import TopBar from './components/TopBar';
 import { Menu, X } from 'lucide-react';
 
 const INITIAL_TEAMS: Team[] = [
@@ -110,11 +111,15 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Top Bar */}
+        <TopBar />
+
+        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pt-12 md:pt-0">
-            <div className="flex-grow min-w-0">
+          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+            <div className="flex-grow min-w-0 flex flex-col h-full">
               <Header />
-              <main className="mt-6">
+              <main className="mt-6 flex-grow">
                 <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
                 <AIAnalysis teams={teams} />
               </main>
