@@ -114,21 +114,32 @@ const App: React.FC = () => {
         {/* Top Bar */}
         <TopBar />
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
-          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-            <div className="flex-grow min-w-0 flex flex-col h-full">
-              <Header />
-              <main className="mt-6 flex-grow">
-                <div className="mb-6">
-                  <AIAnalysis teams={teams} />
-                </div>
+        {/* Content Area - Fixed Height, No Page Scroll */}
+        <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8 overflow-hidden">
+          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 h-full">
+            <div className="flex-grow min-w-0 flex flex-col h-full overflow-hidden">
+              {/* Fixed Header Section */}
+              <div className="flex-shrink-0 space-y-6 mb-6">
+                <Header />
+                <AIAnalysis teams={teams} />
+              </div>
+
+              {/* Scrollable OrderBook Section */}
+              <main className="flex-1 min-h-0">
                 <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
               </main>
-              <Footer />
+
+              {/* Footer - Optional: Keep fixed at bottom or scroll with content? 
+                  User asked for "everything down to Asset row fixed", implying footer might be off screen or fixed at bottom.
+                  Let's keep footer fixed at bottom for a clean "app" feel.
+              */}
+              <div className="flex-shrink-0 mt-4">
+                <Footer />
+              </div>
             </div>
+
             {selectedOrder && (
-              <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0">
+              <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 h-full overflow-y-auto">
                 <TradeSlip
                   key={selectedOrder.team.id + selectedOrder.type}
                   order={selectedOrder}
