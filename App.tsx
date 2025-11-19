@@ -4,6 +4,9 @@ import Header from './components/Header';
 import OrderBook from './components/OrderBook';
 import Footer from './components/Footer';
 import TradeSlip from './components/TradeSlip';
+import Sidebar from './components/Sidebar';
+import AIAnalysis from './components/AIAnalysis';
+import { Menu, X } from 'lucide-react';
 
 const INITIAL_TEAMS: Team[] = [
   { id: 1, name: 'Manchester City', bid: 35.5, offer: 36.0, lastChange: 'none' },
@@ -31,26 +34,24 @@ const INITIAL_TEAMS: Team[] = [
 const App: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const simulatePriceChange = useCallback(() => {
     setTeams(currentTeams => {
       const teamIndex = Math.floor(Math.random() * currentTeams.length);
       const change = (Math.random() * 0.2 - 0.1);
-      
-      // FIX: Explicitly setting the return type of the map callback to `Team` resolves a TypeScript
-      // type inference issue where `lastChange` was being inferred as a generic `string`.
-      // This ensures `updatedTeams` is correctly typed as `Team[]`, which in turn fixes both downstream type errors.
+
       const updatedTeams = currentTeams.map((team, index): Team => {
         if (index === teamIndex) {
           const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
-      
+
           let newBid = parseFloat((team.bid + change).toFixed(1));
           let newOffer = parseFloat((team.offer + change).toFixed(1));
 
           // Ensure bid and offer don't go below 0.1 and bid is less than offer
           if (newBid < 0.1) newBid = 0.1;
           if (newOffer < newBid + 0.2) newOffer = parseFloat((newBid + 0.2).toFixed(1));
-          
+
           return {
             ...team,
             bid: newBid,
@@ -90,25 +91,55 @@ const App: React.FC = () => {
   const sortedTeams = [...teams].sort((a, b) => b.offer - a.offer);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row gap-8">
-        <div className="flex-grow">
-          <Header />
-          <main className="mt-6">
-            <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
-          </main>
-          <Footer />
-        </div>
-        {selectedOrder && (
-          <aside className="w-full md:w-auto md:max-w-xs xl:max-w-sm flex-shrink-0">
-            <TradeSlip 
-              key={selectedOrder.team.id + selectedOrder.type} 
-              order={selectedOrder} 
-              onClose={handleCloseTradeSlip} 
-            />
-          </aside>
-        )}
+    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      {/* Mobile Menu Button */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      >
+        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar - Hidden on mobile unless toggled */}
+      <div className={`
+        fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar />
       </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pt-12 md:pt-0">
+            <div className="flex-grow min-w-0">
+              <Header />
+              <main className="mt-6">
+                <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
+                <AIAnalysis teams={teams} />
+              </main>
+              <Footer />
+            </div>
+            {selectedOrder && (
+              <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0">
+                <TradeSlip
+                  key={selectedOrder.team.id + selectedOrder.type}
+                  order={selectedOrder}
+                  onClose={handleCloseTradeSlip}
+                />
+              </aside>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay for mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
     </div>
   );
 };
