@@ -141,3 +141,24 @@ export const WC_TEAMS: Team[] = [
     createTeam(259, 'Jordan', 2501),
     createTeam(260, 'Haiti', 4501),
 ];
+
+export const SPL_TEAMS: Team[] = [
+    createTeam(301, 'AL Hilal', 2.1),
+    createTeam(302, 'Al-Nassr Riyadh', 2.5),
+    createTeam(303, 'Al Qadisiyah FC', 13),
+    createTeam(304, 'Al Ittihad Jeddah', 13),
+    createTeam(305, 'Al Ahli Jeddah', 13),
+    createTeam(306, 'Al Taawon', 21),
+    createTeam(307, 'Al Khaleej Saihat', 101),
+    createTeam(308, 'Neom SC', 101),
+    createTeam(309, 'Al Ittifaq Dammam', 251),
+    createTeam(310, 'Al Kholood Ar Rass', 351),
+    createTeam(311, 'Al Shabab', 501),
+    createTeam(312, 'Al Riyadh', 1001),
+    createTeam(313, 'Al Fateh SC', 1001),
+    createTeam(314, 'Al Feiha', 1001),
+    createTeam(315, 'Al Hazm', 2001),
+    createTeam(316, 'Al Akhdoud', 2001),
+    createTeam(317, 'Damac FC', 2501),
+    createTeam(318, 'Al Najma', 4001),
+];
