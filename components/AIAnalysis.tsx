@@ -5,6 +5,7 @@ import type { Team } from '../types';
 
 interface AIAnalysisProps {
     teams: Team[];
+    leagueName: string;
 }
 
 const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -13,7 +14,7 @@ const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
+const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
     const [analysis, setAnalysis] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -39,11 +40,11 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams }) => {
 
             const prompt = `You are a sharp sports betting analyst. 
             
-            Here are the current market prices (implied probability %) for the Premier League winner: 
+            Here are the current market prices (implied probability %) for the ${leagueName} winner: 
             ${teamData}
             
             TASK:
-            1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders (Man City, Arsenal, Liverpool, etc.).
+            1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders in the ${leagueName}.
             2. Compare the real-world sentiment/news with these market prices.
             3. Identify ONE "Best Buy" (undervalued team) and ONE "Sell" (overvalued team).
             4. Provide a concise, data-driven rationale for each trade based on the *latest* news you found.
