@@ -39,9 +39,11 @@ const App: React.FC = () => {
 
   const simulatePriceChange = useCallback(() => {
     setTeams(currentTeams => {
-      const teamIndex = Math.floor(Math.random() * currentTeams.length);
-      const change = (Math.random() * 0.2 - 0.1);
+      // Only simulate price changes for the top 5 teams (Arsenal, City, Liverpool, Chelsea, Utd)
+      // The others should remain stable at 0.1-0.2 as per user request.
+      const teamIndex = Math.floor(Math.random() * 5);
 
+      const change = (Math.random() * 0.4 - 0.2); // Slightly increased volatility for top teams
       const updatedTeams = currentTeams.map((team, index): Team => {
         if (index === teamIndex) {
           const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
