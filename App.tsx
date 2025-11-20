@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Team, Order } from './types';
+import { Team, Order } from './types';
 import Header from './components/Header';
 import OrderBook from './components/OrderBook';
 import Footer from './components/Footer';
@@ -8,39 +8,33 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import TopBar from './components/TopBar';
 import { Menu, X } from 'lucide-react';
-
-const INITIAL_TEAMS: Team[] = [
-  { id: 1, name: 'Arsenal', bid: 54.3, offer: 54.6, lastChange: 'none' },
-  { id: 2, name: 'Man City', bid: 29.0, offer: 29.4, lastChange: 'none' },
-  { id: 3, name: 'Liverpool', bid: 7.7, offer: 8.0, lastChange: 'none' },
-  { id: 4, name: 'Chelsea', bid: 4.0, offer: 4.3, lastChange: 'none' },
-  { id: 5, name: 'Man Utd', bid: 2.4, offer: 2.5, lastChange: 'none' },
-  { id: 6, name: 'Tottenham', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 7, name: 'Sunderland', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 8, name: 'Bournemouth', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 9, name: 'Crystal Palace', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 10, name: 'Newcastle', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 11, name: 'Brighton', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 12, name: 'Aston Villa', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 13, name: 'Nottm Forest', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 14, name: 'Everton', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 15, name: 'West Ham', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 16, name: 'Fulham', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 17, name: 'Wolves', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 18, name: 'Brentford', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 19, name: 'Leeds', bid: 0.1, offer: 0.2, lastChange: 'none' },
-  { id: 20, name: 'Burnley', bid: 0.1, offer: 0.2, lastChange: 'none' },
-];
+import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS } from './data/marketData';
 
 const App: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC'>('EPL');
+  const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Reset teams when league changes
+  useEffect(() => {
+    switch (activeLeague) {
+      case 'EPL':
+        setTeams(EPL_TEAMS);
+        break;
+      case 'UCL':
+        setTeams(UCL_TEAMS);
+        break;
+      case 'WC':
+        setTeams(WC_TEAMS);
+        break;
+    }
+    setSelectedOrder(null); // Close trade slip on league switch
+  }, [activeLeague]);
+
   const simulatePriceChange = useCallback(() => {
     setTeams(currentTeams => {
-      // Only simulate price changes for the top 5 teams (Arsenal, City, Liverpool, Chelsea, Utd)
-      // The others should remain stable at 0.1-0.2 as per user request.
+      // Only simulate price changes for the top 5 teams
       const teamIndex = Math.floor(Math.random() * 5);
 
       const change = (Math.random() * 0.4 - 0.2); // Slightly increased volatility for top teams
@@ -93,6 +87,14 @@ const App: React.FC = () => {
 
   const sortedTeams = [...teams].sort((a, b) => b.offer - a.offer);
 
+  const getLeagueTitle = () => {
+    switch (activeLeague) {
+      case 'EPL': return 'Premier League';
+      case 'UCL': return 'Champions League';
+      case 'WC': return 'World Cup';
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
       {/* Mobile Menu Button */}
@@ -100,16 +102,16 @@ const App: React.FC = () => {
         className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        {isMobileMenuOpen ? <X /> : <Menu />}
       </button>
 
-      {/* Sidebar - Hidden on mobile unless toggled */}
-      <div className={`
-        fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <Sidebar />
-      </div>
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={isMobileMenuOpen}
+        setIsOpen={setIsMobileMenuOpen}
+        activeLeague={activeLeague}
+        onLeagueChange={setActiveLeague}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -122,8 +124,8 @@ const App: React.FC = () => {
             <div className="flex-grow min-w-0 flex flex-col h-full overflow-hidden">
               {/* Fixed Header Section */}
               <div className="flex-shrink-0 space-y-6 mb-6">
-                <Header />
-                <AIAnalysis teams={teams} />
+                <Header title={getLeagueTitle()} />
+                <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
               </div>
 
               {/* Scrollable OrderBook Section */}
@@ -131,7 +133,7 @@ const App: React.FC = () => {
                 <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
               </main>
 
-              {/* Footer - Optional: Keep fixed at bottom or scroll with content? 
+              {/* Footer - Optional: Keep fixed at bottom or scroll with content?
                   User asked for "everything down to Asset row fixed", implying footer might be off screen or fixed at bottom.
                   Let's keep footer fixed at bottom for a clean "app" feel.
               */}

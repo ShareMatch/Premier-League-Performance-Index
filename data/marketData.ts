@@ -1,0 +1,143 @@
+import { Team } from '../types';
+
+// Helper to convert decimal odds to Buy/Sell prices
+const calculatePrices = (decimalOdds: number): { bid: number; offer: number } => {
+    if (decimalOdds > 100) {
+        return { bid: 0.1, offer: 0.2 };
+    }
+    const impliedProb = 100 / decimalOdds;
+    // Spread of ~0.4-0.5%
+    const bid = parseFloat((impliedProb - 0.2).toFixed(1));
+    const offer = parseFloat((impliedProb + 0.2).toFixed(1));
+    return { bid: Math.max(0.1, bid), offer: offer };
+};
+
+const createTeam = (id: number, name: string, odds: number): Team => {
+    const { bid, offer } = calculatePrices(odds);
+    return { id, name, bid, offer, lastChange: 'none' };
+};
+
+export const EPL_TEAMS: Team[] = [
+    { id: 1, name: 'Arsenal', bid: 54.3, offer: 54.6, lastChange: 'none' },
+    { id: 2, name: 'Man City', bid: 29.0, offer: 29.4, lastChange: 'none' },
+    { id: 3, name: 'Liverpool', bid: 7.7, offer: 8.0, lastChange: 'none' },
+    { id: 4, name: 'Chelsea', bid: 4.0, offer: 4.3, lastChange: 'none' },
+    { id: 5, name: 'Man Utd', bid: 2.4, offer: 2.5, lastChange: 'none' },
+    { id: 6, name: 'Tottenham', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 7, name: 'Sunderland', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 8, name: 'Bournemouth', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 9, name: 'Crystal Palace', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 10, name: 'Newcastle', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 11, name: 'Brighton', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 12, name: 'Aston Villa', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 13, name: 'Nottm Forest', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 14, name: 'Everton', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 15, name: 'West Ham', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 16, name: 'Fulham', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 17, name: 'Wolves', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 18, name: 'Brentford', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 19, name: 'Leeds', bid: 0.1, offer: 0.2, lastChange: 'none' },
+    { id: 20, name: 'Burnley', bid: 0.1, offer: 0.2, lastChange: 'none' },
+];
+
+export const UCL_TEAMS: Team[] = [
+    createTeam(101, 'Arsenal', 5.5),
+    createTeam(102, 'Bayern Munich', 5.5),
+    createTeam(103, 'PSG', 7),
+    createTeam(104, 'Liverpool', 8),
+    createTeam(105, 'Man City', 8),
+    createTeam(106, 'Barcelona', 10),
+    createTeam(107, 'Real Madrid', 10),
+    createTeam(108, 'Chelsea', 26),
+    createTeam(109, 'Inter Milan', 26),
+    createTeam(110, 'Newcastle', 41),
+    createTeam(111, 'Atletico Madrid', 41),
+    createTeam(112, 'Tottenham', 41),
+    createTeam(113, 'Borussia Dortmund', 67),
+    createTeam(114, 'Napoli', 51),
+    createTeam(115, 'Galatasaray', 81),
+    createTeam(116, 'Atalanta', 126),
+    createTeam(117, 'Juventus', 151),
+    createTeam(118, 'Sporting Lisbon', 151),
+    createTeam(119, 'Bayer Leverkusen', 126),
+    createTeam(120, 'PSV', 151),
+    createTeam(121, 'Marseille', 251),
+    createTeam(122, 'Monaco', 151),
+    createTeam(123, 'Athletic Bilbao', 201),
+    createTeam(124, 'Villarreal', 251),
+    createTeam(125, 'Eintracht Frankfurt', 201),
+    createTeam(126, 'Benfica', 751),
+    createTeam(127, 'Olympiakos', 501),
+    createTeam(128, 'Club Brugge', 501),
+    createTeam(129, 'Union St Gilloise', 1001),
+    createTeam(130, 'FK Qarabag', 1001),
+    createTeam(131, 'Bodo Glimt', 1001),
+    createTeam(132, 'Ajax', 1501),
+    createTeam(133, 'Slavia Prague', 1501),
+    createTeam(134, 'FC Copenhagen', 1501),
+    createTeam(135, 'AEP Paphos', 1501),
+    createTeam(136, 'Kairat Almaty', 4001),
+];
+
+export const WC_TEAMS: Team[] = [
+    createTeam(201, 'Spain', 5.5),
+    createTeam(202, 'England', 7),
+    createTeam(203, 'France', 8),
+    createTeam(204, 'Brazil', 9),
+    createTeam(205, 'Argentina', 9),
+    createTeam(206, 'Portugal', 11),
+    createTeam(207, 'Germany', 13),
+    createTeam(208, 'Netherlands', 21),
+    createTeam(209, 'Norway', 34),
+    createTeam(210, 'Italy', 34),
+    createTeam(211, 'Belgium', 51),
+    createTeam(212, 'Uruguay', 51),
+    createTeam(213, 'Colombia', 51),
+    createTeam(214, 'Mexico', 81),
+    createTeam(215, 'USA', 81),
+    createTeam(216, 'Japan', 101),
+    createTeam(217, 'Croatia', 101),
+    createTeam(218, 'Ecuador', 101),
+    createTeam(219, 'Morocco', 101),
+    createTeam(220, 'Switzerland', 101),
+    createTeam(221, 'Austria', 151),
+    createTeam(222, 'Senegal', 126),
+    createTeam(223, 'Denmark', 201),
+    createTeam(224, 'Sweden', 151),
+    createTeam(225, 'Ivory Coast', 201),
+    createTeam(226, 'Poland', 251),
+    createTeam(227, 'Turkey', 251),
+    createTeam(228, 'Canada', 251),
+    createTeam(229, 'Egypt', 251),
+    createTeam(230, 'Paraguay', 151),
+    createTeam(231, 'Ukraine', 201),
+    createTeam(232, 'Algeria', 201),
+    createTeam(233, 'South Korea', 151),
+    createTeam(234, 'Romania', 501),
+    createTeam(235, 'Australia', 501),
+    createTeam(236, 'Scotland', 251),
+    createTeam(237, 'Ghana', 151),
+    createTeam(238, 'Iran', 501),
+    createTeam(239, 'Wales', 251),
+    createTeam(240, 'Tunisia', 401),
+    createTeam(241, 'Slovakia', 501),
+    createTeam(242, 'Bolivia', 251),
+    createTeam(243, 'Czech Republic', 501),
+    createTeam(244, 'Qatar', 1001),
+    createTeam(245, 'Republic of Ireland', 1001),
+    createTeam(246, 'New Zealand', 1001),
+    createTeam(247, 'Saudi Arabia', 1001),
+    createTeam(248, 'North Macedonia', 501),
+    createTeam(249, 'DR Congo', 751),
+    createTeam(250, 'Panama', 751),
+    createTeam(251, 'Albania', 1001),
+    createTeam(252, 'Northern Ireland', 751),
+    createTeam(253, 'Iraq', 1001),
+    createTeam(254, 'Kosovo', 751),
+    createTeam(255, 'Curacao', 2001),
+    createTeam(256, 'Cape Verde', 2001),
+    createTeam(257, 'Jamaica', 1001),
+    createTeam(258, 'Suriname', 2001),
+    createTeam(259, 'Jordan', 2501),
+    createTeam(260, 'Haiti', 4501),
+];
