@@ -1,4 +1,3 @@
-```
 import React, { useState } from 'react';
 import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu } from 'lucide-react';
 
@@ -13,8 +12,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
   const [expandedItems, setExpandedItems] = useState<string[]>(['Sports', 'Football']);
 
   const toggleExpand = (label: string) => {
-    setExpandedItems(prev => 
-      prev.includes(label) 
+    setExpandedItems(prev =>
+      prev.includes(label)
         ? prev.filter(item => item !== label)
         : [...prev, label]
     );
@@ -25,12 +24,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
     { icon: Building2, label: 'Companies', badge: 'SOON' },
     { icon: Cloud, label: 'Climate', badge: 'SOON' },
     { icon: Vote, label: 'Politics', badge: 'SOON' },
-    { 
-      icon: Trophy, 
-      label: 'Sports', 
+    {
+      icon: Trophy,
+      label: 'Sports',
       subItems: [
-        { 
-          label: 'Football', 
+        {
+          label: 'Football',
           subItems: [
             { label: 'England Premier League', id: 'EPL', active: activeLeague === 'EPL' },
             { label: 'Saudi Premier League', badge: 'SOON' },
@@ -49,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
@@ -57,11 +56,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
 
       {/* Sidebar */}
       <div className={`
-        fixed md:static inset - y - 0 left - 0 z - 50
-w - 64 bg - [#0B1221] border - r border - gray - 800 flex flex - col
-        transform transition - transform duration - 300 ease -in -out
-        ${ isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0' }
-`}>
+        fixed md:static inset-y-0 left-0 z-50
+        w-64 bg-[#0B1221] border-r border-gray-800 flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
         <div className="p-6 flex items-center gap-3">
           <div className="w-8 h-8 bg-[#3AA189] rounded flex items-center justify-center">
             <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -77,9 +76,9 @@ w - 64 bg - [#0B1221] border - r border - gray - 800 flex flex - col
               <button
                 onClick={() => item.subItems && toggleExpand(item.label)}
                 className={`
-w - full flex items - center justify - between px - 3 py - 2 rounded - lg text - sm font - medium transition - colors
-                  ${ item.active ? 'bg-[#3AA189]/10 text-[#3AA189]' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' }
-`}
+                  w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${item.active ? 'bg-[#3AA189]/10 text-[#3AA189]' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}
+                `}
               >
                 <div className="flex items-center gap-3">
                   <item.icon className="w-5 h-5" />
@@ -91,7 +90,7 @@ w - full flex items - center justify - between px - 3 py - 2 rounded - lg text -
                   )}
                 </div>
                 {item.subItems && (
-                  expandedItems.includes(item.label) 
+                  expandedItems.includes(item.label)
                     ? <ChevronDown className="w-4 h-4" />
                     : <ChevronRight className="w-4 h-4" />
                 )}
@@ -105,10 +104,10 @@ w - full flex items - center justify - between px - 3 py - 2 rounded - lg text -
                       <button
                         onClick={() => subItem.subItems && toggleExpand(subItem.label)}
                         className={`
-w - full flex items - center justify - between px - 3 py - 2 rounded - lg text - sm transition - colors
-                          ${ subItem.badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200' }
-text - gray - 400
-  `}
+                          w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
+                          ${subItem.badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200'}
+                          text-gray-400
+                        `}
                       >
                         <div className="flex items-center gap-2">
                           <span>{subItem.label}</span>
@@ -134,15 +133,14 @@ text - gray - 400
                               onClick={() => deepItem.id && onLeagueChange(deepItem.id as any)}
                               disabled={!!deepItem.badge}
                               className={`
-w - full text - left px - 3 py - 2 rounded - lg text - xs transition - colors block
-                                ${
-  deepItem.active
-  ? 'bg-[#3AA189] text-white font-medium shadow-lg shadow-[#3AA189]/20'
-  : deepItem.badge
-    ? 'text-gray-600 cursor-not-allowed'
-    : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
-}
-`}
+                                w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
+                                ${deepItem.active
+                                  ? 'bg-[#3AA189] text-white font-medium shadow-lg shadow-[#3AA189]/20'
+                                  : deepItem.badge
+                                    ? 'text-gray-600 cursor-not-allowed'
+                                    : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
+                                }
+                              `}
                             >
                               <div className="flex items-center justify-between">
                                 <span>{deepItem.label}</span>
@@ -179,4 +177,3 @@ w - full text - left px - 3 py - 2 rounded - lg text - xs transition - colors bl
 };
 
 export default Sidebar;
-```
