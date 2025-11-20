@@ -162,15 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
-          <div className="bg-gradient-to-br from-[#3AA189]/20 to-blue-600/20 rounded-xl p-4 border border-[#3AA189]/20">
-            <h4 className="text-white font-bold text-sm mb-1">Premium Access</h4>
-            <p className="text-xs text-gray-400 mb-3">Unlock advanced analytics and real-time data.</p>
-            <button className="w-full bg-[#3AA189] hover:bg-[#2d826f] text-white text-xs font-bold py-2 rounded-lg transition-colors">
-              Upgrade Plan
-            </button>
-          </div>
-        </div>
+
       </div>
     </>
   );
