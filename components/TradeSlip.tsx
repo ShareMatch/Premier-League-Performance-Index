@@ -125,11 +125,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
       {isBuy && shares !== '' && (
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
-            <p className="text-gray-400">Max Return (Win)</p>
+            <p className="text-gray-400">Max Return</p>
             <p className="text-[#3AA189] font-bold">${maxReturn}</p>
           </div>
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
-            <p className="text-gray-400">Min Return (Loss)</p>
+            <p className="text-gray-400">Min Return</p>
             <p className="text-red-400 font-bold">${minReturn}</p>
           </div>
         </div>
