@@ -8,10 +8,10 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import TopBar from './components/TopBar';
 import { Menu, X } from 'lucide-react';
-import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS } from './data/marketData';
+import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS } from './data/marketData';
 
 const App: React.FC = () => {
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC'>('EPL');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL'>('EPL');
   const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,6 +27,9 @@ const App: React.FC = () => {
         break;
       case 'WC':
         setTeams(WC_TEAMS);
+        break;
+      case 'SPL':
+        setTeams(SPL_TEAMS);
         break;
     }
     setSelectedOrder(null); // Close trade slip on league switch
@@ -92,6 +95,7 @@ const App: React.FC = () => {
       case 'EPL': return 'Premier League';
       case 'UCL': return 'Champions League';
       case 'WC': return 'World Cup';
+      case 'SPL': return 'Saudi Pro League';
     }
   };
 
