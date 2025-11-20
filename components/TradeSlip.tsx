@@ -23,12 +23,12 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
 
-  const orderCost = shares !== '' ? (shares * (order.price / 100)).toFixed(2) : '0.00';
+  const orderCost = shares !== '' ? (shares * order.price).toFixed(2) : '0.00';
   const isBuy = order.type === 'buy';
 
   // Calculate returns
-  const maxReturn = shares !== '' ? ((100 - order.price) * shares / 100).toFixed(2) : '0.00';
-  const minReturn = shares !== '' ? ((0.1 - order.price) * shares / 100).toFixed(2) : '0.00';
+  const maxReturn = shares !== '' ? (shares * 100).toFixed(2) : '0.00';
+  const minReturn = shares !== '' ? (shares * 0.1).toFixed(2) : '0.00';
 
   useEffect(() => {
     if (countdown === null) return;
@@ -104,7 +104,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
         <div className="flex justify-between items-baseline">
           <label htmlFor="shares" className="text-sm font-medium text-gray-400">Number of Units</label>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Total Value: £{orderCost}</p>
+            <p className="text-xs text-gray-500">Total Value: ${orderCost}</p>
             {!isBuy && order.holding && (
               <p className="text-xs text-gray-400">Max Sell: {order.holding}</p>
             )}
@@ -126,11 +126,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
             <p className="text-gray-400">Max Return (Win)</p>
-            <p className="text-[#3AA189] font-bold">£{maxReturn}</p>
+            <p className="text-[#3AA189] font-bold">${maxReturn}</p>
           </div>
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
             <p className="text-gray-400">Min Return (Loss)</p>
-            <p className="text-red-400 font-bold">£{minReturn}</p>
+            <p className="text-red-400 font-bold">${minReturn}</p>
           </div>
         </div>
       )}
@@ -146,10 +146,10 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
           onClick={handleConfirm}
           disabled={!shares || shares <= 0 || countdown !== null}
           className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${!shares || shares <= 0
-              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-              : countdown !== null
-                ? 'bg-[#1C7D83] text-gray-300 cursor-wait'
-                : 'bg-[#3AA189] hover:bg-[#47b89e] text-white'
+            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+            : countdown !== null
+              ? 'bg-[#1C7D83] text-gray-300 cursor-wait'
+              : 'bg-[#3AA189] hover:bg-[#47b89e] text-white'
             }`}
         >
           {countdown !== null ? (
