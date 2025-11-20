@@ -10,4 +10,5 @@ export interface Order {
   team: Team;
   type: 'buy' | 'sell';
   price: number;
+  holding?: number;
 }

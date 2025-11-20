@@ -13,6 +13,7 @@ import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS } from './data/marketData';
 const App: React.FC = () => {
   const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL'>('EPL');
   const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
+  const [portfolio, setPortfolio] = useState<Record<number, number>>({ 1: 10 }); // Mock portfolio: 10 Arsenal shares
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -80,8 +81,18 @@ const App: React.FC = () => {
   }, [simulatePriceChange]);
 
   const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
-    const price = type === 'buy' ? team.offer : team.bid;
-    setSelectedOrder({ team, type, price });
+    if (type === 'sell') {
+      const holding = portfolio[team.id] || 0;
+      if (holding <= 0) {
+        alert(`You cannot sell ${team.name} because you do not own any shares.`);
+        return;
+      }
+      const price = team.bid;
+      setSelectedOrder({ team, type, price, holding });
+    } else {
+      const price = team.offer;
+      setSelectedOrder({ team, type, price });
+    }
   };
 
   const handleCloseTradeSlip = () => {
