@@ -8,10 +8,11 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import TopBar from './components/TopBar';
 import { Menu, X } from 'lucide-react';
-import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS } from './data/marketData';
+import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS, F1_TEAMS } from './data/marketData';
+import NewsFeed from './components/NewsFeed';
 
 const App: React.FC = () => {
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL'>('EPL');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1'>('EPL');
   const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
   const [portfolio, setPortfolio] = useState<Record<number, number>>({ 1: 10 }); // Mock portfolio: 10 Arsenal shares
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -31,6 +32,9 @@ const App: React.FC = () => {
         break;
       case 'SPL':
         setTeams(SPL_TEAMS);
+        break;
+      case 'F1':
+        setTeams(F1_TEAMS);
         break;
     }
     setSelectedOrder(null); // Close trade slip on league switch
@@ -107,6 +111,7 @@ const App: React.FC = () => {
       case 'UCL': return 'Champions League';
       case 'WC': return 'World Cup';
       case 'SPL': return 'Saudi Pro League';
+      case 'F1': return 'Formula 1';
     }
   };
 
@@ -144,8 +149,15 @@ const App: React.FC = () => {
               </div>
 
               {/* Scrollable OrderBook Section */}
-              <main className="flex-1 min-h-0">
+              <main className="flex-1 min-h-0 flex flex-col gap-6 overflow-y-auto pr-2">
                 <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
+
+                {/* News Feed - Only for F1 */}
+                {activeLeague === 'F1' && (
+                  <div className="flex-shrink-0">
+                    <NewsFeed />
+                  </div>
+                )}
               </main>
 
               {/* Footer - Optional: Keep fixed at bottom or scroll with content?

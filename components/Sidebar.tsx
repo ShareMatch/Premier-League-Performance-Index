@@ -4,8 +4,8 @@ import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu }
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -39,7 +39,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         },
         { label: 'Golf', badge: 'SOON' },
         { label: 'Cricket', badge: 'SOON' },
-        { label: 'F1', badge: 'SOON' },
+        {
+          label: 'F1',
+          subItems: [
+            { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
+          ]
+        },
       ]
     },
   ];

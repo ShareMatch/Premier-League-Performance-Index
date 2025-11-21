@@ -162,3 +162,9 @@ export const SPL_TEAMS: Team[] = [
     createTeam(317, 'Damac FC', 2501),
     createTeam(318, 'Al Najma', 4001),
 ];
+
+export const F1_TEAMS: Team[] = [
+    createTeam(401, 'Lando Norris', 1.14),
+    createTeam(402, 'Oscar Piastri', 7),
+    createTeam(403, 'Max Verstappen', 15),
+];
