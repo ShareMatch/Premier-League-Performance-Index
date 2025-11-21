@@ -37,10 +37,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
 
   return (
     <div className={`grid grid-cols-3 gap-4 items-center p-3 sm:p-4 text-sm sm:text-base transition-colors duration-500 ${flashClass}`}>
-      <div className="flex items-center gap-3 text-left">
-        {getIcon()}
-        <span className="font-medium text-gray-200">{team.name}</span>
-      </div>
+      <div className="font-medium text-gray-200 text-left">{team.name}</div>
       <div
         className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
         onClick={() => onSelectOrder(team, 'sell')}

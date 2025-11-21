@@ -3,10 +3,11 @@ import { Team, Order } from './types';
 import Header from './components/Header';
 import OrderBook from './components/OrderBook';
 import Footer from './components/Footer';
-import TradeSlip from './components/TradeSlip';
 import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import TopBar from './components/TopBar';
+import RightPanel from './components/RightPanel';
+import Ticker from './components/Ticker';
 import { Menu, X } from 'lucide-react';
 import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS, F1_TEAMS } from './data/marketData';
 import NewsFeed from './components/NewsFeed';
@@ -42,7 +43,12 @@ const App: React.FC = () => {
         setTeams(EPL_TEAMS);
         break;
     }
-    setSelectedOrder(null); // Close trade slip on league switch
+    // Don't close trade slip on league switch, user might want to keep it open?
+    // User said "always give preference... to Transaction Slip".
+    // But if they switch league, the order might be irrelevant if they want to trade something else.
+    // However, if they have an open slip, maybe keep it?
+    // For now, let's keep existing behavior: setSelectedOrder(null);
+    setSelectedOrder(null);
   }, [activeLeague]);
 
   const simulatePriceChange = useCallback(() => {
@@ -117,6 +123,7 @@ const App: React.FC = () => {
       case 'WC': return 'World Cup';
       case 'SPL': return 'Saudi Pro League';
       case 'F1': return 'Formula 1';
+      case 'HOME': return 'Home Dashboard';
     }
   };
 
@@ -138,52 +145,59 @@ const App: React.FC = () => {
         onLeagueChange={setActiveLeague}
       />
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
         <TopBar />
 
-        {/* Content Area - Fixed Height, No Page Scroll */}
-        <div className="flex-1 flex flex-col p-4 sm:p-6 md:p-8 overflow-hidden">
-          <div className="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 h-full">
-            <div className="flex-grow min-w-0 flex flex-col h-full overflow-hidden">
-              {/* Fixed Header Section */}
-              <div className="flex-shrink-0 space-y-6 mb-6">
-                <Header title={getLeagueTitle()} />
-                <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
-              </div>
+        {/* Content Container (Main + Right Panel) */}
+        <div className="flex-1 flex overflow-hidden">
 
-              {/* Scrollable OrderBook Section */}
-              <main className="flex-1 min-h-0 flex flex-col gap-6 overflow-y-auto pr-2">
-                <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
+          {/* Center Content */}
+          <div className="flex-1 flex flex-col min-w-0 relative">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar">
+              <div className="max-w-5xl mx-auto h-full flex flex-col">
 
-                {/* News Feed - Only for F1 */}
-                {activeLeague === 'F1' && (
-                  <div className="flex-shrink-0">
-                    <NewsFeed />
-                  </div>
+                {activeLeague === 'HOME' ? (
+                  <HomeDashboard onNavigate={setActiveLeague} />
+                ) : (
+                  <>
+                    <div className="flex-shrink-0 space-y-6 mb-6">
+                      <Header title={getLeagueTitle()} />
+                      <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
+                    </div>
+
+                    <main className="flex-1 min-h-0 flex flex-col gap-6">
+                      <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
+
+                      {activeLeague === 'F1' && (
+                        <div className="flex-shrink-0">
+                          <NewsFeed topic="F1" />
+                        </div>
+                      )}
+                    </main>
+                  </>
                 )}
-              </main>
 
-              {/* Footer - Optional: Keep fixed at bottom or scroll with content?
-                  User asked for "everything down to Asset row fixed", implying footer might be off screen or fixed at bottom.
-                  Let's keep footer fixed at bottom for a clean "app" feel.
-              */}
-              <div className="flex-shrink-0 mt-4">
-                <Footer />
+                <div className="mt-8">
+                  <Footer />
+                </div>
               </div>
             </div>
 
-            {selectedOrder && (
-              <aside className="w-full lg:w-80 xl:w-96 flex-shrink-0 h-full overflow-y-auto">
-                <TradeSlip
-                  key={selectedOrder.team.id + selectedOrder.type}
-                  order={selectedOrder}
-                  onClose={handleCloseTradeSlip}
-                />
-              </aside>
-            )}
+            {/* Ticker at the bottom of the center content */}
+            <Ticker />
           </div>
+
+          {/* Right Panel - Hidden on mobile, visible on desktop */}
+          <div className="hidden lg:block h-full">
+            <RightPanel
+              portfolio={portfolio}
+              selectedOrder={selectedOrder}
+              onCloseTradeSlip={handleCloseTradeSlip}
+            />
+          </div>
+
         </div>
       </div>
 
