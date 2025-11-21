@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Shield, Car, Trophy } from 'lucide-react';
 import type { Team } from '../types';
 
 interface OrderBookRowProps {
@@ -19,17 +20,28 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
       return () => clearTimeout(timer);
     }
   }, [team.lastChange, team.bid, team.offer]);
-  
-  const flashClass = flash === 'up' 
-    ? 'bg-[#3AA189]/20' 
-    : flash === 'down' 
-    ? 'bg-red-500/20' 
-    : '';
+
+  const flashClass = flash === 'up'
+    ? 'bg-[#3AA189]/20'
+    : flash === 'down'
+      ? 'bg-red-500/20'
+      : '';
+
+  const getIcon = () => {
+    switch (team.category) {
+      case 'f1': return <Car className="w-5 h-5" style={{ color: team.color }} />;
+      case 'football': return <Shield className="w-5 h-5" style={{ color: team.color }} />;
+      default: return <Trophy className="w-5 h-5" style={{ color: team.color || '#6B7280' }} />;
+    }
+  };
 
   return (
     <div className={`grid grid-cols-3 gap-4 items-center p-3 sm:p-4 text-sm sm:text-base transition-colors duration-500 ${flashClass}`}>
-      <div className="font-medium text-gray-200 text-left">{team.name}</div>
-      <div 
+      <div className="flex items-center gap-3 text-left">
+        {getIcon()}
+        <span className="font-medium text-gray-200">{team.name}</span>
+      </div>
+      <div
         className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
         onClick={() => onSelectOrder(team, 'sell')}
         role="button"
@@ -38,7 +50,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
       >
         <span className="font-semibold text-red-400">{team.bid.toFixed(1)}</span>
       </div>
-      <div 
+      <div
         className="text-right rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
         onClick={() => onSelectOrder(team, 'buy')}
         role="button"
