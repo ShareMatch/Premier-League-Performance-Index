@@ -4,6 +4,8 @@ export interface Team {
   bid: number;
   offer: number;
   lastChange: 'up' | 'down' | 'none';
+  color?: string;
+  category?: 'football' | 'f1' | 'other';
 }
 
 export interface Order {
