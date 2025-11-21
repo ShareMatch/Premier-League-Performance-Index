@@ -155,7 +155,7 @@ const App: React.FC = () => {
 
           {/* Center Content */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 custom-scrollbar">
+            <div className={`flex-1 p-4 sm:p-6 md:p-8 custom-scrollbar ${activeLeague === 'HOME' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
               <div className="max-w-5xl mx-auto h-full flex flex-col">
 
                 {activeLeague === 'HOME' ? (
@@ -179,14 +179,16 @@ const App: React.FC = () => {
                   </>
                 )}
 
-                <div className="mt-8">
-                  <Footer />
-                </div>
+                {activeLeague !== 'HOME' && (
+                  <div className="mt-8">
+                    <Footer />
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Ticker at the bottom of the center content */}
-            <Ticker />
+            <Ticker onNavigate={setActiveLeague} />
           </div>
 
           {/* Right Panel - Hidden on mobile, visible on desktop */}
