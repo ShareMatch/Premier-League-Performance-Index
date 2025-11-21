@@ -10,9 +10,10 @@ import TopBar from './components/TopBar';
 import { Menu, X } from 'lucide-react';
 import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS, F1_TEAMS } from './data/marketData';
 import NewsFeed from './components/NewsFeed';
+import HomeDashboard from './components/HomeDashboard';
 
 const App: React.FC = () => {
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1'>('EPL');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME'>('HOME');
   const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
   const [portfolio, setPortfolio] = useState<Record<number, number>>({ 1: 10 }); // Mock portfolio: 10 Arsenal shares
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -35,6 +36,10 @@ const App: React.FC = () => {
         break;
       case 'F1':
         setTeams(F1_TEAMS);
+        break;
+      case 'HOME':
+        // No specific teams for home, but we can keep EPL as default or empty
+        setTeams(EPL_TEAMS);
         break;
     }
     setSelectedOrder(null); // Close trade slip on league switch

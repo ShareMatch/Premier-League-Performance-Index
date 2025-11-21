@@ -4,8 +4,8 @@ import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu }
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -20,7 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
   };
 
   const menuItems = [
-    { icon: Home, label: 'Home', active: false },
+    { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
     { icon: Building2, label: 'Companies', badge: 'SOON' },
     { icon: Cloud, label: 'Climate', badge: 'SOON' },
     { icon: Vote, label: 'Politics', badge: 'SOON' },
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           {menuItems.map((item) => (
             <div key={item.label}>
               <button
-                onClick={() => item.subItems && toggleExpand(item.label)}
+                onClick={() => item.subItems ? toggleExpand(item.label) : (item.id && onLeagueChange(item.id as any))}
                 className={`
                   w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${item.active ? 'bg-[#3AA189]/10 text-[#3AA189]' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}
