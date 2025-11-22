@@ -12,7 +12,7 @@ import { Menu, X } from 'lucide-react';
 import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS, F1_TEAMS } from './data/marketData';
 import NewsFeed from './components/NewsFeed';
 import HomeDashboard from './components/HomeDashboard';
-import { fetchWallet, fetchPortfolio, placeTrade, TEST_USER_ID } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, TEST_USER_ID } from './lib/api';
 
 const App: React.FC = () => {
   const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME'>('HOME');
@@ -37,8 +37,25 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Supabase Integration 1.0');
+    console.log('App Version: Real-Time Subscriptions 1.0');
     loadUserData();
+
+    // Set up Real-Time Subscriptions
+    const walletSubscription = subscribeToWallet(TEST_USER_ID, (updatedWallet) => {
+      console.log('Wallet updated:', updatedWallet);
+      setWallet(updatedWallet);
+    });
+
+    const portfolioSubscription = subscribeToPortfolio(TEST_USER_ID, () => {
+      console.log('Portfolio changed, reloading...');
+      // Reload portfolio to get the full list with updated calculations/items
+      fetchPortfolio(TEST_USER_ID).then(setPortfolio);
+    });
+
+    return () => {
+      walletSubscription.unsubscribe();
+      portfolioSubscription.unsubscribe();
+    };
   }, [loadUserData]);
 
   // Reset teams when league changes
