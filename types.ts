@@ -14,3 +14,20 @@ export interface Order {
   price: number;
   holding?: number;
 }
+
+export interface Wallet {
+  id: string;
+  balance: number;
+  reserved_cents: number;
+  available_cents: number;
+  currency: string;
+}
+
+export interface Position {
+  id: string;
+  asset_id: string;
+  asset_name: string;
+  quantity: number;
+  average_buy_price: number;
+  current_value?: number;
+}

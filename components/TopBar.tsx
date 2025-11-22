@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Wallet, ChevronDown, User, Settings, FileText, Shield } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import type { Wallet as WalletType } from '../types';
 
-const TopBar: React.FC = () => {
+interface TopBarProps {
+    wallet: WalletType | null;
+}
+
+const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [balance, setBalance] = useState<number>(0);
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
     const [isAvatarOpen, setIsAvatarOpen] = useState(false);
 
@@ -13,21 +16,9 @@ const TopBar: React.FC = () => {
         return () => clearInterval(timer);
     }, []);
 
-    useEffect(() => {
-        // Fetch initial balance (mock or real)
-        const fetchBalance = async () => {
-            // In a real app with auth, we would get the user's ID
-            // const { data: { user } } = await supabase.auth.getUser();
-            // if (user) {
-            //     const { data } = await supabase.from('profiles').select('balance').eq('id', user.id).single();
-            //     if (data) setBalance(data.balance);
-            // }
-
-            // Mock for demonstration until auth is fully set up
-            setBalance(8486.07);
-        };
-        fetchBalance();
-    }, []);
+    const balance = wallet ? wallet.balance : 0;
+    const available = wallet ? wallet.available_cents / 100 : 0;
+    const reserved = wallet ? wallet.reserved_cents / 100 : 0;
 
     const formatTime = (date: Date) => {
         return date.toLocaleString('en-US', {
@@ -81,11 +72,11 @@ const TopBar: React.FC = () => {
                             <div className="px-4 py-2">
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-gray-400">Available</span>
-                                    <span className="font-medium text-gray-200">{(balance * 0.8).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-400">In Orders</span>
-                                    <span className="font-medium text-gray-200">{(balance * 0.2).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span className="font-medium text-gray-200">{reserved.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 </div>
                             </div>
                         </div>
