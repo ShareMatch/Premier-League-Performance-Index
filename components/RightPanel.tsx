@@ -1,20 +1,24 @@
 import React from 'react';
 import TradeSlip from './TradeSlip';
 import Portfolio from './Portfolio';
-import type { Order, Position } from '../types';
+import type { Order, Position, Team } from '../types';
 
 interface RightPanelProps {
     portfolio: Position[];
     selectedOrder: Order | null;
     onCloseTradeSlip: () => void;
     onConfirmTrade: (quantity: number) => Promise<void>;
+    allAssets: Team[];
+    onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
     portfolio,
     selectedOrder,
     onCloseTradeSlip,
-    onConfirmTrade
+    onConfirmTrade,
+    allAssets,
+    onNavigate
 }) => {
     return (
         <div className="h-full flex flex-col bg-gray-900 border-l border-gray-800 w-80 flex-shrink-0">
@@ -36,7 +40,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
                     <span className="w-2 h-6 bg-[#3AA189] rounded-sm"></span>
                     Your Portfolio
                 </h2>
-                <Portfolio portfolio={portfolio} />
+                <Portfolio
+                    portfolio={portfolio}
+                    allAssets={allAssets}
+                    onNavigate={onNavigate}
+                />
             </div>
 
         </div>

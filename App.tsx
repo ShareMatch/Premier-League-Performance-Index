@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.6');
+    console.log('App Version: Dynamic Markets 1.7');
     loadUserData();
     loadAssets();
 
@@ -258,6 +258,8 @@ const App: React.FC = () => {
               selectedOrder={selectedOrder}
               onCloseTradeSlip={handleCloseTradeSlip}
               onConfirmTrade={handleConfirmTrade}
+              allAssets={allAssets}
+              onNavigate={setActiveLeague}
             />
           </div>
 
