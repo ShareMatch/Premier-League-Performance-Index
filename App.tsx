@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.5');
+    console.log('App Version: Dynamic Markets 1.6');
     loadUserData();
     loadAssets();
 
@@ -215,7 +215,7 @@ const App: React.FC = () => {
                     <main className="flex-1 min-h-0 flex flex-col gap-6">
                       <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
                         <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center">
-                          <div className="text-left">{activeLeague === 'F1' ? 'Driver' : 'Team'}</div>
+                          <div className="text-left">Asset</div>
                           <div>Sell</div>
                           <div>Buy</div>
                         </div>
