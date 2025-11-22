@@ -6,6 +6,7 @@ export interface Team {
   lastChange: 'up' | 'down' | 'none';
   color?: string;
   category?: 'football' | 'f1' | 'other';
+  market?: string; // EPL, UCL, WC, SPL, F1
 }
 
 export interface Order {
