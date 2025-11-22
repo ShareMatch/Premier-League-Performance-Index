@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.4');
+    console.log('App Version: Dynamic Markets 1.5');
     loadUserData();
     loadAssets();
 
@@ -135,11 +135,16 @@ const App: React.FC = () => {
         quantity
       );
 
-      if (result.success) {
-        setSelectedOrder(null);
-        // Data will update via subscriptions
-      } else {
-        alert(`Trade failed: ${result.message}`);
+      console.log('Trade result:', result);
+
+      // Always refresh portfolio and wallet after trade attempt
+      await loadUserData();
+
+      setSelectedOrder(null);
+
+      // Show success message
+      if (result && result.success) {
+        console.log('Trade successful!');
       }
     } catch (error) {
       console.error('Trade error:', error);
