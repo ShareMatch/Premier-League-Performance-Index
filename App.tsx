@@ -1,22 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Team, Order, Wallet, Position } from './types';
 import Header from './components/Header';
-import OrderBook from './components/OrderBook';
-import Footer from './components/Footer';
-import Sidebar from './components/Sidebar';
-import AIAnalysis from './components/AIAnalysis';
 import TopBar from './components/TopBar';
 import RightPanel from './components/RightPanel';
 import Ticker from './components/Ticker';
 import { Menu, X } from 'lucide-react';
-import { EPL_TEAMS, UCL_TEAMS, WC_TEAMS, SPL_TEAMS, F1_TEAMS } from './data/marketData';
 import NewsFeed from './components/NewsFeed';
 import HomeDashboard from './components/HomeDashboard';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, TEST_USER_ID } from './lib/api';
+import OrderBookRow from './components/OrderBookRow';
+import Sidebar from './components/Sidebar';
+import AIAnalysis from './components/AIAnalysis';
+import Footer from './components/Footer';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, TEST_USER_ID } from './lib/api';
 
 const App: React.FC = () => {
   const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME'>('HOME');
-  const [teams, setTeams] = useState<Team[]>(EPL_TEAMS);
+  const [allAssets, setAllAssets] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
 
   // Supabase State
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -36,9 +36,31 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Fetch Assets
+  const loadAssets = useCallback(async () => {
+    try {
+      const assets = await fetchAssets();
+      // Map DB fields to Team interface
+      const mappedAssets: Team[] = assets.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        bid: Number(a.bid),
+        offer: Number(a.offer),
+        lastChange: a.last_change as 'up' | 'down' | 'none',
+        color: a.color,
+        category: a.category,
+        market: a.market
+      }));
+      setAllAssets(mappedAssets);
+    } catch (error) {
+      console.error('Error loading assets:', error);
+    }
+  }, []);
+
   useEffect(() => {
-    console.log('App Version: Real-Time Subscriptions 1.0');
+    console.log('App Version: Dynamic Markets 1.0');
     loadUserData();
+    loadAssets();
 
     // Set up Real-Time Subscriptions
     const walletSubscription = subscribeToWallet(TEST_USER_ID, (updatedWallet) => {
@@ -48,98 +70,57 @@ const App: React.FC = () => {
 
     const portfolioSubscription = subscribeToPortfolio(TEST_USER_ID, () => {
       console.log('Portfolio changed, reloading...');
-      // Reload portfolio to get the full list with updated calculations/items
       fetchPortfolio(TEST_USER_ID).then(setPortfolio);
+    });
+
+    const assetsSubscription = subscribeToAssets(() => {
+      console.log('Assets changed, reloading...');
+      loadAssets();
     });
 
     return () => {
       walletSubscription.unsubscribe();
       portfolioSubscription.unsubscribe();
+      assetsSubscription.unsubscribe();
     };
-  }, [loadUserData]);
+  }, [loadUserData, loadAssets]);
 
-  // Reset teams when league changes
+  // Filter teams when league changes or assets update
   useEffect(() => {
-    switch (activeLeague) {
-      case 'EPL': setTeams(EPL_TEAMS); break;
-      case 'UCL': setTeams(UCL_TEAMS); break;
-      case 'WC': setTeams(WC_TEAMS); break;
-      case 'SPL': setTeams(SPL_TEAMS); break;
-      case 'F1': setTeams(F1_TEAMS); break;
-      case 'HOME': setTeams(EPL_TEAMS); break;
+    if (activeLeague === 'HOME') {
+      setTeams([]);
+    } else {
+      const filtered = allAssets.filter((a: any) => a.market === activeLeague);
+      setTeams(filtered);
     }
     setSelectedOrder(null);
-  }, [activeLeague]);
-
-  const simulatePriceChange = useCallback(() => {
-    setTeams(currentTeams => {
-      // Only simulate price changes for the top 5 teams
-      const teamIndex = Math.floor(Math.random() * 5);
-
-      const change = (Math.random() * 0.4 - 0.2); // Slightly increased volatility for top teams
-      const updatedTeams = currentTeams.map((team, index): Team => {
-        if (index === teamIndex) {
-          const direction: 'up' | 'down' = change > 0 ? 'up' : 'down';
-
-          let newBid = parseFloat((team.bid + change).toFixed(1));
-          let newOffer = parseFloat((team.offer + change).toFixed(1));
-
-          // Ensure bid and offer don't go below 0.1 and bid is less than offer
-          if (newBid < 0.1) newBid = 0.1;
-          if (newOffer < newBid + 0.2) newOffer = parseFloat((newBid + 0.2).toFixed(1));
-
-          return {
-            ...team,
-            bid: newBid,
-            offer: newOffer,
-            lastChange: direction
-          };
-        }
-        return { ...team, lastChange: 'none' };
-      });
-
-      const teamToUpdate = updatedTeams[teamIndex];
-
-      // If the selected order's team has updated, update the order as well
-      if (selectedOrder && selectedOrder.team.id === teamToUpdate.id) {
-        const price = selectedOrder.type === 'buy' ? teamToUpdate.offer : teamToUpdate.bid;
-        setSelectedOrder(currentOrder => currentOrder ? ({ ...currentOrder, team: teamToUpdate, price }) : null);
-      }
-
-      return updatedTeams;
-    });
-  }, [selectedOrder]);
-
-  useEffect(() => {
-    const interval = setInterval(simulatePriceChange, 1500);
-    return () => clearInterval(interval);
-  }, [simulatePriceChange]);
+  }, [activeLeague, allAssets]);
 
   const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
-    if (type === 'sell') {
-      // Check holding in portfolio
-      const holding = portfolio.find(p => p.asset_id === team.id.toString())?.quantity || 0;
-      if (holding <= 0) {
-        alert(`You cannot sell ${team.name} because you do not own any shares.`);
-        return;
-      }
-      const price = team.bid;
-      setSelectedOrder({ team, type, price, holding });
-    } else {
-      const price = team.offer;
-      setSelectedOrder({ team, type, price });
-    }
-  };
+    // Calculate max quantity based on available funds (for buy) or portfolio holdings (for sell)
+    let maxQuantity = 0;
 
-  const handleCloseTradeSlip = () => {
-    setSelectedOrder(null);
+    if (type === 'buy' && wallet) {
+      maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
+    } else if (type === 'sell') {
+      const position = portfolio.find(p => p.asset_id === team.id.toString());
+      maxQuantity = position ? Number(position.quantity) : 0;
+    }
+
+    setSelectedOrder({
+      team,
+      type,
+      price: type === 'buy' ? team.offer : team.bid,
+      quantity: 0, // Default to 0, let user input
+      maxQuantity
+    });
   };
 
   const handleConfirmTrade = async (quantity: number) => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !wallet) return;
 
     try {
-      await placeTrade(
+      const result = await placeTrade(
         TEST_USER_ID,
         selectedOrder.team.id.toString(),
         selectedOrder.team.name,
@@ -148,14 +129,20 @@ const App: React.FC = () => {
         quantity
       );
 
-      // Refresh data
-      await loadUserData();
-
-      // Close slip is handled by TradeSlip calling onClose after confirm
+      if (result.success) {
+        setSelectedOrder(null);
+        // Data will update via subscriptions
+      } else {
+        alert(`Trade failed: ${result.message}`);
+      }
     } catch (error) {
-      console.error('Trade failed:', error);
-      throw error; // Re-throw for TradeSlip to handle
+      console.error('Trade error:', error);
+      alert('Trade failed. See console for details.');
     }
+  };
+
+  const handleCloseTradeSlip = () => {
+    setSelectedOrder(null);
   };
 
   const sortedTeams = [...teams].sort((a, b) => b.offer - a.offer);
@@ -203,7 +190,10 @@ const App: React.FC = () => {
               <div className="max-w-5xl mx-auto h-full flex flex-col">
 
                 {activeLeague === 'HOME' ? (
-                  <HomeDashboard onNavigate={setActiveLeague} />
+                  <HomeDashboard
+                    onNavigate={setActiveLeague}
+                    teams={allAssets}
+                  />
                 ) : (
                   <>
                     <div className="flex-shrink-0 space-y-6 mb-6">
@@ -212,7 +202,22 @@ const App: React.FC = () => {
                     </div>
 
                     <main className="flex-1 min-h-0 flex flex-col gap-6">
-                      <OrderBook teams={sortedTeams} onSelectOrder={handleSelectOrder} />
+                      <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          <div>Team</div>
+                          <div className="text-right">Bid</div>
+                          <div className="text-right">Offer</div>
+                        </div>
+                        <div className="divide-y divide-gray-700">
+                          {sortedTeams.map((team) => (
+                            <OrderBookRow
+                              key={team.id}
+                              team={team}
+                              onSelectOrder={handleSelectOrder}
+                            />
+                          ))}
+                        </div>
+                      </div>
 
                       {activeLeague === 'F1' && (
                         <div className="flex-shrink-0">
@@ -232,7 +237,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Ticker at the bottom of the center content */}
-            <Ticker onNavigate={setActiveLeague} />
+            <Ticker onNavigate={setActiveLeague} teams={allAssets.filter((a: any) => a.market === 'EPL')} />
           </div>
 
           {/* Right Panel - Hidden on mobile, visible on desktop */}
