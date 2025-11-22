@@ -2,42 +2,42 @@
  * Helper functions for team/driver logos
  */
 
-// TheSportsDB API base URL for team badges
-const SPORTS_DB_BADGE_URL = 'https://www.thesportsdb.com/images/media/team/badge';
-
 /**
- * Format team name for TheSportsDB URL
- * - Replace spaces with underscores
- * - Handle special cases
+ * Team logo mappings to reliable sources
+ * Using a combination of sources for best coverage
  */
-const formatTeamName = (name: string, market: string): string => {
-    // Special cases for team name formatting
-    const specialCases: Record<string, string> = {
-        'Man City': 'Manchester_City',
-        'Man Utd': 'Manchester_United',
-        'Nottm Forest': 'Nottingham_Forest',
-        'West Ham': 'West_Ham',
-        'Aston Villa': 'Aston_Villa',
-        'Crystal Palace': 'Crystal_Palace',
-        // F1 teams (not drivers)
-        'Lando Norris': 'McLaren',
-        'Oscar Piastri': 'McLaren',
-        'Max Verstappen': 'Red_Bull',
-        'Charles Leclerc': 'Ferrari',
-        'Carlos Sainz': 'Ferrari',
-        'Lewis Hamilton': 'Mercedes',
-        'George Russell': 'Mercedes',
-        'Sergio Perez': 'Red_Bull',
-        'Fernando Alonso': 'Aston_Martin',
-        'Lance Stroll': 'Aston_Martin',
-    };
+const TEAM_LOGOS: Record<string, string> = {
+    // EPL Teams - Using official club domains for logo.dev
+    'Arsenal': 'https://logo.clearbit.com/arsenal.com',
+    'Man City': 'https://logo.clearbit.com/mancity.com',
+    'Liverpool': 'https://logo.clearbit.com/liverpoolfc.com',
+    'Chelsea': 'https://logo.clearbit.com/chelseafc.com',
+    'Man Utd': 'https://logo.clearbit.com/manutd.com',
+    'Tottenham': 'https://logo.clearbit.com/tottenhamhotspur.com',
+    'Newcastle': 'https://logo.clearbit.com/nufc.co.uk',
+    'Aston Villa': 'https://logo.clearbit.com/avfc.co.uk',
+    'Brighton': 'https://logo.clearbit.com/brightonandhovealbion.com',
+    'West Ham': 'https://logo.clearbit.com/whufc.com',
+    'Everton': 'https://logo.clearbit.com/evertonfc.com',
+    'Wolves': 'https://logo.clearbit.com/wolves.co.uk',
+    'Fulham': 'https://logo.clearbit.com/fulhamfc.com',
+    'Brentford': 'https://logo.clearbit.com/brentfordfc.com',
+    'Crystal Palace': 'https://logo.clearbit.com/cpfc.co.uk',
+    'Bournemouth': 'https://logo.clearbit.com/afcb.co.uk',
+    'Nottm Forest': 'https://logo.clearbit.com/nottinghamforest.co.uk',
+    'Leeds': 'https://logo.clearbit.com/leedsunited.com',
 
-    if (specialCases[name]) {
-        return specialCases[name];
-    }
-
-    // Default: replace spaces with underscores
-    return name.replace(/\s+/g, '_');
+    // F1 Teams
+    'Lando Norris': 'https://logo.clearbit.com/mclaren.com',
+    'Oscar Piastri': 'https://logo.clearbit.com/mclaren.com',
+    'Max Verstappen': 'https://logo.clearbit.com/redbull.com',
+    'Sergio Perez': 'https://logo.clearbit.com/redbull.com',
+    'Charles Leclerc': 'https://logo.clearbit.com/ferrari.com',
+    'Carlos Sainz': 'https://logo.clearbit.com/ferrari.com',
+    'Lewis Hamilton': 'https://logo.clearbit.com/mercedesamgf1.com',
+    'George Russell': 'https://logo.clearbit.com/mercedesamgf1.com',
+    'Fernando Alonso': 'https://logo.clearbit.com/astonmartinf1.com',
+    'Lance Stroll': 'https://logo.clearbit.com/astonmartinf1.com',
 };
 
 /**
@@ -47,15 +47,13 @@ const formatTeamName = (name: string, market: string): string => {
  * @returns Logo URL or null if not available
  */
 export const getLogoUrl = (name: string, market: string): string | null => {
-    // F1 drivers - use team logos instead
-    if (market === 'F1') {
-        const formattedName = formatTeamName(name, market);
-        return `${SPORTS_DB_BADGE_URL}/${formattedName}.png`;
+    // Check if we have a direct mapping
+    if (TEAM_LOGOS[name]) {
+        return TEAM_LOGOS[name];
     }
 
-    // Football teams
-    const formattedName = formatTeamName(name, market);
-    return `${SPORTS_DB_BADGE_URL}/${formattedName}.png`;
+    // For teams not in our mapping, return null to show fallback
+    return null;
 };
 
 /**
