@@ -1,18 +1,20 @@
 import React from 'react';
 import TradeSlip from './TradeSlip';
 import Portfolio from './Portfolio';
-import type { Order } from '../types';
+import type { Order, Position } from '../types';
 
 interface RightPanelProps {
-    portfolio: Record<number, number>;
+    portfolio: Position[];
     selectedOrder: Order | null;
     onCloseTradeSlip: () => void;
+    onConfirmTrade: (quantity: number) => Promise<void>;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
     portfolio,
     selectedOrder,
-    onCloseTradeSlip
+    onCloseTradeSlip,
+    onConfirmTrade
 }) => {
     return (
         <div className="h-full flex flex-col bg-gray-900 border-l border-gray-800 w-80 flex-shrink-0">
@@ -20,7 +22,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
             {/* Trade Slip Section - Only visible when order selected */}
             {selectedOrder && (
                 <div className="p-4 border-b border-gray-800 bg-gray-800/30">
-                    <TradeSlip order={selectedOrder} onClose={onCloseTradeSlip} />
+                    <TradeSlip
+                        order={selectedOrder}
+                        onClose={onCloseTradeSlip}
+                        onConfirm={onConfirmTrade}
+                    />
                 </div>
             )}
 

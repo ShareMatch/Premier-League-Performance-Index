@@ -4,6 +4,7 @@ import type { Order } from '../types';
 interface TradeSlipProps {
   order: Order;
   onClose: () => void;
+  onConfirm: (quantity: number) => Promise<void>;
 }
 
 const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -12,16 +13,16 @@ const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-// FIX: Update TimerIcon props to accept `style` to allow for inline styling.
 const TimerIcon: React.FC<{ className?: string, style?: React.CSSProperties }> = ({ className, style }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className} style={style}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
   </svg>
 );
 
-const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
+const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm }) => {
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const orderCost = shares !== '' ? (shares * order.price).toFixed(2) : '0.00';
   const isBuy = order.type === 'buy';
@@ -34,15 +35,28 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
     if (countdown === null) return;
     if (countdown === 0) {
       setCountdown(null);
-      // Here you would typically submit the order
-      onClose(); // Close slip after countdown
+      handleSubmit();
       return;
     }
     const timer = setTimeout(() => {
       setCountdown(countdown - 1);
     }, 1000);
     return () => clearTimeout(timer);
-  }, [countdown, onClose]);
+  }, [countdown]);
+
+  const handleSubmit = async () => {
+    if (shares === '' || shares <= 0) return;
+    setIsSubmitting(true);
+    try {
+      await onConfirm(shares);
+      onClose();
+    } catch (error) {
+      console.error('Trade failed:', error);
+      alert('Trade failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleShareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -144,8 +158,8 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
       <div className="mt-4">
         <button
           onClick={handleConfirm}
-          disabled={!shares || shares <= 0 || countdown !== null}
-          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${!shares || shares <= 0
+          disabled={!shares || shares <= 0 || countdown !== null || isSubmitting}
+          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${!shares || shares <= 0 || isSubmitting
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
             : countdown !== null
               ? 'bg-[#1C7D83] text-gray-300 cursor-wait'
@@ -157,6 +171,8 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose }) => {
               <TimerIcon className="w-6 h-6 animate-spin" style={{ animationDuration: '5s' }} />
               <span>Confirming... ({countdown}s)</span>
             </>
+          ) : isSubmitting ? (
+            'Processing...'
           ) : (
             'Confirm Transaction'
           )}
