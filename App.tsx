@@ -37,6 +37,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('App Version: Supabase Integration 1.0');
     loadUserData();
   }, [loadUserData]);
 
