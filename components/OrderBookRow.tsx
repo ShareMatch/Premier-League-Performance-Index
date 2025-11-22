@@ -48,7 +48,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
         <span className="font-semibold text-red-400">{team.bid.toFixed(1)}</span>
       </div>
       <div
-        className="text-right rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
+        className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
         onClick={() => onSelectOrder(team, 'buy')}
         role="button"
         tabIndex={0}

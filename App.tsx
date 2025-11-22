@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.1');
+    console.log('App Version: Dynamic Markets 1.2');
     loadUserData();
     loadAssets();
 
@@ -105,6 +105,12 @@ const App: React.FC = () => {
     } else if (type === 'sell') {
       const position = portfolio.find(p => p.asset_id === team.id.toString());
       maxQuantity = position ? Number(position.quantity) : 0;
+
+      // Validation: Cannot sell if not owned
+      if (maxQuantity <= 0) {
+        alert(`You cannot sell ${team.name} because you do not own any shares.`);
+        return;
+      }
     }
 
     setSelectedOrder({
@@ -203,10 +209,10 @@ const App: React.FC = () => {
 
                     <main className="flex-1 min-h-0 flex flex-col gap-6">
                       <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          <div>Team</div>
-                          <div className="text-right">Bid</div>
-                          <div className="text-right">Offer</div>
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center">
+                          <div className="text-left">{activeLeague === 'F1' ? 'Driver' : 'Team'}</div>
+                          <div>Sell</div>
+                          <div>Buy</div>
                         </div>
                         <div className="divide-y divide-gray-700">
                           {sortedTeams.map((team) => (
