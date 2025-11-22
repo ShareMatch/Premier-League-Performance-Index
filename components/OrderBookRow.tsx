@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Car, Trophy } from 'lucide-react';
 import type { Team } from '../types';
+import { getLogoUrl } from '../lib/logoHelper';
 
 interface OrderBookRowProps {
   team: Team;
@@ -10,6 +11,7 @@ interface OrderBookRowProps {
 
 const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
   const [flash, setFlash] = useState<'up' | 'down' | 'none'>('none');
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     if (team.lastChange !== 'none') {
@@ -35,9 +37,30 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
     }
   };
 
+  const logoUrl = team.market ? getLogoUrl(team.name, team.market) : null;
+
   return (
     <div className={`grid grid-cols-3 gap-4 items-center p-3 sm:p-4 text-sm sm:text-base transition-colors duration-500 ${flashClass}`}>
-      <div className="font-medium text-gray-200 text-left">{team.name}</div>
+      <div className="font-medium text-gray-200 text-left flex items-center gap-2">
+        {logoUrl && !logoError ? (
+          <img
+            src={logoUrl}
+            alt={`${team.name} logo`}
+            className="w-6 h-6 object-contain"
+            onError={() => setLogoError(true)}
+          />
+        ) : (
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: team.color || '#6B7280' }}
+          >
+            <span className="text-white text-xs font-bold">
+              {team.name.charAt(0)}
+            </span>
+          </div>
+        )}
+        <span className="truncate">{team.name}</span>
+      </div>
       <div
         className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
         onClick={() => onSelectOrder(team, 'sell')}
