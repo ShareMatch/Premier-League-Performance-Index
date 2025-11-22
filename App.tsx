@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.0');
+    console.log('App Version: Dynamic Markets 1.1');
     loadUserData();
     loadAssets();
 
