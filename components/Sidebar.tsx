@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu } from 'lucide-react';
+import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu, Search } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -73,6 +73,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             </svg>
           </div>
           <span className="text-xl font-bold text-white">PL Index</span>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-4 mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs focus:outline-none focus:border-[#3AA189] text-gray-300 placeholder-gray-600 transition-colors"
+            />
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">

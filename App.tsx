@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 1.7');
+    console.log('App Version: Dynamic Markets 1.9');
     loadUserData();
     loadAssets();
 
@@ -206,37 +206,50 @@ const App: React.FC = () => {
                     teams={allAssets}
                   />
                 ) : (
-                  <>
-                    <div className="flex-shrink-0 space-y-6 mb-6">
+                  <div className="flex flex-col h-full">
+                    {/* Compact Header */}
+                    <div className="flex-shrink-0">
                       <Header title={getLeagueTitle()} />
-                      <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
                     </div>
 
-                    <main className="flex-1 min-h-0 flex flex-col gap-6">
-                      <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center">
-                          <div className="text-left">Asset</div>
-                          <div>Sell</div>
-                          <div>Buy</div>
-                        </div>
-                        <div className="divide-y divide-gray-700">
-                          {sortedTeams.map((team) => (
-                            <OrderBookRow
-                              key={team.id}
-                              team={team}
-                              onSelectOrder={handleSelectOrder}
-                            />
-                          ))}
+                    {/* Split View Content */}
+                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-hidden">
+
+                      {/* Left Column: Order Book (2/3) */}
+                      <div className="flex-[2] flex flex-col min-h-0">
+                        <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
+                          {/* Fixed Header */}
+                          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+                            <div className="text-left">Asset</div>
+                            <div>Sell</div>
+                            <div>Buy</div>
+                          </div>
+
+                          {/* Scrollable List */}
+                          <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
+                            {sortedTeams.map((team) => (
+                              <OrderBookRow
+                                key={team.id}
+                                team={team}
+                                onSelectOrder={handleSelectOrder}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
 
-                      {activeLeague === 'F1' && (
+                      {/* Right Column: AI & News (1/3) */}
+                      <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                        <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
+
+                        {/* News Feed - Show for all leagues or just F1? User mentioned "football markets news feed at bottom is gone" so likely wants it for all */}
                         <div className="flex-shrink-0">
-                          <NewsFeed topic="F1" />
+                          <NewsFeed topic={activeLeague === 'F1' ? 'F1' : 'Football'} />
                         </div>
-                      )}
-                    </main>
-                  </>
+                      </div>
+
+                    </div>
+                  </div>
                 )}
 
                 {activeLeague !== 'HOME' && (
