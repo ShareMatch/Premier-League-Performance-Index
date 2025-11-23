@@ -58,7 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 2.0');
+    console.log('App Version: Dynamic Markets 2.1');
     loadUserData();
     loadAssets();
 
@@ -242,9 +242,9 @@ const App: React.FC = () => {
                       <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
                         <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
 
-                        {/* News Feed - Show for all leagues or just F1? User mentioned "football markets news feed at bottom is gone" so likely wants it for all */}
+                        {/* News Feed */}
                         <div className="flex-shrink-0">
-                          <NewsFeed topic={activeLeague === 'F1' ? 'F1' : 'Football'} />
+                          <NewsFeed topic={activeLeague as any} />
                         </div>
                       </div>
 

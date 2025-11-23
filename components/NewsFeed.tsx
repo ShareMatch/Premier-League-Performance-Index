@@ -9,34 +9,70 @@ interface NewsItem {
     time: string;
 }
 
-const MOCK_NEWS: NewsItem[] = [
-    { id: 1, headline: "Norris confident in McLaren upgrades ahead of next race", source: "F1.com", time: "2h ago" },
-    { id: 2, headline: "Verstappen dismisses rumors of Red Bull exit", source: "Autosport", time: "4h ago" },
-    { id: 3, headline: "Piastri: 'We are closing the gap to Max'", source: "Sky Sports", time: "5h ago" },
-    { id: 4, headline: "Ferrari strategy under scrutiny after recent GP", source: "BBC Sport", time: "6h ago" },
-    { id: 5, headline: "Hamilton praises Mercedes progress", source: "ESPN", time: "8h ago" },
-];
+const NEWS_DATA: Record<string, NewsItem[]> = {
+    'EPL': [
+        { id: 1, headline: "Newcastle stun Man City 2-1 as Barnes strikes winner", source: "Sky Sports", time: "2h ago" },
+        { id: 2, headline: "Slot under pressure after Liverpool's defeat to Forest", source: "BBC Sport", time: "4h ago" },
+        { id: 3, headline: "Chelsea close gap on Arsenal with win over Burnley", source: "The Guardian", time: "5h ago" },
+        { id: 4, headline: "North London Derby preview: Arsenal face defensive reshuffle", source: "The Athletic", time: "6h ago" },
+        { id: 5, headline: "Man Utd unveil plans for squad during AFCON", source: "Manchester Evening News", time: "8h ago" },
+    ],
+    'UCL': [
+        { id: 1, headline: "Man City cruise past Dortmund with Foden masterclass", source: "UEFA.com", time: "1h ago" },
+        { id: 2, headline: "Arsenal beat Slavia Prague thanks to Merino double", source: "BBC Sport", time: "3h ago" },
+        { id: 3, headline: "Liverpool end losing streak with win in Frankfurt", source: "Sky Sports", time: "4h ago" },
+        { id: 4, headline: "Chelsea held by Qarabag in frustrating draw", source: "ESPN", time: "6h ago" },
+        { id: 5, headline: "Max Dowman becomes youngest ever Champions League player", source: "Goal.com", time: "12h ago" },
+    ],
+    'SPL': [
+        { id: 1, headline: "Ronaldo scores 950th career goal as Al-Nassr stay top", source: "Arab News", time: "2h ago" },
+        { id: 2, headline: "Al-Hilal edge Al-Shabab to keep pressure on leaders", source: "Saudi Gazette", time: "4h ago" },
+        { id: 3, headline: "10-man Al-Ittihad stage incredible comeback draw", source: "SPL Official", time: "5h ago" },
+        { id: 4, headline: "Salah remains top target for Saudi Pro League", source: "The Athletic", time: "8h ago" },
+        { id: 5, headline: "2025-26 Season start date confirmed for August", source: "Reuters", time: "1d ago" },
+    ],
+    'WC': [
+        { id: 1, headline: "Mbappe brace secures France's spot in 2026 World Cup", source: "FIFA.com", time: "3h ago" },
+        { id: 2, headline: "USA, Canada, Mexico preparations ramp up for 2026", source: "ESPN", time: "5h ago" },
+        { id: 3, headline: "DR Congo advance in African playoffs after penalty drama", source: "BBC Africa", time: "7h ago" },
+        { id: 4, headline: "Intercontinental playoff spots decided this week", source: "Sky Sports", time: "10h ago" },
+        { id: 5, headline: "FIFA projects record attendance for expanded tournament", source: "Reuters", time: "1d ago" },
+    ],
+    'F1': [
+        { id: 1, headline: "Verstappen wins Las Vegas GP to keep title hopes alive", source: "F1.com", time: "2h ago" },
+        { id: 2, headline: "Norris and Piastri disqualified from Vegas GP for technical breach", source: "Autosport", time: "3h ago" },
+        { id: 3, headline: "Norris admits 'major f*** up' at Turn 1 cost victory", source: "Sky Sports F1", time: "4h ago" },
+        { id: 4, headline: "Horner linked with shock move to Aston Martin", source: "Crash.net", time: "6h ago" },
+        { id: 5, headline: "Leclerc questions Ferrari strategy after missed podium", source: "The Race", time: "8h ago" },
+    ]
+};
 
 interface NewsFeedProps {
-    topic?: 'F1' | 'Global';
+    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'Global';
 }
 
-const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'F1' }) => {
+const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
     const [summary, setSummary] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const newsItems = topic === 'F1' ? MOCK_NEWS : [
-        { id: 101, headline: "Man City reclaim top spot in Premier League", source: "BBC Sport", time: "1h ago" },
-        { id: 102, headline: "Mbappe hat-trick sends PSG through", source: "L'Equipe", time: "3h ago" },
-        { id: 103, headline: "Lando Norris confident in McLaren upgrades", source: "F1.com", time: "2h ago" },
-        { id: 104, headline: "Saudi Pro League attracts more stars", source: "Reuters", time: "6h ago" },
-        { id: 105, headline: "England announce squad for upcoming friendlies", source: "The FA", time: "12h ago" },
-    ];
+    // Default to EPL if topic not found or Global
+    const newsItems = NEWS_DATA[topic] || NEWS_DATA['EPL'];
 
-    const title = topic === 'F1' ? 'Formula 1 News Wire' : 'Global Sports News Wire';
-    const promptContext = topic === 'F1' ? 'Formula 1' : 'Sports News';
+    const getTitle = (topic: string) => {
+        switch (topic) {
+            case 'EPL': return 'England Premier League News Wire';
+            case 'UCL': return 'UEFA Champions League News Wire';
+            case 'SPL': return 'Saudi Pro League News Wire';
+            case 'WC': return 'FIFA World Cup News Wire';
+            case 'F1': return 'Formula 1 News Wire';
+            default: return 'Global Sports News Wire';
+        }
+    };
+
+    const title = getTitle(topic);
+    const promptContext = topic === 'F1' ? 'Formula 1' : 'Football';
 
     const handleNewsClick = async (item: NewsItem) => {
         setSelectedNews(item);
