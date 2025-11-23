@@ -72,7 +72,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
           </div>
-          <span className="text-xl font-bold text-white">PL Index</span>
+          <span className="text-xl font-bold text-white">
+            {activeLeague === 'HOME' ? 'ShareMatch' :
+              activeLeague === 'EPL' ? 'PL Index' :
+                activeLeague === 'SPL' ? 'SPL Index' :
+                  activeLeague === 'UCL' ? 'UCL Index' :
+                    activeLeague === 'WC' ? 'WC Index' :
+                      activeLeague === 'F1' ? 'F1 Index' : 'ShareMatch'}
+          </span>
         </div>
 
         {/* Search Bar */}
