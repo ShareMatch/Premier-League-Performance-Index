@@ -1,64 +1,27 @@
-import React, { useState } from 'react';
-import { Newspaper, X, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Newspaper, X, Sparkles, RefreshCw } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { supabase } from '../lib/supabase';
 
 interface NewsItem {
-    id: number;
+    id: string; // Changed to string for UUID
     headline: string;
     source: string;
-    time: string;
+    published_at: string;
+    url?: string;
 }
-
-const NEWS_DATA: Record<string, NewsItem[]> = {
-    'EPL': [
-        { id: 1, headline: "Newcastle stun Man City 2-1 as Barnes strikes winner", source: "Sky Sports", time: "2h ago" },
-        { id: 2, headline: "Slot under pressure after Liverpool's defeat to Forest", source: "BBC Sport", time: "4h ago" },
-        { id: 3, headline: "Chelsea close gap on Arsenal with win over Burnley", source: "The Guardian", time: "5h ago" },
-        { id: 4, headline: "North London Derby preview: Arsenal face defensive reshuffle", source: "The Athletic", time: "6h ago" },
-        { id: 5, headline: "Man Utd unveil plans for squad during AFCON", source: "Manchester Evening News", time: "8h ago" },
-    ],
-    'UCL': [
-        { id: 1, headline: "Man City cruise past Dortmund with Foden masterclass", source: "UEFA.com", time: "1h ago" },
-        { id: 2, headline: "Arsenal beat Slavia Prague thanks to Merino double", source: "BBC Sport", time: "3h ago" },
-        { id: 3, headline: "Liverpool end losing streak with win in Frankfurt", source: "Sky Sports", time: "4h ago" },
-        { id: 4, headline: "Chelsea held by Qarabag in frustrating draw", source: "ESPN", time: "6h ago" },
-        { id: 5, headline: "Max Dowman becomes youngest ever Champions League player", source: "Goal.com", time: "12h ago" },
-    ],
-    'SPL': [
-        { id: 1, headline: "Ronaldo scores 950th career goal as Al-Nassr stay top", source: "Arab News", time: "2h ago" },
-        { id: 2, headline: "Al-Hilal edge Al-Shabab to keep pressure on leaders", source: "Saudi Gazette", time: "4h ago" },
-        { id: 3, headline: "10-man Al-Ittihad stage incredible comeback draw", source: "SPL Official", time: "5h ago" },
-        { id: 4, headline: "Salah remains top target for Saudi Pro League", source: "The Athletic", time: "8h ago" },
-        { id: 5, headline: "2025-26 Season start date confirmed for August", source: "Reuters", time: "1d ago" },
-    ],
-    'WC': [
-        { id: 1, headline: "Mbappe brace secures France's spot in 2026 World Cup", source: "FIFA.com", time: "3h ago" },
-        { id: 2, headline: "USA, Canada, Mexico preparations ramp up for 2026", source: "ESPN", time: "5h ago" },
-        { id: 3, headline: "DR Congo advance in African playoffs after penalty drama", source: "BBC Africa", time: "7h ago" },
-        { id: 4, headline: "Intercontinental playoff spots decided this week", source: "Sky Sports", time: "10h ago" },
-        { id: 5, headline: "FIFA projects record attendance for expanded tournament", source: "Reuters", time: "1d ago" },
-    ],
-    'F1': [
-        { id: 1, headline: "Verstappen wins Las Vegas GP to keep title hopes alive", source: "F1.com", time: "2h ago" },
-        { id: 2, headline: "Norris and Piastri disqualified from Vegas GP for technical breach", source: "Autosport", time: "3h ago" },
-        { id: 3, headline: "Norris admits 'major f*** up' at Turn 1 cost victory", source: "Sky Sports F1", time: "4h ago" },
-        { id: 4, headline: "Horner linked with shock move to Aston Martin", source: "Crash.net", time: "6h ago" },
-        { id: 5, headline: "Leclerc questions Ferrari strategy after missed podium", source: "The Race", time: "8h ago" },
-    ]
-};
 
 interface NewsFeedProps {
     topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'Global';
 }
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
+    const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
     const [summary, setSummary] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
-    // Default to EPL if topic not found or Global
-    const newsItems = NEWS_DATA[topic] || NEWS_DATA['EPL'];
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const getTitle = (topic: string) => {
         switch (topic) {
@@ -74,17 +37,93 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
     const title = getTitle(topic);
     const promptContext = topic === 'F1' ? 'Formula 1' : 'Football';
 
+    const fetchNews = async () => {
+        setLoading(true);
+        try {
+            // 1. Fetch existing news from DB
+            const { data, error } = await supabase
+                .from('news_articles')
+                .select('*')
+                .eq('topic', topic)
+                .order('published_at', { ascending: false })
+                .limit(10);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                setNewsItems(data);
+            }
+
+            // 2. Check if update is needed (Lazy Update)
+            const { data: updateData } = await supabase
+                .from('news_updates')
+                .select('last_updated_at')
+                .eq('topic', topic)
+                .single();
+
+            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+            const lastUpdated = updateData?.last_updated_at ? new Date(updateData.last_updated_at) : null;
+
+            if (!lastUpdated || lastUpdated < sixHoursAgo) {
+                console.log(`News for ${topic} is stale. Triggering update...`);
+                triggerUpdate();
+            }
+
+        } catch (err) {
+            console.error('Error fetching news:', err);
+            setError('Failed to load news.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const triggerUpdate = async () => {
+        setIsUpdating(true);
+        try {
+            const { data, error } = await supabase.functions.invoke('fetch-news', {
+                body: { topic }
+            });
+
+            if (error) throw error;
+
+            if (data?.updated) {
+                // Refetch to get new items
+                const { data: newData } = await supabase
+                    .from('news_articles')
+                    .select('*')
+                    .eq('topic', topic)
+                    .order('published_at', { ascending: false })
+                    .limit(10);
+
+                if (newData) setNewsItems(newData);
+            }
+        } catch (err) {
+            console.error('Error updating news:', err);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNews();
+    }, [topic]);
+
     const handleNewsClick = async (item: NewsItem) => {
         setSelectedNews(item);
         setSummary('');
-        setLoading(true);
-        setError('');
+        setLoading(true); // Re-use loading state for modal or create separate one? 
+        // Let's create a local loading state for the modal to avoid hiding the feed
+        // Actually, let's just use a separate state variable for summary loading
+    };
 
+    // Separate loading state for summary
+    const [summaryLoading, setSummaryLoading] = useState(false);
+
+    const generateSummary = async (item: NewsItem) => {
+        setSummaryLoading(true);
         try {
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) {
-                throw new Error('API Key not found.');
-            }
+            if (!apiKey) throw new Error('API Key not found.');
 
             const ai = new GoogleGenAI({ apiKey });
             const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
@@ -97,16 +136,32 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             setSummary(response.text || 'No summary generated.');
         } catch (err: any) {
             console.error(err);
-            setError('Failed to generate summary. Please try again.');
+            setSummary('Failed to generate summary.');
         } finally {
-            setLoading(false);
+            setSummaryLoading(false);
         }
     };
+
+    // Trigger summary generation when modal opens
+    useEffect(() => {
+        if (selectedNews) {
+            generateSummary(selectedNews);
+        }
+    }, [selectedNews]);
 
     const closeModal = () => {
         setSelectedNews(null);
         setSummary('');
-        setError('');
+    };
+
+    const formatTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+        if (diffInHours < 1) return 'Just now';
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        return `${Math.floor(diffInHours / 24)}d ago`;
     };
 
     return (
@@ -114,27 +169,34 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-64">
                 <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
                     <Newspaper className="w-4 h-4 text-[#3AA189]" />
-                    <h3 className="font-bold text-gray-200 text-sm">{title}</h3>
-                    <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse ml-auto">LIVE</span>
+                    <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
+                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />}
+                    <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
                 </div>
 
                 <div className="flex-1 overflow-hidden relative group">
                     <div className="absolute inset-0 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                        {newsItems.map((item) => (
-                            <div
-                                key={item.id}
-                                className="border-b border-gray-700/50 last:border-0 pb-3 last:pb-0 cursor-pointer group/item"
-                                onClick={() => handleNewsClick(item)}
-                            >
-                                <p className="text-sm font-medium text-gray-300 group-hover/item:text-[#3AA189] transition-colors">
-                                    {item.headline}
-                                </p>
-                                <div className="flex justify-between mt-1 text-xs text-gray-500">
-                                    <span>{item.source}</span>
-                                    <span>{item.time}</span>
+                        {loading && newsItems.length === 0 ? (
+                            <div className="text-center text-gray-500 text-sm py-4">Loading news...</div>
+                        ) : newsItems.length === 0 ? (
+                            <div className="text-center text-gray-500 text-sm py-4">No news available.</div>
+                        ) : (
+                            newsItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="border-b border-gray-700/50 last:border-0 pb-3 last:pb-0 cursor-pointer group/item"
+                                    onClick={() => handleNewsClick(item)}
+                                >
+                                    <p className="text-sm font-medium text-gray-300 group-hover/item:text-[#3AA189] transition-colors line-clamp-2">
+                                        {item.headline}
+                                    </p>
+                                    <div className="flex justify-between mt-1 text-xs text-gray-500">
+                                        <span>{item.source}</span>
+                                        <span>{formatTime(item.published_at)}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
             </div>
@@ -156,14 +218,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                         <div className="p-6">
                             <h4 className="font-bold text-lg text-white mb-4 leading-tight">{selectedNews.headline}</h4>
 
-                            {loading ? (
+                            {summaryLoading ? (
                                 <div className="space-y-3 animate-pulse">
                                     <div className="h-2 bg-gray-700 rounded w-full"></div>
                                     <div className="h-2 bg-gray-700 rounded w-5/6"></div>
                                     <div className="h-2 bg-gray-700 rounded w-4/5"></div>
                                 </div>
-                            ) : error ? (
-                                <p className="text-red-400 text-sm">{error}</p>
                             ) : (
                                 <p className="text-gray-300 text-sm leading-relaxed">
                                     {summary}
