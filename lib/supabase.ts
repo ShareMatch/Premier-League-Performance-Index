@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// TODO: Revert to import.meta.env once .env loading issue is resolved
+const supabaseUrl = 'https://nilquprumeipoiljsezt.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbHF1cHJ1bWVpcG9pbGpzZXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQwMjQsImV4cCI6MjA3Mzk5MDAyNH0.Z1lCDDRvCgUBdYdzzZjahl44A2waYhbqc1rFDV0n20U';
 
 if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Missing Supabase credentials. Please check your .env file.');
 }
 
 export const supabase = createClient(
-    supabaseUrl || 'https://placeholder.supabase.co',
-    supabaseAnonKey || 'placeholder'
+    supabaseUrl,
+    supabaseAnonKey
 );
 
 // Placeholder for future data fetching functions
