@@ -20,14 +20,16 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
 
     const generatedQuestions = [];
 
-    // Helper to get top team
-    const getTopTeam = (leagueTeams: Team[]) => {
-      return [...leagueTeams].sort((a, b) => b.offer - a.offer)[0];
+    // Helper to get a random top team (from top 5)
+    const getRandomTopTeam = (leagueTeams: Team[]) => {
+      const sorted = [...leagueTeams].sort((a, b) => b.offer - a.offer);
+      const top5 = sorted.slice(0, 5);
+      return top5[Math.floor(Math.random() * top5.length)];
     };
 
     // Generate questions for each active market
     if (markets.EPL.length > 0) {
-      const top = getTopTeam(markets.EPL);
+      const top = getRandomTopTeam(markets.EPL);
       generatedQuestions.push({
         id: 'epl-1',
         market: 'EPL',
@@ -42,7 +44,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     }
 
     if (markets.F1.length > 0) {
-      const top = getTopTeam(markets.F1);
+      const top = getRandomTopTeam(markets.F1);
       generatedQuestions.push({
         id: 'f1-1',
         market: 'F1',
@@ -57,7 +59,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     }
 
     if (markets.SPL.length > 0) {
-      const top = getTopTeam(markets.SPL);
+      const top = getRandomTopTeam(markets.SPL);
       generatedQuestions.push({
         id: 'spl-1',
         market: 'SPL',
@@ -72,7 +74,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     }
 
     if (markets.UCL.length > 0) {
-      const top = getTopTeam(markets.UCL);
+      const top = getRandomTopTeam(markets.UCL);
       generatedQuestions.push({
         id: 'ucl-1',
         market: 'UCL',
@@ -97,7 +99,6 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
           <TrendingUp className="w-6 h-6 text-[#3AA189]" />
           Trending Markets
         </h2>
-        <span className="text-sm text-gray-400">Real-time probabilities</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Homepage:** Added randomization logic to shuffle questions on page load.
 - **Homepage:** Integrated "Hot Questions" into `HomeDashboard` replacing the old market preview grid.
 
+### Changed
+- **Homepage:** Enhanced randomization logic to select from the top 5 teams in each market instead of just the top 1.
+- **Homepage:** Removed "Real-time probabilities" text from the "Trending Markets" header for a cleaner UI.
+
 ### Fixed
 - **Data Fetching:** Resolved issue with `App.tsx` not passing `teams` prop to `HomeDashboard`.
 - **Environment:** Implemented workaround for Supabase credentials loading issue by hardcoding them in `lib/supabase.ts` (temporary).
