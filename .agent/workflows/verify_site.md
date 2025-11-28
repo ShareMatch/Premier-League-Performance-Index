@@ -6,7 +6,13 @@ description: Run a comprehensive verification of the live site including new lay
    - Go to `https://rwa.sharematch.me/`
    - Check console logs for "App Version: Dynamic Markets 2.1"
 
-2. **Verify Layout & Navigation**
+2. **Verify Authentication**
+   - **Landing Page:** Verify that accessing the site while logged out shows the "Future of Sports Trading" landing page.
+   - **Sign Up:** Create a new account and verify you are redirected to the Dashboard.
+   - **Wallet:** Verify the new account starts with $10,000 balance.
+   - **Sign Out:** Click the user avatar -> Sign Out. Verify you are redirected back to the Landing Page.
+
+3. **Verify Layout & Navigation**
    - **Sidebar Search:** Verify the search bar is present in the Sidebar (left panel).
    - **Top Bar:** Verify the Top Bar only contains Date/Time, Wallet, and Profile (no search bar).
    - **Dynamic Title:**

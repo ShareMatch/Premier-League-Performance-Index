@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5] - 2025-11-28
+### Added
+- **Auth:** Implemented Zero Trust Authentication with Supabase.
+- **Auth:** Added public "Landing Page" for logged-out users.
+- **Auth:** Added private "Dashboard" for logged-in users.
+- **Auth:** Implemented automatic user profile and wallet creation on signup.
+- **UI:** Added "Sign Out" button to user menu.
+
 ## [2.4] - 2025-11-27
 ### Added
 - **Homepage:** Redesigned homepage with new "Hot Questions" component.

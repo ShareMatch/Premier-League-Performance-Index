@@ -4,16 +4,19 @@ import Header from './components/Header';
 import TopBar from './components/TopBar';
 import RightPanel from './components/RightPanel';
 import Ticker from './components/Ticker';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Loader2 } from 'lucide-react';
 import NewsFeed from './components/NewsFeed';
 import HomeDashboard from './components/HomeDashboard';
 import OrderBookRow from './components/OrderBookRow';
 import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import Footer from './components/Footer';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, TEST_USER_ID } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets } from './lib/api';
+import { useAuth } from './components/auth/AuthProvider';
+import { LandingPage } from './components/LandingPage';
 
 const App: React.FC = () => {
+  const { user, loading } = useAuth();
   const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -26,15 +29,16 @@ const App: React.FC = () => {
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
+    if (!user) return;
     try {
-      const walletData = await fetchWallet(TEST_USER_ID);
+      const walletData = await fetchWallet(user.id);
       setWallet(walletData);
-      const portfolioData = await fetchPortfolio(TEST_USER_ID);
+      const portfolioData = await fetchPortfolio(user.id);
       setPortfolio(portfolioData);
     } catch (error) {
       console.error('Error loading user data:', error);
     }
-  }, []);
+  }, [user]);
 
   // Fetch Assets
   const loadAssets = useCallback(async () => {
@@ -59,18 +63,22 @@ const App: React.FC = () => {
 
   useEffect(() => {
     console.log('App Version: Dynamic Markets 2.1');
-    loadUserData();
+    if (user) {
+      loadUserData();
+    }
     loadAssets();
 
     // Set up Real-Time Subscriptions
-    const walletSubscription = subscribeToWallet(TEST_USER_ID, (updatedWallet) => {
+    if (!user) return;
+
+    const walletSubscription = subscribeToWallet(user.id, (updatedWallet) => {
       console.log('Wallet updated:', updatedWallet);
       setWallet(updatedWallet);
     });
 
-    const portfolioSubscription = subscribeToPortfolio(TEST_USER_ID, () => {
+    const portfolioSubscription = subscribeToPortfolio(user.id, () => {
       console.log('Portfolio changed, reloading...');
-      fetchPortfolio(TEST_USER_ID).then(setPortfolio);
+      fetchPortfolio(user.id).then(setPortfolio);
     });
 
     const assetsSubscription = subscribeToAssets(() => {
@@ -83,7 +91,7 @@ const App: React.FC = () => {
       portfolioSubscription.unsubscribe();
       assetsSubscription.unsubscribe();
     };
-  }, [loadUserData, loadAssets]);
+  }, [loadUserData, loadAssets, user]);
 
   // Filter teams when league changes or assets update
   useEffect(() => {
@@ -123,11 +131,11 @@ const App: React.FC = () => {
   };
 
   const handleConfirmTrade = async (quantity: number) => {
-    if (!selectedOrder || !wallet) return;
+    if (!selectedOrder || !wallet || !user) return;
 
     try {
       const result = await placeTrade(
-        TEST_USER_ID,
+        user.id,
         selectedOrder.team.id.toString(),
         selectedOrder.team.name,
         selectedOrder.type,
@@ -168,6 +176,18 @@ const App: React.FC = () => {
       case 'HOME': return 'Home Dashboard';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-900 text-white">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LandingPage />;
+  }
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">

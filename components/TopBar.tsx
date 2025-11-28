@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, ChevronDown, User, Settings, FileText, Shield } from 'lucide-react';
+import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut } from 'lucide-react';
 import type { Wallet as WalletType } from '../types';
+import { useAuth } from './auth/AuthProvider';
 
 interface TopBarProps {
     wallet: WalletType | null;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
+    const { user, signOut } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
     const [isAvatarOpen, setIsAvatarOpen] = useState(false);
@@ -84,7 +86,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     {isAvatarOpen && (
                         <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-1 animate-in fade-in slide-in-from-top-2">
                             <div className="px-4 py-3 border-b border-gray-700">
-                                <p className="text-sm font-bold text-white">testuser123</p>
+                                <p className="text-sm font-bold text-white truncate">{user?.email}</p>
                                 <p className="text-xs text-gray-400">Last logged in: Today</p>
                             </div>
                             <div className="py-1">
@@ -97,6 +99,12 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                                 <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                     <Shield className="h-4 w-4" /> Rules & Regulations
                                 </a>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                                >
+                                    <LogOut className="h-4 w-4" /> Sign Out
+                                </button>
                             </div>
                         </div>
                     )}
