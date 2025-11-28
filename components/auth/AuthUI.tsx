@@ -46,11 +46,16 @@ export const AuthUI: React.FC = () => {
 
     return (
         <div className="w-full max-w-md p-8 space-y-6 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
-            <div className="text-center">
-                <h2 className="text-2xl font-bold text-white">
-                    {isSignUp ? 'Create an Account' : 'Welcome Back'}
-                </h2>
-                <p className="mt-2 text-sm text-gray-400">
+            <div className="flex flex-col items-center justify-center mb-6">
+                <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-[#3AA189] rounded flex items-center justify-center">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                    </div>
+                    <span className="text-xl font-bold text-white">ShareMatch</span>
+                </div>
+                <p className="text-sm text-gray-400">
                     {isSignUp
                         ? 'Sign up to start trading on the performance index'
                         : 'Sign in to access your portfolio'}

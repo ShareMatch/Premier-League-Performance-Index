@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.5] - 2025-11-28
 ### Added
 - **Auth:** Implemented Zero Trust Authentication with Supabase.
-- **Auth:** Added "Sign In" modal for logged-out users.
-- **UI:** Logged-out users now see the Dashboard (read-only/empty state) instead of a separate Landing Page.
+- **Auth:** Added "Sign In" modal with ShareMatch branding.
+- **UI:** Logged-out users see Dashboard with "Sign In" button; Wallet balance hidden.
 - **UI:** Added "Sign Out" button to user menu.
 - **Auth:** Implemented automatic user profile and wallet creation on signup.
 

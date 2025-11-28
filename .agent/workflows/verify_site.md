@@ -9,11 +9,13 @@ description: Run a comprehensive verification of the live site including new lay
 2. **Verify Authentication**
    - **Logged Out View:** Verify that accessing the site while logged out shows the Dashboard.
      - Top Bar should show a "Sign In" button.
+     - **Verify Balance Hidden:** Ensure the green wallet balance box is NOT visible.
+     - **Verify Date/Time:** Ensure date and time are still visible.
      - Portfolio should show "No active positions".
-     - Wallet balance should be $0.00 (or hidden/default).
-   - **Sign In:** Click "Sign In". Verify a modal opens. Sign in with a test account.
-   - **Logged In View:** Verify user avatar appears in Top Bar. Wallet balance updates.
-   - **Sign Out:** Click the user avatar -> Sign Out. Verify "Sign In" button reappears.
+   - **Sign In Modal:** Click "Sign In". Verify the modal header shows the "ShareMatch" logo and branding instead of just text.
+   - **Sign In:** Sign in with a test account (or create one).
+   - **Logged In View:** Verify user avatar appears. Verify green wallet balance box APPEARS.
+   - **Sign Out:** Click the user avatar -> Sign Out. Verify "Sign In" button reappears and balance box disappears.
 
 3. **Verify Layout & Navigation**
    - **Sidebar Search:** Verify the search bar is present in the Sidebar (left panel).
