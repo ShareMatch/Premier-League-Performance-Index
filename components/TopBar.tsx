@@ -53,36 +53,38 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                         {formatTime(currentTime)}
                     </div>
 
-                    {/* Balance Dropdown */}
-                    <div className="relative">
-                        <button
-                            className="flex items-center gap-2 bg-[#3AA189] text-white px-4 py-2 rounded-lg hover:bg-[#2d826f] transition-colors"
-                            onClick={() => setIsBalanceOpen(!isBalanceOpen)}
-                        >
-                            <Wallet className="h-4 w-4" />
-                            <span className="font-bold">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                            <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
-                        </button>
+                    {/* Balance Dropdown - Only show if user is logged in */}
+                    {user && (
+                        <div className="relative">
+                            <button
+                                className="flex items-center gap-2 bg-[#3AA189] text-white px-4 py-2 rounded-lg hover:bg-[#2d826f] transition-colors"
+                                onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                            >
+                                <Wallet className="h-4 w-4" />
+                                <span className="font-bold">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                            </button>
 
-                        {isBalanceOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                                <div className="px-4 py-2 border-b border-gray-700">
-                                    <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
-                                    <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                                </div>
-                                <div className="px-4 py-2">
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-400">Available</span>
-                                        <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                            {isBalanceOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-2 border-b border-gray-700">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                        <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
                                     </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">In Orders</span>
-                                        <span className="font-medium text-gray-200">{reserved.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <div className="px-4 py-2">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-400">Available</span>
+                                            <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-400">In Orders</span>
+                                            <span className="font-medium text-gray-200">{reserved.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Avatar Dropdown or Sign In */}
                     {user ? (
