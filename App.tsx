@@ -13,7 +13,6 @@ import AIAnalysis from './components/AIAnalysis';
 import Footer from './components/Footer';
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
-import { LandingPage } from './components/LandingPage';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
@@ -62,7 +61,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log('App Version: Dynamic Markets 2.1');
+    console.log('App Version: Zero Trust 2.5');
     if (user) {
       loadUserData();
     }
@@ -183,10 +182,6 @@ const App: React.FC = () => {
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
-  }
-
-  if (!user) {
-    return <LandingPage />;
   }
 
   return (

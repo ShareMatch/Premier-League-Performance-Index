@@ -4,13 +4,16 @@ description: Run a comprehensive verification of the live site including new lay
 
 1. **Check App Version**
    - Go to `https://rwa.sharematch.me/`
-   - Check console logs for "App Version: Dynamic Markets 2.1"
+   - Check console logs for "App Version: Zero Trust 2.5"
 
 2. **Verify Authentication**
-   - **Landing Page:** Verify that accessing the site while logged out shows the "Future of Sports Trading" landing page.
-   - **Sign Up:** Create a new account and verify you are redirected to the Dashboard.
-   - **Wallet:** Verify the new account starts with $10,000 balance.
-   - **Sign Out:** Click the user avatar -> Sign Out. Verify you are redirected back to the Landing Page.
+   - **Logged Out View:** Verify that accessing the site while logged out shows the Dashboard.
+     - Top Bar should show a "Sign In" button.
+     - Portfolio should show "No active positions".
+     - Wallet balance should be $0.00 (or hidden/default).
+   - **Sign In:** Click "Sign In". Verify a modal opens. Sign in with a test account.
+   - **Logged In View:** Verify user avatar appears in Top Bar. Wallet balance updates.
+   - **Sign Out:** Click the user avatar -> Sign Out. Verify "Sign In" button reappears.
 
 3. **Verify Layout & Navigation**
    - **Sidebar Search:** Verify the search bar is present in the Sidebar (left panel).

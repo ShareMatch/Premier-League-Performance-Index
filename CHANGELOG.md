@@ -8,10 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.5] - 2025-11-28
 ### Added
 - **Auth:** Implemented Zero Trust Authentication with Supabase.
-- **Auth:** Added public "Landing Page" for logged-out users.
-- **Auth:** Added private "Dashboard" for logged-in users.
-- **Auth:** Implemented automatic user profile and wallet creation on signup.
+- **Auth:** Added "Sign In" modal for logged-out users.
+- **UI:** Logged-out users now see the Dashboard (read-only/empty state) instead of a separate Landing Page.
 - **UI:** Added "Sign Out" button to user menu.
+- **Auth:** Implemented automatic user profile and wallet creation on signup.
 
 ## [2.4] - 2025-11-27
 ### Added
