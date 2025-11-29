@@ -288,6 +288,7 @@ const App: React.FC = () => {
               onConfirmTrade={handleConfirmTrade}
               allAssets={allAssets}
               onNavigate={setActiveLeague}
+              leagueName={getLeagueTitle()}
             />
           </div>
 

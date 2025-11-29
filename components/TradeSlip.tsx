@@ -5,6 +5,7 @@ interface TradeSlipProps {
   order: Order;
   onClose: () => void;
   onConfirm: (quantity: number) => Promise<void>;
+  leagueName: string;
 }
 
 const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -19,7 +20,7 @@ const TimerIcon: React.FC<{ className?: string, style?: React.CSSProperties }> =
   </svg>
 );
 
-const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm }) => {
+const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, leagueName }) => {
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,7 +96,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm }) => {
           <div className="flex items-center gap-2 text-sm">
             <span className="bg-[#3AA189] text-white text-xs font-bold px-2 py-0.5 rounded">LIVE</span>
             <SoccerBallIcon className="w-4 h-4 text-gray-400" />
-            <span className="font-semibold text-gray-300">Premier League Performance Index</span>
+            <span className="font-semibold text-gray-300">{leagueName} Performance Index</span>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close trade slip">&times;</button>
         </div>

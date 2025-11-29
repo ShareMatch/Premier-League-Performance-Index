@@ -10,6 +10,7 @@ interface RightPanelProps {
     onConfirmTrade: (quantity: number) => Promise<void>;
     allAssets: Team[];
     onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+    leagueName: string;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
@@ -18,7 +19,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
     onCloseTradeSlip,
     onConfirmTrade,
     allAssets,
-    onNavigate
+    onNavigate,
+    leagueName
 }) => {
     return (
         <div className="h-full flex flex-col bg-gray-900 border-l border-gray-800 w-80 flex-shrink-0">
@@ -30,6 +32,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                         order={selectedOrder}
                         onClose={onCloseTradeSlip}
                         onConfirm={onConfirmTrade}
+                        leagueName={leagueName}
                     />
                 </div>
             )}
