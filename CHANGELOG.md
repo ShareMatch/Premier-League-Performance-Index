@@ -164,6 +164,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Dynamic headers ("Driver" for F1, "Team" for others).
 
 ## [Unreleased]
+- Removed percentage signs from token values in Transaction Slip and Portfolio for consistency.
+- Added logo variations and fixed transaction slip league title.
 
 ### Fixed
 - Updated `fetch-news` Edge Function to use `delete` + `insert` strategy instead of `upsert` to avoid unique constraint errors.

@@ -68,7 +68,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate 
                             ${(holding.quantity * holding.currentPrice).toFixed(2)}
                         </div>
                         <div className="text-[10px] text-gray-500">
-                            @ {holding.currentPrice.toFixed(1)}%
+                            @ {holding.currentPrice.toFixed(1)}
                         </div>
                     </div>
                 </div>
