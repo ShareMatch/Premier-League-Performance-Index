@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Dynamic headers ("Driver" for F1, "Team" for others).
 
 ## [Unreleased]
-- Removed percentage signs from token values in Transaction Slip and Portfolio for consistency.
+- Removed percentage signs from token values in Transaction Slip, Portfolio, and Home Page (Hot Questions) for consistency.
 - Added logo variations and fixed transaction slip league title.
 
 ### Fixed
