@@ -1,11 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut } from 'lucide-react';
 import type { Wallet as WalletType } from '../types';
 import { useAuth } from './auth/AuthProvider';
-import { AuthUI } from './auth/AuthUI';
+import { LoginModal } from './auth/LoginModal';
+import { SignUpModal } from './auth/SignUpModal';
+import { EmailVerificationModal } from './auth/EmailVerificationModal';
+import { WhatsAppVerificationModal } from './auth/WhatsAppVerificationModal';
+import { sendEmailOtp, verifyEmailOtp, sendWhatsAppOtp, verifyWhatsAppOtp } from '../lib/api';
+import type { VerificationRequiredData } from './auth/LoginModal';
 
 interface TopBarProps {
     wallet: WalletType | null;
+}
+
+// Store pending verification info for verification modals
+interface PendingVerification {
+    email: string;
+    userId: string;
+    whatsappPhone?: string;
+    maskedWhatsapp?: string;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
@@ -14,18 +27,72 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
     const [isAvatarOpen, setIsAvatarOpen] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showSignUpModal, setShowSignUpModal] = useState(false);
+    const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+    const [showWhatsAppVerificationModal, setShowWhatsAppVerificationModal] = useState(false);
+    const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
+    
+    // Ref to store WhatsApp data from email verification response (avoids async state issues)
+    const whatsappDataRef = useRef<{ raw: string; masked: string } | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
     }, []);
 
-    // Close modal when user logs in
+    // Close modals when user logs in
     useEffect(() => {
         if (user) {
             setShowLoginModal(false);
+            setShowSignUpModal(false);
         }
     }, [user]);
+
+    const switchToSignUp = () => {
+        setShowLoginModal(false);
+        setShowSignUpModal(true);
+    };
+
+    const switchToLogin = () => {
+        setShowSignUpModal(false);
+        setShowLoginModal(true);
+    };
+
+    const handleVerificationRequired = async (data: VerificationRequiredData) => {
+        console.log('Verification required from login:', data);
+        
+        // Set pending verification data
+        setPendingVerification({
+            email: data.email,
+            userId: '', // Not needed for login flow
+            whatsappPhone: data.whatsappData?.raw,
+            maskedWhatsapp: data.whatsappData?.masked,
+        });
+
+        if (data.verificationType === 'email') {
+            // Open email verification modal
+            setShowEmailVerificationModal(true);
+            
+            // Send email OTP
+            try {
+                await sendEmailOtp(data.email);
+                console.log('Email OTP sent for login verification');
+            } catch (error) {
+                console.error('Failed to send email OTP:', error);
+            }
+        } else if (data.verificationType === 'whatsapp') {
+            // Open WhatsApp verification modal
+            setShowWhatsAppVerificationModal(true);
+            
+            // Send WhatsApp OTP
+            try {
+                await sendWhatsAppOtp({ email: data.email });
+                console.log('WhatsApp OTP sent for login verification');
+            } catch (error) {
+                console.error('Failed to send WhatsApp OTP:', error);
+            }
+        }
+    };
 
     const balance = wallet ? wallet.balance : 0;
     const available = wallet ? wallet.available_cents / 100 : 0;
@@ -125,7 +192,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     ) : (
                         <button
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            className="bg-[#064e3b] hover:bg-[#053d2f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
                             Sign In
                         </button>
@@ -134,19 +201,162 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
             </div>
 
             {/* Login Modal */}
-            {showLoginModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="relative w-full max-w-md">
-                        <button
-                            onClick={() => setShowLoginModal(false)}
-                            className="absolute -top-12 right-0 text-gray-400 hover:text-white transition-colors"
-                        >
-                            <X className="w-8 h-8" />
-                        </button>
-                        <AuthUI />
-                    </div>
-                </div>
-            )}
+            <LoginModal 
+                isOpen={showLoginModal} 
+                onClose={() => setShowLoginModal(false)}
+                onSwitchToSignUp={switchToSignUp}
+                onForgotPassword={() => {
+                    // TODO: Handle forgot password modal
+                    console.log('Forgot password clicked');
+                }}
+                onVerificationRequired={handleVerificationRequired}
+            />
+
+            {/* Sign Up Modal */}
+            <SignUpModal
+                isOpen={showSignUpModal}
+                onClose={() => setShowSignUpModal(false)}
+                onSwitchToLogin={switchToLogin}
+                onSuccess={async (email: string, userId: string) => {
+                    console.log('Registration successful, moving to email verification', { email, userId });
+                    setShowSignUpModal(false);
+                    setPendingVerification({ email, userId });
+                    setShowEmailVerificationModal(true);
+                    
+                    // Automatically send the first OTP
+                    try {
+                        await sendEmailOtp(email);
+                        console.log('Initial OTP sent to:', email);
+                    } catch (error) {
+                        console.error('Failed to send initial OTP:', error);
+                        // Modal will still open, user can click resend
+                    }
+                }}
+            />
+
+            {/* Email Verification Modal */}
+            <EmailVerificationModal
+                isOpen={showEmailVerificationModal && pendingVerification !== null}
+                onClose={() => {
+                    setShowEmailVerificationModal(false);
+                    setPendingVerification(null);
+                    whatsappDataRef.current = null;
+                }}
+                email={pendingVerification?.email || ''}
+                onVerificationSuccess={async () => {
+                    console.log('Email verification successful!');
+                    setShowEmailVerificationModal(false);
+                    
+                    // Check if we have WhatsApp data to proceed to WhatsApp verification
+                    // Use the ref since state update from onVerifyCode may not be applied yet
+                    const whatsappData = whatsappDataRef.current;
+                    
+                    if (whatsappData && pendingVerification) {
+                        console.log('Proceeding to WhatsApp verification with:', whatsappData.masked);
+                        
+                        // Update pending verification with WhatsApp data
+                        setPendingVerification({
+                            ...pendingVerification,
+                            whatsappPhone: whatsappData.raw,
+                            maskedWhatsapp: whatsappData.masked,
+                        });
+                        
+                        setShowWhatsAppVerificationModal(true);
+                        
+                        // Send initial WhatsApp OTP
+                        try {
+                            await sendWhatsAppOtp({ email: pendingVerification.email });
+                            console.log('WhatsApp OTP sent');
+                        } catch (error) {
+                            console.error('Failed to send WhatsApp OTP:', error);
+                            // Modal will still open, user can click resend
+                        }
+                    } else {
+                        // No WhatsApp verification needed, open login
+                        console.log('No WhatsApp data, opening login modal');
+                        setPendingVerification(null);
+                        setShowLoginModal(true);
+                    }
+                    
+                    // Clear the ref
+                    whatsappDataRef.current = null;
+                }}
+                onVerifyCode={async (code) => {
+                    if (!pendingVerification?.email) return false;
+                    try {
+                        const result = await verifyEmailOtp(pendingVerification.email, code);
+                        console.log('Email verification result:', result);
+                        
+                        // Store WhatsApp data in ref for immediate access in onVerificationSuccess
+                        if (result.whatsappData) {
+                            whatsappDataRef.current = result.whatsappData;
+                        }
+                        
+                        return result.ok;
+                    } catch (error) {
+                        console.error('Verification error:', error);
+                        throw error; // Re-throw to show error message in modal
+                    }
+                }}
+                onResendCode={async () => {
+                    if (!pendingVerification?.email) return false;
+                    try {
+                        const result = await sendEmailOtp(pendingVerification.email);
+                        console.log('Resend result:', result);
+                        return result.ok;
+                    } catch (error) {
+                        console.error('Resend error:', error);
+                        throw error; // Re-throw to show error message in modal
+                    }
+                }}
+            />
+
+            {/* WhatsApp Verification Modal */}
+            <WhatsAppVerificationModal
+                isOpen={showWhatsAppVerificationModal}
+                onClose={() => {
+                    setShowWhatsAppVerificationModal(false);
+                    setPendingVerification(null);
+                }}
+                whatsappPhone={pendingVerification?.whatsappPhone || ''}
+                maskedWhatsapp={pendingVerification?.maskedWhatsapp}
+                onVerificationSuccess={() => {
+                    console.log('WhatsApp verification successful!');
+                    setShowWhatsAppVerificationModal(false);
+                    setPendingVerification(null);
+                    // Open login modal after successful verification
+                    setShowLoginModal(true);
+                }}
+                onVerifyCode={async (code) => {
+                    if (!pendingVerification) return false;
+                    
+                    try {
+                        const result = await verifyWhatsAppOtp({
+                            email: pendingVerification.email,
+                            token: code,
+                        });
+                        console.log('WhatsApp verification result:', result);
+                        return result.ok;
+                    } catch (error) {
+                        console.error('WhatsApp verification error:', error);
+                        throw error;
+                    }
+                }}
+                onResendCode={async () => {
+                    if (!pendingVerification) return false;
+                    
+                    try {
+                        const result = await sendWhatsAppOtp({
+                            email: pendingVerification.email,
+                        });
+                        console.log('WhatsApp OTP resend result:', result);
+                        return result.ok;
+                    } catch (error) {
+                        console.error('WhatsApp OTP resend error:', error);
+                        throw error;
+                    }
+                }}
+            />
         </>
     );
 };

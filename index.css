@@ -1,3 +1,23 @@
+/* ShareMatch Brand Colors */
+:root {
+  /* Primary Colors */
+  --color-emerald-900: #064e3b;
+  --color-emerald-500: #10b981;
+  --color-cream: #FDFBF7;
+  
+  /* Accent Colors */
+  --color-amber-500: #f59e0b;
+  --color-amber-400: #fbbf24;
+  
+  /* Neutral Colors */
+  --color-gray-50: #F9FAFB;
+  --color-gray-900: #111827;
+  
+  /* Legacy colors (for compatibility) */
+  --color-brand: #10b981;
+  --color-brand-dark: #064e3b;
+}
+
 /* Custom Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
@@ -5,22 +25,22 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827; /* gray-900 */
+  background: var(--color-emerald-900);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151; /* gray-700 */
+  background: var(--color-emerald-500);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563; /* gray-600 */
+  background: var(--color-amber-500);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #374151 #111827;
+  scrollbar-color: var(--color-emerald-500) var(--color-emerald-900);
 }
 
 /* Custom utility for hiding scrollbar but keeping functionality if needed */
@@ -30,4 +50,13 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Font utilities */
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-body {
+  font-family: 'Inter', sans-serif;
 }
