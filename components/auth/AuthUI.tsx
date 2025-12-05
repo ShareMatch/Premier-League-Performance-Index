@@ -2,6 +2,25 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Loader2 } from 'lucide-react';
 
+const SUPABASE_URL = 'https://nilquprumeipoiljsezt.supabase.co';
+
+interface LoginResponse {
+    success: boolean;
+    message: string;
+    user?: { id: string; email: string };
+    session?: {
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+        expires_at: number;
+        token_type: string;
+    };
+    requiresVerification?: boolean;
+    verificationType?: 'email' | 'whatsapp';
+    email?: string;
+    whatsappData?: { masked: string; raw: string };
+}
+
 export const AuthUI: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
@@ -19,6 +38,8 @@ export const AuthUI: React.FC = () => {
 
         try {
             if (isSignUp) {
+                // For sign up, use the old direct method (or redirect to registration page)
+                // The full registration flow should go through /register page
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
@@ -31,14 +52,52 @@ export const AuthUI: React.FC = () => {
                 if (error) throw error;
                 setMessage('Check your email for the confirmation link!');
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
+                // Use custom login edge function for verification checks
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
                 });
-                if (error) throw error;
+
+                const data: LoginResponse = await response.json();
+
+                if (!data.success) {
+                    // Check if verification is required
+                    if (data.requiresVerification) {
+                        // Store email for verification flow
+                        sessionStorage.setItem('pendingVerificationEmail', data.email || email);
+                        if (data.whatsappData) {
+                            sessionStorage.setItem('pendingVerificationPhone', data.whatsappData.raw);
+                        }
+                        
+                        // Show appropriate message based on verification type
+                        if (data.verificationType === 'email') {
+                            setError('Please verify your email address first. Check your inbox for the OTP.');
+                        } else if (data.verificationType === 'whatsapp') {
+                            setError('Please verify your WhatsApp number first.');
+                        }
+                        return;
+                    }
+                    throw new Error(data.message);
+                }
+
+                // Login successful - set the session in Supabase client
+                if (data.session) {
+                    const { error: sessionError } = await supabase.auth.setSession({
+                        access_token: data.session.access_token,
+                        refresh_token: data.session.refresh_token,
+                    });
+                    
+                    if (sessionError) {
+                        throw new Error('Failed to establish session');
+                    }
+                }
+                // AuthProvider will pick up the session change automatically
             }
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || 'An error occurred');
         } finally {
             setLoading(false);
         }

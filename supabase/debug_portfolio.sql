@@ -18,3 +18,4 @@ SELECT place_trade(
   1,
   55.6
 );
+

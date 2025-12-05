@@ -11,7 +11,7 @@ import OrderBookRow from './components/OrderBookRow';
 import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import Footer from './components/Footer';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 
 const App: React.FC = () => {
@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [portfolio, setPortfolio] = useState<Position[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [publicUserId, setPublicUserId] = useState<string | null>(null);
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -60,28 +61,33 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Load public user ID when auth user changes
   useEffect(() => {
-    console.log('App Version: Zero Trust 2.5');
+    if (user) {
+      getPublicUserId(user.id).then(setPublicUserId);
+    } else {
+      setPublicUserId(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (user) {
       loadUserData();
     }
     loadAssets();
 
-    // Set up Real-Time Subscriptions
-    if (!user) return;
+    // Set up Real-Time Subscriptions - only when we have the public user ID
+    if (!user || !publicUserId) return;
 
-    const walletSubscription = subscribeToWallet(user.id, (updatedWallet) => {
-      console.log('Wallet updated:', updatedWallet);
+    const walletSubscription = subscribeToWallet(publicUserId, (updatedWallet) => {
       setWallet(updatedWallet);
     });
 
-    const portfolioSubscription = subscribeToPortfolio(user.id, () => {
-      console.log('Portfolio changed, reloading...');
+    const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
       fetchPortfolio(user.id).then(setPortfolio);
     });
 
     const assetsSubscription = subscribeToAssets(() => {
-      console.log('Assets changed, reloading...');
       loadAssets();
     });
 
@@ -90,7 +96,7 @@ const App: React.FC = () => {
       portfolioSubscription.unsubscribe();
       assetsSubscription.unsubscribe();
     };
-  }, [loadUserData, loadAssets, user]);
+  }, [loadUserData, loadAssets, user, publicUserId]);
 
   // Filter teams when league changes or assets update
   useEffect(() => {
@@ -142,20 +148,11 @@ const App: React.FC = () => {
         quantity
       );
 
-      console.log('Trade result:', result);
-
-      // Always refresh portfolio and wallet after trade attempt
+      // Refresh portfolio and wallet after trade
       await loadUserData();
-
       setSelectedOrder(null);
-
-      // Show success message
-      if (result && result.success) {
-        console.log('Trade successful!');
-      }
     } catch (error) {
-      console.error('Trade error:', error);
-      alert('Trade failed. See console for details.');
+      alert('Trade failed. Please try again.');
     }
   };
 

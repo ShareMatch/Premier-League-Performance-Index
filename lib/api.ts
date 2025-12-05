@@ -19,11 +19,22 @@ export interface Position {
     current_value?: number;
 }
 
-export const fetchWallet = async (userId: string) => {
+export const fetchWallet = async (authUserId: string) => {
+    // First, get the public user ID from auth_user_id
+    const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .single();
+
+    if (userError || !userData) {
+        throw new Error('User profile not found');
+    }
+
     const { data, error } = await supabase
         .from('wallets')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userData.id)
         .single();
 
     if (error) throw error;
@@ -36,11 +47,22 @@ export const fetchWallet = async (userId: string) => {
     };
 };
 
-export const fetchPortfolio = async (userId: string) => {
+export const fetchPortfolio = async (authUserId: string) => {
+    // First, get the public user ID from auth_user_id
+    const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .single();
+
+    if (userError || !userData) {
+        return [];
+    }
+
     const { data, error } = await supabase
         .from('positions')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userData.id);
 
     if (error) throw error;
     return data as Position[];
@@ -70,7 +92,23 @@ export const placeTrade = async (
     return data;
 };
 
-export const subscribeToWallet = (userId: string, callback: (wallet: any) => void) => {
+/**
+ * Get the public user ID from auth user ID
+ */
+export const getPublicUserId = async (authUserId: string): Promise<string | null> => {
+    const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .single();
+
+    if (error || !data) {
+        return null;
+    }
+    return data.id;
+};
+
+export const subscribeToWallet = (publicUserId: string, callback: (wallet: any) => void) => {
     return supabase
         .channel('wallet-changes')
         .on(
@@ -79,7 +117,7 @@ export const subscribeToWallet = (userId: string, callback: (wallet: any) => voi
                 event: 'UPDATE',
                 schema: 'public',
                 table: 'wallets',
-                filter: `user_id=eq.${userId}`
+                filter: `user_id=eq.${publicUserId}`
             },
             (payload) => {
                 const data = payload.new as any;
@@ -94,7 +132,7 @@ export const subscribeToWallet = (userId: string, callback: (wallet: any) => voi
         .subscribe();
 };
 
-export const subscribeToPortfolio = (userId: string, callback: () => void) => {
+export const subscribeToPortfolio = (publicUserId: string, callback: () => void) => {
     return supabase
         .channel('portfolio-changes')
         .on(
@@ -103,7 +141,7 @@ export const subscribeToPortfolio = (userId: string, callback: () => void) => {
                 event: '*', // Listen for INSERT, UPDATE, DELETE
                 schema: 'public',
                 table: 'positions',
-                filter: `user_id=eq.${userId}`
+                filter: `user_id=eq.${publicUserId}`
             },
             () => {
                 callback();
@@ -137,4 +175,295 @@ export const subscribeToAssets = (callback: () => void) => {
             }
         )
         .subscribe();
+};
+
+// ============================================
+// AUTH API - Registration & Verification
+// ============================================
+
+const SUPABASE_URL = 'https://nilquprumeipoiljsezt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbHF1cHJ1bWVpcG9pbGpzZXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQwMjQsImV4cCI6MjA3Mzk5MDAyNH0.Z1lCDDRvCgUBdYdzzZjahl44A2waYhbqc1rFDV0n20U';
+
+export interface RegistrationData {
+    full_name: string;
+    email: string;
+    phone: string;
+    whatsapp_phone?: string;
+    dob: string;
+    country_of_residence: string;
+    password: string;
+    referral_code?: string | null;
+    receive_otp_sms: boolean;
+    agree_to_terms: boolean;
+}
+
+export interface RegistrationResponse {
+    ok: boolean;
+    user_id: string;
+    auth_user_id: string;
+    email: string;
+    requires_verification: boolean;
+    message: string;
+}
+
+export interface ApiError {
+    error: string;
+    duplicates?: string[];
+    message?: string;
+    details?: string;
+}
+
+/**
+ * Register a new user via the Supabase Edge Function
+ */
+export const registerUser = async (data: RegistrationData): Promise<RegistrationResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/register`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        const error = result as ApiError;
+        throw new RegistrationError(
+            error.message || error.error || 'Registration failed',
+            error.duplicates,
+            response.status
+        );
+    }
+
+    return result as RegistrationResponse;
+};
+
+/**
+ * Custom error class for registration errors
+ */
+export class RegistrationError extends Error {
+    duplicates?: string[];
+    statusCode: number;
+
+    constructor(message: string, duplicates?: string[], statusCode: number = 500) {
+        super(message);
+        this.name = 'RegistrationError';
+        this.duplicates = duplicates;
+        this.statusCode = statusCode;
+    }
+}
+
+// ============================================
+// EMAIL VERIFICATION API
+// ============================================
+
+export interface SendOtpResponse {
+    ok: boolean;
+    message: string;
+}
+
+export interface VerifyOtpResponse {
+    ok: boolean;
+    message: string;
+    nextStep?: 'whatsapp' | 'dashboard';
+    whatsappData?: {
+        masked: string;
+        raw: string;
+    };
+}
+
+/**
+ * Send OTP verification code to email
+ */
+export const sendEmailOtp = async (email: string): Promise<SendOtpResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to send verification code');
+    }
+
+    return result as SendOtpResponse;
+};
+
+/**
+ * Verify OTP code for email
+ */
+export const verifyEmailOtp = async (email: string, token: string): Promise<VerifyOtpResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-email-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, token }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Verification failed');
+    }
+
+    return result as VerifyOtpResponse;
+};
+
+// ============================================
+// WHATSAPP VERIFICATION API
+// ============================================
+
+export interface SendWhatsAppOtpResponse {
+    ok: boolean;
+    message: string;
+    maskedPhone?: string;
+}
+
+export interface VerifyWhatsAppOtpResponse {
+    ok: boolean;
+    message: string;
+    nextStep?: 'login' | 'dashboard';
+}
+
+/**
+ * Send OTP verification code to WhatsApp
+ * Can identify user by either phone number or email
+ */
+export const sendWhatsAppOtp = async (params: { phone?: string; email?: string }): Promise<SendWhatsAppOtpResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(params),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to send WhatsApp verification code');
+    }
+
+    return result as SendWhatsAppOtpResponse;
+};
+
+/**
+ * Verify OTP code for WhatsApp
+ * Can identify user by either phone number or email
+ */
+export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string }): Promise<VerifyWhatsAppOtpResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-whatsapp-otp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(params),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'WhatsApp verification failed');
+    }
+
+    return result as VerifyWhatsAppOtpResponse;
+};
+
+// ============================================
+// FORGOT PASSWORD API
+// ============================================
+
+export interface ForgotPasswordResponse {
+    ok: boolean;
+    message: string;
+}
+
+/**
+ * Request a password reset email
+ * Always returns success to prevent email enumeration
+ */
+export const requestPasswordReset = async (email: string): Promise<ForgotPasswordResponse> => {
+    // Pass the current origin so the reset link redirects back to the correct app URL
+    const redirectUrl = window.location.origin;
+    
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/forgot-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, redirectUrl }),
+    });
+
+    const result = await response.json();
+
+    // We always return success for security (don't reveal if email exists)
+    return result as ForgotPasswordResponse;
+};
+
+// ============================================
+// LOGIN API
+// ============================================
+
+export interface LoginResponse {
+    success: boolean;
+    message: string;
+    user?: {
+        id: string;
+        email: string;
+    };
+    session?: {
+        access_token: string;
+        refresh_token: string;
+        expires_in: number;
+        token_type: string;
+    };
+    // Verification required fields
+    requiresVerification?: boolean;
+    verificationType?: 'email' | 'whatsapp';
+    email?: string;
+    whatsappData?: {
+        masked: string;
+        raw: string;
+    };
+}
+
+/**
+ * Login user via edge function
+ * Validates email/WhatsApp verification before allowing login
+ */
+export const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, password }),
+    });
+
+    const result = await response.json();
+
+    // For verification required responses (403), we don't throw - we return the response
+    // so the UI can handle showing the appropriate verification modal
+    if (response.status === 403 && result.requiresVerification) {
+        return result as LoginResponse;
+    }
+
+    if (!response.ok) {
+        throw new Error(result.message || result.error || 'Login failed');
+    }
+
+    return result as LoginResponse;
 };
