@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6] - 2025-12-05
+### Changed
+- **Auth UI:** Redesigned Email Verification modal - vertical layout, title outside container, removed logo, success toast above title.
+- **Auth UI:** Redesigned WhatsApp Verification modal to match Email Verification style.
+- **Auth UI:** Added "Account Created" success screen after WhatsApp verification before redirecting to login.
+- **Auth:** Forgot password resend cooldown reduced from 10 minutes to 5 minutes.
+- **Sidebar:** Updated logo to white icon on green background.
+- **Sidebar:** Reorganized menu items - removed Companies, renamed Politics to Global Events, added E-Sports.
+- **Sidebar:** New menu order: Home, Sports, E-Sports (SOON), Climate (SOON), Global Events (SOON).
+
+### Fixed
+- **Auth:** Login modal now resets form data when opened (prevents stale credentials after logout).
+- **Auth:** Fixed multi-tab behavior for password reset - only the tab that opened the reset link shows the modal.
+- **Auth:** Added expired/invalid link detection with proper UI feedback for password reset.
+
+### Removed
+- **Code Quality:** Removed unnecessary console.log statements from auth components.
+
 ## [2.5] - 2025-11-28
 ### Added
 - **Auth:** Implemented Zero Trust Authentication with Supabase.

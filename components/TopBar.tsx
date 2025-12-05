@@ -360,7 +360,11 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
             {/* Reset Password Modal */}
             <ResetPasswordModal
                 isOpen={showResetPasswordModal}
-                onClose={() => setShowResetPasswordModal(false)}
+                onClose={() => {
+                    setShowResetPasswordModal(false);
+                    clearPasswordRecovery();
+                    setShowLoginModal(true);
+                }}
                 onSuccess={handleResetPasswordSuccess}
             />
         </>
