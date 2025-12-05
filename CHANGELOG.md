@@ -7,10 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.6] - 2025-12-05
 ### Changed
-- **Auth UI:** Redesigned Email Verification modal - vertical layout, title outside container, removed logo, success toast above title.
-- **Auth UI:** Redesigned WhatsApp Verification modal to match Email Verification style.
-- **Auth UI:** Added "Account Created" success screen after WhatsApp verification before redirecting to login.
-- **Auth:** Forgot password resend cooldown reduced from 10 minutes to 5 minutes.
+- **User Journey - Sign Up Flow:** Sign Up → Email Verification (with inline success toast) → WhatsApp Verification (with inline success toast) → "Account Created" success screen → Redirects to Login.
+- **User Journey - Password Reset Flow:** Forgot Password → Email sent → Click link → Reset Password modal → Success → Login modal with success message. Expired/invalid links now show proper "Link Expired" UI with "Back to Login" button.
 - **Sidebar:** Updated logo to white icon on green background.
 - **Sidebar:** Reorganized menu items - removed Companies, renamed Politics to Global Events, added E-Sports.
 - **Sidebar:** New menu order: Home, Sports, E-Sports (SOON), Climate (SOON), Global Events (SOON).
