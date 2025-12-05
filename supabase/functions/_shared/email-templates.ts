@@ -37,7 +37,7 @@ export function generateOtpEmailSubject(otpCode: string): string {
 }
 
 /**
- * Generate forgot password email HTML
+ * Generate forgot password email HTML (legacy - with personalization)
  */
 export function generateForgotPasswordEmailHtml(params: ForgotPasswordEmailParams): string {
   const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
@@ -55,6 +55,13 @@ export function generateForgotPasswordEmailHtml(params: ForgotPasswordEmailParam
  */
 export function generateForgotPasswordEmailSubject(): string {
   return `Reset your ShareMatch password`;
+}
+
+/**
+ * Build password reset email HTML - simplified version with magic link
+ */
+export function buildResetEmailHTML(magicLink: string): string {
+  return PASSWORD_RESET_TEMPLATE.replace(/\${magicLink}/g, magicLink);
 }
 
 // ============================================
@@ -452,3 +459,466 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// ShareMatch Password Reset Email Template with Gradient Design (simplified version)
+const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Email - ShareMatch</title>
+    <style>
+        /* Base styles for email clients */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FFFFFF;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            line-height: 1.6;
+            padding: 20px 0;
+        }
+        
+        /* Gradient Background */
+        .gradient-bg {
+            background-color: #019170;
+            background: 
+                linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%),
+                linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 600px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            text-align: left;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        
+        /* Outer wrapper table */
+        table[role="presentation"] {
+            width: 100%;
+            height: auto;
+        }
+        
+        /* Text Colors */
+        .text-light { color: #FFFFFF; }
+        .text-highlight { color: #1acc79; }
+        
+        /* Logo Section */
+        .logo-section {
+            padding-top: 20px;
+            padding-bottom: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .logo-image {
+            max-width: 320px;
+            width: 320px;
+            height: auto;
+        }
+        
+        /* Content Padding */
+        .content {
+            padding: 25px 40px 25px 40px;
+        }
+        
+        .content p {
+            color: #FFFFFF !important;
+        }
+        .content h2 {
+            color: #FFFFFF !important;
+        }
+        
+        /* Button Box Styling (similar to OTP box) */
+        .button-box-wrapper {
+            padding: 15px 0;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .reset-button {
+            display: inline-block;
+            font-size: 18px;
+            font-weight: 700;
+            color: #16683f;
+            padding: 15px 35px;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #FFFFFF;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+        .reset-button:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Warning/Footer Text */
+        .warning {
+            font-size: 14px;
+            text-align: center;
+            color: #FFFFFF !important;
+        }
+        
+        .footer {
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 14px;
+            color: #FFFFFF;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        /* ========== COMPREHENSIVE RESPONSIVE DESIGN ========== */
+        
+        /* Mobile S - 320px */
+        @media only screen and (max-width: 320px) {
+            body {
+                padding: 10px !important;
+            }
+            .container {
+                border-radius: 8px !important;
+                width: calc(100% - 20px) !important;
+                max-width: calc(100% - 20px) !important;
+                margin: 0 10px !important;
+            }
+            table[role="presentation"] {
+                min-height: auto !important;
+            }
+            .content, .footer {
+                padding: 15px 10px !important;
+            }
+            .logo-section {
+                padding-top: 12px !important;
+                padding-bottom: 12px !important;
+            }
+            .logo-image {
+                max-width: 160px !important;
+                width: 160px !important;
+            }
+            .button-box-wrapper {
+                padding: 8px 0 !important;
+                margin: 15px 0 !important;
+            }
+            .reset-button {
+                font-size: 14px !important;
+                padding: 10px 20px !important;
+            }
+            .content p {
+                font-size: 13px !important;
+                line-height: 1.4 !important;
+            }
+            .content h2 {
+                font-size: 18px !important;
+            }
+            .warning {
+                font-size: 11px !important;
+            }
+        }
+        
+        /* Mobile M - 375px */
+        @media only screen and (min-width: 321px) and (max-width: 375px) {
+            body {
+                padding: 10px !important;
+            }
+            .container {
+                border-radius: 8px !important;
+                width: calc(100% - 20px) !important;
+                max-width: calc(100% - 20px) !important;
+                margin: 0 10px !important;
+            }
+            table[role="presentation"] {
+                min-height: auto !important;
+            }
+            .content, .footer {
+                padding: 18px 12px !important;
+            }
+            .logo-section {
+                padding-top: 15px !important;
+                padding-bottom: 15px !important;
+            }
+            .logo-image {
+                max-width: 180px !important;
+                width: 180px !important;
+            }
+            .button-box-wrapper {
+                padding: 10px 0 !important;
+                margin: 15px 0 !important;
+            }
+            .reset-button {
+                font-size: 15px !important;
+                padding: 11px 22px !important;
+            }
+            .content p {
+                font-size: 14px !important;
+            }
+            .content h2 {
+                font-size: 19px !important;
+            }
+            .warning {
+                font-size: 12px !important;
+            }
+        }
+        
+        /* Mobile L - 425px */
+        @media only screen and (min-width: 376px) and (max-width: 425px) {
+            body {
+                padding: 15px !important;
+            }
+            .container {
+                border-radius: 8px !important;
+                width: calc(100% - 30px) !important;
+                max-width: calc(100% - 30px) !important;
+                margin: 0 15px !important;
+            }
+            table[role="presentation"] {
+                min-height: auto !important;
+            }
+            .content, .footer {
+                padding: 20px 15px !important;
+            }
+            .logo-section {
+                padding-top: 15px !important;
+                padding-bottom: 15px !important;
+            }
+            .logo-image {
+                max-width: 200px !important;
+                width: 200px !important;
+            }
+            .button-box-wrapper {
+                padding: 10px 0 !important;
+                margin: 18px 0 !important;
+            }
+            .reset-button {
+                font-size: 16px !important;
+                padding: 12px 25px !important;
+            }
+            .content p {
+                font-size: 14px !important;
+            }
+            .content h2 {
+                font-size: 20px !important;
+            }
+        }
+        
+        /* Tablet & iPad (768px) - Portrait */
+        @media only screen and (min-width: 426px) and (max-width: 768px) {
+            body {
+                padding: 20px !important;
+            }
+            .container {
+                border-radius: 8px !important;
+                width: 95% !important;
+                max-width: 600px !important;
+            }
+            table[role="presentation"] {
+                min-height: auto !important;
+            }
+            .content, .footer {
+                padding: 22px 25px !important;
+            }
+            .logo-section {
+                padding-top: 18px !important;
+                padding-bottom: 18px !important;
+            }
+            .logo-image {
+                max-width: 240px !important;
+                width: 240px !important;
+            }
+            .button-box-wrapper {
+                padding: 12px 0 !important;
+                margin: 18px 0 !important;
+            }
+            .reset-button {
+                font-size: 17px !important;
+                padding: 13px 28px !important;
+            }
+            .content p {
+                font-size: 15px !important;
+            }
+            .content h2 {
+                font-size: 21px !important;
+            }
+        }
+        
+        /* iPad Air, iPad Pro (Portrait) - 820px to 1024px */
+        @media only screen and (min-width: 769px) and (max-width: 1024px) {
+            body {
+                padding: 30px 20px !important;
+            }
+            .container {
+                border-radius: 10px !important;
+                width: 90% !important;
+                max-width: 600px !important;
+            }
+            table[role="presentation"] {
+                min-height: auto !important;
+            }
+            .content, .footer {
+                padding: 24px 35px !important;
+            }
+            .logo-section {
+                padding-top: 20px !important;
+                padding-bottom: 20px !important;
+            }
+            .logo-image {
+                max-width: 280px !important;
+                width: 280px !important;
+            }
+            .button-box-wrapper {
+                padding: 14px 0 !important;
+                margin: 20px 0 !important;
+            }
+            .reset-button {
+                font-size: 17px !important;
+                padding: 14px 30px !important;
+            }
+            .content p {
+                font-size: 15px !important;
+            }
+            .content h2 {
+                font-size: 21px !important;
+            }
+        }
+        
+        /* Laptop - 1024px to 1440px */
+        @media only screen and (min-width: 1025px) and (max-width: 1440px) {
+            .container {
+                border-radius: 12px !important;
+                width: 600px !important;
+                max-width: 600px !important;
+            }
+            .content, .footer {
+                padding: 25px 40px !important;
+            }
+            .logo-section {
+                padding-top: 20px !important;
+                padding-bottom: 20px !important;
+            }
+            .logo-image {
+                max-width: 320px !important;
+                width: 320px !important;
+            }
+            .button-box-wrapper {
+                padding: 15px 0 !important;
+                margin: 20px 0 !important;
+            }
+            .reset-button {
+                font-size: 18px !important;
+                padding: 15px 35px !important;
+            }
+        }
+        
+        /* Large Desktop - 1440px to 2560px */
+        @media only screen and (min-width: 1441px) and (max-width: 2560px) {
+            .container {
+                border-radius: 12px !important;
+                width: 600px !important;
+                max-width: 600px !important;
+            }
+            .content, .footer {
+                padding: 25px 40px !important;
+            }
+            .logo-image {
+                max-width: 320px !important;
+                width: 320px !important;
+            }
+        }
+        
+        /* 4K and Ultra Wide - 2560px+ */
+        @media only screen and (min-width: 2561px) {
+            .container {
+                border-radius: 12px !important;
+                width: 600px !important;
+                max-width: 600px !important;
+            }
+            .content, .footer {
+                padding: 25px 40px !important;
+            }
+            .logo-image {
+                max-width: 320px !important;
+                width: 320px !important;
+            }
+        }
+    </style>
+</head>
+<body style="font-family: 'Inter', sans-serif; background-color: #FFFFFF; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #FFFFFF; margin: 0; padding: 0;">
+        <tr>
+            <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
+        </tr>
+        <tr>
+            <td align="center">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%), linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);">
+                    <!-- Logo Section -->
+                    <tr>
+                        <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
+                            <img src="https://sharematch-website.dev-782.workers.dev/sharematch.png" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
+                        </td>
+                    </tr>
+                    <!-- Content Section -->
+                    <tr>
+                        <td class="content" style="padding: 25px 40px 25px 40px; color: #FFFFFF; font-size: 18px;">
+                            <h2 style="margin: 0 0 20px; font-size: 26px; color: #FFFFFF; text-align: center;">
+                                Reset Your Password
+                            </h2>
+                            <p style="margin-bottom: 30px; font-size: 18px; color: #FFFFFF; text-align: center;">
+                                We received a request to reset the password associated with this email address. If you made this request, click the button below to choose a new password:
+                            </p>
+
+                            <div class="button-box-wrapper" style="padding: 15px 0; margin: 20px 0; text-align: center;">
+                                <a href="\${magicLink}" class="reset-button" style="
+                                    display: inline-block;
+                                    font-size: 24px;
+                                    font-weight: 700;
+                                    color: #16683f;
+                                    padding: 15px 35px;
+                                    border-radius: 8px;
+                                    text-align: center;
+                                    background-color: #FFFFFF;
+                                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+                                    text-decoration: none;"
+                                >
+                                    Reset Password
+                                </a>
+                            </div>
+
+                            <p style="margin-bottom: 5px; font-size: 18px; color: #FFFFFF; text-align: center;">
+                                For your security, this link will expire in <span class="text-highlight" style="font-weight: 700; color: #1acc79;">10 minutes</span>.
+                            </p>
+                            <p style="margin-top: 16px; font-size: 18px; color: #FFFFFF; text-align: center;">
+                                If you did not request a password reset, you can safely ignore this email.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer Section -->
+                    <tr>
+                        <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                        </td>
+                    </tr>
+            </table>
+          </td>
+        </tr>  
+        <tr>
+            <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
+        </tr>
+      </table>
+    </body>
+</html>`;

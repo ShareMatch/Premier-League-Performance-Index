@@ -381,6 +381,38 @@ export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string
 };
 
 // ============================================
+// FORGOT PASSWORD API
+// ============================================
+
+export interface ForgotPasswordResponse {
+    ok: boolean;
+    message: string;
+}
+
+/**
+ * Request a password reset email
+ * Always returns success to prevent email enumeration
+ */
+export const requestPasswordReset = async (email: string): Promise<ForgotPasswordResponse> => {
+    // Pass the current origin so the reset link redirects back to the correct app URL
+    const redirectUrl = window.location.origin;
+    
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/forgot-password`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, redirectUrl }),
+    });
+
+    const result = await response.json();
+
+    // We always return success for security (don't reveal if email exists)
+    return result as ForgotPasswordResponse;
+};
+
+// ============================================
 // LOGIN API
 // ============================================
 

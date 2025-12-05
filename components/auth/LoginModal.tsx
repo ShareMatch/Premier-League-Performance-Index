@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { loginUser, LoginResponse } from '../../lib/api';
 import { X } from 'lucide-react';
@@ -167,6 +167,7 @@ interface LoginModalProps {
   onSwitchToSignUp?: () => void;
   onForgotPassword?: () => void;
   onVerificationRequired?: (data: VerificationRequiredData) => void;
+  successMessage?: string; // Optional success message to display (e.g., after password reset)
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ 
@@ -174,13 +175,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onSwitchToSignUp,
   onForgotPassword,
-  onVerificationRequired
+  onVerificationRequired,
+  successMessage,
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setEmail('');
+      setPassword('');
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   const canSubmit = email.trim().length > 0 && password.trim().length > 0;
 
@@ -238,7 +250,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       
       {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col md:flex-row items-center"
+        className="relative w-full flex flex-col md:flex-row md:items-stretch items-center"
         style={{
           maxWidth: "min(90vw, 900px)",
           borderRadius: "40px",
@@ -247,7 +259,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           WebkitBackdropFilter: "blur(40px)",
           padding: "clamp(1.5rem, 2.5vh, 3rem) clamp(1.5rem, 2.5vw, 4rem)",
           gap: "clamp(2rem, 3vw, 4rem)",
-          border: "1px solid rgba(58, 161, 137, 0.3)",
         }}
       >
         {/* Close Button */}
@@ -259,18 +270,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         </button>
 
         {/* Left Side - Logo and Text */}
-        <div className="flex flex-col items-center justify-center flex-1" style={{ gap: "clamp(1rem, 2vh, 1.5rem)" }}>
+        <div className="flex flex-col items-center justify-center flex-1 pb-12" style={{ gap: "clamp(1rem, 2vh, 1.5rem)" }}>
           <img 
             src="/logos/white_wordmark_logo_on_black-removebg-preview.png" 
             alt="ShareMatch" 
-            className="h-20 object-contain"
+            className="h-32 object-contain"
           />
           <h1 
             className="text-[#F1F7F7] text-center leading-tight"
             style={{ 
               fontFamily: "'Playfair Display', serif",
               fontWeight: 600,
-              fontSize: "clamp(1.5rem, 2vw + 0.5rem, 2.5rem)",
+              fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)",
             }}
           >
             Login to Your<br />Account
@@ -278,22 +289,40 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         </div>
 
         {/* Right Side - Login Form */}
-        <div
-          className="flex flex-col w-full md:w-auto"
-          style={{
+        <div 
+          className="flex flex-col w-full md:w-auto" 
+          style={{ 
             flex: "0 0 auto",
             minWidth: "min(100%, 380px)",
             maxWidth: "420px",
-            background: "#021A1A",
-            border: "1px solid transparent",
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-            backgroundOrigin: "border-box",
-            backgroundClip: "padding-box, border-box",
-            borderRadius: "8px",
-            padding: "clamp(1.25rem, 2vh, 2rem) clamp(1.25rem, 1.5vw, 2rem)",
-            gap: "clamp(0.875rem, 1.5vh, 1.25rem)",
+            gap: "clamp(1rem, 1.5vh, 1.25rem)",
           }}
         >
+          {successMessage && (
+            <p 
+              className="text-center text-[#10b981] bg-[#10b981]/10 border border-[#10b981]/30 rounded-full px-4 py-2"
+              style={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "clamp(0.75rem, 0.8vw + 0.25rem, 0.875rem)",
+              }}
+            >
+              {successMessage}
+            </p>
+          )}
+
+          <div
+            className="flex flex-col"
+            style={{
+              background: "#021A1A",
+              border: "1px solid transparent",
+              backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
+              backgroundOrigin: "border-box",
+              backgroundClip: "padding-box, border-box",
+              borderRadius: "8px",
+              padding: "clamp(1.25rem, 2vh, 2rem) clamp(1.25rem, 1.5vw, 2rem)",
+              gap: "clamp(0.875rem, 1.5vh, 1.25rem)",
+            }}
+          >
           <h2 
             className="text-white"
             style={{ 
@@ -413,6 +442,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </div>
           </form>
+          </div>
         </div>
       </div>
     </div>

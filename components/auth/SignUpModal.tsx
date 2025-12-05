@@ -785,58 +785,67 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
       <div
         className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4"
         style={{ 
-          maxWidth: '860px', 
+          maxWidth: 'min(90vw, 900px)', 
           maxHeight: '95vh',
           borderRadius: '40px',
           background: 'rgba(4, 34, 34, 0.60)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
-          border: '1px solid rgba(58, 161, 137, 0.3)',
         }}
       >
         {/* Close Button */}
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-30">
-          <X className="w-5 h-5" />
+        <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-30">
+          <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
         {/* Left Side - Branding */}
-        <div className="hidden md:flex w-5/12 flex-col items-center justify-center p-4 relative">
+        <div className="hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative">
           {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute top-3 left-3 text-white hover:text-[#3AA189] transition-colors">
-              <ChevronLeft className="w-5 h-5" />
+            <button onClick={() => setStep(1)} className="absolute top-5 left-5 text-white hover:text-[#3AA189] transition-colors">
+              <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-20 object-contain mb-3" />
+          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-32 object-contain mb-3" />
           <h1
-            className="text-white text-center leading-tight mb-2"
-            style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: 600 }}
+            className="text-white text-center leading-tight mb-10 whitespace-pre-line"
+            style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2rem, 2.5vw + 0.5rem, 3rem)', fontWeight: 600 }}
           >
-            {step === 1 ? 'Create Your\nAccount' : 'Security and\nVerification'}
+            {step === 1 ? 'Create Your\nAccount' : 'Security\nand\nVerification'}
           </h1>
-          <p className="text-gray-400 text-center text-xs" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <p 
+            className="text-center text-base" 
+            style={{ 
+              fontFamily: "'Inter', sans-serif",
+              background: 'linear-gradient(180deg, #6F7D7D 0%, #CAE3E3 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
             Join the new era of smart, social investing — where traders connect, compete, and grow together.
           </p>
         </div>
 
         {/* Mobile Header */}
-        <div className="md:hidden p-4 flex items-center justify-center relative">
+        <div className="md:hidden p-5 flex items-center justify-center relative">
           {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute left-4 text-white">
-              <ChevronLeft className="w-6 h-6" />
+            <button onClick={() => setStep(1)} className="absolute left-5 text-white hover:text-[#3AA189] transition-colors">
+              <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-10 object-contain" />
+          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-16 object-contain" />
         </div>
 
         {/* Right Side - Form */}
-        <div className="flex-1 p-3 md:p-4 md:pt-10 md:pr-8 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
+        <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
             <div
-              className="bg-[#021A1A] rounded-lg p-3 md:p-4"
+              className="bg-[#021A1A] rounded-lg p-3 md:p-4 flex flex-col"
               style={{
                 border: '1px solid transparent',
                 backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
                 backgroundOrigin: 'border-box',
                 backgroundClip: 'padding-box, border-box',
+                minHeight: '460px',
               }}
             >
             <h2
@@ -852,7 +861,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
               </div>
             )}
 
-            <form onSubmit={step === 1 ? handleNext : handleSubmit} className="flex flex-col gap-2">
+            <form onSubmit={step === 1 ? handleNext : handleSubmit} className="flex flex-col gap-2 flex-1">
               {step === 1 ? (
                 <>
                   <InputField
@@ -933,7 +942,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                   />
                 </>
               ) : (
-                <div className="flex flex-col gap-2 pb-4">
+                <div className="flex flex-col gap-4 flex-1 justify-center">
                   <PhoneInputField
                     label="Phone Number *"
                     name="phone"
