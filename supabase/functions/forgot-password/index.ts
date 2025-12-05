@@ -1,0 +1,149 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendSESEmail } from "../_shared/ses.ts";
+import { buildResetEmailHTML } from "../_shared/email-templates.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+// Neutral response to prevent email enumeration attacks
+const neutralResponse = () =>
+  new Response(
+    JSON.stringify({
+      ok: true,
+      message: "If an account exists with this email, a reset link has been sent.",
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+
+serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    // Get environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const sesAccessKey = Deno.env.get("SES_ACCESS_KEY") ?? "";
+    const sesSecretKey = Deno.env.get("SES_SECRET_KEY") ?? "";
+    const sesRegion = Deno.env.get("SES_REGION") ?? "us-east-1";
+    const sesFromEmail = Deno.env.get("SES_FROM_EMAIL") ?? "";
+    const publicUrl = Deno.env.get("PUBLIC_URL") ?? "https://www.sharematch.co";
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase configuration");
+      return neutralResponse();
+    }
+
+    if (!sesAccessKey || !sesSecretKey || !sesFromEmail) {
+      console.error("Missing SES configuration");
+      return neutralResponse();
+    }
+
+    // Parse request body
+    const body = await req.json() as { email?: string; redirectUrl?: string };
+    const emailRaw = body.email?.toString().trim();
+
+    if (!emailRaw) {
+      return neutralResponse();
+    }
+
+    const email = emailRaw.toLowerCase();
+    console.log("🔵 [forgot-password] Processing request for:", email);
+
+    // Determine the redirect URL (priority: body > env > default)
+    // NOTE: Don't use origin header as it might be from a different domain making the API call
+    const baseUrl = body.redirectUrl || publicUrl;
+    const cleanBaseUrl = baseUrl.replace(/\/$/, "").split("#")[0].split("?")[0];
+    
+    console.log("🔵 [forgot-password] Redirect URL from body:", body.redirectUrl);
+    console.log("🔵 [forgot-password] Base URL for redirect:", cleanBaseUrl);
+
+    // Initialize admin client
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+
+    // Check if user exists (we don't need their name since template doesn't use it)
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("id, email")
+      .eq("email", email)
+      .single();
+
+    if (userError || !userData) {
+      console.log("🟡 [forgot-password] User not found, returning neutral response");
+      // Return neutral response to prevent email enumeration
+      return neutralResponse();
+    }
+
+    console.log("🟢 [forgot-password] User found:", userData.id);
+
+    // Generate the password reset link using Supabase Admin API
+    // The redirectTo should point to your app's base URL
+    // NOTE: Supabase will append #access_token=...&type=recovery to the URL
+    // We detect type=recovery in the hash on the frontend to open the reset modal
+    const redirectTo = cleanBaseUrl;
+
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo },
+    });
+
+    if (linkError || !linkData) {
+      console.error("🔴 [forgot-password] generateLink error:", linkError);
+      return neutralResponse();
+    }
+
+    console.log("🟢 [forgot-password] Reset link generated");
+
+    // The action_link from generateLink is the full magic link
+    const resetLink = linkData.properties?.action_link;
+
+    if (!resetLink) {
+      console.error("🔴 [forgot-password] No action_link in response");
+      return neutralResponse();
+    }
+
+    // Build the email HTML using the simplified template
+    const emailHtml = buildResetEmailHTML(resetLink);
+    const emailSubject = "Reset your ShareMatch password";
+
+    console.log("🔵 [forgot-password] Sending email via SES...");
+
+    // Send the email via SES
+    const sesResult = await sendSESEmail({
+      accessKey: sesAccessKey,
+      secretKey: sesSecretKey,
+      region: sesRegion,
+      from: sesFromEmail,
+      to: email,
+      subject: emailSubject,
+      html: emailHtml,
+    });
+
+    console.log("🟢 [forgot-password] SES result:", {
+      ok: sesResult.ok,
+      status: sesResult.status,
+    });
+
+    if (!sesResult.ok) {
+      console.error("🔴 [forgot-password] SES error:", sesResult.body);
+    }
+
+    // Always return neutral response
+    return neutralResponse();
+
+  } catch (error: unknown) {
+    console.error("🔴 [forgot-password] Unexpected error:", error);
+    // Always return neutral response even on error
+    return neutralResponse();
+  }
+});
+

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Building2, Cloud, Vote, Trophy, ChevronDown, ChevronRight, Menu, Search } from 'lucide-react';
+import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,9 +21,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
 
   const menuItems = [
     { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
-    { icon: Building2, label: 'Companies', badge: 'SOON' },
-    { icon: Cloud, label: 'Climate', badge: 'SOON' },
-    { icon: Vote, label: 'Politics', badge: 'SOON' },
     {
       icon: Trophy,
       label: 'Sports',
@@ -47,6 +44,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         },
       ]
     },
+    { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
+    { icon: Cloud, label: 'Climate', badge: 'SOON' },
+    { icon: Globe, label: 'Global Events', badge: 'SOON' },
   ];
 
   return (
@@ -67,11 +67,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#3AA189] rounded flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </div>
+          <img 
+            src="/logos/white_icon_on_green.jpeg" 
+            alt="ShareMatch" 
+            className="w-8 h-8 rounded object-cover"
+          />
           <span className="text-xl font-bold text-white">
             {activeLeague === 'HOME' ? 'ShareMatch' :
               activeLeague === 'EPL' ? 'PL Index' :

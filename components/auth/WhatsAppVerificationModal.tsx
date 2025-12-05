@@ -12,7 +12,7 @@ interface WhatsAppVerificationModalProps {
   onVerifyCode?: (code: string) => Promise<boolean>;
 }
 
-type VerificationStatus = 'idle' | 'sending' | 'verifying' | 'error' | 'success';
+type VerificationStatus = 'idle' | 'sending' | 'verifying' | 'error' | 'success' | 'accountCreated';
 
 const CODE_LENGTH = 6;
 
@@ -194,9 +194,14 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         if (success) {
           setStatus('success');
           setMessage('WhatsApp verified successfully!');
+          // After showing success toast, transition to account created screen
+          setTimeout(() => {
+            setStatus('accountCreated');
+          }, 1500);
+          // Then redirect to login after showing account created message
           setTimeout(() => {
             onVerificationSuccess?.();
-          }, 1500);
+          }, 3500);
         } else {
           throw new Error('Invalid verification code');
         }
@@ -206,8 +211,11 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         setStatus('success');
         setMessage('WhatsApp verified successfully!');
         setTimeout(() => {
-          onVerificationSuccess?.();
+          setStatus('accountCreated');
         }, 1500);
+        setTimeout(() => {
+          onVerificationSuccess?.();
+        }, 3500);
       }
     } catch (error: any) {
       setStatus('error');
@@ -252,10 +260,80 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
   };
 
   const isCodeComplete = code.join('').length === CODE_LENGTH;
-  const isVerifyDisabled = !isCodeComplete || status === 'verifying' || status === 'sending' || status === 'success';
+  const isVerifyDisabled = !isCodeComplete || status === 'verifying' || status === 'sending' || status === 'success' || status === 'accountCreated';
   const isResendDisabled = timeLeft > 0 || status === 'sending';
 
   if (!isOpen) return null;
+
+  // Account Created Success Screen - Vertical popup with just success message
+  if (status === 'accountCreated') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/50" />
+
+        {/* Modal Content - Vertical Layout */}
+        <div
+          className="relative w-full flex flex-col items-center"
+          style={{
+            maxWidth: "min(90vw, 450px)",
+            borderRadius: "40px",
+            background: "rgba(4, 34, 34, 0.60)",
+            backdropFilter: "blur(40px)",
+            WebkitBackdropFilter: "blur(40px)",
+            padding: "clamp(2.5rem, 4vh, 4rem) clamp(2rem, 3vw, 3rem)",
+            gap: "clamp(1.5rem, 2vh, 2rem)",
+          }}
+        >
+          {/* Success Icon */}
+          <div 
+            className="flex items-center justify-center w-20 h-20 rounded-full"
+            style={{
+              background: 'rgba(1, 145, 112, 0.15)',
+              border: '2px solid rgba(58, 161, 137, 0.4)',
+            }}
+          >
+            <CheckCircle className="w-10 h-10 text-[#3AA189]" />
+          </div>
+
+          {/* Success Title */}
+          <h1 
+            className="text-[#F1F7F7] text-center leading-tight"
+            style={{ 
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 600,
+              fontSize: "clamp(1.5rem, 2vw + 0.5rem, 2rem)",
+            }}
+          >
+            Verification Successful!
+          </h1>
+
+          {/* Success Message */}
+          <p 
+            className="text-center text-gray-300"
+            style={{ 
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 'clamp(0.875rem, 1vw, 1rem)',
+              lineHeight: 1.6,
+            }}
+          >
+            Your account has been created successfully.
+          </p>
+
+          {/* Redirecting indicator */}
+          <p 
+            className="text-center text-gray-500"
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
+            }}
+          >
+            Redirecting to login...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -265,237 +343,204 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         onClick={onClose}
       />
 
-      {/* Modal Content */}
+      {/* Modal Content - Vertical Layout */}
       <div
-        className="relative w-full flex flex-col md:flex-row items-center"
+        className="relative w-full flex flex-col items-center"
         style={{
-          maxWidth: 'min(90vw, 860px)',
-          borderRadius: '40px',
-          background: 'rgba(4, 34, 34, 0.60)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-          padding: 'clamp(1.5rem, 2.5vh, 3rem) clamp(1.5rem, 2.5vw, 4rem)',
-          gap: 'clamp(2rem, 3vw, 4rem)',
-          border: '1px solid rgba(58, 161, 137, 0.3)',
+          maxWidth: "min(90vw, 550px)",
+          borderRadius: "40px",
+          background: "rgba(4, 34, 34, 0.60)",
+          backdropFilter: "blur(40px)",
+          WebkitBackdropFilter: "blur(40px)",
+          padding: "clamp(2rem, 3vh, 3rem) clamp(2rem, 3vw, 3rem)",
+          gap: "clamp(1.5rem, 2vh, 2rem)",
         }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors z-10"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
-        {/* Left Side - Branding */}
-        <div className="flex flex-col items-center justify-center flex-1" style={{ gap: 'clamp(1rem, 2vh, 1.5rem)' }}>
-          <img 
-            src="/logos/white_wordmark_logo_on_black-removebg-preview.png" 
-            alt="ShareMatch" 
-            className="h-16 md:h-20 object-contain"
-          />
-          <h1 
-            className="text-[#F1F7F7] text-center leading-tight"
-            style={{ 
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 600,
-              fontSize: 'clamp(1.25rem, 2vw + 0.5rem, 2rem)',
+        {/* Success Toast - Above Title */}
+        {status === 'success' && (
+          <div 
+            className="flex items-center gap-2 px-4 py-3 rounded-lg animate-in fade-in slide-in-from-top-2"
+            style={{
+              background: 'rgba(1, 145, 112, 0.15)',
+              border: '1px solid rgba(58, 161, 137, 0.4)',
             }}
           >
-            {status === 'success' ? 'Verified!' : 'Verify Your\nWhatsApp'}
-          </h1>
-        </div>
+            <CheckCircle className="w-5 h-5 text-[#3AA189]" />
+            <p 
+              className="font-medium text-[#3AA189]"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 'clamp(0.875rem, 1vw, 1rem)',
+              }}
+            >
+              WhatsApp verified successfully!
+            </p>
+          </div>
+        )}
 
-        {/* Right Side - Verification Form */}
-        <div
-          className="flex flex-col w-full md:w-auto"
-          style={{
-            flex: '0 0 auto',
-            minWidth: 'min(100%, 380px)',
-            maxWidth: '450px',
-            background: '#021A1A',
-            border: '1px solid transparent',
-            backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'padding-box, border-box',
-            borderRadius: '8px',
-            padding: 'clamp(1.25rem, 2vh, 2rem) clamp(1.25rem, 1.5vw, 2rem)',
-            gap: 'clamp(0.875rem, 1.5vh, 1.25rem)',
+        {/* Title - Outside Inner Container */}
+        <h1 
+          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap"
+          style={{ 
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 600,
+            fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)",
           }}
         >
-          <h2 
-            className="text-white text-center"
-            style={{ 
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 700,
-              fontSize: 'clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)' 
-            }}
-          >
-            WhatsApp Verification
-          </h2>
+          WhatsApp Verification
+        </h1>
 
-          {status === 'success' ? (
-            /* Success State - Inline Toast Style */
-            <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <div 
-                className="flex items-center gap-2 px-4 py-3 rounded-lg"
-                style={{
-                  background: 'rgba(1, 145, 112, 0.15)',
-                  border: '1px solid rgba(58, 161, 137, 0.4)',
-                }}
-              >
-                <CheckCircle className="w-5 h-5 text-[#3AA189]" />
-                <p 
-                  className="font-medium text-[#3AA189]"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 'clamp(0.875rem, 1vw, 1rem)',
-                  }}
-                >
-                  WhatsApp verification successful!
-                </p>
-              </div>
+        {/* Inner Container - Form Content */}
+        <div
+          className="flex flex-col w-full"
+          style={{
+            background: "#021A1A",
+            border: "1px solid transparent",
+            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
+            backgroundOrigin: "border-box",
+            backgroundClip: "padding-box, border-box",
+            borderRadius: "8px",
+            padding: "clamp(1.5rem, 2vh, 2rem)",
+            gap: "clamp(1rem, 1.5vh, 1.25rem)",
+          }}
+        >
+          {/* Verification Form - Always visible */}
+          <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
+            {/* Description */}
+            <p 
+              className="text-center text-white"
+              style={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
+                lineHeight: 1.5,
+              }}
+            >
+              We've sent a 6-digit verification code to your WhatsApp. Please enter the code below to continue.
+            </p>
+
+            {/* Masked WhatsApp */}
+            <p 
+              className="text-center text-[#3AA189] font-medium"
+              style={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
+              }}
+            >
+              {displayWhatsapp}
+            </p>
+
+            {/* Status Message */}
+            {message && status !== 'success' && (
               <p 
-                className="text-center text-gray-400"
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                }}
+                className={`text-center text-sm ${
+                  status === 'error' ? 'text-red-400' : 'text-gray-400'
+                }`}
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                Redirecting...
+                {message}
               </p>
+            )}
+
+            {/* OTP Input */}
+            <OTPInput
+              value={code}
+              onChange={handleCodeChange}
+              disabled={status === 'verifying' || status === 'success'}
+              hasError={status === 'error'}
+            />
+
+            {/* Timer */}
+            <p 
+              className="text-center text-white font-semibold"
+              style={{ 
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 'clamp(1rem, 1.2vw, 1.25rem)',
+              }}
+            >
+              {formatTime(timeLeft)}
+            </p>
+
+            {/* Resend */}
+            <div className="text-center">
+              <span 
+                className="text-white text-sm"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                Didn't receive the code?{' '}
+              </span>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResendDisabled}
+                className={`text-sm font-semibold transition-colors ${
+                  isResendDisabled 
+                    ? 'text-gray-500 cursor-not-allowed' 
+                    : 'text-[#3AA189] hover:text-white'
+                }`}
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                Resend
+              </button>
             </div>
-          ) : (
-            /* Verification Form */
-            <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
-              {/* Description */}
-              <p 
-                className="text-center text-white"
-                style={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                  lineHeight: 1.5,
+
+            {/* Verify Button - Inside Container */}
+            <div className="flex justify-center pt-2">
+              <div
+                className="rounded-full transition-all duration-300"
+                style={{
+                  border: `1px solid ${isButtonHovered && isCodeComplete ? '#FFFFFF' : '#3AA189'}`,
+                  boxShadow: isButtonHovered && isCodeComplete ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
+                  padding: 'clamp(0.2rem, 0.3vw, 0.4rem)',
                 }}
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
               >
-                We've sent a 6-digit verification code to your WhatsApp. Please enter the code below to continue.
-              </p>
-
-              {/* Masked WhatsApp */}
-              <p 
-                className="text-center text-[#3AA189] font-medium"
-                style={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                }}
-              >
-                {displayWhatsapp}
-              </p>
-
-              {/* Status Message */}
-              {message && status !== 'success' && (
-                <p 
-                  className={`text-center text-sm ${
-                    status === 'error' ? 'text-red-400' : 'text-gray-400'
-                  }`}
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
-                  {message}
-                </p>
-              )}
-
-              {/* OTP Input */}
-              <OTPInput
-                value={code}
-                onChange={handleCodeChange}
-                disabled={status === 'verifying' || status === 'success'}
-                hasError={status === 'error'}
-              />
-
-              {/* Timer */}
-              <p 
-                className="text-center text-white font-semibold"
-                style={{ 
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(1rem, 1.2vw, 1.25rem)',
-                }}
-              >
-                {formatTime(timeLeft)}
-              </p>
-
-              {/* Resend */}
-              <div className="text-center">
-                <span 
-                  className="text-white text-sm"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
-                  Didn't receive the code?{' '}
-                </span>
                 <button
                   type="button"
-                  onClick={handleResend}
-                  disabled={isResendDisabled}
-                  className={`text-sm font-semibold transition-colors ${
-                    isResendDisabled 
-                      ? 'text-gray-500 cursor-not-allowed' 
-                      : 'text-[#3AA189] hover:text-white'
-                  }`}
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  onClick={handleVerify}
+                  disabled={isVerifyDisabled}
+                  className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    background: isButtonHovered && isCodeComplete
+                      ? '#FFFFFF'
+                      : 'linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)',
+                    color: isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF',
+                    boxShadow: '0px 4px 12px 0px rgba(0, 0, 0, 0.12)',
+                    cursor: !isVerifyDisabled ? 'pointer' : 'not-allowed',
+                    padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(1.5rem, 2.5vw, 2rem)',
+                    fontSize: 'clamp(0.875rem, 0.9vw + 0.2rem, 1rem)',
+                    gap: 'clamp(0.375rem, 0.8vw, 0.625rem)',
+                  }}
                 >
-                  Resend
+                  {status === 'verifying' ? 'Verifying...' : 'Verify'}
+                  {status !== 'verifying' && (
+                    <svg 
+                      viewBox="0 0 48 14" 
+                      fill="none" 
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="flex-shrink-0"
+                      style={{
+                        width: 'clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)',
+                        height: 'clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)',
+                      }}
+                    >
+                      <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" />
+                      <path d="M40 1L47 7L40 13" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </button>
               </div>
-
-              {/* Verify Button */}
-              <div className="flex justify-center pt-2">
-                <div
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    border: `1px solid ${isButtonHovered && isCodeComplete ? '#FFFFFF' : '#3AA189'}`,
-                    boxShadow: isButtonHovered && isCodeComplete ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
-                    padding: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-                  }}
-                  onMouseEnter={() => setIsButtonHovered(true)}
-                  onMouseLeave={() => setIsButtonHovered(false)}
-                >
-                  <button
-                    type="button"
-                    onClick={handleVerify}
-                    disabled={isVerifyDisabled}
-                    className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      background: isButtonHovered && isCodeComplete
-                        ? '#FFFFFF'
-                        : 'linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)',
-                      color: isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF',
-                      boxShadow: '0px 4px 12px 0px rgba(0, 0, 0, 0.12)',
-                      cursor: !isVerifyDisabled ? 'pointer' : 'not-allowed',
-                      padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(1.5rem, 2.5vw, 2rem)',
-                      fontSize: 'clamp(0.875rem, 0.9vw + 0.2rem, 1rem)',
-                      gap: 'clamp(0.375rem, 0.8vw, 0.625rem)',
-                    }}
-                  >
-                    {status === 'verifying' ? 'Verifying...' : 'Verify'}
-                    {status !== 'verifying' && (
-                      <svg 
-                        viewBox="0 0 48 14" 
-                        fill="none" 
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="flex-shrink-0"
-                        style={{
-                          width: 'clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)',
-                          height: 'clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)',
-                        }}
-                      >
-                        <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" />
-                        <path d="M40 1L47 7L40 13" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
