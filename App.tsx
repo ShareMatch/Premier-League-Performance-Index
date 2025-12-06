@@ -30,16 +30,16 @@ const App: React.FC = () => {
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
-    if (!user) return;
+    if (!publicUserId) return;
     try {
-      const walletData = await fetchWallet(user.id);
+      const walletData = await fetchWallet(publicUserId);
       setWallet(walletData);
-      const portfolioData = await fetchPortfolio(user.id);
+      const portfolioData = await fetchPortfolio(publicUserId);
       setPortfolio(portfolioData);
     } catch (error) {
       console.error('Error loading user data:', error);
     }
-  }, [user]);
+  }, [publicUserId]);
 
   // Fetch Assets
   const loadAssets = useCallback(async () => {
@@ -72,7 +72,7 @@ const App: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (publicUserId) {
       loadUserData();
     }
     loadAssets();
@@ -151,11 +151,11 @@ const App: React.FC = () => {
   };
 
   const handleConfirmTrade = async (quantity: number) => {
-    if (!selectedOrder || !wallet || !user) return;
+    if (!selectedOrder || !wallet || !publicUserId) return;
 
     try {
       const result = await placeTrade(
-        user.id,
+        publicUserId,
         selectedOrder.team.id.toString(),
         selectedOrder.team.name,
         selectedOrder.type,
