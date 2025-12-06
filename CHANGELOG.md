@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8] - 2025-12-06
+### Added
+- **AI Analytics Engine:** New paywalled section for token holders offering Gemini-powered market analysis.
+- **Sidebar:** Added "AI Analytics Engine" to the main navigation menu.
+- **Compliance:** Added Sharia-compliance keyword filtering for the "Global Sports Wire" news feed to block non-compliant content.
+
+### Changed
+- **Ticker:** Implemented round-robin randomization for the ticker to prevent consecutive same-market asset display and ensure all markets are represented.
+- **Trending Markets:** Updated "Hot Questions" text from "Will [Team] win..." to "Will [Team] Top the [League] Index?" for clearer financial terminology.
+- **Sidebar:** Reordered Sports menu to: Football, F1, Golf, Cricket.
+- **Auth UI:** Removed "Login to Your Account" header text from Login Modal.
+- **Auth UI:** Updated Signup Modal slogan to "Join our trading community" and hyperlinked the Privacy Policy.
+- **Auth UI:** Prioritized "Saudi Arabia" in Country and Phone Number selection lists.
+
 ## [2.7] - 2025-12-05
 ### Changed
 - **User Journey - Sign Up Flow:** Sign Up → Email Verification (with inline success toast) → WhatsApp Verification (with inline success toast) → "Account Created" success screen → Redirects to Login.
