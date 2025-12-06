@@ -19,22 +19,11 @@ export interface Position {
     current_value?: number;
 }
 
-export const fetchWallet = async (authUserId: string) => {
-    // First, get the public user ID from auth_user_id
-    const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', authUserId)
-        .single();
-
-    if (userError || !userData) {
-        throw new Error('User profile not found');
-    }
-
+export const fetchWallet = async (userId: string) => {
     const { data, error } = await supabase
         .from('wallets')
         .select('*')
-        .eq('user_id', userData.id)
+        .eq('user_id', userId)
         .single();
 
     if (error) throw error;
@@ -47,22 +36,11 @@ export const fetchWallet = async (authUserId: string) => {
     };
 };
 
-export const fetchPortfolio = async (authUserId: string) => {
-    // First, get the public user ID from auth_user_id
-    const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', authUserId)
-        .single();
-
-    if (userError || !userData) {
-        return [];
-    }
-
+export const fetchPortfolio = async (userId: string) => {
     const { data, error } = await supabase
         .from('positions')
         .select('*')
-        .eq('user_id', userData.id);
+        .eq('user_id', userId);
 
     if (error) throw error;
     return data as Position[];
@@ -396,7 +374,7 @@ export interface ForgotPasswordResponse {
 export const requestPasswordReset = async (email: string): Promise<ForgotPasswordResponse> => {
     // Pass the current origin so the reset link redirects back to the correct app URL
     const redirectUrl = window.location.origin;
-    
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/forgot-password`, {
         method: 'POST',
         headers: {
