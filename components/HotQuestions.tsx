@@ -126,11 +126,11 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
 
               <div className="mt-auto grid grid-cols-2 gap-3">
                 <button className="flex flex-col items-center justify-center bg-[#3AA189]/10 hover:bg-[#3AA189]/20 border border-[#3AA189]/30 rounded-lg p-2 transition-colors group/btn">
-                  <span className="text-xs text-[#3AA189] font-medium mb-1">Yes</span>
+                  <span className="text-xs text-[#3AA189] font-medium mb-1">Buy</span>
                   <span className="text-lg font-bold text-[#3AA189]">{q.yesPrice.toFixed(1)}</span>
                 </button>
                 <button className="flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg p-2 transition-colors group/btn">
-                  <span className="text-xs text-red-400 font-medium mb-1">No</span>
+                  <span className="text-xs text-red-400 font-medium mb-1">Sell</span>
                   <span className="text-lg font-bold text-red-400">{q.noPrice.toFixed(1)}</span>
                 </button>
               </div>
