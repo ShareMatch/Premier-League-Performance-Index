@@ -30,18 +30,24 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                 .join(', ');
 
             const prompt = `
-        You are an expert Islamic Finance & Sports Analyst for ShareMatch.
+        You are an Expert Sports Analyst for the ShareMatch trading platform.
         
-        Market: ${selectedMarket} Winner
-        Current Implied Probabilities: ${marketTeams}
+        Market: ${selectedMarket} Index
+        Current Market Prices: ${marketTeams}
         
         TASK:
         1. Search for the latest breaking news, injuries, and team morale impacting these specific teams/drivers.
-        2. Provide a "Hallal Investment Analysis" - focus on fundamentals, performance, and ethical competition. Avoid gambling terminology like "bets", "odds", "wager". Use "investment", "probability", "position".
-        3. Identify 1 Undervalued Asset and 1 Overvalued Asset based on the divergence between public sentiment/news and current market price.
-        4. Format with clean Markdown (headers, bullet points).
+        2. Provide a technical analysis of the market. Focus on fundamentals, performance, and momentum.
+        3. Identify 1 Undervalued Asset and 1 Overvalued Asset based on the divergence between sentiment and current market price.
+        4. Format with clean Markdown (headers, bullet points). Start directly with the analysis title.
         
-        Style: Professional, insightful, concise.
+        STRICT TERMINOLOGY GUIDELINES:
+        - DO NOT use religious terms like "Halal", "Islamic", "Sharia", "Haram". The analysis must be compliant in *principle* (ethical, no gambling), but must NOT use the labels.
+        - DO NOT use gambling terms like "bet", "odds", "wager", "gamble". Use "trade", "position", "sentiment", "forecast".
+        - DO NOT use "Win" or "Winner" when referring to the market outcome. Use "Top the Index" or "finish first".
+        - DO NOT provide meta-commentary or conversational openings (e.g., "Okay, here is..."). Start immediately with the content.
+        
+        Style: Professional, insightful, concise, data-driven.
       `;
 
             const response = await ai.models.generateContent({
@@ -85,8 +91,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                                     key={market}
                                     onClick={() => setSelectedMarket(market)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selectedMarket === market
-                                            ? 'bg-[#3AA189] text-white shadow-lg shadow-[#3AA189]/20'
-                                            : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800'
+                                        ? 'bg-[#3AA189] text-white shadow-lg shadow-[#3AA189]/20'
+                                        : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800'
                                         }`}
                                 >
                                     {market}
