@@ -85,7 +85,7 @@ const App: React.FC = () => {
     });
 
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
-      fetchPortfolio(user.id).then(setPortfolio);
+      fetchPortfolio(publicUserId).then(setPortfolio);
     });
 
     const assetsSubscription = subscribeToAssets(() => {
