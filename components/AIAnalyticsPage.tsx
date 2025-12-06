@@ -80,69 +80,58 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                     <p className="text-gray-400 max-w-2xl mx-auto">
                         Exclusive deep-dive analysis for our community. Powered by real-time data and grounded in Sharia-compliant investment principles.
                     </p>
-                </div>
-
-                {/* Controls */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 backdrop-blur-sm">
-                    <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                        <div className="flex gap-2">
-                            {(['EPL', 'F1', 'SPL', 'UCL'] as const).map(market => (
-                                <button
-                                    key={market}
-                                    onClick={() => setSelectedMarket(market)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selectedMarket === market
-                                        ? 'bg-[#3AA189] text-white shadow-lg shadow-[#3AA189]/20'
-                                        : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800'
                                         }`}
                                 >
-                                    {market}
-                                </button>
+                    {market}
+                </button>
                             ))}
-                        </div>
+            </div>
 
-                        <button
-                            onClick={getAnalysis}
-                            disabled={loading}
-                            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#3AA189] to-[#2F8E75] hover:from-[#42B59A] hover:to-[#36A386] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    Processing...
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-5 h-5" />
-                                    Generate Analysis
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Results */}
-                {analysis ? (
-                    <div className="bg-[#0B1221] border border-gray-800 rounded-2xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-                        <div className="prose prose-invert max-w-none">
-                            <div className="whitespace-pre-wrap leading-relaxed text-gray-300">
-                                {analysis}
-                            </div>
-                        </div>
-                        <div className="mt-8 pt-6 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span>AI-generated analysis is for informational purposes only. Past performance does not guarantee future results.</span>
-                        </div>
-                    </div>
+            <button
+                onClick={getAnalysis}
+                disabled={loading}
+                className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#3AA189] to-[#2F8E75] hover:from-[#42B59A] hover:to-[#36A386] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+                {loading ? (
+                    <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Processing...
+                    </>
                 ) : (
-                    !loading && (
-                        <div className="text-center py-20 border-2 border-dashed border-gray-800 rounded-2xl text-gray-500">
-                            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                            <p>Select a market and click "Generate Analysis" to begin.</p>
-                        </div>
-                    )
+                    <>
+                        <Sparkles className="w-5 h-5" />
+                        Generate Analysis
+                    </>
                 )}
+            </button>
+        </div>
+                </div >
+
+    {/* Results */ }
+{
+    analysis ? (
+        <div className="bg-[#0B1221] border border-gray-800 rounded-2xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+            <div className="prose prose-invert max-w-none">
+                <div className="whitespace-pre-wrap leading-relaxed text-gray-300">
+                    {analysis}
+                </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
+                <AlertTriangle className="w-4 h-4" />
+                <span>AI-generated analysis is for informational purposes only. Past performance does not guarantee future results.</span>
             </div>
         </div>
+    ) : (
+        !loading && (
+            <div className="text-center py-20 border-2 border-dashed border-gray-800 rounded-2xl text-gray-500">
+                <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p>Select a market and click "Generate Analysis" to begin.</p>
+            </div>
+        )
+    )
+}
+            </div >
+        </div >
     );
 };
 

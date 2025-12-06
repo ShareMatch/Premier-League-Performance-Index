@@ -12,7 +12,7 @@ interface NewsItem {
 }
 
 interface NewsFeedProps {
-    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'Global';
+    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Global';
 }
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
@@ -30,12 +30,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             case 'SPL': return 'Saudi Pro League News Wire';
             case 'WC': return 'FIFA World Cup News Wire';
             case 'F1': return 'Formula 1 News Wire';
+            case 'NBA': return 'NBA News Wire';
+            case 'NFL': return 'NFL News Wire';
             default: return 'Global Sports News Wire';
         }
     };
 
     const title = getTitle(topic);
-    const promptContext = topic === 'F1' ? 'Formula 1' : 'Football';
+    const promptContext = topic === 'F1' ? 'Formula 1' : topic === 'NBA' ? 'Basketball' : topic === 'NFL' ? 'American Football' : 'Football';
 
     const fetchNews = async () => {
         setLoading(true);
