@@ -10,13 +10,14 @@ import HomeDashboard from './components/HomeDashboard';
 import OrderBookRow from './components/OrderBookRow';
 import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
+import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME'>('HOME');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -109,6 +110,20 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
+  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS') => {
+    if (league === 'AI_ANALYTICS') {
+      if (!user) {
+        alert("Please login to access the AI Analytics Engine.");
+        return;
+      }
+      if (!portfolio || portfolio.length === 0) {
+        alert("Exclusive Access: The AI Analytics Engine is available only to token holders.");
+        return;
+      }
+    }
+    setActiveLeague(league);
+  };
+
   const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
     // Calculate max quantity based on available funds (for buy) or portfolio holdings (for sell)
     let maxQuantity = 0;
@@ -170,6 +185,7 @@ const App: React.FC = () => {
       case 'SPL': return 'Saudi Pro League';
       case 'F1': return 'Formula 1';
       case 'HOME': return 'Home Dashboard';
+      case 'AI_ANALYTICS': return 'AI Analytics Engine';
     }
   };
 
@@ -196,7 +212,7 @@ const App: React.FC = () => {
         isOpen={isMobileMenuOpen}
         setIsOpen={setIsMobileMenuOpen}
         activeLeague={activeLeague}
-        onLeagueChange={setActiveLeague}
+        onLeagueChange={handleNavigate}
       />
 
       {/* Main Content Area */}
@@ -214,9 +230,11 @@ const App: React.FC = () => {
 
                 {activeLeague === 'HOME' ? (
                   <HomeDashboard
-                    onNavigate={setActiveLeague}
+                    onNavigate={handleNavigate}
                     teams={allAssets}
                   />
+                ) : activeLeague === 'AI_ANALYTICS' ? (
+                  <AIAnalyticsPage teams={allAssets} />
                 ) : (
                   <div className="flex flex-col h-full">
                     {/* Compact Header */}
@@ -273,7 +291,8 @@ const App: React.FC = () => {
             </div>
 
             {/* Ticker at the bottom of the center content */}
-            <Ticker onNavigate={setActiveLeague} teams={allAssets.filter((a: any) => a.market === 'EPL')} />
+            {/* Ticker at the bottom of the center content */}
+            <Ticker onNavigate={handleNavigate} teams={allAssets} />
           </div>
 
           {/* Right Panel - Hidden on mobile, visible on desktop */}
@@ -284,7 +303,7 @@ const App: React.FC = () => {
               onCloseTradeSlip={handleCloseTradeSlip}
               onConfirmTrade={handleConfirmTrade}
               allAssets={allAssets}
-              onNavigate={setActiveLeague}
+              onNavigate={handleNavigate}
               leagueName={getLeagueTitle()}
             />
           </div>

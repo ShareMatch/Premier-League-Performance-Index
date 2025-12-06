@@ -33,7 +33,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
       generatedQuestions.push({
         id: 'epl-1',
         market: 'EPL',
-        question: `Will ${top.name} win the Premier League?`,
+        question: `Will ${top.name} Top the Premier League Index?`,
         yesPrice: top.offer,
         noPrice: top.bid, // Using bid as proxy for "No" sell price
         volume: '£1.2M',
@@ -48,7 +48,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
       generatedQuestions.push({
         id: 'f1-1',
         market: 'F1',
-        question: `Will ${top.name} win the Drivers' Championship?`,
+        question: `Will ${top.name} Top the Drivers' Championship Index?`,
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£850K',
@@ -63,7 +63,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
       generatedQuestions.push({
         id: 'spl-1',
         market: 'SPL',
-        question: `Will ${top.name} win the Saudi Pro League?`,
+        question: `Will ${top.name} Top the Saudi Pro League Index?`,
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£420K',
@@ -78,7 +78,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
       generatedQuestions.push({
         id: 'ucl-1',
         market: 'UCL',
-        question: `Will ${top.name} win the Champions League?`,
+        question: `Will ${top.name} Top the Champions League Index?`,
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£2.1M',

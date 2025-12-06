@@ -51,7 +51,13 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             if (error) throw error;
 
             if (data && data.length > 0) {
-                setNewsItems(data);
+                // Filter for Sharia compliance (remove gambling/betting/haram keywords)
+                const haramKeywords = ['betting', 'gamble', 'casino', 'poker', 'wager', 'bookmaker', 'odds', 'wine', 'beer', 'alcohol'];
+                const filteredData = data.filter(item => {
+                    const text = (item.headline + ' ' + (item.source || '')).toLowerCase();
+                    return !haramKeywords.some(keyword => text.includes(keyword));
+                });
+                setNewsItems(filteredData);
             }
 
             // 2. Check if update is needed (Lazy Update)

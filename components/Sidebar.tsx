@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search } from 'lucide-react';
+import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -34,19 +34,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             { label: 'FIFA World Cup', id: 'WC', active: activeLeague === 'WC' },
           ]
         },
-        { label: 'Golf', badge: 'SOON' },
-        { label: 'Cricket', badge: 'SOON' },
         {
           label: 'F1',
           subItems: [
             { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
           ]
         },
+        { label: 'Golf', badge: 'SOON' },
+        { label: 'Cricket', badge: 'SOON' },
       ]
     },
     { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
     { icon: Cloud, label: 'Climate', badge: 'SOON' },
     { icon: Globe, label: 'Global Events', badge: 'SOON' },
+    { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
   ];
 
   return (
@@ -67,9 +68,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 flex items-center gap-3">
-          <img 
-            src="/logos/white_icon_on_green.jpeg" 
-            alt="ShareMatch" 
+          <img
+            src="/logos/white_icon_on_green.jpeg"
+            alt="ShareMatch"
             className="w-8 h-8 rounded object-cover"
           />
           <span className="text-xl font-bold text-white">

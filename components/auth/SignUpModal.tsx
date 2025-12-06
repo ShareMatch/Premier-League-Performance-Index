@@ -49,13 +49,13 @@ const EyeIcon = ({ off = false }: { off?: boolean }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     {off ? (
       <>
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </>
     ) : (
       <>
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </>
     )}
   </svg>
@@ -90,9 +90,8 @@ const InputField = ({
       {label}
     </label>
     <div
-      className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${
-        error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-      }`}
+      className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
+        }`}
       style={{ height: '36px', padding: '0 16px' }}
     >
       <input
@@ -145,9 +144,8 @@ const PasswordField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${
-          error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-        }`}
+        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
+          }`}
         style={{ height: '36px', padding: '0 16px' }}
       >
         <input
@@ -236,9 +234,8 @@ const PhoneInputField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all relative ${
-          error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-        }`}
+        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all relative ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
+          }`}
         style={{ height: '36px', padding: '0 16px' }}
         ref={dropdownRef}
       >
@@ -297,9 +294,8 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${
-                    c.code === countryIso ? 'bg-[#3AA189]/10' : ''
-                  }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? 'bg-[#3AA189]/10' : ''
+                    }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -373,9 +369,8 @@ const CountrySelectField = ({
           setIsOpen(!isOpen);
           setSearch('');
         }}
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left relative ${
-          error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
-        }`}
+        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left relative ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
+          }`}
         style={{ height: '36px', padding: '0 16px' }}
       >
         {selectedCountry ? (
@@ -395,7 +390,7 @@ const CountrySelectField = ({
           </span>
         )}
         <svg className="w-4 h-4 text-black ml-2 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
         </svg>
 
         {/* Dropdown */}
@@ -427,9 +422,8 @@ const CountrySelectField = ({
                     onChange(c.code);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${
-                    c.code === value ? 'bg-[#3AA189]/10' : ''
-                  }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${c.code === value ? 'bg-[#3AA189]/10' : ''
+                    }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -477,7 +471,7 @@ const DatePickerField = ({
 
   const maxAllowedDate = new Date();
   maxAllowedDate.setFullYear(maxAllowedDate.getFullYear() - 18);
-  
+
   const currentYear = new Date().getFullYear();
   const maxYear = currentYear - 18;
   const yearOptions = Array.from({ length: 100 }, (_, i) => maxYear - i);
@@ -528,9 +522,8 @@ const DatePickerField = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left ${
-          error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
-        }`}
+        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
+          }`}
         style={{ height: '36px', padding: '0 16px' }}
       >
         <span
@@ -540,7 +533,7 @@ const DatePickerField = ({
           {formatted || 'Select date of birth'}
         </span>
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 17C0 18.7 1.3 20 3 20H17C18.7 20 20 18.7 20 17V9H0V17ZM17 2H15V1C15 0.4 14.6 0 14 0C13.4 0 13 0.4 13 1V2H7V1C7 0.4 6.6 0 6 0C5.4 0 5 0.4 5 1V2H3C1.3 2 0 3.3 0 5V7H20V5C20 3.3 18.7 2 17 2Z" fill="#000000"/>
+          <path d="M0 17C0 18.7 1.3 20 3 20H17C18.7 20 20 18.7 20 17V9H0V17ZM17 2H15V1C15 0.4 14.6 0 14 0C13.4 0 13 0.4 13 1V2H7V1C7 0.4 6.6 0 6 0C5.4 0 5 0.4 5 1V2H3C1.3 2 0 3.3 0 5V7H20V5C20 3.3 18.7 2 17 2Z" fill="#000000" />
         </svg>
       </button>
 
@@ -575,9 +568,8 @@ const DatePickerField = ({
                   type="button"
                   onClick={() => handleSelect(day)}
                   disabled={!day || tooRecent}
-                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-black ${
-                    !day ? 'invisible' : tooRecent ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#3AA189] text-white' : 'hover:bg-gray-100'
-                  }`}
+                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-black ${!day ? 'invisible' : tooRecent ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#3AA189] text-white' : 'hover:bg-gray-100'
+                    }`}
                 >
                   {day}
                 </button>
@@ -612,9 +604,8 @@ const Checkbox = ({
         id={id}
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${
-          error ? 'border-red-500' : 'border-white'
-        } bg-transparent transition-all checked:border-[#3AA189] checked:bg-[#3AA189]`}
+        className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${error ? 'border-red-500' : 'border-white'
+          } bg-transparent transition-all checked:border-[#3AA189] checked:bg-[#3AA189]`}
       />
       <span className="absolute inset-0 flex items-center justify-center opacity-0 peer-checked:opacity-100 text-black pointer-events-none">
         <Check size={10} strokeWidth={4} />
@@ -784,8 +775,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
       {/* Modal */}
       <div
         className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4"
-        style={{ 
-          maxWidth: 'min(90vw, 900px)', 
+        style={{
+          maxWidth: 'min(90vw, 900px)',
           maxHeight: '95vh',
           borderRadius: '40px',
           background: 'rgba(4, 34, 34, 0.60)',
@@ -812,9 +803,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
           >
             {step === 1 ? 'Create Your\nAccount' : 'Security\nand\nVerification'}
           </h1>
-          <p 
-            className="text-center text-base" 
-            style={{ 
+          <p
+            className="text-center text-base"
+            style={{
               fontFamily: "'Inter', sans-serif",
               background: 'linear-gradient(180deg, #6F7D7D 0%, #CAE3E3 100%)',
               backgroundClip: 'text',
@@ -822,7 +813,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Join the new era of smart, social investing — where traders connect, compete, and grow together.
+            Join our trading community.
           </p>
         </div>
 
@@ -838,21 +829,21 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
 
         {/* Right Side - Form */}
         <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
-            <div
-              className="bg-[#021A1A] rounded-lg p-3 md:p-4 flex flex-col"
-              style={{
-                border: '1px solid transparent',
-                backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
-                backgroundOrigin: 'border-box',
-                backgroundClip: 'padding-box, border-box',
-                minHeight: '460px',
-              }}
-            >
+          <div
+            className="bg-[#021A1A] rounded-lg p-3 md:p-4 flex flex-col"
+            style={{
+              border: '1px solid transparent',
+              backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
+              backgroundOrigin: 'border-box',
+              backgroundClip: 'padding-box, border-box',
+              minHeight: '460px',
+            }}
+          >
             <h2
               className="text-white mb-3"
               style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.25rem', fontWeight: 700 }}
             >
-              {step === 1 ? 'Basic Information' : 'Security & Access'}
+              {step === 2 && 'Security & Access'}
             </h2>
 
             {errors.form && (
@@ -873,7 +864,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                     error={errors.fullName}
                     icon={
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                       </svg>
                     }
                   />
@@ -907,7 +898,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                     error={errors.email}
                     icon={
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                       </svg>
                     }
                   />
@@ -936,7 +927,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                     onChange={handleChange}
                     icon={
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" />
                       </svg>
                     }
                   />
@@ -1006,7 +997,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                     onChange={(checked) => setFormData((p) => ({ ...p, agreeToTerms: checked }))}
                     error={!!errors.agreeToTerms}
                   >
-                    I agree to the Terms of Service and Privacy Policy
+                    <span>
+                      I agree to the Terms of Service and <a href="https://sharematch.me/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">Privacy Policy</a>
+                    </span>
                   </Checkbox>
                 </div>
               )}

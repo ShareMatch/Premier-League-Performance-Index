@@ -8,10 +8,10 @@ export interface Country {
 }
 
 export const countries: Country[] = [
+  { name: "Saudi Arabia", code: "SA", dial_code: "+966", flag: "🇸🇦", format: "XX XXX XXXX", length: 9 },
   { name: "United States", code: "US", dial_code: "+1", flag: "🇺🇸", format: "XXX XXX XXXX", length: 10 },
   { name: "United Kingdom", code: "GB", dial_code: "+44", flag: "🇬🇧", format: "XXXX XXXXXX", length: 10 },
   { name: "United Arab Emirates", code: "AE", dial_code: "+971", flag: "🇦🇪", format: "XX XXX XXXX", length: 9 },
-  { name: "Saudi Arabia", code: "SA", dial_code: "+966", flag: "🇸🇦", format: "XX XXX XXXX", length: 9 },
   { name: "India", code: "IN", dial_code: "+91", flag: "🇮🇳", format: "XXXXX XXXXX", length: 10 },
   { name: "Pakistan", code: "PK", dial_code: "+92", flag: "🇵🇰", format: "XXX XXXXXXX", length: 10 },
   { name: "Canada", code: "CA", dial_code: "+1", flag: "🇨🇦", format: "XXX XXX XXXX", length: 10 },

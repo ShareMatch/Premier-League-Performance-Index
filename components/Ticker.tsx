@@ -9,8 +9,36 @@ interface TickerProps {
 
 const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
     const tickerItems = useMemo(() => {
-        // Use provided teams, shuffle and pick 20 items
-        return teams.sort(() => 0.5 - Math.random()).slice(0, Math.min(20, teams.length));
+        // Group teams by market
+        const marketGroups: { [key: string]: Team[] } = {};
+        teams.forEach(t => {
+            const m = t.market || 'Unknown';
+            if (!marketGroups[m]) marketGroups[m] = [];
+            marketGroups[m].push(t);
+        });
+
+        // Shuffle within groups
+        Object.keys(marketGroups).forEach(k => {
+            marketGroups[k] = marketGroups[k].sort(() => 0.5 - Math.random());
+        });
+
+        const result: Team[] = [];
+        const markets = Object.keys(marketGroups);
+        let active = true;
+
+        // Round robin selection to avoid consecutive same-market items
+        while (result.length < 20 && active) {
+            active = false;
+            for (const m of markets) {
+                if (marketGroups[m].length > 0) {
+                    result.push(marketGroups[m].pop()!);
+                    active = true;
+                    if (result.length >= 20) break;
+                }
+            }
+        }
+
+        return result;
     }, [teams]);
 
     const handleItemClick = (team: Team) => {
