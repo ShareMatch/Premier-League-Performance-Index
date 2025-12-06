@@ -14,6 +14,7 @@ import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
+import { seedSportsAssets } from './lib/seedSports';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
@@ -76,6 +77,7 @@ const App: React.FC = () => {
       loadUserData();
     }
     loadAssets();
+    seedSportsAssets(); // Auto-seed if missing
 
     // Set up Real-Time Subscriptions - only when we have the public user ID
     if (!user || !publicUserId) return;
