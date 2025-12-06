@@ -4,8 +4,8 @@ import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'HOME' | 'AI_ANALYTICS') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -38,6 +38,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           label: 'F1',
           subItems: [
             { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
+          ]
+        },
+        {
+          label: 'Basketball',
+          subItems: [
+            { label: 'NBA', id: 'NBA', active: activeLeague === 'NBA' }
+          ]
+        },
+        {
+          label: 'American Football',
+          subItems: [
+            { label: 'NFL', id: 'NFL', active: activeLeague === 'NFL' }
           ]
         },
         { label: 'Golf', badge: 'SOON' },
@@ -130,15 +142,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                         onClick={() => subItem.subItems && toggleExpand(subItem.label)}
                         className={`
                           w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                          ${subItem.badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200'}
+                          ${(subItem as any).badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200'}
                           text-gray-400
                         `}
                       >
                         <div className="flex items-center gap-2">
                           <span>{subItem.label}</span>
-                          {subItem.badge && (
+                          {(subItem as any).badge && (
                             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-800 text-gray-500 rounded border border-gray-700">
-                              {subItem.badge}
+                              {(subItem as any).badge}
                             </span>
                           )}
                         </div>
@@ -156,12 +168,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                             <button
                               key={deepItem.label}
                               onClick={() => deepItem.id && onLeagueChange(deepItem.id as any)}
-                              disabled={!!deepItem.badge}
+                              disabled={!!(deepItem as any).badge}
                               className={`
                                 w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
                                 ${deepItem.active
                                   ? 'bg-[#3AA189] text-white font-medium shadow-lg shadow-[#3AA189]/20'
-                                  : deepItem.badge
+                                  : (deepItem as any).badge
                                     ? 'text-gray-600 cursor-not-allowed'
                                     : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
                                 }
@@ -169,9 +181,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                             >
                               <div className="flex items-center justify-between">
                                 <span>{deepItem.label}</span>
-                                {deepItem.badge && (
+                                {(deepItem as any).badge && (
                                   <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-800 text-gray-600 rounded border border-gray-700">
-                                    {deepItem.badge}
+                                    {(deepItem as any).badge}
                                   </span>
                                 )}
                               </div>
