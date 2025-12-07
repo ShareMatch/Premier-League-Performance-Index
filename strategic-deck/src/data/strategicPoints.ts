@@ -15,7 +15,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "Scroll",
         points: [
             "Verified by a Shariah Supervisory Board with regional credibility.",
-            "First and only Shariah-compliant prediction market globally.",
+            "First and only Shariah-compliant real-money outcome trading venue.",
             "Creates an immediate regulatory moat across GCC, especially KSA.",
             "Zero credible competition in the only market that matters."
         ]
@@ -23,22 +23,22 @@ export const strategicPoints: StrategicPoint[] = [
     {
         id: 2,
         title: "ShareMatch, Today: The Tech Stack",
-        subtitle: "Current Status & Architecture",
+        subtitle: "Enterprise Grade Architecture",
         icon: "Cpu",
         points: [
-            "A stable, high-frequency trading platform built on modern rails."
+            "A stable, high-frequency exchange engine built on modern rails."
         ],
         specialComponent: 'tech-stack'
     },
     {
         id: 3,
-        title: "Saudi Royal Family Shareholder, Delivering the First 1,000 VIPs",
+        title: "Saudi Royal Family Shareholder: Strategic Access to First 1,000 VIPs",
         subtitle: "Unmatched Market Access",
         icon: "Crown",
         points: [
             "Direct cap table involvement from the House of Saud.",
-            "Pre-committed pipeline of the first 1,000 high-value VIP accounts.",
-            "Removes the single biggest risk in any marketplace: initial liquidity and user acquisition."
+            "Secured pipeline of the first 1,000 high-value VIP accounts.",
+            "Eliminates the 'cold start' liquidity risk inherent in new marketplaces."
         ]
     },
     {
@@ -48,7 +48,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "FileBadge",
         points: [
             "Protects the underlying economic engine and settlement layer.",
-            "Raises defensibility well beyond simple 'sports trading'.",
+            "Elevates proposition from 'sports betting' to 'proprietary asset class'.",
             "Gives institutional investors clarity on long-term IP value."
         ]
     },
@@ -60,7 +60,7 @@ export const strategicPoints: StrategicPoint[] = [
         points: [
             "Entire market runs on fully-owned smart contract rails.",
             "Immutable audit trail, provable ownership, instant settlement logic.",
-            "A technical moat that makes Web2 incumbents obsolete."
+            "A structural moat that renders Web2 legacy architectures obsolete."
         ]
     },
     {
@@ -69,9 +69,9 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Bank-Grade Security",
         icon: "Vault",
         points: [
-            "One of the most secure and reputable global custodians.",
+            "Partnered with one of the most secure global custodians.",
             "Infrastructure ready for eight and nine-figure AUM flows.",
-            "Removes counterparty risk concerns for VIPs and regulators."
+            "Eliminates counterparty risk concerns for VIPs and regulators."
         ]
     },
     {
@@ -80,9 +80,9 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Institutional Liquidity",
         icon: "AreaChart",
         points: [
-            "Largest iGaming Broker Worldwide guarantees depth of markets from day one.",
-            "Allows tight spreads, fast fills, and institutional-grade execution quality.",
-            "Instantly elevates ShareMatch from 'startup' to 'professional venue'."
+            "Global iGaming Broker guarantees depth of markets from day one.",
+            "Ensures tight spreads, fast fills, and institutional-grade execution.",
+            "Instantly elevates ShareMatch to a professional trading venue."
         ]
     },
     {
@@ -93,8 +93,8 @@ export const strategicPoints: StrategicPoint[] = [
         points: [
             "Canada: MSB-licensed subsidiary handles fiat banking rails.",
             "Poland: VASP-licensed subsidiary covers crypto operations.",
-            "Combined structure gives ShareMatch operational freedom across all on/off-ramps.",
-            "Removes a typical 18 to 24 month regulatory build window."
+            "Dual structure grants operational independence across all payment corridors.",
+            "Bypasses the typical 18-24 month regulatory lead time."
         ]
     },
     {
@@ -103,32 +103,32 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Enterprise Onboarding",
         icon: "ScanFace",
         points: [
-            "Sumsub for global identity verification.",
-            "My Inbox Media for OTP and 2FA delivery.",
-            "Enterprise-grade onboarding ready for mass VIP throughput."
+            "Sumsub integration for global identity verification.",
+            "My Inbox Media for enterprise-grade OTP and 2FA delivery.",
+            "Onboarding flow stress-tested for mass VIP throughput."
         ]
     },
     {
         id: 10,
-        title: "Self-Funded to Date, Now Raising £4M at £64M Post",
-        subtitle: "The Ask",
+        title: "Capital Strategy: Raising £4M at £64M Post-Money",
+        subtitle: "Investment Opportunity",
         icon: "TrendingUp",
         points: [
-            "Founders have funded product, compliance, and market entry themselves.",
-            "Zero external capital until a high-confidence inflection point.",
-            "Raise is for global scale, not survival."
+            "Founders have self-funded product, compliance, and market entry.",
+            "Zero external dilution until this high-confidence inflection point.",
+            "Capital is deployed strictly for global scale, not validation."
         ],
         specialComponent: 'valuation'
     },
     {
         id: 11,
         title: "Institutional Data Room Live",
-        subtitle: "Operational Readiness",
+        subtitle: "Due Diligence Ready",
         icon: "FolderLock",
         points: [
-            "Full institutional-grade data room already assembled.",
-            "Includes audited-style financial projections, regulatory documents, tech architecture, and detailed unit economics.",
-            "Shows we are operating like a Series A company at seed stage."
+            "Comprehensive institutional data room fully assembled.",
+            "Includes audited financial models, regulatory legal opinions, and tech architecture.",
+            "Demonstrates Series A operational maturity at Seed stage."
         ]
     },
     {
@@ -137,9 +137,9 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Forward Outlook",
         icon: "Milestone",
         points: [
-            "Seed Round: December 2025 (Current). Executing now to finalize compliance and launch.",
-            "Series A: February 2026. Scheduled rapidly post-launch to fuel KSA expansion.",
-            "Series B: May 2026. Targeted for global institutional scaling once volume critical mass is hit."
+            "Seed Round: December 2025 (Current). Finalizing launch logistics.",
+            "Series A: February 2026. Acceleration capital to capture KSA market share.",
+            "Series B: May 2026. Global expansion once critical liquidity mass is achieved."
         ]
     }
 ];

@@ -33,7 +33,7 @@ const TechStackViz: React.FC = () => {
                         <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400 shrink-0">
                             <Monitor className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-display font-semibold text-white truncate">Frontend</h3>
+                        <h3 className="text-lg font-display font-semibold text-white">Frontend</h3>
                     </div>
                     <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-start gap-2"><Zap className="w-4 h-4 text-brand mt-0.5 shrink-0" /> React 19 (Vite)</li>
@@ -49,7 +49,7 @@ const TechStackViz: React.FC = () => {
                         <div className="p-2.5 bg-brand/10 rounded-lg text-brand shrink-0">
                             <Database className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-display font-semibold text-white truncate">Backend</h3>
+                        <h3 className="text-lg font-display font-semibold text-white">Backend</h3>
                     </div>
                     <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-start gap-2"><Server className="w-4 h-4 text-brand mt-0.5 shrink-0" /> Supabase Platform</li>
@@ -65,7 +65,7 @@ const TechStackViz: React.FC = () => {
                         <div className="p-2.5 bg-amber-500/10 rounded-lg text-brand-accent shrink-0">
                             <BrainCircuit className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-display font-semibold text-white truncate">AI Engine</h3>
+                        <h3 className="text-lg font-display font-semibold text-white">AI Engine</h3>
                     </div>
                     <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-start gap-2"><Activity className="w-4 h-4 text-brand mt-0.5 shrink-0" /> Google Gemini Pro</li>
