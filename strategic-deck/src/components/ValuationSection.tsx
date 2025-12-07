@@ -10,7 +10,7 @@ const ValuationSection: React.FC = () => {
         { title: "Institutional Infra", desc: "Custody, KYC, Liquidity already built.", icon: ShieldCheck },
         { title: "Defendable IP", desc: "Patent and proprietary smart contracts.", icon: ShieldCheck },
         { title: "Zero Red Flags", desc: "KSA, GCC, and Canada alignment.", icon: CheckCircle2 },
-        { title: "Path to Unicorn", desc: "The CME of sports outcomes for the Middle East.", icon: TrendingUp },
+        { title: "Path to Unicorn", desc: "The CME of the real-world asset marketplace for the Middle East.", icon: TrendingUp },
     ];
 
     return (
