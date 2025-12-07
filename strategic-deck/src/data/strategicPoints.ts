@@ -137,9 +137,9 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Forward Outlook",
         icon: "Milestone",
         points: [
-            "Seed now. Series A and B structured with clear milestones and scale triggers.",
-            "Series A: Scheduled for 9 to 12 months post-launch, focused on KSA expansion and liquidity scaling.",
-            "Series B: Envisioned once volume passes critical mass, targeting global institutional onboarding."
+            "Seed Round: December 2025 (Current). Executing now to finalize compliance and launch.",
+            "Series A: February 2026. Scheduled rapidly post-launch to fuel KSA expansion.",
+            "Series B: May 2026. Targeted for global institutional scaling once volume critical mass is hit."
         ]
     }
 ];
