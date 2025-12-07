@@ -138,7 +138,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "Milestone",
         points: [
             "Seed Round: December 2025 (Current). Finalizing launch logistics.",
-            "Series A: February 2026. Acceleration capital to capture KSA market share.",
+            "Series A: February 2026. Acceleration capital to capture GCC market share.",
             "Series B: May 2026. Global expansion once critical liquidity mass is achieved."
         ]
     }
