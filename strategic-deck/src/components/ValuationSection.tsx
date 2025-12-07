@@ -4,7 +4,7 @@ import { CheckCircle2, TrendingUp, ShieldCheck, Crown } from 'lucide-react';
 
 const ValuationSection: React.FC = () => {
     const reasons = [
-        { title: "Category Monopoly", desc: "Blockchain Based trading venue.", icon: Crown },
+        { title: "Category Monopoly", desc: "Blockchain-based trading venue.", icon: Crown },
         { title: "Regulatory Certainty", desc: "Operates under strict Shariah-compliant classification.", icon: ShieldCheck },
         { title: "Pre-sold Demand", desc: "1,000 VIPs on day one.", icon: TrendingUp },
         { title: "Institutional Infra", desc: "Custody, KYC, Liquidity already built.", icon: ShieldCheck },
