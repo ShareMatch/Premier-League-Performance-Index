@@ -80,7 +80,7 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Institutional Liquidity",
         icon: "AreaChart",
         points: [
-            "Global iGaming Broker guarantees depth of markets from day one.",
+            "Global Liquidity Provider guarantees depth of markets from day one.",
             "Ensures tight spreads, fast fills, and institutional-grade execution.",
             "Instantly elevates ShareMatch to a professional trading venue."
         ]
