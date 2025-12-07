@@ -3,7 +3,7 @@ export interface StrategicPoint {
     title: string;
     subtitle?: string;
     points: string[];
-    icon?: string; // We'll map string to Lucide icon in component
+    icon?: string;
     specialComponent?: 'tech-stack' | 'valuation';
 }
 
@@ -12,6 +12,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 1,
         title: "Formal Shariah Approval from World-Renowned Scholars (SAHL)",
         subtitle: "Regulatory Moat",
+        icon: "Scroll",
         points: [
             "Verified by a Shariah Supervisory Board with regional credibility.",
             "First and only Shariah-compliant prediction market globally.",
@@ -23,6 +24,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 2,
         title: "ShareMatch, Today: The Tech Stack",
         subtitle: "Current Status & Architecture",
+        icon: "Cpu",
         points: [
             "A stable, high-frequency trading platform built on modern rails."
         ],
@@ -32,6 +34,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 3,
         title: "Saudi Royal Family Shareholder, Delivering the First 1,000 VIPs",
         subtitle: "Unmatched Market Access",
+        icon: "Crown",
         points: [
             "Direct cap table involvement from the House of Saud.",
             "Pre-committed pipeline of the first 1,000 high-value VIP accounts.",
@@ -42,6 +45,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 4,
         title: "Patent Pending on Core Matching and Tokenisation Technology",
         subtitle: "Defensible IP",
+        icon: "FileBadge",
         points: [
             "Protects the underlying economic engine and settlement layer.",
             "Raises defensibility well beyond simple 'sports trading'.",
@@ -52,6 +56,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 5,
         title: "World-First: All Trades Written to Proprietary Smart Contracts",
         subtitle: "Web3 Infrastructure",
+        icon: "Blocks",
         points: [
             "Entire market runs on fully-owned smart contract rails.",
             "Immutable audit trail, provable ownership, instant settlement logic.",
@@ -62,6 +67,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 6,
         title: "Custody Partner: OKX Institutional",
         subtitle: "Bank-Grade Security",
+        icon: "Vault",
         points: [
             "One of the most secure and reputable global custodians.",
             "Infrastructure ready for eight and nine-figure AUM flows.",
@@ -72,6 +78,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 7,
         title: "Liquidity Provision from Atlascope",
         subtitle: "Institutional Liquidity",
+        icon: "AreaChart",
         points: [
             "Largest iGaming Broker Worldwide guarantees depth of markets from day one.",
             "Allows tight spreads, fast fills, and institutional-grade execution quality.",
@@ -82,6 +89,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 8,
         title: "Regulatory Architecture: Two Compliance Entities Fully Owned",
         subtitle: "Global Access",
+        icon: "Globe2",
         points: [
             "Canada: MSB-licensed subsidiary handles fiat banking rails.",
             "Poland: CASP-licensed subsidiary covers crypto operations.",
@@ -93,6 +101,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 9,
         title: "KYC and OTP Infrastructure in Place",
         subtitle: "Enterprise Onboarding",
+        icon: "ScanFace",
         points: [
             "Sumsub for global identity verification.",
             "My Inbox Media for OTP and 2FA delivery.",
@@ -103,6 +112,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 10,
         title: "Self-Funded to Date, Now Raising £4M at £64M Post",
         subtitle: "The Ask",
+        icon: "TrendingUp",
         points: [
             "Founders have funded product, compliance, and market entry themselves.",
             "Zero external capital until a high-confidence inflection point.",
@@ -114,6 +124,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 11,
         title: "Institutional Data Room Live",
         subtitle: "Operational Readiness",
+        icon: "FolderLock",
         points: [
             "Full institutional-grade data room already assembled.",
             "Includes audited-style financial projections, regulatory documents, tech architecture, and detailed unit economics.",
@@ -124,6 +135,7 @@ export const strategicPoints: StrategicPoint[] = [
         id: 12,
         title: "Capital Roadmap",
         subtitle: "Forward Outlook",
+        icon: "Milestone",
         points: [
             "Seed now. Series A and B structured with clear milestones and scale triggers.",
             "Series A: Scheduled for 9 to 12 months post-launch, focused on KSA expansion and liquidity scaling.",

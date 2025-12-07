@@ -1,4 +1,3 @@
-
 import HeroSection from './components/HeroSection';
 import StrategicPoint from './components/StrategicPoint';
 import { strategicPoints } from './data/strategicPoints';
@@ -8,7 +7,7 @@ function App() {
     <main className="bg-gray-950 min-h-screen text-gray-100 selection:bg-brand/30 selection:text-brand-accent">
       <HeroSection />
 
-      <div className="flex flex-col gap-0 pb-32">
+      <div className="flex flex-col gap-0 pb-16">
         {strategicPoints.map((point, index) => (
           <StrategicPoint
             key={point.id}

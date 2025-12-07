@@ -28,14 +28,14 @@ const TechStackViz: React.FC = () => {
                 className="grid grid-cols-1 md:grid-cols-3 gap-8"
             >
                 {/* Frontend */}
-                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors">
+                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors h-full flex flex-col">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
                             <Monitor className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-display font-semibold text-white">Frontend</h3>
                     </div>
-                    <ul className="space-y-2 text-sm text-gray-400">
+                    <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-center gap-2"><Zap className="w-4 h-4 text-brand" /> React 19 (Vite)</li>
                         <li className="flex items-center gap-2"><Zap className="w-4 h-4 text-brand" /> TypeScript</li>
                         <li className="flex items-center gap-2"><Zap className="w-4 h-4 text-brand" /> Tailwind CSS (Emerald/Amber)</li>
@@ -44,14 +44,14 @@ const TechStackViz: React.FC = () => {
                 </motion.div>
 
                 {/* Backend */}
-                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors">
+                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors h-full flex flex-col">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-3 bg-brand/10 rounded-lg text-brand">
                             <Database className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-display font-semibold text-white">Backend</h3>
                     </div>
-                    <ul className="space-y-2 text-sm text-gray-400">
+                    <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-center gap-2"><Server className="w-4 h-4 text-brand" /> Supabase Platform</li>
                         <li className="flex items-center gap-2"><Server className="w-4 h-4 text-brand" /> Realtime Subscriptions</li>
                         <li className="flex items-center gap-2"><Server className="w-4 h-4 text-brand" /> Edge Functions</li>
@@ -60,14 +60,14 @@ const TechStackViz: React.FC = () => {
                 </motion.div>
 
                 {/* AI & Data */}
-                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors">
+                <motion.div variants={item} className="bg-gray-800/50 p-6 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors h-full flex flex-col">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="p-3 bg-amber-500/10 rounded-lg text-brand-accent">
                             <BrainCircuit className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-display font-semibold text-white">AI Engine</h3>
                     </div>
-                    <ul className="space-y-2 text-sm text-gray-400">
+                    <ul className="space-y-2 text-sm text-gray-400 flex-1">
                         <li className="flex items-center gap-2"><Activity className="w-4 h-4 text-brand" /> Google Gemini Pro</li>
                         <li className="flex items-center gap-2"><Activity className="w-4 h-4 text-brand" /> Live Performance Analysis</li>
                         <li className="flex items-center gap-2"><Activity className="w-4 h-4 text-brand" /> Context-Aware Analytics</li>
