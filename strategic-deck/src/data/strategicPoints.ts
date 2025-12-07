@@ -10,14 +10,14 @@ export interface StrategicPoint {
 export const strategicPoints: StrategicPoint[] = [
     {
         id: 1,
-        title: "Formal Shariah Approval from World-Renowned Scholars (SAHL)",
+        title: "Formal Shariah Approval from World-Renowned Scholars",
         subtitle: "Regulatory Moat",
         icon: "Scroll",
         points: [
             "Verified by a Shariah Supervisory Board with regional credibility.",
             "World's first fully Shariah-compliant digital markets platform, built on an asset-backed framework.",
-            "Creates an immediate regulatory moat across GCC, especially KSA.",
-            "Zero credible competition in the only market that matters."
+            "Creates an immediate regulatory moat across the GCC and beyond from KSA experts.",
+            "Zero compliant and legal competition in this unique market space."
         ]
     },
     {
@@ -43,7 +43,7 @@ export const strategicPoints: StrategicPoint[] = [
     },
     {
         id: 4,
-        title: "Patent Pending on Core Matching and Tokenisation Technology",
+        title: "Patentable Technology: An Industry First",
         subtitle: "Defensible IP",
         icon: "FileBadge",
         points: [
@@ -65,11 +65,11 @@ export const strategicPoints: StrategicPoint[] = [
     },
     {
         id: 6,
-        title: "Custody Partner: OKX Institutional",
+        title: "Custody Partner: TBC",
         subtitle: "Bank-Grade Security",
         icon: "Vault",
         points: [
-            "Partnered with one of the most secure global custodians.",
+            "In discussions with secure and reputable global custodians.",
             "Infrastructure ready for eight and nine-figure AUM flows.",
             "Eliminates counterparty risk concerns for VIPs and regulators."
         ]
