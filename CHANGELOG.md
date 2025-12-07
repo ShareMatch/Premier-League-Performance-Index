@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9] - 2025-12-06
+### Added
+- **Markets:** Full integration of NBA (Basketball) and NFL (American Football) markets.
+- **Assets:** Added 57 new assets (30 NBA, 27 NFL) with real-time pricing and official colors.
+- **Database:** Implemented auto-seeding mechanism for missing sports assets to ensure data integrity.
+- **News Feed:** Dedicated news wires for "Basketball" and "American Football" topics.
+- **AI Analytics:** Expanded coverage to include deep-dive analysis for NBA and NFL indices.
+
+### Changed
+- **AI Analytics:** Refined AI prompt engineering to remove explicit religious terminology while maintaining Sharia-compliant tone (e.g., using "Top the Index" instead of "Win").
+- **Sidebar:** Added new "Basketball" and "American Football" sections with "NBA" and "NFL" sub-items.
+
 ## [2.8] - 2025-12-06
 ### Added
 - **AI Analytics Engine:** New paywalled section for token holders offering Gemini-powered market analysis.
