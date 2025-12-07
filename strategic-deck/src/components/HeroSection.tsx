@@ -15,17 +15,21 @@ const HeroSection: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
+                    <div className="mb-8 flex justify-center">
+                        <img src="/logo.svg" alt="ShareMatch" className="h-16 md:h-20 opacity-90" />
+                    </div>
+
                     <span className="inline-block py-1 px-3 rounded-full bg-brand/10 border border-brand/20 text-brand text-sm font-semibold tracking-wide uppercase mb-6">
                         Internal Document
                     </span>
 
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-display font-bold text-white mb-6 leading-tight">
-                        ShareMatch: <br />
-                        <span className="text-gradient">The Strategic Position</span>
+                        The Strategic <br />
+                        <span className="text-gradient">Position</span>
                     </h1>
 
                     <p className="text-xl md:text-2xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
-                        Ten pillars defining our trajectory to a <span className="text-brand-accent font-medium">£64M valuation</span> and beyond.
+                        Twelve pillars defining our trajectory to a <span className="text-brand-accent font-medium">£64M valuation</span> and beyond.
                     </p>
                 </motion.div>
             </div>

@@ -92,7 +92,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "Globe2",
         points: [
             "Canada: MSB-licensed subsidiary handles fiat banking rails.",
-            "Poland: CASP-licensed subsidiary covers crypto operations.",
+            "Poland: VASP-licensed subsidiary covers crypto operations.",
             "Combined structure gives ShareMatch operational freedom across all on/off-ramps.",
             "Removes a typical 18 to 24 month regulatory build window."
         ]
