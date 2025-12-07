@@ -15,7 +15,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "Scroll",
         points: [
             "Verified by a Shariah Supervisory Board with regional credibility.",
-            "First and only Shariah-compliant real-money outcome trading venue.",
+            "World's first fully Shariah-compliant digital markets platform, built on an asset-backed framework.",
             "Creates an immediate regulatory moat across GCC, especially KSA.",
             "Zero credible competition in the only market that matters."
         ]
