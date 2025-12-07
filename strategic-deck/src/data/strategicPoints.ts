@@ -48,7 +48,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "FileBadge",
         points: [
             "Protects the underlying economic engine and settlement layer.",
-            "Elevates proposition from 'sports betting' to 'proprietary asset class'.",
+            "Fundamentally elevates the proposition to a 'proprietary asset class'.",
             "Gives institutional investors clarity on long-term IP value."
         ]
     },
