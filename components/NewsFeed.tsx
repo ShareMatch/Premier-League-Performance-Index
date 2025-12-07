@@ -11,6 +11,32 @@ interface NewsItem {
     url?: string;
 }
 
+const HARAM_KEYWORDS = [
+    "gambling", "betting", "wager", "wagers", "stake", "stakes", "odds", "line",
+    "lines", "bookie", "bookmaker", "picks", "action", "parlay", "teaser",
+    "future", "futures", "prop bet", "prop bets", "spread", "spreads",
+    "over/under", "o/u", "payout", "risk-free", "vegas", "las vegas",
+    "promo code", "promocode", "deposit match", "bonus", "bonuses",
+    "free bet", "freebets", "sign-up offer", "welcome offer", "welcome bonus",
+    "offer code", "credit", "credits", "guaranteed winnings", "cash back",
+    "daily fantasy", "dfs", "draftkings", "fanduel", "sleeper", "casino",
+    "poker", "slot", "slots", "roulette", "blackjack", "lotto", "lottery",
+    "moneyline", "wine", "beer", "alcohol"
+];
+
+const isHaram = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    return HARAM_KEYWORDS.some(keyword => {
+        // For multi-word phrases or terms with special chars, use simple inclusion
+        if (keyword.includes(' ') || keyword.includes('/') || keyword.includes('-')) {
+            return lowerText.includes(keyword);
+        }
+        // For single words, use word boundary to avoid false positives (e.g. 'line' in 'online')
+        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+        return regex.test(lowerText);
+    });
+};
+
 interface NewsFeedProps {
     topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Global';
 }
@@ -54,10 +80,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
             if (data && data.length > 0) {
                 // Filter for Sharia compliance (remove gambling/betting/haram keywords)
-                const haramKeywords = ['betting', 'gamble', 'casino', 'poker', 'wager', 'bookmaker', 'odds', 'wine', 'beer', 'alcohol'];
                 const filteredData = data.filter(item => {
                     const text = (item.headline + ' ' + (item.source || '')).toLowerCase();
-                    return !haramKeywords.some(keyword => text.includes(keyword));
+                    return !isHaram(text);
                 });
                 setNewsItems(filteredData);
             }
