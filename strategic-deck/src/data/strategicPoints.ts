@@ -32,11 +32,11 @@ export const strategicPoints: StrategicPoint[] = [
     },
     {
         id: 3,
-        title: "Saudi Royal Family Shareholder: Strategic Access to First 1,000 VIPs",
+        title: "Strategic KSA Family Office: Unique Access to First 1,000 VIPs",
         subtitle: "Unmatched Market Access",
         icon: "Crown",
         points: [
-            "Direct cap table involvement from the House of Saud.",
+            "Direct cap table involvement from a leading Strategic KSA Family Office.",
             "Secured pipeline of the first 1,000 high-value VIP accounts.",
             "Eliminates the 'cold start' liquidity risk inherent in new marketplaces."
         ]
