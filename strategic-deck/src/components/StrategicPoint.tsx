@@ -37,7 +37,8 @@ const StrategicPoint: React.FC<Props> = ({ data, index }) => {
             <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-brand/0 via-brand/20 to-brand/0 -translate-x-1/2 hidden md:block" />
 
             {/* Number Badge - Adjusted alignment */}
-            <div className="absolute left-6 md:left-1/2 top-[4rem] w-12 h-12 rounded-full bg-gray-900 border-2 border-brand text-brand flex items-center justify-center font-display text-xl font-bold -translate-x-1/2 shadow-[0_0_15px_rgba(16,185,129,0.3)] z-10 pb-1 leading-none">
+            {/* Number Badge - Fixed mobile overlap */}
+            <div className="relative mb-6 md:mb-0 md:absolute md:left-1/2 md:top-[4rem] w-12 h-12 rounded-full bg-gray-900 border-2 border-brand text-brand flex items-center justify-center font-display text-xl font-bold md:-translate-x-1/2 shadow-[0_0_15px_rgba(16,185,129,0.3)] z-10 pb-1 leading-none">
                 {data.id}
             </div>
 
