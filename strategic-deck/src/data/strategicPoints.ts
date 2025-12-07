@@ -65,7 +65,7 @@ export const strategicPoints: StrategicPoint[] = [
     },
     {
         id: 6,
-        title: "Custody Partner: TBC",
+        title: "Custody Partner: OKX International (TBC)",
         subtitle: "Bank-Grade Security",
         icon: "Vault",
         points: [
@@ -80,7 +80,7 @@ export const strategicPoints: StrategicPoint[] = [
         subtitle: "Institutional Liquidity",
         icon: "AreaChart",
         points: [
-            "Global Liquidity Provider guarantees depth of markets from day one.",
+            "Multiple Global Liquidity Providers guarantee depth of markets from day one.",
             "Ensures tight spreads, fast fills, and institutional-grade execution.",
             "Instantly elevates ShareMatch to a professional trading venue."
         ]
@@ -94,7 +94,7 @@ export const strategicPoints: StrategicPoint[] = [
             "Canada: MSB-licensed subsidiary handles fiat banking rails.",
             "Poland: VASP-licensed subsidiary covers crypto operations.",
             "Dual structure grants operational independence across all payment corridors.",
-            "Bypasses the typical 18-24 month regulatory lead time."
+            "Regulatory compliance is at the forefront of the longevity of the platform."
         ]
     },
     {
@@ -104,7 +104,7 @@ export const strategicPoints: StrategicPoint[] = [
         icon: "ScanFace",
         points: [
             "Sumsub integration for global identity verification.",
-            "My Inbox Media for enterprise-grade OTP and 2FA delivery.",
+            "Meta for enterprise-grade OTP and 2FA delivery.",
             "Onboarding flow stress-tested for mass VIP throughput."
         ]
     },
