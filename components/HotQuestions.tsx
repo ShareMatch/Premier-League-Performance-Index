@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { Team } from '../types';
 import { ArrowRight, TrendingUp, Trophy, Flag, Activity } from 'lucide-react';
+import InfoPopup from './InfoPopup';
+import { getMarketInfo } from '../lib/marketInfo';
 
 interface HotQuestionsProps {
   teams: Team[];
@@ -117,7 +119,20 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                   {q.icon}
                   <span className="text-xs font-medium text-gray-300">{q.market}</span>
                 </div>
-                <span className="text-xs text-gray-500 font-mono">Vol: {q.volume}</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-gray-500 font-mono">Vol: {q.volume}</span>
+                  {(() => {
+                    const info = getMarketInfo(q.market);
+                    return (
+                      <InfoPopup
+                        title={info.title}
+                        content={info.content}
+                        details={info.details}
+                        iconSize={14}
+                      />
+                    );
+                  })()}
+                </div>
               </div>
 
               <h3 className="text-lg font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors line-clamp-2">

@@ -20,9 +20,10 @@ const CODE_LENGTH = 6;
 const OTPInput: React.FC<{
   value: string[];
   onChange: (value: string[]) => void;
+  onComplete?: (code: string) => void;
   disabled?: boolean;
   hasError?: boolean;
-}> = ({ value, onChange, disabled = false, hasError = false }) => {
+}> = ({ value, onChange, onComplete, disabled = false, hasError = false }) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const focusInput = (index: number) => {
@@ -44,6 +45,15 @@ const OTPInput: React.FC<{
     // Auto-focus next input
     if (inputValue && index < CODE_LENGTH - 1) {
       focusInput(index + 1);
+    }
+
+    // Auto-submit when last digit is entered
+    if (inputValue && index === CODE_LENGTH - 1) {
+      const fullCode = newValue.join('');
+      if (fullCode.length === CODE_LENGTH && onComplete) {
+        // Small delay to allow state to update and show the digit
+        setTimeout(() => onComplete(fullCode), 50);
+      }
     }
   };
 
@@ -83,6 +93,11 @@ const OTPInput: React.FC<{
       // Focus the last filled input or the next empty one
       const focusIndex = Math.min(pastedData.length, CODE_LENGTH - 1);
       focusInput(focusIndex);
+
+      // Auto-submit if all digits pasted
+      if (pastedData.length === CODE_LENGTH && onComplete) {
+        setTimeout(() => onComplete(pastedData), 50);
+      }
     }
   };
 
@@ -181,8 +196,9 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     }
   }, [status]);
 
-  const handleVerify = async () => {
-    const enteredCode = code.join('');
+  const handleVerify = async (directCode?: string) => {
+    // Use directCode if provided (from onComplete), otherwise use state
+    const enteredCode = directCode || code.join('');
     if (enteredCode.length !== CODE_LENGTH || status === 'verifying') return;
 
     setStatus('verifying');
@@ -375,6 +391,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             <OTPInput
               value={code}
               onChange={handleCodeChange}
+              onComplete={handleVerify}
               disabled={status === 'verifying' || status === 'success'}
               hasError={status === 'error'}
             />

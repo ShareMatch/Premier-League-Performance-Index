@@ -445,3 +445,104 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
 
     return result as LoginResponse;
 };
+
+// ============================================
+// KYC API - Sumsub Integration
+// ============================================
+
+export type KycStatus = 
+    | 'not_started' 
+    | 'started' 
+    | 'pending' 
+    | 'approved' 
+    | 'rejected' 
+    | 'resubmission_requested'
+    | 'on_hold';
+
+export interface KycUserStatusResponse {
+    kyc_status: KycStatus;
+    cooling_off_until: string | null;
+    is_in_cooling_off: boolean;
+    has_applicant: boolean;
+    sumsub_level: string | null;
+    kyc_started_at: string | null;
+    kyc_reviewed_at: string | null;
+    can_resubmit: boolean;
+    // Rejection details (only present if rejected/resubmission)
+    reject_type?: string | null;
+    reject_labels?: string[];
+    moderation_comment?: string | null;
+    button_ids?: string[];
+}
+
+export interface KycCheckStatusResponse {
+    kyc_status: KycStatus;
+    sumsub_status?: string;
+    review_result?: any;
+    reject_type?: string | null;
+    reject_labels?: string[];
+    moderation_comment?: string | null;
+    button_ids?: string[];
+    can_resubmit: boolean;
+    error?: string;
+}
+
+/**
+ * Get user's current KYC status
+ * This is the primary method to check if user needs to do KYC
+ */
+export const getKycUserStatus = async (userId: string): Promise<KycUserStatusResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-user-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to get KYC status');
+    }
+
+    return result as KycUserStatusResponse;
+};
+
+/**
+ * Check KYC status directly from Sumsub API
+ * Use this for real-time status checks or when webhook might be delayed
+ */
+export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-check-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to check KYC status');
+    }
+
+    return result as KycCheckStatusResponse;
+};
+
+/**
+ * Determine if user needs to complete KYC before accessing the platform
+ */
+export const needsKycVerification = (status: KycStatus): boolean => {
+    return status !== 'approved';
+};
+
+/**
+ * Determine if user can retry KYC (resubmission allowed)
+ */
+export const canRetryKyc = (status: KycStatus): boolean => {
+    return status === 'not_started' || status === 'resubmission_requested';
+};
