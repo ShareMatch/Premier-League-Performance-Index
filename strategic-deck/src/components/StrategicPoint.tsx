@@ -11,32 +11,13 @@ const IconMap: { [key: string]: React.ElementType } = {
 };
 
 interface Props {
-    data: PointType;
-    index: number;
-}
+            className = "py-16 px-6 relative opacity-0 translate-x-[-50px]"
+    >
+    {/* Connector Line */ }
+    < div className = "absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-brand-emerald500/0 via-brand-emerald500/20 to-brand-emerald500/0 -translate-x-1/2 hidden md:block" />
 
-const StrategicPoint: React.FC<Props> = ({ data, index }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["start end", "center center"]
-    });
-
-    const opacity = useTransform(scrollYProgress, [0, 0.5], [0, 1]);
-    const x = useTransform(scrollYProgress, [0, 0.5], [index % 2 === 0 ? -50 : 50, 0]);
-
-    const IconComponent = data.icon ? IconMap[data.icon] : null;
-
-    return (
-        <motion.section
-            ref={ref}
-            className="py-16 px-6 relative opacity-0 translate-x-[-50px]"
-        >
-            {/* Connector Line */}
-            <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-brand-emerald500/0 via-brand-emerald500/20 to-brand-emerald500/0 -translate-x-1/2 hidden md:block" />
-
-            {/* Number Badge - Adjusted alignment */}
-            {/* Number Badge - Fixed mobile overlap */}
+        {/* Number Badge - Adjusted alignment */ }
+{/* Number Badge - Fixed mobile overlap */ }
             <div className="relative mb-6 md:mb-0 md:absolute md:left-1/2 md:top-[4rem] w-12 h-12 rounded-full bg-gray-900 border-2 border-brand-emerald500 text-brand-emerald500 flex items-center justify-center font-sans text-xl font-bold md:-translate-x-1/2 shadow-[0_0_15px_rgba(16,185,129,0.3)] z-10 pb-1 leading-none">
                 {data.id}
             </div>
@@ -95,7 +76,7 @@ const StrategicPoint: React.FC<Props> = ({ data, index }) => {
                 </div>
 
             </div>
-        </motion.section>
+        </motion.section >
     );
 };
 
