@@ -80,10 +80,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="ShareMatch" className="h-8 w-8" />
-            <span className="text-xl font-bold text-white tracking-tight">ShareMatch</span>
-          </div>
+          <img
+            src="/logo-wordmark-green.png"
+            alt="ShareMatch"
+            className="h-10 w-auto rounded-md"
+          />
         </div>
 
         {/* Search Bar */}
