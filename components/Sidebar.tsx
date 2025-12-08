@@ -80,11 +80,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 flex items-center gap-3">
-          <img
-            src="/logo-wordmark.png"
-            alt="ShareMatch"
-            className="h-8 w-auto"
-          />
+          <div className="flex items-center gap-2">
+            <img src="/favicon.svg" alt="ShareMatch" className="h-8 w-8" />
+            <span className="text-xl font-bold text-white tracking-tight">ShareMatch</span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -109,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   ${item.id === 'AI_ANALYTICS'
                     ? (item.active
                       ? 'bg-violet-500/10 text-violet-400'
-                      : 'text-gray-400 hover:bg-violet-500/5 hover:text-violet-300')
+                      : 'text-violet-400/80 hover:bg-violet-500/10 hover:text-violet-300')
                     : (item.active
                       ? 'bg-[#3AA189]/10 text-[#3AA189]'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200')
