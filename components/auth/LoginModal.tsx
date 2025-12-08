@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 // Email Icon SVG
 const EmailIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#000000" />
+    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="currentColor" />
   </svg>
 );
 
@@ -45,42 +45,25 @@ const InputField = ({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   showIcon?: boolean;
 }) => (
-  <div className="flex flex-col w-full" style={{ gap: "clamp(0.375rem, 0.8vh, 0.625rem)" }}>
+  <div className="flex flex-col w-full gap-1.5">
     <label
       htmlFor={id}
-      className="capitalize text-white"
-      style={{
-        fontFamily: "'Inter', sans-serif",
-        fontSize: "0.875rem",
-        fontWeight: 500,
-      }}
+      className="capitalize text-white text-sm font-medium font-sans"
     >
       {label}
     </label>
-    <div
-      className="flex items-center justify-between rounded-full"
-      style={{
-        background: "#E5E5E5",
-        boxShadow: "0px 0px 30px 0px rgba(0, 0, 0, 0.1)",
-        padding: "clamp(0.625rem, 1vh, 0.875rem) clamp(1rem, 1.8vw, 1.5rem)",
-      }}
-    >
+    <div className="flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 px-4 focus-within:ring-2 focus-within:ring-brand-emerald500">
       <input
         id={id}
         type={type}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
-        className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "0.875rem",
-          lineHeight: "1.2",
-        }}
+        className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
         required
       />
       {showIcon && (
-        <span className="text-black flex-shrink-0 ml-2">
+        <span className="text-gray-900 flex-shrink-0 ml-2">
           <EmailIcon />
         </span>
       )}
@@ -105,44 +88,27 @@ const PasswordField = ({
   const [visible, setVisible] = useState(false);
 
   return (
-    <div className="flex flex-col w-full" style={{ gap: "clamp(0.375rem, 0.8vh, 0.625rem)" }}>
+    <div className="flex flex-col w-full gap-1.5">
       <label
         htmlFor={id}
-        className="capitalize text-white"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "0.875rem",
-          fontWeight: 500,
-        }}
+        className="capitalize text-white text-sm font-medium font-sans"
       >
         {label}
       </label>
-      <div
-        className="flex items-center justify-between rounded-full"
-        style={{
-          background: "#E5E5E5",
-          boxShadow: "0px 0px 30px 0px rgba(0, 0, 0, 0.1)",
-          padding: "clamp(0.625rem, 1vh, 0.875rem) clamp(1rem, 1.8vw, 1.5rem)",
-        }}
-      >
+      <div className="flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 px-4 focus-within:ring-2 focus-within:ring-brand-emerald500">
         <input
           id={id}
           type={visible ? 'text' : 'password'}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none"
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.875rem",
-            lineHeight: "1.2",
-          }}
+          className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
           required
         />
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="text-black flex-shrink-0 ml-2 transition-colors hover:text-[#019170] focus:outline-none"
+          className="text-gray-900 flex-shrink-0 ml-2 transition-colors hover:text-brand-emerald500 focus:outline-none"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           <EyeIcon off={!visible} />
@@ -191,6 +157,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       setPassword('');
       setError(null);
       setLoading(false);
+      setIsButtonHovered(false);
     }
   }, [isOpen]);
 
@@ -250,82 +217,54 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col md:flex-row md:items-stretch items-center"
-        style={{
-          maxWidth: "min(90vw, 900px)",
-          borderRadius: "40px",
-          background: "rgba(4, 34, 34, 0.60)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-          padding: "clamp(1.5rem, 2.5vh, 3rem) clamp(1.5rem, 2.5vw, 4rem)",
-          gap: "clamp(2rem, 3vw, 4rem)",
-        }}
+        className="relative w-full flex flex-col md:flex-row md:items-stretch items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
+        style={{ maxWidth: "min(90vw, 850px)" }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-10"
         >
           <X className="w-6 h-6" />
         </button>
 
-        {/* Left Side - Logo and Text */}
-        <div className="flex flex-col items-center justify-center flex-1 pb-12" style={{ gap: "clamp(1rem, 2vh, 1.5rem)" }}>
+        {/* Left Side - Logo */}
+        <div className="hidden md:flex flex-col items-center justify-center w-5/12">
           <img
             src="/logos/white_wordmark_logo_on_black-removebg-preview.png"
             alt="ShareMatch"
-            className="h-32 object-contain"
+            className="h-28 object-contain"
           />
-
         </div>
 
         {/* Right Side - Login Form */}
         <div
-          className="flex flex-col w-full md:w-auto"
+          className="flex flex-col w-full md:w-auto gap-4 md:pr-2"
           style={{
-            flex: "0 0 auto",
-            minWidth: "min(100%, 380px)",
-            maxWidth: "420px",
-            gap: "clamp(1rem, 1.5vh, 1.25rem)",
+            flex: "1 1 auto",
+            minWidth: "min(100%, 360px)",
+            maxWidth: "400px",
           }}
         >
           {successMessage && (
-            <p
-              className="text-center text-[#10b981] bg-[#10b981]/10 border border-[#10b981]/30 rounded-full px-4 py-2"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "clamp(0.75rem, 0.8vw + 0.25rem, 0.875rem)",
-              }}
-            >
+            <p className="text-center text-brand-emerald500 bg-brand-emerald500/10 border border-brand-emerald500/30 rounded-full px-4 py-2 font-sans text-sm">
               {successMessage}
             </p>
           )}
 
           <div
-            className="flex flex-col"
+            className="flex flex-col bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
             style={{
-              background: "#021A1A",
-              border: "1px solid transparent",
               backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
               backgroundOrigin: "border-box",
               backgroundClip: "padding-box, border-box",
-              borderRadius: "8px",
-              padding: "clamp(1.25rem, 2vh, 2rem) clamp(1.25rem, 1.5vw, 2rem)",
-              gap: "clamp(0.875rem, 1.5vh, 1.25rem)",
             }}
           >
-            <h2
-              className="text-white"
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontWeight: 700,
-                fontSize: "clamp(1.5rem, 1.5vw + 0.5rem, 2.5rem)"
-              }}
-            >
+            <h2 className="text-white font-bold font-sans text-2xl md:text-3xl">
               Login
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col" style={{ gap: "clamp(0.875rem, 1.5vh, 1.25rem)" }}>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <InputField
                 id="login-email"
                 label="Email"
@@ -344,18 +283,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               />
 
               <div className="flex justify-between items-center">
-                <span
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.75rem",
-                    color: "white",
-                  }}
-                >
+                <span className="font-sans text-xs text-white">
                   Don't have an account?{' '}
                   <button
                     type="button"
                     onClick={onSwitchToSignUp}
-                    className="underline transition-colors hover:text-[#3AA189]"
+                    className="underline transition-colors hover:text-brand-emerald500"
                   >
                     Sign up
                   </button>
@@ -363,70 +296,42 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="button"
                   onClick={onForgotPassword}
-                  className="text-white underline transition-colors hover:text-[#3AA189]"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.75rem",
-                  }}
+                  className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
                 >
                   Forgot password?
                 </button>
               </div>
 
               {error && (
-                <p
-                  className="text-center text-red-400"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "clamp(0.75rem, 0.8vw + 0.25rem, 0.875rem)"
-                  }}
-                >
+                <p className="text-center text-red-400 font-sans text-sm">
                   {error}
                 </p>
               )}
 
               <div className="flex justify-center pt-2">
                 <div
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    border: `1px solid ${isButtonHovered && canSubmit ? '#FFFFFF' : '#3AA189'}`,
-                    boxShadow: isButtonHovered && canSubmit ? "0 0 20px rgba(255, 255, 255, 0.3)" : "none",
-                    padding: "clamp(0.2rem, 0.3vw, 0.4rem)",
-                  }}
+                  className={`rounded-full transition-all duration-300 p-0.5 ${
+                    isButtonHovered && canSubmit
+                      ? 'border border-white shadow-glow'
+                      : 'border border-brand-emerald500'
+                  }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
                 >
                   <button
                     type="submit"
                     disabled={!canSubmit || loading}
-                    className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      background: isButtonHovered && canSubmit
-                        ? "#FFFFFF"
-                        : "linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)",
-                      color: isButtonHovered && canSubmit ? "#019170" : "#FFFFFF",
-                      boxShadow: "0px 4px 12px 0px rgba(0, 0, 0, 0.12)",
-                      cursor: canSubmit && !loading ? "pointer" : "not-allowed",
-                      padding: "clamp(0.5rem, 1vh, 0.75rem) clamp(1.25rem, 2vw, 1.75rem)",
-                      fontSize: "clamp(0.875rem, 0.9vw + 0.2rem, 1rem)",
-                      gap: "clamp(0.375rem, 0.8vw, 0.625rem)",
-                    }}
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
+                      isButtonHovered && canSubmit
+                        ? 'bg-white text-brand-emerald500'
+                        : 'bg-gradient-primary text-white'
+                    }`}
                   >
                     {loading ? "Logging in..." : "Login"}
                     {!loading && (
-                      <svg
-                        viewBox="0 0 48 14"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="flex-shrink-0"
-                        style={{
-                          width: "clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)",
-                          height: "clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)",
-                        }}
-                      >
-                        <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && canSubmit ? "#019170" : "#FFFFFF"} strokeWidth="2" />
-                        <path d="M40 1L47 7L40 13" stroke={isButtonHovered && canSubmit ? "#019170" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                        <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                        <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </button>
