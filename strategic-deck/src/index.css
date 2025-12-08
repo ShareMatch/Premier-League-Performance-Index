@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,10 +15,10 @@
   h4,
   h5,
   h6 {
-    @apply font-display;
+    @apply font-sans font-bold;
   }
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-accent to-brand;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-amber500 to-brand-emerald500;
 }
