@@ -3,9 +3,10 @@ import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut } from 'l
 import type { Wallet as WalletType } from '../types';
 import { useAuth } from './auth/AuthProvider';
 import { LoginModal } from './auth/LoginModal';
-import { SignUpModal } from './auth/SignUpModal';
+import { SignUpModal, EditModeData, FormData as SignUpFormData } from './auth/SignUpModal';
 import { EmailVerificationModal } from './auth/EmailVerificationModal';
 import { WhatsAppVerificationModal } from './auth/WhatsAppVerificationModal';
+import { EditEmailModal } from './auth/EditEmailModal';
 import { ForgotPasswordModal } from './auth/ForgotPasswordModal';
 import { ResetPasswordModal } from './auth/ResetPasswordModal';
 import { sendEmailOtp, verifyEmailOtp, sendWhatsAppOtp, verifyWhatsAppOtp } from '../lib/api';
@@ -16,10 +17,26 @@ interface TopBarProps {
 }
 
 // Store pending verification info for verification modals
+// Includes all form data so user can return to edit with same state
 interface PendingVerification {
     email: string;
     userId: string;
+    // Step 1 data
+    fullName?: string;
+    dob?: string;
+    countryOfResidence?: string;
+    referralCode?: string;
+    // Step 2 data
+    phone?: string;
+    phoneCode?: string;
+    phoneIso?: string;
     whatsappPhone?: string;
+    whatsappCode?: string;
+    whatsappIso?: string;
+    useSameNumber?: boolean;
+    agreeToWhatsappOtp?: boolean;
+    agreeToTerms?: boolean;
+    // Legacy field
     maskedWhatsapp?: string;
 }
 
@@ -35,7 +52,13 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
     const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
     const [showPasswordResetSuccess, setShowPasswordResetSuccess] = useState(false);
+    const [showEditEmailModal, setShowEditEmailModal] = useState(false);
     const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
+    
+    // Edit mode state for SignUpModal
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editStep, setEditStep] = useState<1 | 2>(1);
+    const [editData, setEditData] = useState<EditModeData | undefined>(undefined);
     
     // Ref to store WhatsApp data from email verification response (avoids async state issues)
     const whatsappDataRef = useRef<{ raw: string; masked: string } | null>(null);
@@ -239,16 +262,80 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
             {/* Sign Up Modal */}
             <SignUpModal
                 isOpen={showSignUpModal}
-                onClose={() => setShowSignUpModal(false)}
-                onSwitchToLogin={switchToLogin}
-                onSuccess={async (email: string, userId: string) => {
+                onClose={() => {
                     setShowSignUpModal(false);
-                    setPendingVerification({ email, userId });
+                    setIsEditMode(false);
+                    setEditData(undefined);
+                }}
+                onSwitchToLogin={switchToLogin}
+                onSuccess={async (email: string, userId: string, formData: SignUpFormData) => {
+                    setShowSignUpModal(false);
+                    setIsEditMode(false);
+                    setEditData(undefined);
+                    // Store all form data so user can return to edit with same state
+                    setPendingVerification({ 
+                        email, 
+                        userId,
+                        fullName: formData.fullName,
+                        dob: formData.dob,
+                        countryOfResidence: formData.countryOfResidence,
+                        referralCode: formData.referralCode,
+                        phone: formData.phone,
+                        phoneCode: formData.phoneCode,
+                        phoneIso: formData.phoneIso,
+                        whatsappPhone: formData.whatsapp,
+                        whatsappCode: formData.whatsappCode,
+                        whatsappIso: formData.whatsappIso,
+                        useSameNumber: formData.useSameNumber,
+                        agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
+                        agreeToTerms: formData.agreeToTerms,
+                    });
                     setShowEmailVerificationModal(true);
                     try {
                         await sendEmailOtp(email);
                     } catch {
                         // Modal will still open, user can click resend
+                    }
+                }}
+                isEditMode={isEditMode}
+                editStep={editStep}
+                editData={editData}
+                onEditSuccess={async (email: string, whatsappPhone: string | undefined, formData: SignUpFormData) => {
+                    setShowSignUpModal(false);
+                    setIsEditMode(false);
+                    setEditData(undefined);
+                    
+                    // Update pending verification with all form data
+                    if (pendingVerification) {
+                        setPendingVerification({
+                            ...pendingVerification,
+                            // Update with new form data
+                            fullName: formData.fullName,
+                            dob: formData.dob,
+                            countryOfResidence: formData.countryOfResidence,
+                            referralCode: formData.referralCode,
+                            phone: formData.phone,
+                            phoneCode: formData.phoneCode,
+                            phoneIso: formData.phoneIso,
+                            whatsappCode: formData.whatsappCode,
+                            whatsappIso: formData.whatsappIso,
+                            useSameNumber: formData.useSameNumber,
+                            agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
+                            agreeToTerms: formData.agreeToTerms,
+                            email,
+                            whatsappPhone: whatsappPhone || pendingVerification.whatsappPhone,
+                        });
+                    }
+                    
+                    // Go back to the appropriate verification modal
+                    if (editStep === 1) {
+                        // Email was edited, go back to email verification
+                        setShowEmailVerificationModal(true);
+                        // OTP already sent by the update API
+                    } else {
+                        // Phone was edited, go back to WhatsApp verification
+                        setShowWhatsAppVerificationModal(true);
+                        // OTP already sent by the update API
                     }
                 }}
             />
@@ -305,6 +392,46 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                         throw error;
                     }
                 }}
+                onEditEmail={() => {
+                    // Open simple email edit modal (not full signup form)
+                    setShowEmailVerificationModal(false);
+                    setShowEditEmailModal(true);
+                }}
+            />
+
+            {/* Edit Email Modal - Simple email-only edit */}
+            <EditEmailModal
+                isOpen={showEditEmailModal}
+                onClose={() => {
+                    setShowEditEmailModal(false);
+                    setShowEmailVerificationModal(true);
+                }}
+                currentEmail={pendingVerification?.email || ''}
+                onSave={async (newEmail) => {
+                    if (!pendingVerification) return false;
+                    try {
+                        const { updateUserProfile } = await import('../lib/api');
+                        const result = await updateUserProfile({
+                            currentEmail: pendingVerification.email,
+                            newEmail: newEmail,
+                            sendEmailOtp: true,
+                        });
+                        if (result.ok) {
+                            // Update pending verification with new email
+                            setPendingVerification({
+                                ...pendingVerification,
+                                email: newEmail,
+                            });
+                            // Close edit modal and return to email verification
+                            setShowEditEmailModal(false);
+                            setShowEmailVerificationModal(true);
+                            return true;
+                        }
+                        return false;
+                    } catch (error: any) {
+                        throw error;
+                    }
+                }}
             />
 
             {/* WhatsApp Verification Modal */}
@@ -315,7 +442,6 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     setPendingVerification(null);
                 }}
                 whatsappPhone={pendingVerification?.whatsappPhone || ''}
-                maskedWhatsapp={pendingVerification?.maskedWhatsapp}
                 onVerificationSuccess={() => {
                     setShowWhatsAppVerificationModal(false);
                     setPendingVerification(null);
@@ -343,6 +469,29 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     } catch (error) {
                         throw error;
                     }
+                }}
+                onEditPhone={() => {
+                    // Close verification modal and open SignUp in edit mode at step 2 with all their data
+                    setShowWhatsAppVerificationModal(false);
+                    setIsEditMode(true);
+                    setEditStep(2);
+                    setEditData({
+                        email: pendingVerification?.email || '',
+                        fullName: pendingVerification?.fullName,
+                        dob: pendingVerification?.dob,
+                        countryOfResidence: pendingVerification?.countryOfResidence,
+                        referralCode: pendingVerification?.referralCode,
+                        phone: pendingVerification?.phone,
+                        phoneCode: pendingVerification?.phoneCode,
+                        phoneIso: pendingVerification?.phoneIso,
+                        whatsappPhone: pendingVerification?.whatsappPhone,
+                        whatsappCode: pendingVerification?.whatsappCode,
+                        whatsappIso: pendingVerification?.whatsappIso,
+                        useSameNumber: pendingVerification?.useSameNumber,
+                        agreeToWhatsappOtp: pendingVerification?.agreeToWhatsappOtp,
+                        agreeToTerms: pendingVerification?.agreeToTerms,
+                    });
+                    setShowSignUpModal(true);
                 }}
             />
 

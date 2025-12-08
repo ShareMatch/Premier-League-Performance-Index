@@ -133,43 +133,102 @@ serve(async (req: Request) => {
       );
     }
 
-    // --- Check for duplicates ---
-    const duplicates: string[] = [];
-
-    // Check email
-    const { count: emailCount } = await supabase
+    // --- Check for existing user and handle abandonment ---
+    // 
+    // ABANDONMENT LOGIC:
+    // - Allow re-registration if user has NOT completed BOTH verifications
+    // - Block re-registration ONLY if BOTH email AND WhatsApp are verified
+    //
+    // Examples:
+    // | Email Verified | WhatsApp Verified | Action                    |
+    // |----------------|-------------------|---------------------------|
+    // | ❌ No          | ❌ No             | DELETE → Allow re-register |
+    // | ✅ Yes         | ❌ No             | DELETE → Allow re-register |
+    // | ❌ No          | ✅ Yes            | DELETE → Allow re-register |
+    // | ✅ Yes         | ✅ Yes            | BLOCK → "Account exists"   |
+    //
+    const { data: existingUser } = await supabase
       .from("users")
-      .select("id", { count: "exact", head: true })
-      .eq("email", email);
-    if (emailCount && emailCount > 0) duplicates.push("email");
+      .select("id, auth_user_id, email_verified_at, whatsapp_phone_verified_at")
+      .eq("email", email)
+      .single();
 
-    // Check phone
-    const { count: phoneCount } = await supabase
-      .from("users")
-      .select("id", { count: "exact", head: true })
-      .eq("phone_e164", phone);
-    if (phoneCount && phoneCount > 0) duplicates.push("phone");
+    if (existingUser) {
+      // Only block if BOTH verifications are complete
+      const isFullyVerified = 
+        existingUser.email_verified_at !== null && 
+        existingUser.whatsapp_phone_verified_at !== null;
 
-    // Check WhatsApp if different from phone
-    if (phone !== whatsappPhone) {
-      const { count: whatsappCount } = await supabase
-        .from("users")
-        .select("id", { count: "exact", head: true })
-        .eq("whatsapp_phone_e164", whatsappPhone);
-      if (whatsappCount && whatsappCount > 0) duplicates.push("whatsapp_phone");
+      if (isFullyVerified) {
+        // User completed BOTH verifications - block re-registration
+        return new Response(
+          JSON.stringify({
+            error: "Account already exists",
+            message: "An account with this email already exists. Please login instead.",
+          }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // User has NOT completed both verifications - cleanup and allow re-registration
+      // This includes: neither verified, only email verified, or only WhatsApp verified
+      // Delete in correct order: wallet → public.users → auth.users
+      await supabase.from("wallets").delete().eq("user_id", existingUser.id);
+      await supabase.from("users").delete().eq("id", existingUser.id);
+      if (existingUser.auth_user_id) {
+        await supabase.auth.admin.deleteUser(existingUser.auth_user_id);
+      }
+      // Continue with fresh registration below
     }
 
-    if (duplicates.length > 0) {
-      return new Response(
-        JSON.stringify({
-          error: "Account already exists with this information",
-          duplicates,
-          message: duplicates.includes("email")
-            ? "An account with this email already exists. Please login instead."
-            : "An account with this phone number already exists.",
-        }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // --- Check for phone duplicates (separate from email) ---
+    const { data: phoneUser } = await supabase
+      .from("users")
+      .select("id, email_verified_at, whatsapp_phone_verified_at")
+      .eq("phone_e164", phone)
+      .single();
+
+    if (phoneUser) {
+      const isPhoneUserFullyVerified = 
+        phoneUser.email_verified_at !== null && 
+        phoneUser.whatsapp_phone_verified_at !== null;
+
+      if (isPhoneUserFullyVerified) {
+        return new Response(
+          JSON.stringify({
+            error: "Phone number already registered",
+            message: "An account with this phone number already exists.",
+          }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Phone belongs to an unverified user - will be cleaned up by cron
+    }
+
+    // --- Check for WhatsApp duplicates (if different from phone) ---
+    if (phone !== whatsappPhone) {
+      const { data: whatsappUser } = await supabase
+        .from("users")
+        .select("id, email_verified_at, whatsapp_phone_verified_at")
+        .eq("whatsapp_phone_e164", whatsappPhone)
+        .single();
+
+      if (whatsappUser) {
+        const isWhatsappUserFullyVerified = 
+          whatsappUser.email_verified_at !== null && 
+          whatsappUser.whatsapp_phone_verified_at !== null;
+
+        if (isWhatsappUserFullyVerified) {
+          return new Response(
+            JSON.stringify({
+              error: "WhatsApp number already registered",
+              message: "An account with this WhatsApp number already exists.",
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // WhatsApp belongs to an unverified user - will be cleaned up by cron
+      }
     }
 
     // --- Get request metadata ---

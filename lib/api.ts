@@ -359,6 +359,123 @@ export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string
 };
 
 // ============================================
+// UPDATE EMAIL API (during verification)
+// ============================================
+
+export interface UpdateEmailResponse {
+    ok: boolean;
+    message: string;
+    newEmail?: string;
+}
+
+/**
+ * Update user's email during verification flow
+ * Updates in both auth.users and public.users, then sends new OTP
+ */
+export const updateUserEmail = async (currentEmail: string, newEmail: string): Promise<UpdateEmailResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ currentEmail, newEmail }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update email');
+    }
+
+    return result as UpdateEmailResponse;
+};
+
+// ============================================
+// UPDATE WHATSAPP API (during verification)
+// ============================================
+
+export interface UpdateWhatsAppResponse {
+    ok: boolean;
+    message: string;
+    newWhatsappPhone?: string;
+}
+
+/**
+ * Update user's WhatsApp phone during verification flow
+ * Updates in public.users, then sends new OTP
+ */
+export const updateUserWhatsApp = async (email: string, newWhatsappPhone: string): Promise<UpdateWhatsAppResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-whatsapp`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email, newWhatsappPhone }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update WhatsApp number');
+    }
+
+    return result as UpdateWhatsAppResponse;
+};
+
+// ============================================
+// UPDATE USER PROFILE API (comprehensive update)
+// ============================================
+
+export interface UpdateProfilePayload {
+    currentEmail: string;
+    newEmail?: string;
+    fullName?: string;
+    dob?: string;
+    countryOfResidence?: string;
+    phone?: string;
+    whatsappPhone?: string;
+    sendEmailOtp?: boolean;
+    sendWhatsAppOtp?: boolean;
+}
+
+export interface UpdateProfileResponse {
+    ok: boolean;
+    message: string;
+    emailChanged?: boolean;
+    whatsappChanged?: boolean;
+    emailOtpSent?: boolean;
+    whatsappOtpSent?: boolean;
+    newEmail?: string;
+    newWhatsappPhone?: string;
+}
+
+/**
+ * Update user profile - comprehensive update for multiple fields
+ * Can be used during verification or from profile settings
+ * Handles email/phone changes with verification reset
+ */
+export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<UpdateProfileResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-profile`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update profile');
+    }
+
+    return result as UpdateProfileResponse;
+};
+
+// ============================================
 // FORGOT PASSWORD API
 // ============================================
 
@@ -444,4 +561,44 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
     }
 
     return result as LoginResponse;
+};
+
+// ============================================
+// CHECK EMAIL VERIFICATION STATUS API
+// ============================================
+
+export interface CheckEmailStatusResponse {
+    exists: boolean;
+    emailVerified: boolean;
+    whatsappVerified: boolean;
+    fullyVerified: boolean;
+}
+
+/**
+ * Check if an email exists and its verification status
+ * Used to prevent duplicate registrations for fully verified accounts
+ */
+export const checkEmailVerificationStatus = async (email: string): Promise<CheckEmailStatusResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/check-email-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ email }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        // If endpoint doesn't exist or returns error, assume email doesn't exist
+        return {
+            exists: false,
+            emailVerified: false,
+            whatsappVerified: false,
+            fullyVerified: false,
+        };
+    }
+
+    return result as CheckEmailStatusResponse;
 };

@@ -1,4 +1,9 @@
-/* ShareMatch Brand Colors */
+/* Tailwind CSS Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ShareMatch Brand Colors (CSS Variables for legacy support) */
 :root {
   /* Primary Colors */
   --color-emerald-900: #064e3b;
@@ -59,4 +64,13 @@
 
 .font-body {
   font-family: 'Inter', sans-serif;
+}
+
+/* Modal inner container gradient border */
+.modal-gradient-border {
+  background-color: #021A1A;
+  background-image: linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
 }
