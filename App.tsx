@@ -12,9 +12,10 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 import { seedSportsAssets } from './lib/seedSports';
+import KYCModal from './components/kyc/KYCModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
@@ -28,6 +29,11 @@ const App: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+
+  // KYC State
+  const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [kycChecked, setKycChecked] = useState(false);
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -69,8 +75,63 @@ const App: React.FC = () => {
       getPublicUserId(user.id).then(setPublicUserId);
     } else {
       setPublicUserId(null);
+      setKycStatus(null);
+      setKycChecked(false);
     }
   }, [user]);
+
+  // Check KYC status when we have the public user ID
+  useEffect(() => {
+    if (!publicUserId) {
+      setKycChecked(false);
+      return;
+    }
+
+    const checkKyc = async () => {
+      try {
+        const status = await getKycUserStatus(publicUserId);
+        setKycStatus(status.kyc_status);
+        
+        // Auto-show KYC modal if user needs verification
+        if (needsKycVerification(status.kyc_status)) {
+          setShowKycModal(true);
+        }
+      } catch (error) {
+        console.error('Failed to check KYC status:', error);
+        // Default to not_started if we can't fetch status
+        setKycStatus('not_started');
+        setShowKycModal(true);
+      } finally {
+        setKycChecked(true);
+      }
+    };
+
+    checkKyc();
+  }, [publicUserId]);
+
+  // Handle KYC completion - just update status, DON'T auto-close
+  // User must click X to close the modal
+  const handleKycComplete = (status: KycStatus) => {
+    console.log('KYC status update received:', status);
+    setKycStatus(status);
+    // DON'T auto-close - user will click X when they're ready
+    // The modal will be hidden next time they open the app if approved
+  };
+
+  // Handle KYC modal close - re-check status in case user completed KYC
+  const handleKycModalClose = async () => {
+    setShowKycModal(false);
+    
+    // Re-fetch KYC status in case it changed while modal was open
+    if (publicUserId) {
+      try {
+        const status = await getKycUserStatus(publicUserId);
+        setKycStatus(status.kyc_status);
+      } catch (error) {
+        console.error('Failed to refresh KYC status:', error);
+      }
+    }
+  };
 
   useEffect(() => {
     if (publicUserId) {
@@ -127,6 +188,18 @@ const App: React.FC = () => {
   };
 
   const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
+    // Check if user is logged in
+    if (!user) {
+      alert('Please login to trade.');
+      return;
+    }
+
+    // Check if KYC is required
+    if (kycStatus && needsKycVerification(kycStatus)) {
+      setShowKycModal(true);
+      return;
+    }
+
     // Calculate max quantity based on available funds (for buy) or portfolio holdings (for sell)
     let maxQuantity = 0;
 
@@ -320,6 +393,17 @@ const App: React.FC = () => {
         <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* KYC Modal */}
+      {publicUserId && (
+        <KYCModal
+          isOpen={showKycModal}
+          onClose={handleKycModalClose}
+          userId={publicUserId}
+          onKycComplete={handleKycComplete}
+          initialStatus={kycStatus || undefined}
         />
       )}
     </div>

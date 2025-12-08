@@ -60,3 +60,15 @@
 .font-body {
   font-family: 'Inter', sans-serif;
 }
+
+/* Sumsub SDK smooth transitions */
+#sumsub-websdk-container,
+[id^="sumsub"],
+iframe[src*="sumsub"] {
+  transition: height 0.3s ease-in-out !important;
+}
+
+/* Smooth container transitions for KYC modal */
+.kyc-sdk-container {
+  transition: all 0.3s ease-in-out;
+}
