@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { motion, useScroll } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import type { StrategicPoint as PointType } from '../data/strategicPoints';
 import TechStackViz from './TechStackViz';
 import ValuationSection from './ValuationSection';
@@ -16,17 +16,10 @@ interface Props {
 }
 
 const StrategicPoint: React.FC<Props> = ({ data, index }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["start end", "center center"]
-    });
-
     const IconComponent = data.icon ? IconMap[data.icon] : null;
 
     return (
         <motion.section
-            ref={ref}
             className="py-16 px-6 relative"
             initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
             whileInView={{ opacity: 1, x: 0 }}
