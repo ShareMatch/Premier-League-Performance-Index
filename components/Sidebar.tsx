@@ -81,18 +81,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
       `}>
         <div className="p-6 flex items-center gap-3">
           <img
-            src="/logos/white_icon_on_green.jpeg"
+            src="/logo-wordmark.png"
             alt="ShareMatch"
-            className="w-8 h-8 rounded object-cover"
+            className="h-8 w-auto"
           />
-          <span className="text-xl font-bold text-white">
-            {activeLeague === 'HOME' ? 'ShareMatch' :
-              activeLeague === 'EPL' ? 'PL Index' :
-                activeLeague === 'SPL' ? 'SPL Index' :
-                  activeLeague === 'UCL' ? 'UCL Index' :
-                    activeLeague === 'WC' ? 'WC Index' :
-                      activeLeague === 'F1' ? 'F1 Index' : 'ShareMatch'}
-          </span>
         </div>
 
         {/* Search Bar */}
@@ -114,7 +106,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                 onClick={() => item.subItems ? toggleExpand(item.label) : (item.id && onLeagueChange(item.id as any))}
                 className={`
                   w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${item.active ? 'bg-[#3AA189]/10 text-[#3AA189]' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'}
+                  ${item.id === 'AI_ANALYTICS'
+                    ? (item.active
+                      ? 'bg-violet-500/10 text-violet-400'
+                      : 'text-gray-400 hover:bg-violet-500/5 hover:text-violet-300')
+                    : (item.active
+                      ? 'bg-[#3AA189]/10 text-[#3AA189]'
+                      : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200')
+                  }
                 `}
               >
                 <div className="flex items-center gap-3">
