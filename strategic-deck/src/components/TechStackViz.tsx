@@ -62,7 +62,7 @@ const TechStackViz: React.FC = () => {
                 {/* AI & Data */}
                 <motion.div variants={item} className="bg-gray-800/50 p-5 rounded-xl border border-brand-dark/50 hover:border-brand/50 transition-colors h-full flex flex-col">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2.5 bg-amber-500/10 rounded-lg text-brand-accent shrink-0">
+                        <div className="p-2.5 bg-violet-500/10 rounded-lg text-violet-400 shrink-0">
                             <BrainCircuit className="w-5 h-5" />
                         </div>
                         <h3 className="text-lg font-display font-semibold text-white">AI Engine</h3>

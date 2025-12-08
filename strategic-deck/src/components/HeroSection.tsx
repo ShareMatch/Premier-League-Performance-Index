@@ -16,7 +16,7 @@ const HeroSection: React.FC = () => {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                 >
                     <div className="mb-8 flex justify-center">
-                        <img src="/logo.svg" alt="ShareMatch" className="h-16 md:h-20 opacity-90" />
+                        <img src="/logo-wordmark.png" alt="ShareMatch" className="h-16 md:h-20 opacity-90" />
                     </div>
 
                     <span className="inline-block py-1 px-3 rounded-full bg-brand/10 border border-brand/20 text-brand text-sm font-semibold tracking-wide uppercase mb-6">
