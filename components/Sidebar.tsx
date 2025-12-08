@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           <img
             src="/logo-wordmark-green.png"
             alt="ShareMatch"
-            className="h-10 w-auto rounded-md"
+            className="w-full h-auto rounded-lg shadow-lg shadow-brand/10"
           />
         </div>
 
