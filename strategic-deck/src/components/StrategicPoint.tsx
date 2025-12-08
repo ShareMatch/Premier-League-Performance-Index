@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll } from 'framer-motion';
 import type { StrategicPoint as PointType } from '../data/strategicPoints';
 import TechStackViz from './TechStackViz';
 import ValuationSection from './ValuationSection';
@@ -11,13 +11,32 @@ const IconMap: { [key: string]: React.ElementType } = {
 };
 
 interface Props {
-            className = "py-16 px-6 relative opacity-0 translate-x-[-50px]"
-    >
-    {/* Connector Line */ }
-    < div className = "absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-brand-emerald500/0 via-brand-emerald500/20 to-brand-emerald500/0 -translate-x-1/2 hidden md:block" />
+    data: PointType;
+    index: number;
+}
 
-        {/* Number Badge - Adjusted alignment */ }
-{/* Number Badge - Fixed mobile overlap */ }
+const StrategicPoint: React.FC<Props> = ({ data, index }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start end", "center center"]
+    });
+
+    const IconComponent = data.icon ? IconMap[data.icon] : null;
+
+    return (
+        <motion.section
+            ref={ref}
+            className="py-16 px-6 relative"
+            initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            viewport={{ once: true, margin: "-100px" }}
+        >
+            {/* Connector Line */}
+            <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-brand-emerald500/0 via-brand-emerald500/20 to-brand-emerald500/0 -translate-x-1/2 hidden md:block" />
+
+            {/* Number Badge */}
             <div className="relative mb-6 md:mb-0 md:absolute md:left-1/2 md:top-[4rem] w-12 h-12 rounded-full bg-gray-900 border-2 border-brand-emerald500 text-brand-emerald500 flex items-center justify-center font-sans text-xl font-bold md:-translate-x-1/2 shadow-[0_0_15px_rgba(16,185,129,0.3)] z-10 pb-1 leading-none">
                 {data.id}
             </div>
@@ -61,7 +80,6 @@ interface Props {
                         // Improved Visual Placeholder using Icons
                         <div className="aspect-video rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 p-8 flex items-center justify-center relative overflow-hidden group">
                             <div className="absolute inset-0 bg-brand-emerald500/5 group-hover:bg-brand-emerald500/10 transition-colors" />
-                            {/* Decorative background number if desired, or removed if user hates "repetition" */}
 
                             {/* Central Icon */}
                             {IconComponent ? (
