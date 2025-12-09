@@ -143,12 +143,12 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
           <div
             key={q.id}
             onClick={() => onNavigate(q.market as any)}
-            className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5 cursor-pointer transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 ${q.borderColor}`}
+            className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5 cursor-pointer transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10 ${q.borderColor}`}
           >
             {/* Gradient Background Effect */}
             <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
-            <div className="relative z-10 flex flex-col h-full overflow-hidden">
+            <div className="relative z-10 flex flex-col h-full">
               <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
                 <div className="flex flex-col gap-1 min-w-0">
                   <div className="flex items-center gap-2 bg-gray-900/60 rounded-full px-3 py-1 border border-gray-700">
