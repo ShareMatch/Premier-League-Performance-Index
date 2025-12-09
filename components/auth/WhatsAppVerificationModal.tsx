@@ -234,7 +234,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         if (success) {
           setTimeLeft(300); // 5 minutes OTP validity
           setStatus('idle');
-          setMessage(`A new code has been sent to ${whatsappPhone}`);
+          setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
         } else {
           throw new Error('Failed to send code');
         }
@@ -243,7 +243,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setTimeLeft(300); // 5 minutes OTP validity
         setStatus('idle');
-        setMessage(`A new code has been sent to ${whatsappPhone}`);
+        setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
       }
     } catch (error: any) {
       setStatus('error');
@@ -255,6 +255,27 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all spaces and non-digit characters except +
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // If it starts with +, format it
+    if (cleaned.startsWith('+')) {
+      // Country codes are typically 1-3 digits after +
+      // For UAE (+971), it's 3 digits, but we'll try to detect common patterns
+      // Common country codes: 1 (US/Canada), 44 (UK), 971 (UAE), etc.
+      const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
+      if (match) {
+        const [, countryCode, rest] = match;
+        return `+${countryCode} ${rest}`;
+      }
+      return cleaned; // Return as-is if pattern doesn't match
+    }
+    
+    // If no +, assume it's a local number and return as-is
+    return phone;
   };
 
   const isCodeComplete = code.join('').length === CODE_LENGTH;
@@ -319,7 +340,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
 
         {/* Success Toast - Above Title */}
         {status === 'success' && (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/15 border border-brand-emerald500/40">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500">
             <CheckCircle className="w-5 h-5 text-brand-emerald500" />
             <p className="font-medium text-brand-emerald500 font-sans text-sm">
               WhatsApp verified successfully!
@@ -351,7 +372,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
             {/* WhatsApp Phone Display with Edit Link */}
             <div className="flex flex-col items-center gap-1">
               <p className="text-center text-brand-emerald500 font-medium font-sans text-sm">
-                {whatsappPhone}
+                {formatPhoneNumber(whatsappPhone)}
               </p>
               {onEditPhone && status !== 'success' && (
                 <button
