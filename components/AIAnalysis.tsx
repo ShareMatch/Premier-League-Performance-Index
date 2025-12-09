@@ -91,10 +91,10 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
         <button
           onClick={getAnalysis}
           disabled={loading}
-          className="bg-[#3AA189]/80 hover:bg-[#3AA189] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className="bg-brand-emerald500/80 hover:bg-[#3AA189] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
         >
           <SparkleIcon className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-          <span>
+          <span className="text-sm">
             {loading
               ? "Analyzing..."
               : analysis
@@ -106,7 +106,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
         {analysis && !loading && (
           <button
             onClick={() => setIsVisible(!isVisible)}
-            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-full inline-flex items-center gap-2 transition-all duration-300"
+            className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 px-4 rounded-full inline-flex items-center gap-2 transition-all duration-300"
           >
             {isVisible ? (
               <EyeOff className="w-4 h-4" />
@@ -151,7 +151,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
               ),
               li: (props) => <li className="mb-1" {...props} />,
               h3: (props) => (
-                <h3 className="text-[#3AA189] text-sm font-bold mb-2" {...props} />
+                <h3 className="text-bg-brand-emerald500 text-sm font-bold mb-2" {...props} />
               ),
             }}
           >
