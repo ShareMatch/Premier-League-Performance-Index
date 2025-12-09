@@ -61,24 +61,39 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
         )}
         <span className="truncate">{team.name}</span>
       </div>
-      <div
-        className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
-        onClick={() => onSelectOrder(team, 'sell')}
-        role="button"
-        tabIndex={0}
-        aria-label={`Sell ${team.name} Performance Index at ${team.bid.toFixed(1)}`}
-      >
-        <span className="font-semibold text-red-400">{team.bid.toFixed(1)}</span>
-      </div>
-      <div
-        className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
-        onClick={() => onSelectOrder(team, 'buy')}
-        role="button"
-        tabIndex={0}
-        aria-label={`Buy ${team.name} Performance Index at ${team.offer.toFixed(1)}`}
-      >
-        <span className="font-semibold text-[#3AA189]">{team.offer.toFixed(1)}</span>
-      </div>
+
+      {team.is_settled ? (
+        <div className="col-span-2 flex flex-col items-end pr-2">
+          <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Settled at</span>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500 text-xs">{team.settled_date || 'Dec 8, 2025'}</span>
+            <span className={`text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
+              {team.bid.toFixed(1)}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
+            onClick={() => onSelectOrder(team, 'sell')}
+            role="button"
+            tabIndex={0}
+            aria-label={`Sell ${team.name} Performance Index at ${team.bid.toFixed(1)}`}
+          >
+            <span className="font-semibold text-red-400">{team.bid.toFixed(1)}</span>
+          </div>
+          <div
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
+            onClick={() => onSelectOrder(team, 'buy')}
+            role="button"
+            tabIndex={0}
+            aria-label={`Buy ${team.name} Performance Index at ${team.offer.toFixed(1)}`}
+          >
+            <span className="font-semibold text-[#3AA189]">{team.offer.toFixed(1)}</span>
+          </div>
+        </>
+      )}
     </div>
   );
 };

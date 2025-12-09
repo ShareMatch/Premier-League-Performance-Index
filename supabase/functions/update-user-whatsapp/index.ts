@@ -1,0 +1,190 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+// Configurable via environment variables
+const OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("WHATSAPP_OTP_EXPIRY_MINUTES") ?? "2");
+const MAX_UPDATE_ATTEMPTS = parseInt(Deno.env.get("WHATSAPP_UPDATE_MAX_ATTEMPTS") ?? "3");
+
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    // Get environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
+    const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
+
+    // Validate required env vars
+    const missingVars: string[] = [];
+    if (!supabaseUrl) missingVars.push("SUPABASE_URL");
+    if (!supabaseServiceKey) missingVars.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (!wabaProfileId) missingVars.push("WABA_PROFILE_ID");
+    if (!wabaApiKey) missingVars.push("WABA_API_KEY");
+
+    if (missingVars.length > 0) {
+      console.error("Missing env vars:", missingVars);
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+
+    // Parse request body - identify user by email
+    const body = await req.json() as { email: string; newWhatsappPhone: string };
+    const email = String(body.email ?? "").trim().toLowerCase();
+    const newWhatsappPhone = String(body.newWhatsappPhone ?? "").trim();
+
+    if (!email || !newWhatsappPhone) {
+      return new Response(
+        JSON.stringify({ error: "Email and new WhatsApp phone are required." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Basic phone validation - must start with + and have digits
+    const phoneRegex = /^\+[1-9]\d{6,14}$/;
+    if (!phoneRegex.test(newWhatsappPhone)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid phone number format. Please include country code (e.g., +1234567890)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get user by email
+    const { data: user, error: fetchErr } = await supabase
+      .from("users")
+      .select("id, whatsapp_phone_e164, whatsapp_phone_verified_at, whatsapp_otp_attempts, whatsapp_update_attempts, email_verified_at")
+      .eq("email", email)
+      .single();
+
+    if (fetchErr || !user) {
+      return new Response(
+        JSON.stringify({ error: "User not found." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if email is verified first
+    if (!user.email_verified_at) {
+      return new Response(
+        JSON.stringify({ error: "Please verify your email first." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if WhatsApp already verified - can't change after verification
+    if (user.whatsapp_phone_verified_at) {
+      return new Response(
+        JSON.stringify({ error: "WhatsApp already verified. Cannot change phone number." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check update attempts (rate limiting)
+    const updateAttempts = user.whatsapp_update_attempts || 0;
+    if (updateAttempts >= MAX_UPDATE_ATTEMPTS) {
+      return new Response(
+        JSON.stringify({ error: "Maximum WhatsApp update attempts reached. Please contact support." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if new WhatsApp phone already exists
+    const { count: phoneCount } = await supabase
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("whatsapp_phone_e164", newWhatsappPhone)
+      .neq("id", user.id);
+
+    if (phoneCount && phoneCount > 0) {
+      return new Response(
+        JSON.stringify({ error: "This WhatsApp number is already registered." }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Generate new OTP
+    const otpCode = generateOtp();
+    const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000).toISOString();
+
+    // Update user in public.users table
+    const { error: updateErr } = await supabase
+      .from("users")
+      .update({
+        whatsapp_phone_e164: newWhatsappPhone,
+        whatsapp_otp_code: otpCode,
+        whatsapp_otp_expires_at: expiry,
+        whatsapp_otp_attempts: 0, // Reset OTP attempts for new phone
+        whatsapp_update_attempts: updateAttempts + 1, // Track how many times they changed phone
+      })
+      .eq("id", user.id);
+
+    if (updateErr) {
+      console.error("Error updating WhatsApp phone:", updateErr);
+      return new Response(
+        JSON.stringify({ error: "Failed to update WhatsApp number." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Send WhatsApp OTP to new number
+    const sendResult = await sendWhatsAppOtp({
+      mobileNumber: formatPhoneForWhatsApp(newWhatsappPhone),
+      otpCode: otpCode,
+      profileId: wabaProfileId,
+      apiKey: wabaApiKey,
+    });
+
+    if (!sendResult.ok) {
+      console.error("WhatsApp send error:", sendResult.error, sendResult.body);
+      // Rollback the phone update
+      await supabase
+        .from("users")
+        .update({ whatsapp_phone_e164: user.whatsapp_phone_e164 })
+        .eq("id", user.id);
+      
+      return new Response(
+        JSON.stringify({ error: "Failed to send WhatsApp message. Please try again." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        message: `WhatsApp number updated. OTP sent to ${newWhatsappPhone}.`,
+        newWhatsappPhone,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error: unknown) {
+    console.error("Error in update-user-whatsapp:", error);
+    const message = error instanceof Error ? error.message : "Server error";
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+

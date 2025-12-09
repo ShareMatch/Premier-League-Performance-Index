@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { Sparkles, AlertTriangle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Team } from '../types';
 
 interface AIAnalyticsPageProps {
@@ -10,7 +12,7 @@ interface AIAnalyticsPageProps {
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const [analysis, setAnalysis] = useState<string>('');
     const [loading, setLoading] = useState(false);
-    const [selectedMarket, setSelectedMarket] = useState<'EPL' | 'F1' | 'SPL' | 'UCL'>('EPL');
+    const [selectedMarket, setSelectedMarket] = useState<'EPL' | 'F1' | 'SPL' | 'UCL' | 'NBA' | 'NFL'>('EPL');
 
     const getAnalysis = async () => {
         setLoading(true);
@@ -73,8 +75,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
                 {/* Header */}
                 <div className="text-center space-y-4">
-                    <div className="inline-flex items-center justify-center p-3 bg-[#3AA189]/10 rounded-full mb-4">
-                        <Sparkles className="w-8 h-8 text-[#3AA189]" />
+                    <div className="inline-flex items-center justify-center p-3 bg-brand-emerald900/10 rounded-full mb-4 ring-1 ring-brand-emerald500/20">
+                        <Sparkles className="w-8 h-8 text-brand-emerald500" />
                     </div>
                     <h1 className="text-4xl font-bold text-white font-serif">AI Analytics Engine</h1>
                     <p className="text-gray-400 max-w-2xl mx-auto">
@@ -82,15 +84,15 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                     </p>
                 </div>
                 {/* Controls */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 backdrop-blur-sm">
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 backdrop-blur-sm">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="flex gap-2">
                             {(['EPL', 'F1', 'SPL', 'UCL', 'NBA', 'NFL'] as const).map(market => (
                                 <button
                                     key={market}
                                     onClick={() => setSelectedMarket(market)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${selectedMarket === market
-                                        ? 'bg-[#3AA189] text-white shadow-lg shadow-[#3AA189]/20'
+                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedMarket === market
+                                        ? 'bg-brand-emerald500 text-white shadow-lg shadow-brand-emerald500/20'
                                         : 'bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800'
                                         }`}
                                 >
@@ -102,7 +104,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                         <button
                             onClick={getAnalysis}
                             disabled={loading}
-                            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#3AA189] to-[#2F8E75] hover:from-[#42B59A] hover:to-[#36A386] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-brand-emerald500 to-brand-emerald900 hover:from-emerald-400 hover:to-emerald-800 text-white font-bold rounded-full flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                         >
                             {loading ? (
                                 <>
@@ -122,20 +124,32 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                 {/* Results */}
                 {
                     analysis ? (
-                        <div className="bg-[#0B1221] border border-gray-800 rounded-2xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-                            <div className="prose prose-invert max-w-none">
-                                <div className="whitespace-pre-wrap leading-relaxed text-gray-300">
-                                    {analysis}
-                                </div>
-                            </div>
+                        <div className="bg-gray-900/50 border border-white/10 rounded-xl p-8 shadow-card backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4">
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    h1: ({ node, ...props }) => <h1 className="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2" {...props} />,
+                                    h2: ({ node, ...props }) => <h2 className="text-2xl font-bold text-brand-emerald500 mt-8 mb-4" {...props} />,
+                                    h3: ({ node, ...props }) => <h3 className="text-xl font-semibold text-white mt-6 mb-3" {...props} />,
+                                    p: ({ node, ...props }) => <p className="text-gray-300 leading-relaxed mb-4" {...props} />,
+                                    ul: ({ node, ...props }) => <ul className="list-disc list-outside ml-6 space-y-2 mb-6 text-gray-300" {...props} />,
+                                    ol: ({ node, ...props }) => <ol className="list-decimal list-outside ml-6 space-y-2 mb-6 text-gray-300" {...props} />,
+                                    li: ({ node, ...props }) => <li className="pl-2" {...props} />,
+                                    strong: ({ node, ...props }) => <strong className="text-white font-semibold" {...props} />,
+                                    blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-brand-emerald500 pl-4 italic text-gray-400 my-6 bg-gray-800/30 p-4 rounded-r-lg" {...props} />,
+                                }}
+                            >
+                                {analysis}
+                            </ReactMarkdown>
+
                             <div className="mt-8 pt-6 border-t border-gray-800 flex items-center gap-2 text-xs text-gray-500">
-                                <AlertTriangle className="w-4 h-4" />
+                                <AlertTriangle className="w-4 h-4 text-brand-amber500" />
                                 <span>AI-generated analysis is for informational purposes only. Past performance does not guarantee future results.</span>
                             </div>
                         </div>
                     ) : (
                         !loading && (
-                            <div className="text-center py-20 border-2 border-dashed border-gray-800 rounded-2xl text-gray-500">
+                            <div className="text-center py-20 border-2 border-dashed border-gray-800 rounded-xl text-gray-500">
                                 <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
                                 <p>Select a market and click "Generate Analysis" to begin.</p>
                             </div>

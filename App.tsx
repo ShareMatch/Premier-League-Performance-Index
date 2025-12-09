@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Team, Order, Wallet, Position } from './types';
+import { Team, Order, Wallet, Position, Transaction } from './types';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
 import RightPanel from './components/RightPanel';
@@ -12,7 +12,7 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
@@ -26,6 +26,7 @@ const App: React.FC = () => {
   // Supabase State
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [portfolio, setPortfolio] = useState<Position[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
@@ -43,6 +44,8 @@ const App: React.FC = () => {
       setWallet(walletData);
       const portfolioData = await fetchPortfolio(publicUserId);
       setPortfolio(portfolioData);
+      const transactionsData = await fetchTransactions(publicUserId);
+      setTransactions(transactionsData);
     } catch (error) {
       console.error('Error loading user data:', error);
     }
@@ -61,7 +64,9 @@ const App: React.FC = () => {
         lastChange: a.last_change as 'up' | 'down' | 'none',
         color: a.color,
         category: a.category,
-        market: a.market
+        market: a.market,
+        is_settled: a.is_settled,
+        settled_date: a.settled_date
       }));
       setAllAssets(mappedAssets);
     } catch (error) {
@@ -252,19 +257,22 @@ const App: React.FC = () => {
 
   const sortedTeams = [...teams].sort((a, b) => b.offer - a.offer);
 
-  const getLeagueTitle = () => {
-    switch (activeLeague) {
+  const getLeagueTitle = (id: string = activeLeague) => {
+    switch (id) {
       case 'EPL': return 'Premier League';
       case 'UCL': return 'Champions League';
       case 'WC': return 'World Cup';
       case 'SPL': return 'Saudi Pro League';
-      case 'F1': return 'Formula 1';
+      case 'F1': return 'Formula 1 Drivers Performance Index';
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
+      default: return 'ShareMatch Pro';
     }
   };
+
+
 
   if (loading) {
     return (
@@ -316,7 +324,7 @@ const App: React.FC = () => {
                   <div className="flex flex-col h-full">
                     {/* Compact Header */}
                     <div className="flex-shrink-0">
-                      <Header title={getLeagueTitle()} />
+                      <Header title={getLeagueTitle(activeLeague)} />
                     </div>
 
                     {/* Split View Content */}
@@ -347,7 +355,7 @@ const App: React.FC = () => {
 
                       {/* Right Column: AI & News (1/3) */}
                       <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-                        <AIAnalysis teams={teams} leagueName={getLeagueTitle()} />
+                        <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
 
                         {/* News Feed */}
                         <div className="flex-shrink-0">
@@ -376,12 +384,13 @@ const App: React.FC = () => {
           <div className="hidden lg:block h-full">
             <RightPanel
               portfolio={portfolio}
+              transactions={transactions}
               selectedOrder={selectedOrder}
-              onCloseTradeSlip={handleCloseTradeSlip}
+              onCloseTradeSlip={() => setSelectedOrder(null)}
               onConfirmTrade={handleConfirmTrade}
               allAssets={allAssets}
               onNavigate={handleNavigate}
-              leagueName={getLeagueTitle()}
+              leagueName={getLeagueTitle(activeLeague)}
             />
           </div>
 

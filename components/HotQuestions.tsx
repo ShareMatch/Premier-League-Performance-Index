@@ -12,12 +12,16 @@ interface HotQuestionsProps {
 const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
   const questions = useMemo(() => {
     // Group teams by market
+    const activeTeams = teams.filter(t => !t.is_settled);
+
     const markets = {
-      EPL: teams.filter(t => t.market === 'EPL'),
-      UCL: teams.filter(t => t.market === 'UCL'),
-      SPL: teams.filter(t => t.market === 'SPL'),
-      F1: teams.filter(t => t.market === 'F1'),
-      WC: teams.filter(t => t.market === 'WC'),
+      EPL: activeTeams.filter(t => t.market === 'EPL'),
+      UCL: activeTeams.filter(t => t.market === 'UCL'),
+      SPL: activeTeams.filter(t => t.market === 'SPL'),
+      F1: activeTeams.filter(t => t.market === 'F1'),
+      WC: activeTeams.filter(t => t.market === 'WC'),
+      NBA: activeTeams.filter(t => t.market === 'NBA'),
+      NFL: activeTeams.filter(t => t.market === 'NFL'),
     };
 
     const generatedQuestions = [];
@@ -75,6 +79,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
       });
     }
 
+
     if (markets.UCL.length > 0) {
       const top = getRandomTopTeam(markets.UCL);
       generatedQuestions.push({
@@ -87,6 +92,36 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         icon: <Trophy className="w-5 h-5 text-blue-400" />,
         color: 'from-blue-600/20 to-indigo-600/20',
         borderColor: 'group-hover:border-blue-500/50'
+      });
+    }
+
+    if (markets.NBA.length > 0) {
+      const top = getRandomTopTeam(markets.NBA);
+      generatedQuestions.push({
+        id: 'nba-1',
+        market: 'NBA',
+        question: `Will ${top.name} Top the NBA Index?`,
+        yesPrice: top.offer,
+        noPrice: top.bid,
+        volume: '£3.5M',
+        icon: <Activity className="w-5 h-5 text-orange-400" />,
+        color: 'from-orange-500/20 to-amber-500/20',
+        borderColor: 'group-hover:border-orange-500/50'
+      });
+    }
+
+    if (markets.NFL.length > 0) {
+      const top = getRandomTopTeam(markets.NFL);
+      generatedQuestions.push({
+        id: 'nfl-1',
+        market: 'NFL',
+        question: `Will ${top.name} Top the NFL Index?`,
+        yesPrice: top.offer,
+        noPrice: top.bid,
+        volume: '£5.2M',
+        icon: <Trophy className="w-5 h-5 text-blue-800" />,
+        color: 'from-blue-800/20 to-blue-900/20',
+        borderColor: 'group-hover:border-blue-800/50'
       });
     }
 

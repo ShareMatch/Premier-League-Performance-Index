@@ -41,68 +41,39 @@ const PasswordField = ({
   const [visible, setVisible] = useState(false);
   
   return (
-    <div className="flex flex-col w-full" style={{ gap: "clamp(0.375rem, 0.8vh, 0.625rem)" }}>
+    <div className="flex flex-col w-full gap-1.5">
       <label 
         htmlFor={id} 
-        className="capitalize text-white"
-        style={{ 
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "0.875rem",
-          fontWeight: 500,
-        }}
+        className="capitalize text-white text-sm font-medium font-sans"
       >
         {label}
       </label>
-      <div
-        className={`flex items-center justify-between rounded-full ${error ? 'ring-2 ring-red-500' : ''}`}
-        style={{
-          background: "#E5E5E5",
-          boxShadow: "0px 0px 30px 0px rgba(0, 0, 0, 0.1)",
-          padding: "clamp(0.625rem, 1vh, 0.875rem) clamp(1rem, 1.8vw, 1.5rem)",
-        }}
-      >
+      <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'}`}>
         <input
           id={id}
           type={visible ? 'text' : 'password'}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none"
-          style={{ 
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.875rem",
-            lineHeight: "1.2",
-          }}
+          className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
           required
         />
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="text-black flex-shrink-0 ml-2 transition-colors hover:text-[#019170] focus:outline-none"
+          className="text-gray-900 flex-shrink-0 ml-2 transition-colors hover:text-brand-emerald500 focus:outline-none"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           <EyeIcon off={!visible} />
         </button>
       </div>
       {hint && !error && (
-        <p 
-          className="text-[#3AA189]"
-          style={{ 
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.75rem",
-          }}
-        >
+        <p className="text-brand-emerald500 font-sans text-xs">
           {hint}
         </p>
       )}
       {error && (
-        <p 
-          className="text-red-400"
-          style={{ 
-            fontFamily: "'Inter', sans-serif",
-            fontSize: "0.75rem",
-          }}
-        >
+        <p className="text-red-400 font-sans text-xs">
           {error}
         </p>
       )}
@@ -132,6 +103,17 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+
+  // Reset states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setNewPassword('');
+      setConfirmPassword('');
+      setLoading(false);
+      setError(null);
+      setIsButtonHovered(false);
+    }
+  }, [isOpen]);
 
   // Listen for PASSWORD_RECOVERY event from Supabase
   useEffect(() => {
@@ -223,62 +205,40 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-      />
+      {/* Backdrop - no click to close to preserve password reset state */}
+      <div className="absolute inset-0 bg-black/50" />
       
       {/* Modal Content - Vertical Layout */}
       <div
-        className="relative w-full flex flex-col items-center"
-        style={{
-          maxWidth: "min(90vw, 550px)",
-          borderRadius: "40px",
-          background: "rgba(4, 34, 34, 0.60)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-          padding: "clamp(2rem, 3vh, 3rem) clamp(2rem, 3vw, 3rem)",
-          gap: "clamp(1.5rem, 2vh, 2rem)",
-        }}
+        className="relative w-full flex flex-col items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
+        style={{ maxWidth: "min(90vw, 550px)" }}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors z-10"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
         {/* Title */}
-        <h1 
-          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap"
-          style={{ 
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 600,
-            fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)",
-          }}
-        >
+        <h1 className="text-white text-center leading-tight whitespace-nowrap font-bold font-sans text-2xl md:text-3xl">
           {state === 'invalid' ? 'Link Expired' : 'Create New Password'}
         </h1>
 
         {/* Loading State */}
         {state === 'loading' && (
           <div
-            className="flex flex-col w-full"
+            className="flex flex-col w-full bg-modal-inner rounded-xl p-6 border border-transparent"
             style={{
-              background: "#021A1A",
-              border: "1px solid transparent",
               backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
               backgroundOrigin: "border-box",
               backgroundClip: "padding-box, border-box",
-              borderRadius: "8px",
-              padding: "clamp(2rem, 3vh, 3rem)",
             }}
           >
-            <div className="flex flex-col items-center text-center" style={{ gap: "1rem" }}>
-              <div className="w-12 h-12 border-4 border-[#3AA189]/30 border-t-[#3AA189] rounded-full animate-spin"></div>
-              <p className="text-gray-300" style={{ fontFamily: "'Inter', sans-serif", fontSize: "0.875rem" }}>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="w-12 h-12 border-4 border-brand-emerald500/30 border-t-brand-emerald500 rounded-full animate-spin"></div>
+              <p className="text-gray-300 font-sans text-sm">
                 Verifying reset link...
               </p>
             </div>
@@ -289,30 +249,19 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         {state === 'invalid' && (
           <>
             <div
-              className="flex flex-col w-full"
+              className="flex flex-col w-full bg-modal-inner rounded-xl p-5 border border-transparent"
               style={{
-                background: "#021A1A",
-                border: "1px solid transparent",
                 backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
                 backgroundOrigin: "border-box",
                 backgroundClip: "padding-box, border-box",
-                borderRadius: "8px",
-                padding: "clamp(1.5rem, 2vh, 2rem)",
               }}
             >
-              <div className="flex flex-col items-center text-center" style={{ gap: "clamp(1rem, 1.5vh, 1.25rem)" }}>
+              <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                   <AlertCircle className="w-8 h-8 text-red-400" />
                 </div>
                 
-                <p 
-                  className="text-gray-300"
-                  style={{ 
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "0.875rem",
-                    lineHeight: "1.6",
-                  }}
-                >
+                <p className="text-gray-300 font-sans text-sm leading-relaxed">
                   This reset link is invalid, expired, or has already been used. Please request a new password reset.
                 </p>
               </div>
@@ -320,45 +269,27 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
             {/* Button outside inner container */}
             <div
-              className="rounded-full transition-all duration-300"
-              style={{
-                border: `1px solid ${isButtonHovered ? '#FFFFFF' : '#3AA189'}`,
-                boxShadow: isButtonHovered ? "0 0 20px rgba(255, 255, 255, 0.3)" : "none",
-                padding: "clamp(0.2rem, 0.3vw, 0.4rem)",
-              }}
+              className={`rounded-full transition-all duration-300 p-0.5 ${
+                isButtonHovered
+                  ? 'border border-white shadow-glow'
+                  : 'border border-brand-emerald500'
+              }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
               <button
                 type="button"
                 onClick={handleClose}
-                className="text-white rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  background: isButtonHovered
-                    ? "#FFFFFF"
-                    : "linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)",
-                  color: isButtonHovered ? "#019170" : "#FFFFFF",
-                  boxShadow: "0px 4px 12px 0px rgba(0, 0, 0, 0.12)",
-                  cursor: "pointer",
-                  padding: "clamp(0.5rem, 1vh, 0.75rem) clamp(1.25rem, 2vw, 1.75rem)",
-                  fontSize: "clamp(0.875rem, 0.9vw + 0.2rem, 1rem)",
-                  gap: "clamp(0.375rem, 0.8vw, 0.625rem)",
-                }}
+                className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                  isButtonHovered
+                    ? 'bg-white text-brand-emerald500'
+                    : 'bg-gradient-primary text-white'
+                }`}
               >
                 Back to Login
-                <svg 
-                  viewBox="0 0 48 14" 
-                  fill="none" 
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="flex-shrink-0"
-                  style={{
-                    width: "clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)",
-                    height: "clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)",
-                  }}
-                >
-                  <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered ? "#019170" : "#FFFFFF"} strokeWidth="2" />
-                  <path d="M40 1L47 7L40 13" stroke={isButtonHovered ? "#019170" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                  <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                  <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -370,16 +301,11 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           <>
             {/* Inner Container with Form Fields */}
             <div
-              className="flex flex-col w-full"
+              className="flex flex-col w-full bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
               style={{
-                background: "#021A1A",
-                border: "1px solid transparent",
                 backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
                 backgroundOrigin: "border-box",
                 backgroundClip: "padding-box, border-box",
-                borderRadius: "8px",
-                padding: "clamp(1.5rem, 2vh, 2rem)",
-                gap: "clamp(1rem, 1.5vh, 1.25rem)",
               }}
             >
               <PasswordField
@@ -401,13 +327,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
               />
 
               {error && (
-                <p 
-                  className="text-center text-red-400"
-                  style={{ 
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: "clamp(0.75rem, 0.8vw + 0.25rem, 0.875rem)" 
-                  }}
-                >
+                <p className="text-center text-red-400 font-sans text-sm">
                   {error}
                 </p>
               )}
@@ -416,46 +336,28 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             {/* Button outside inner container */}
             <form onSubmit={handleSubmit} className="flex justify-center">
               <div
-                className="rounded-full transition-all duration-300"
-                style={{
-                  border: `1px solid ${isButtonHovered && canSubmit ? '#FFFFFF' : '#3AA189'}`,
-                  boxShadow: isButtonHovered && canSubmit ? "0 0 20px rgba(255, 255, 255, 0.3)" : "none",
-                  padding: "clamp(0.2rem, 0.3vw, 0.4rem)",
-                }}
+                className={`rounded-full transition-all duration-300 p-0.5 ${
+                  isButtonHovered && canSubmit
+                    ? 'border border-white shadow-glow'
+                    : 'border border-brand-emerald500'
+                }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
                 <button
                   type="submit"
                   disabled={!canSubmit || loading}
-                  className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    background: isButtonHovered && canSubmit
-                      ? "#FFFFFF"
-                      : "linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)",
-                    color: isButtonHovered && canSubmit ? "#019170" : "#FFFFFF",
-                    boxShadow: "0px 4px 12px 0px rgba(0, 0, 0, 0.12)",
-                    cursor: canSubmit && !loading ? "pointer" : "not-allowed",
-                    padding: "clamp(0.5rem, 1vh, 0.75rem) clamp(1.25rem, 2vw, 1.75rem)",
-                    fontSize: "clamp(0.875rem, 0.9vw + 0.2rem, 1rem)",
-                    gap: "clamp(0.375rem, 0.8vw, 0.625rem)",
-                  }}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
+                    isButtonHovered && canSubmit
+                      ? 'bg-white text-brand-emerald500'
+                      : 'bg-gradient-primary text-white'
+                  }`}
                 >
                   {loading ? "Updating..." : "Reset Password"}
                   {!loading && (
-                    <svg 
-                      viewBox="0 0 48 14" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="flex-shrink-0"
-                      style={{
-                        width: "clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)",
-                        height: "clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)",
-                      }}
-                    >
-                      <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && canSubmit ? "#019170" : "#FFFFFF"} strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke={isButtonHovered && canSubmit ? "#019170" : "#FFFFFF"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -469,4 +371,3 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 };
 
 export default ResetPasswordModal;
-

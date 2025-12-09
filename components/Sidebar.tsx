@@ -52,6 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             { label: 'NFL', id: 'NFL', active: activeLeague === 'NFL' }
           ]
         },
+        {
+          label: 'Motorsport',
+          subItems: [
+            { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
+          ]
+        },
         { label: 'Golf', badge: 'SOON' },
         { label: 'Cricket', badge: 'SOON' },
       ]
@@ -83,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           <img
             src="/logo-wordmark-green.png"
             alt="ShareMatch"
-            className="h-10 w-auto rounded-md"
+            className="w-full h-auto rounded-lg shadow-lg shadow-brand/10"
           />
         </div>
 

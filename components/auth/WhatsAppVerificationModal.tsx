@@ -6,10 +6,10 @@ interface WhatsAppVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   whatsappPhone: string;
-  maskedWhatsapp?: string;
   onVerificationSuccess?: () => void;
   onResendCode?: () => Promise<boolean>;
   onVerifyCode?: (code: string) => Promise<boolean>;
+  onEditPhone?: () => void; // Navigate to edit modal
 }
 
 type VerificationStatus = 'idle' | 'sending' | 'verifying' | 'error' | 'success' | 'accountCreated';
@@ -125,17 +125,17 @@ const OTPInput: React.FC<{
           className={`
             w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
             text-center text-lg sm:text-xl md:text-2xl font-semibold
-            bg-[#E5E5E5] text-gray-800
-            rounded-full
+            bg-gray-200 text-gray-900
+            rounded-full shadow-inner
             outline-none
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
+            font-sans
             ${hasError 
               ? 'ring-2 ring-red-500 focus:ring-red-500' 
-              : 'focus:ring-2 focus:ring-[#3AA189]'
+              : 'focus:ring-2 focus:ring-brand-emerald500'
             }
           `}
-          style={{ fontFamily: "'Inter', sans-serif" }}
         />
       ))}
     </div>
@@ -147,19 +147,16 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
   isOpen,
   onClose,
   whatsappPhone,
-  maskedWhatsapp,
   onVerificationSuccess,
   onResendCode,
   onVerifyCode,
+  onEditPhone,
 }) => {
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<VerificationStatus>('idle');
   const [message, setMessage] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes OTP validity
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes OTP validity
   const [isButtonHovered, setIsButtonHovered] = useState(false);
-
-  // Derive masked WhatsApp if not provided
-  const displayWhatsapp = maskedWhatsapp || (whatsappPhone ? maskPhone(whatsappPhone) : '');
 
   // Reset state when modal opens
   useEffect(() => {
@@ -167,7 +164,8 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
       setCode(Array(CODE_LENGTH).fill(''));
       setStatus('idle');
       setMessage('');
-      setTimeLeft(120); // 2 minutes OTP validity
+      setTimeLeft(300); // 5 minutes OTP validity
+      setIsButtonHovered(false);
     }
   }, [isOpen]);
 
@@ -250,18 +248,18 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
-          setTimeLeft(120); // 2 minutes OTP validity
+          setTimeLeft(300); // 5 minutes OTP validity
           setStatus('idle');
-          setMessage(`A new code has been sent to ${displayWhatsapp}`);
+          setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
         } else {
           throw new Error('Failed to send code');
         }
       } else {
         // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setTimeLeft(120); // 2 minutes OTP validity
+        setTimeLeft(300); // 5 minutes OTP validity
         setStatus('idle');
-        setMessage(`A new code has been sent to ${displayWhatsapp}`);
+        setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
       }
     } catch (error: any) {
       setStatus('error');
@@ -273,6 +271,27 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all spaces and non-digit characters except +
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    
+    // If it starts with +, format it
+    if (cleaned.startsWith('+')) {
+      // Country codes are typically 1-3 digits after +
+      // For UAE (+971), it's 3 digits, but we'll try to detect common patterns
+      // Common country codes: 1 (US/Canada), 44 (UK), 971 (UAE), etc.
+      const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
+      if (match) {
+        const [, countryCode, rest] = match;
+        return `+${countryCode} ${rest}`;
+      }
+      return cleaned; // Return as-is if pattern doesn't match
+    }
+    
+    // If no +, assume it's a local number and return as-is
+    return phone;
   };
 
   const isCodeComplete = code.join('').length === CODE_LENGTH;
@@ -290,60 +309,26 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
 
         {/* Modal Content - Vertical Layout */}
         <div
-          className="relative w-full flex flex-col items-center"
-          style={{
-            maxWidth: "min(90vw, 450px)",
-            borderRadius: "40px",
-            background: "rgba(4, 34, 34, 0.60)",
-            backdropFilter: "blur(40px)",
-            WebkitBackdropFilter: "blur(40px)",
-            padding: "clamp(2.5rem, 4vh, 4rem) clamp(2rem, 3vw, 3rem)",
-            gap: "clamp(1.5rem, 2vh, 2rem)",
-          }}
+          className="relative w-full flex flex-col items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-8 gap-6"
+          style={{ maxWidth: "min(90vw, 450px)" }}
         >
           {/* Success Icon */}
-          <div 
-            className="flex items-center justify-center w-20 h-20 rounded-full"
-            style={{
-              background: 'rgba(1, 145, 112, 0.15)',
-              border: '2px solid rgba(58, 161, 137, 0.4)',
-            }}
-          >
-            <CheckCircle className="w-10 h-10 text-[#3AA189]" />
+          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-brand-emerald500/15 border-2 border-brand-emerald500/40">
+            <CheckCircle className="w-10 h-10 text-brand-emerald500" />
           </div>
 
           {/* Success Title */}
-          <h1 
-            className="text-[#F1F7F7] text-center leading-tight"
-            style={{ 
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 600,
-              fontSize: "clamp(1.5rem, 2vw + 0.5rem, 2rem)",
-            }}
-          >
+          <h1 className="text-white text-center leading-tight font-bold font-sans text-2xl md:text-3xl">
             Verification Successful!
           </h1>
 
           {/* Success Message */}
-          <p 
-            className="text-center text-gray-300"
-            style={{ 
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 'clamp(0.875rem, 1vw, 1rem)',
-              lineHeight: 1.6,
-            }}
-          >
+          <p className="text-center text-gray-300 font-sans text-sm leading-relaxed">
             Your account has been created successfully.
           </p>
 
           {/* Redirecting indicator */}
-          <p 
-            className="text-center text-gray-500"
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-            }}
-          >
+          <p className="text-center text-gray-500 font-sans text-xs">
             Redirecting to login...
           </p>
         </div>
@@ -353,114 +338,74 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
+      {/* Backdrop - no click to close to preserve verification state */}
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Modal Content - Vertical Layout */}
       <div
-        className="relative w-full flex flex-col items-center"
-        style={{
-          maxWidth: "min(90vw, 550px)",
-          borderRadius: "40px",
-          background: "rgba(4, 34, 34, 0.60)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-          padding: "clamp(2rem, 3vh, 3rem) clamp(2rem, 3vw, 3rem)",
-          gap: "clamp(1.5rem, 2vh, 2rem)",
-        }}
+        className="relative w-full flex flex-col items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
+        style={{ maxWidth: "min(90vw, 550px)" }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors z-10"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
         {/* Success Toast - Above Title */}
         {status === 'success' && (
-          <div 
-            className="flex items-center gap-2 px-4 py-3 rounded-lg animate-in fade-in slide-in-from-top-2"
-            style={{
-              background: 'rgba(1, 145, 112, 0.15)',
-              border: '1px solid rgba(58, 161, 137, 0.4)',
-            }}
-          >
-            <CheckCircle className="w-5 h-5 text-[#3AA189]" />
-            <p 
-              className="font-medium text-[#3AA189]"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.875rem, 1vw, 1rem)',
-              }}
-            >
+          <div className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500">
+            <CheckCircle className="w-5 h-5 text-brand-emerald500" />
+            <p className="font-medium text-brand-emerald500 font-sans text-sm">
               WhatsApp verified successfully!
             </p>
           </div>
         )}
 
         {/* Title - Outside Inner Container */}
-        <h1 
-          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap"
-          style={{ 
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 600,
-            fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)",
-          }}
-        >
+        <h1 className="text-white text-center leading-tight whitespace-nowrap font-bold font-sans text-2xl md:text-3xl">
           WhatsApp Verification
         </h1>
 
         {/* Inner Container - Form Content */}
         <div
-          className="flex flex-col w-full"
+          className="flex flex-col w-full bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
           style={{
-            background: "#021A1A",
-            border: "1px solid transparent",
             backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
             backgroundOrigin: "border-box",
             backgroundClip: "padding-box, border-box",
-            borderRadius: "8px",
-            padding: "clamp(1.5rem, 2vh, 2rem)",
-            gap: "clamp(1rem, 1.5vh, 1.25rem)",
           }}
         >
           {/* Verification Form - Always visible */}
-          <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
+          <div className="flex flex-col gap-4">
             {/* Description */}
-            <p 
-              className="text-center text-white"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="text-center text-white font-sans text-sm leading-relaxed">
               We've sent a 6-digit verification code to your WhatsApp. Please enter the code below to continue.
             </p>
 
-            {/* Masked WhatsApp */}
-            <p 
-              className="text-center text-[#3AA189] font-medium"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-              }}
-            >
-              {displayWhatsapp}
-            </p>
+            {/* WhatsApp Phone Display with Edit Link */}
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-center text-brand-emerald500 font-medium font-sans text-sm">
+                {formatPhoneNumber(whatsappPhone)}
+              </p>
+              {onEditPhone && status !== 'success' && (
+                <button
+                  onClick={onEditPhone}
+                  className="text-xs transition-colors font-sans"
+                >
+                  <span className="text-gray-500">Wrong Number?</span>{' '}
+                  <span className="text-brand-emerald500 hover:text-white">Edit</span>
+                </button>
+              )}
+            </div>
 
             {/* Status Message */}
             {message && status !== 'success' && (
-              <p 
-                className={`text-center text-sm ${
-                  status === 'error' ? 'text-red-400' : 'text-gray-400'
-                }`}
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
+              <p className={`text-center text-sm font-sans ${
+                status === 'error' ? 'text-red-400' : 'text-gray-500'
+              }`}>
                 {message}
               </p>
             )}
@@ -475,34 +420,24 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
             />
 
             {/* Timer */}
-            <p 
-              className="text-center text-white font-semibold"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(1rem, 1.2vw, 1.25rem)',
-              }}
-            >
+            <p className="text-center text-white font-semibold font-sans text-lg">
               {formatTime(timeLeft)}
             </p>
 
             {/* Resend */}
             <div className="text-center">
-              <span 
-                className="text-white text-sm"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
+              <span className="text-white text-sm font-sans">
                 Didn't receive the code?{' '}
               </span>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={isResendDisabled}
-                className={`text-sm font-semibold transition-colors ${
+                className={`text-sm font-semibold transition-colors font-sans ${
                   isResendDisabled 
                     ? 'text-gray-500 cursor-not-allowed' 
-                    : 'text-[#3AA189] hover:text-white'
+                    : 'text-brand-emerald500 hover:text-white'
                 }`}
-                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 Resend
               </button>
@@ -511,12 +446,11 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
             {/* Verify Button - Inside Container */}
             <div className="flex justify-center pt-2">
               <div
-                className="rounded-full transition-all duration-300"
-                style={{
-                  border: `1px solid ${isButtonHovered && isCodeComplete ? '#FFFFFF' : '#3AA189'}`,
-                  boxShadow: isButtonHovered && isCodeComplete ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
-                  padding: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-                }}
+                className={`rounded-full transition-all duration-300 p-0.5 ${
+                  isButtonHovered && isCodeComplete
+                    ? 'border border-white shadow-glow'
+                    : 'border border-brand-emerald500'
+                }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
@@ -524,34 +458,17 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
                   type="button"
                   onClick={handleVerify}
                   disabled={isVerifyDisabled}
-                  className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    background: isButtonHovered && isCodeComplete
-                      ? '#FFFFFF'
-                      : 'linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)',
-                    color: isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF',
-                    boxShadow: '0px 4px 12px 0px rgba(0, 0, 0, 0.12)',
-                    cursor: !isVerifyDisabled ? 'pointer' : 'not-allowed',
-                    padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(1.5rem, 2.5vw, 2rem)',
-                    fontSize: 'clamp(0.875rem, 0.9vw + 0.2rem, 1rem)',
-                    gap: 'clamp(0.375rem, 0.8vw, 0.625rem)',
-                  }}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
+                    isButtonHovered && isCodeComplete
+                      ? 'bg-white text-brand-emerald500'
+                      : 'bg-gradient-primary text-white'
+                  }`}
                 >
                   {status === 'verifying' ? 'Verifying...' : 'Verify'}
                   {status !== 'verifying' && (
-                    <svg 
-                      viewBox="0 0 48 14" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="flex-shrink-0"
-                      style={{
-                        width: 'clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)',
-                        height: 'clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)',
-                      }}
-                    >
-                      <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -563,29 +480,5 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     </div>
   );
 };
-
-// --- Helper Functions ---
-function maskPhone(phone: string): string {
-  // Remove any non-digit characters except +
-  const cleaned = phone.replace(/[^\d+]/g, '');
-  
-  if (cleaned.length < 6) return phone;
-  
-  // Keep country code and last 2 digits visible
-  const hasPlus = cleaned.startsWith('+');
-  const digits = hasPlus ? cleaned.slice(1) : cleaned;
-  
-  // Assume first 1-3 digits are country code
-  let countryCodeLength = 1;
-  if (digits.length > 10) countryCodeLength = digits.length - 10;
-  if (countryCodeLength > 3) countryCodeLength = 3;
-  
-  const countryCode = digits.slice(0, countryCodeLength);
-  const lastTwo = digits.slice(-2);
-  const middleLength = digits.length - countryCodeLength - 2;
-  const maskedMiddle = '*'.repeat(Math.max(middleLength, 1));
-  
-  return `${hasPlus ? '+' : ''}${countryCode} ${maskedMiddle} ${lastTwo}`;
-}
 
 export default WhatsAppVerificationModal;

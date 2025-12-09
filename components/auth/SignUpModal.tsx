@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown, ChevronLeft, ChevronRight, Check, Lock, Search } from 'lucide-react';
 import { countries, Country } from '../../data/countries';
-import { registerUser, RegistrationError } from '../../lib/api';
+import { registerUser, RegistrationError, updateUserProfile, checkEmailVerificationStatus } from '../../lib/api';
 
 // --- Types ---
-interface FormData {
+export interface FormData {
   // Step 1
   fullName: string;
   dob: string;
@@ -71,6 +71,7 @@ const InputField = ({
   onChange,
   error,
   icon,
+  disabled = false,
 }: {
   label: string;
   name: string;
@@ -80,34 +81,33 @@ const InputField = ({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }) => (
   <div className="flex flex-col w-full">
     <label
       htmlFor={name}
-      className="text-white text-xs font-medium mb-1"
-      style={{ fontFamily: "'Inter', sans-serif" }}
+      className="text-white text-xs font-medium mb-1 font-sans"
     >
       {label}
     </label>
     <div
-      className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-        }`}
-      style={{ height: '36px', padding: '0 16px' }}
+      className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'
+        } ${disabled ? 'cursor-not-allowed' : ''}`}
     >
       <input
         id={name}
         name={name}
         type={type}
+        disabled={disabled}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none text-xs"
-        style={{ fontFamily: "'Inter', sans-serif" }}
+        className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans"
       />
-      {icon && <span className="text-black ml-2 flex-shrink-0">{icon}</span>}
+      {icon && <span className="text-gray-900 ml-2 flex-shrink-0">{icon}</span>}
     </div>
     {error && (
-      <p className="text-red-400 text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <p className="text-red-400 text-xs mt-0.5 font-sans">
         {error}
       </p>
     )}
@@ -123,6 +123,7 @@ const PasswordField = ({
   onChange,
   error,
   hint,
+  disabled = false,
 }: {
   label: string;
   name: string;
@@ -131,22 +132,21 @@ const PasswordField = ({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   hint?: string;
+  disabled?: boolean;
 }) => {
   const [visible, setVisible] = useState(false);
 
   return (
-    <div className="flex flex-col w-full">
-      <label
-        htmlFor={name}
-        className="text-white text-xs font-medium mb-1"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
-        {label}
-      </label>
+  <div className="flex flex-col w-full">
+    <label
+      htmlFor={name}
+      className="text-white text-xs font-medium mb-1 font-sans"
+    >
+      {label}
+    </label>
       <div
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-          }`}
-        style={{ height: '36px', padding: '0 16px' }}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'
+          } ${disabled ? 'cursor-not-allowed' : ''}`}
       >
         <input
           id={name}
@@ -155,24 +155,24 @@ const PasswordField = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none text-xs"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          disabled={disabled}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${disabled ? 'cursor-not-allowed' : ''}`}
         />
         <button
           type="button"
           onClick={() => setVisible(!visible)}
-          className="text-black ml-2 flex-shrink-0 hover:text-gray-700 transition-colors"
+          className="text-gray-900 ml-2 flex-shrink-0 hover:text-gray-700 transition-colors"
         >
           <EyeIcon off={!visible} />
         </button>
       </div>
       {hint && !error && (
-        <p className="text-[#3AA189] text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <p className="text-brand-emerald500 text-xs mt-0.5 font-sans">
           {hint}
         </p>
       )}
       {error && (
-        <p className="text-red-400 text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <p className="text-red-400 text-xs mt-0.5 font-sans">
           {error}
         </p>
       )}
@@ -191,6 +191,7 @@ const PhoneInputField = ({
   countryIso,
   countryDialCode,
   onCountryChange,
+  disabled = false,
 }: {
   label: string;
   name: string;
@@ -201,6 +202,7 @@ const PhoneInputField = ({
   countryIso: string;
   countryDialCode: string;
   onCountryChange: (country: Country) => void;
+  disabled?: boolean;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -225,28 +227,28 @@ const PhoneInputField = ({
   );
 
   return (
-    <div className="flex flex-col w-full">
-      <label
-        htmlFor={name}
-        className="text-white text-xs font-medium mb-1"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
-        {label}
-      </label>
+  <div className="flex flex-col w-full">
+    <label
+      htmlFor={name}
+      className="text-white text-xs font-medium mb-1 font-sans"
+    >
+      {label}
+    </label>
       <div
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all relative ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-[#3AA189]'
-          }`}
-        style={{ height: '36px', padding: '0 16px' }}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'
+          } ${disabled ? 'cursor-not-allowed' : ''}`}
         ref={dropdownRef}
       >
         {/* Country Selector */}
         <button
           type="button"
           onClick={() => {
+            if (disabled) return;
             setIsOpen(!isOpen);
             setSearch('');
           }}
-          className="flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full"
+          disabled={disabled}
+          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${disabled ? 'cursor-not-allowed' : ''}`}
         >
           <img
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
@@ -255,7 +257,7 @@ const PhoneInputField = ({
           />
           <ChevronDown className={`w-3 h-3 text-gray-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
-        <span className="text-black text-xs font-medium mr-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <span className="text-gray-900 text-xs font-medium mr-2 font-sans">
           {selectedCountry.dial_code}
         </span>
         <input
@@ -265,8 +267,8 @@ const PhoneInputField = ({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="flex-1 min-w-0 bg-transparent text-black placeholder-gray-400 outline-none text-xs"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          disabled={disabled}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${disabled ? 'cursor-not-allowed' : ''}`}
         />
 
         {/* Dropdown */}
@@ -294,7 +296,7 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? 'bg-[#3AA189]/10' : ''
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? 'bg-brand-emerald500/10' : ''
                     }`}
                 >
                   <img
@@ -311,7 +313,7 @@ const PhoneInputField = ({
         )}
       </div>
       {error && (
-        <p className="text-red-400 text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <p className="text-red-400 text-xs mt-0.5 font-sans">
           {error}
         </p>
       )}
@@ -358,8 +360,7 @@ const CountrySelectField = ({
     <div className="flex flex-col w-full" ref={dropdownRef}>
       <label
         htmlFor={name}
-        className="text-white text-xs font-medium mb-1"
-        style={{ fontFamily: "'Inter', sans-serif" }}
+        className="text-white text-xs font-medium mb-1 font-sans"
       >
         {label}
       </label>
@@ -369,9 +370,8 @@ const CountrySelectField = ({
           setIsOpen(!isOpen);
           setSearch('');
         }}
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left relative ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left relative h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-brand-emerald500'
           }`}
-        style={{ height: '36px', padding: '0 16px' }}
       >
         {selectedCountry ? (
           <>
@@ -380,16 +380,16 @@ const CountrySelectField = ({
               alt={selectedCountry.name}
               className="w-5 h-4 object-cover rounded mr-2"
             />
-            <span className="text-black text-xs flex-1 truncate" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <span className="text-gray-900 text-xs flex-1 truncate font-sans">
               {selectedCountry.name}
             </span>
           </>
         ) : (
-          <span className="text-gray-400 text-xs flex-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <span className="text-gray-500 text-xs flex-1 font-sans">
             Select country
           </span>
         )}
-        <svg className="w-4 h-4 text-black ml-2 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-4 h-4 text-gray-900 ml-2 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
         </svg>
 
@@ -422,7 +422,7 @@ const CountrySelectField = ({
                     onChange(c.code);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${c.code === value ? 'bg-[#3AA189]/10' : ''
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${c.code === value ? 'bg-brand-emerald500/10' : ''
                     }`}
                 >
                   <img
@@ -431,7 +431,7 @@ const CountrySelectField = ({
                     className="w-5 h-4 object-cover rounded"
                   />
                   <span className="text-sm text-gray-800 flex-1 truncate">{c.name}</span>
-                  {c.code === value && <Check className="w-4 h-4 text-[#3AA189]" />}
+                  {c.code === value && <Check className="w-4 h-4 text-brand-emerald500" />}
                 </div>
               ))}
             </div>
@@ -439,7 +439,7 @@ const CountrySelectField = ({
         )}
       </button>
       {error && (
-        <p className="text-red-400 text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <p className="text-red-400 text-xs mt-0.5 font-sans">
           {error}
         </p>
       )}
@@ -516,24 +516,22 @@ const DatePickerField = ({
 
   return (
     <div className="flex flex-col w-full relative" ref={containerRef}>
-      <label className="text-white text-xs font-medium mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <label className="text-white text-xs font-medium mb-1 font-sans">
         {label}
       </label>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center w-full bg-[#E5E5E5] rounded-full transition-all text-left ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-[#3AA189]'
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus:ring-2 focus:ring-brand-emerald500'
           }`}
-        style={{ height: '36px', padding: '0 16px' }}
       >
         <span
-          className={`flex-1 text-xs ${formatted ? 'text-black' : 'text-gray-400'}`}
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className={`flex-1 text-xs font-sans ${formatted ? 'text-gray-900' : 'text-gray-500'}`}
         >
           {formatted || 'Select date of birth'}
         </span>
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0 17C0 18.7 1.3 20 3 20H17C18.7 20 20 18.7 20 17V9H0V17ZM17 2H15V1C15 0.4 14.6 0 14 0C13.4 0 13 0.4 13 1V2H7V1C7 0.4 6.6 0 6 0C5.4 0 5 0.4 5 1V2H3C1.3 2 0 3.3 0 5V7H20V5C20 3.3 18.7 2 17 2Z" fill="#000000" />
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-900">
+          <path d="M0 17C0 18.7 1.3 20 3 20H17C18.7 20 20 18.7 20 17V9H0V17ZM17 2H15V1C15 0.4 14.6 0 14 0C13.4 0 13 0.4 13 1V2H7V1C7 0.4 6.6 0 6 0C5.4 0 5 0.4 5 1V2H3C1.3 2 0 3.3 0 5V7H20V5C20 3.3 18.7 2 17 2Z" fill="currentColor" />
         </svg>
       </button>
 
@@ -541,21 +539,21 @@ const DatePickerField = ({
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-3">
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => setMonth((p) => (p === 0 ? (setYear(year - 1), 11) : p - 1))} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronLeft className="w-4 h-4 text-black" />
+              <ChevronLeft className="w-4 h-4 text-gray-900" />
             </button>
             <div className="flex gap-2">
-              <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="text-sm border rounded px-2 py-1 text-black font-medium">
+              <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="text-sm border rounded px-2 py-1 text-gray-900 font-medium">
                 {monthNames.map((m, i) => <option key={m} value={i}>{m}</option>)}
               </select>
-              <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="text-sm border rounded px-2 py-1 text-black font-medium">
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="text-sm border rounded px-2 py-1 text-gray-900 font-medium">
                 {yearOptions.map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
             <button type="button" onClick={() => setMonth((p) => (p === 11 ? (setYear(year + 1), 0) : p + 1))} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronRight className="w-4 h-4 text-black" />
+              <ChevronRight className="w-4 h-4 text-gray-900" />
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs text-black font-medium mb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-900 font-medium mb-1">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => <div key={d}>{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-sm">
@@ -568,7 +566,7 @@ const DatePickerField = ({
                   type="button"
                   onClick={() => handleSelect(day)}
                   disabled={!day || tooRecent}
-                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-black ${!day ? 'invisible' : tooRecent ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-[#3AA189] text-white' : 'hover:bg-gray-100'
+                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-gray-900 ${!day ? 'invisible' : tooRecent ? 'text-gray-300 cursor-not-allowed' : isSelected ? 'bg-brand-emerald500 text-white' : 'hover:bg-gray-100'
                     }`}
                 >
                   {day}
@@ -578,7 +576,7 @@ const DatePickerField = ({
           </div>
         </div>
       )}
-      {error && <p className="text-red-400 text-xs mt-0.5" style={{ fontFamily: "'Inter', sans-serif" }}>{error}</p>}
+      {error && <p className="text-red-400 text-xs mt-0.5 font-sans">{error}</p>}
     </div>
   );
 };
@@ -598,46 +596,117 @@ const Checkbox = ({
   children: React.ReactNode;
 }) => (
   <label htmlFor={id} className="flex items-center gap-2 cursor-pointer select-none">
-    <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: '16px', height: '16px' }}>
+    <div className="relative flex items-center justify-center flex-shrink-0 w-4 h-4">
       <input
         type="checkbox"
         id={id}
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${error ? 'border-red-500' : 'border-white'
-          } bg-transparent transition-all checked:border-[#3AA189] checked:bg-[#3AA189]`}
+          } bg-transparent transition-all checked:border-brand-emerald500 checked:bg-brand-emerald500`}
       />
       <span className="absolute inset-0 flex items-center justify-center opacity-0 peer-checked:opacity-100 text-black pointer-events-none">
         <Check size={10} strokeWidth={4} />
       </span>
     </div>
-    <span className={`text-xs leading-normal ${error ? 'text-red-400' : 'text-gray-300'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+    <span className={`text-xs leading-normal font-sans ${error ? 'text-red-400' : 'text-gray-300'}`}>
       {children}
     </span>
   </label>
 );
+
+// --- Edit Mode Data Interface ---
+// Contains all form data so user can return to exact same state
+export interface EditModeData {
+  // Step 1 data
+  email: string;
+  fullName?: string;
+  dob?: string;
+  countryOfResidence?: string;
+  referralCode?: string;
+  // Step 2 data
+  phone?: string;
+  phoneCode?: string;
+  phoneIso?: string;
+  whatsappPhone?: string;
+  whatsappCode?: string;
+  whatsappIso?: string;
+  useSameNumber?: boolean;
+  agreeToWhatsappOtp?: boolean;
+  agreeToTerms?: boolean;
+}
 
 // --- Main Modal Component ---
 interface SignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToLogin?: () => void;
-  onSuccess?: (email: string, userId: string) => void;
+  onSuccess?: (email: string, userId: string, formData: FormData) => void;
+  // Edit mode props (only for step 2 - phone/WhatsApp editing)
+  isEditMode?: boolean;
+  editData?: EditModeData;
+  onEditSuccess?: (email: string, whatsappPhone: string | undefined, formData: FormData) => void;
 }
 
-export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwitchToLogin, onSuccess }) => {
-  const [step, setStep] = useState<1 | 2>(1);
+export const SignUpModal: React.FC<SignUpModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSwitchToLogin, 
+  onSuccess,
+  isEditMode = false,
+  editData,
+  onEditSuccess,
+}) => {
+  const [step, setStep] = useState<1 | 2>(isEditMode ? 2 : 1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'form', string>>>({});
   const [loading, setLoading] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
-  // Reset form when modal closes
+  // Initialize form with edit data when in edit mode (step 2 only)
+  // This restores the exact form state the user had before
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && isEditMode && editData) {
+      setFormData({
+        // Step 1 fields - not used in edit mode
+        fullName: '',
+        dob: '',
+        countryOfResidence: '',
+        email: editData.email || '',
+        password: '',
+        confirmPassword: '',
+        referralCode: '',
+        // Step 2 fields - use provided values directly
+        phone: editData.phone || '',
+        phoneCode: editData.phoneCode || '+1',
+        phoneIso: editData.phoneIso || 'US',
+        whatsapp: editData.whatsappPhone || '',
+        whatsappCode: editData.whatsappCode || '+1',
+        whatsappIso: editData.whatsappIso || 'US',
+        useSameNumber: editData.useSameNumber || false,
+        agreeToWhatsappOtp: editData.agreeToWhatsappOtp ?? true,
+        agreeToTerms: editData.agreeToTerms ?? true,
+      });
+      setStep(2);
+    }
+  }, [isOpen, isEditMode, editData]);
+
+  // Reset form when modal closes (only if not in edit mode)
+  useEffect(() => {
+    if (!isOpen && !isEditMode) {
       setStep(1);
       setFormData(initialFormData);
       setErrors({});
+      setLoading(false);
+      setIsButtonHovered(false);
+    }
+  }, [isOpen, isEditMode]);
+
+  // Reset loading and hover states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(false);
+      setIsButtonHovered(false);
     }
   }, [isOpen]);
 
@@ -691,6 +760,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
     if (!formData.countryOfResidence) newErrors.countryOfResidence = 'Country is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Invalid email';
+    // Password validation (always required for step 1)
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
     if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
@@ -709,11 +779,76 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateStep1()) {
+    if (!validateStep1()) {
+      return;
+    }
+
+    // Check if email exists and is fully verified before proceeding
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const emailStatus = await checkEmailVerificationStatus(formData.email.toLowerCase());
+      
+      if (emailStatus.exists && emailStatus.fullyVerified) {
+        // Email exists and both email and WhatsApp are verified
+        setErrors({ 
+          email: 'An account with this email already exists. Please log in to continue.' 
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Email doesn't exist or is not fully verified - proceed to step 2
       setStep(2);
       setIsButtonHovered(false);
+    } catch (error: any) {
+      // If check fails, still allow proceeding (don't block user flow)
+      console.error('Error checking email status:', error);
+      setStep(2);
+      setIsButtonHovered(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle edit mode save for Step 2
+  const handleEditSaveStep2 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // For edit mode step 2, validate both phone fields
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    if (!formData.whatsapp.trim()) newErrors.whatsapp = 'WhatsApp number is required';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const phone = `${formData.phoneCode}${formData.phone.replace(/\D/g, '')}`;
+      const whatsappPhone = `${formData.whatsappCode}${formData.whatsapp.replace(/\D/g, '')}`;
+      
+      const result = await updateUserProfile({
+        currentEmail: editData?.email || '',
+        phone,
+        whatsappPhone,
+        sendWhatsAppOtp: true, // Always send OTP after phone edit
+      });
+
+      if (result.ok) {
+        // Return to verification with updated form data
+        if (onEditSuccess) {
+          const updatedFormData = { ...formData };
+          onEditSuccess(editData?.email || '', result.newWhatsappPhone || whatsappPhone, updatedFormData);
+        }
+      }
+    } catch (error: any) {
+      setErrors({ form: error.message || 'Failed to update profile' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -741,8 +876,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
       const result = await registerUser(payload);
 
       // Trigger verification flow on successful registration
+      // Pass all form data so it can be restored if user needs to edit
       if (onSuccess) {
-        onSuccess(result.email, result.user_id);
+        onSuccess(result.email, result.user_id, formData);
       }
     } catch (error) {
       if (error instanceof RegistrationError) {
@@ -769,19 +905,15 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      {/* Backdrop - no click to close to preserve form state */}
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Modal */}
       <div
-        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4"
+        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-modal-outer/60 backdrop-blur-[40px] rounded-modal"
         style={{
           maxWidth: 'min(90vw, 900px)',
           maxHeight: '95vh',
-          borderRadius: '40px',
-          background: 'rgba(4, 34, 34, 0.60)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
         }}
       >
         {/* Close Button */}
@@ -790,37 +922,36 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
         </button>
 
         {/* Left Side - Branding */}
-        <div className="hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative">
+        <div className={`hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative ${step === 2 ? 'justify-center' : ''}`}>
           {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute top-5 left-5 text-white hover:text-[#3AA189] transition-colors">
+            <button onClick={() => setStep(1)} className="absolute top-5 left-5 text-white hover:text-brand-emerald500 transition-colors">
               <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-32 object-contain mb-3 justify-center" />
-          <h1
-            className="text-white text-center leading-tight mb-10 whitespace-pre-line"
-            style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2rem, 2.5vw + 0.5rem, 3rem)', fontWeight: 600 }}
-          >
-            {step === 1 ? 'Create Your\nAccount' : 'Security\nand\nVerification'}
-          </h1>
-          <p
-            className="text-center text-base"
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              background: 'linear-gradient(180deg, #6F7D7D 0%, #CAE3E3 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Join our trading community.
-          </p>
+          <img 
+            src="/logos/white_wordmark_logo_on_black-removebg-preview.png" 
+            alt="ShareMatch" 
+            className={`h-32 object-contain ${step === 2 ? 'mt-16 mb-0' : 'mb-3'}`}
+          />
+          {step === 1 && (
+            <>
+              <h1
+                className="text-white text-center leading-tight mb-4 whitespace-pre-line font-bold"
+                style={{ fontSize: 'clamp(2rem, 2.5vw + 0.5rem, 3rem)' }}
+              >
+                Create Your <br /> Account
+              </h1>
+              <p className="mt-8 text-gray-400 text-center font-medium text-lg leading-relaxed px-4">
+                Join our trading community.
+              </p>
+            </>
+          )}
         </div>
 
         {/* Mobile Header */}
         <div className="md:hidden p-5 flex items-center justify-center relative">
           {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute left-5 text-white hover:text-[#3AA189] transition-colors">
+            <button onClick={() => setStep(1)} className="absolute left-5 text-white hover:text-brand-emerald500 transition-colors">
               <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
@@ -830,9 +961,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
         {/* Right Side - Form */}
         <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
           <div
-            className="bg-[#021A1A] rounded-lg p-3 md:p-4 flex flex-col"
+            className="bg-modal-inner rounded-xl p-3 md:p-4 flex flex-col border border-transparent"
             style={{
-              border: '1px solid transparent',
               backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
               backgroundOrigin: 'border-box',
               backgroundClip: 'padding-box, border-box',
@@ -840,8 +970,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
             }}
           >
             <h2
-              className="text-white mb-3"
-              style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.25rem', fontWeight: 700 }}
+              className="text-white mb-3 font-bold text-xl"
             >
               {step === 2 && 'Security & Access'}
             </h2>
@@ -852,7 +981,11 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
               </div>
             )}
 
-            <form onSubmit={step === 1 ? handleNext : handleSubmit} className="flex flex-col gap-2 flex-1">
+            <form onSubmit={
+              isEditMode 
+                ? handleEditSaveStep2
+                : (step === 1 ? handleNext : handleSubmit)
+            } className="flex flex-col gap-2 flex-1">
               {step === 1 ? (
                 <>
                   <InputField
@@ -902,6 +1035,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                       </svg>
                     }
                   />
+                  {/* Password fields */}
                   <PasswordField
                     label="Password *"
                     name="password"
@@ -934,6 +1068,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                 </>
               ) : (
                 <div className="flex flex-col gap-4 flex-1 justify-center">
+                  {/* Phone field - editable in edit mode */}
                   <PhoneInputField
                     label="Phone Number *"
                     name="phone"
@@ -984,9 +1119,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
                   </Checkbox>
 
                   {/* Security Notice */}
-                  <div className="bg-[#0F2222] rounded-lg p-2 flex items-start gap-2 border border-white/5">
+                  <div className="bg-modal-notice rounded-lg p-2 flex items-start gap-2 border border-white/5">
                     <Lock className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-400 text-xs leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    <p className="text-gray-400 text-xs leading-tight font-sans">
                       Your account is protected with encryption. Never share your password.
                     </p>
                   </div>
@@ -1007,32 +1142,28 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
               {/* Submit Button */}
               <div className="flex justify-center mt-1">
                 <div
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    border: `1px solid ${isButtonHovered ? '#FFFFFF' : '#3AA189'}`,
-                    boxShadow: isButtonHovered ? '0 0 20px rgba(255,255,255,0.3)' : 'none',
-                    padding: '2px',
-                  }}
+                  className={`rounded-full transition-all duration-300 p-0.5 ${
+                    isButtonHovered 
+                      ? 'border border-white shadow-glow' 
+                      : 'border border-brand-emerald500'
+                  }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
                 >
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm"
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      background: isButtonHovered
-                        ? '#FFFFFF'
-                        : 'linear-gradient(0deg, rgba(0,0,0,0.4), rgba(0,0,0,0.4)), linear-gradient(180deg, #019170 15%, #3AA189 50%, #019170 85%)',
-                      color: isButtonHovered ? '#019170' : '#FFFFFF',
-                    }}
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
+                      isButtonHovered
+                        ? 'bg-white text-brand-emerald500'
+                        : 'bg-gradient-primary text-white'
+                    }`}
                   >
-                    {loading ? 'Processing...' : step === 1 ? 'Continue' : 'Create Account'}
+                    {loading ? 'Processing...' : isEditMode ? 'Save Changes' : step === 1 ? 'Continue' : 'Create Account'}
                     {!loading && (
-                      <svg width="18" height="7" viewBox="0 0 48 14" fill="none">
-                        <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered ? '#019170' : '#FFFFFF'} strokeWidth="2" />
-                        <path d="M40 1L47 7L40 13" stroke={isButtonHovered ? '#019170' : '#FFFFFF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                        <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                        <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </button>
@@ -1041,9 +1172,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
 
               {/* Switch to Login */}
               {step === 1 && (
-                <p className="text-center text-xs text-white mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+                <p className="text-center text-xs text-white mt-1 font-sans">
                   Already have an account?{' '}
-                  <button type="button" onClick={onSwitchToLogin} className="underline hover:text-[#3AA189] transition-colors">
+                  <button type="button" onClick={onSwitchToLogin} className="underline hover:text-brand-emerald500 transition-colors">
                     Login
                   </button>
                 </p>

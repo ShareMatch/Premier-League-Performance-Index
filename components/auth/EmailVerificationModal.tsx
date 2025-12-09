@@ -6,10 +6,10 @@ interface EmailVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   email: string;
-  maskedEmail?: string;
   onVerificationSuccess?: () => void;
   onResendCode?: () => Promise<boolean>;
   onVerifyCode?: (code: string) => Promise<boolean>;
+  onEditEmail?: () => void; // Navigate to edit modal
 }
 
 type VerificationStatus = 'idle' | 'sending' | 'verifying' | 'error' | 'success';
@@ -147,19 +147,16 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   isOpen,
   onClose,
   email,
-  maskedEmail,
   onVerificationSuccess,
   onResendCode,
   onVerifyCode,
+  onEditEmail,
 }) => {
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<VerificationStatus>('idle');
   const [message, setMessage] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes OTP validity
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes OTP validity
   const [isButtonHovered, setIsButtonHovered] = useState(false);
-
-  // Derive masked email if not provided
-  const displayEmail = maskedEmail || (email ? maskEmail(email) : '');
 
   // Reset state when modal opens
   useEffect(() => {
@@ -167,7 +164,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setCode(Array(CODE_LENGTH).fill(''));
       setStatus('idle');
       setMessage('');
-      setTimeLeft(120); // 2 minutes OTP validity
+      setTimeLeft(300); // 5 minutes OTP validity
+      setIsButtonHovered(false);
     }
   }, [isOpen]);
 
@@ -242,18 +240,18 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
-          setTimeLeft(120); // 2 minutes OTP validity
+          setTimeLeft(300); // 5 minutes OTP validity
           setStatus('idle');
-          setMessage(`A new code has been sent to ${displayEmail}`);
+          setMessage(`A new code has been sent to ${email}`);
         } else {
           throw new Error('Failed to send code');
         }
       } else {
         // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setTimeLeft(120); // 2 minutes OTP validity
+        setTimeLeft(300); // 5 minutes OTP validity
         setStatus('idle');
-        setMessage(`A new code has been sent to ${displayEmail}`);
+        setMessage(`A new code has been sent to ${email}`);
       }
     } catch (error: any) {
       setStatus('error');
@@ -275,11 +273,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
+      {/* Backdrop - no click to close to preserve verification state */}
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Modal Content - Vertical Layout */}
       <div
@@ -305,19 +300,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         {/* Success Toast - Above Title */}
         {status === 'success' && (
           <div 
-            className="flex items-center gap-2 px-4 py-3 rounded-lg animate-in fade-in slide-in-from-top-2"
-            style={{
-              background: 'rgba(1, 145, 112, 0.15)',
-              border: '1px solid rgba(58, 161, 137, 0.4)',
-            }}
+            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500"
           >
-            <CheckCircle className="w-5 h-5 text-[#3AA189]" />
+            <CheckCircle className="w-5 h-5 text-brand-emerald500" />
             <p 
-              className="font-medium text-[#3AA189]"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.875rem, 1vw, 1rem)',
-              }}
+              className="font-medium text-brand-emerald500 font-sans text-sm"
             >
               Email verified successfully!
             </p>
@@ -326,12 +313,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
         {/* Title - Outside Inner Container */}
         <h1 
-          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap"
-          style={{ 
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 600,
-            fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)",
-          }}
+          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap font-bold"
+          style={{ fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)" }}
         >
           Email Verification
         </h1>
@@ -354,34 +337,33 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
           <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
             {/* Description */}
             <p 
-              className="text-center text-white"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                lineHeight: 1.5,
-              }}
+              className="text-center text-white font-sans text-sm"
             >
               We've sent a 6-digit verification code to your email address. Please enter the code below to continue.
             </p>
 
-            {/* Masked Email */}
-            <p 
-              className="text-center text-[#3AA189] font-medium"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-              }}
-            >
-              {displayEmail}
-            </p>
+            {/* Email Display with Edit Link */}
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-center text-brand-emerald500 font-medium font-sans text-sm">
+                {email}
+              </p>
+              {onEditEmail && status !== 'success' && (
+                <button
+                  onClick={onEditEmail}
+                  className="text-xs transition-colors font-sans"
+                >
+                  <span className="text-gray-500">Wrong Email?</span>{' '}
+                  <span className="text-brand-emerald500 hover:text-white">Edit</span>
+                </button>
+              )}
+            </div>
 
             {/* Status Message */}
             {message && status !== 'success' && (
               <p 
-                className={`text-center text-sm ${
+                className={`text-center text-sm font-sans ${
                   status === 'error' ? 'text-red-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 {message}
               </p>
@@ -398,11 +380,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Timer */}
             <p 
-              className="text-center text-white font-semibold"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(1rem, 1.2vw, 1.25rem)',
-              }}
+              className="text-center text-white font-semibold font-sans text-lg"
             >
               {formatTime(timeLeft)}
             </p>
@@ -433,12 +411,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             {/* Verify Button - Inside Container */}
             <div className="flex justify-center pt-2">
               <div
-                className="rounded-full transition-all duration-300"
-                style={{
-                  border: `1px solid ${isButtonHovered && isCodeComplete ? '#FFFFFF' : '#3AA189'}`,
-                  boxShadow: isButtonHovered && isCodeComplete ? '0 0 20px rgba(255, 255, 255, 0.3)' : 'none',
-                  padding: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-                }}
+                className={`rounded-full transition-all duration-300 p-0.5 ${
+                  isButtonHovered && isCodeComplete
+                    ? 'border border-white shadow-glow'
+                    : 'border border-brand-emerald500'
+                }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
@@ -446,34 +423,17 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                   type="button"
                   onClick={handleVerify}
                   disabled={isVerifyDisabled}
-                  className="text-white disabled:opacity-60 disabled:cursor-not-allowed rounded-full flex items-center justify-center transition-all duration-300 whitespace-nowrap font-medium"
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    background: isButtonHovered && isCodeComplete
-                      ? '#FFFFFF'
-                      : 'linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), linear-gradient(180deg, #019170 15.254%, #3AA189 49.576%, #019170 83.898%)',
-                    color: isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF',
-                    boxShadow: '0px 4px 12px 0px rgba(0, 0, 0, 0.12)',
-                    cursor: !isVerifyDisabled ? 'pointer' : 'not-allowed',
-                    padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(1.5rem, 2.5vw, 2rem)',
-                    fontSize: 'clamp(0.875rem, 0.9vw + 0.2rem, 1rem)',
-                    gap: 'clamp(0.375rem, 0.8vw, 0.625rem)',
-                  }}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
+                    isButtonHovered && isCodeComplete
+                      ? 'bg-white text-brand-emerald500'
+                      : 'bg-gradient-primary text-white'
+                  }`}
                 >
                   {status === 'verifying' ? 'Verifying...' : 'Verify'}
                   {status !== 'verifying' && (
-                    <svg 
-                      viewBox="0 0 48 14" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="flex-shrink-0"
-                      style={{
-                        width: 'clamp(1.25rem, 1.5vw + 0.3rem, 2.5rem)',
-                        height: 'clamp(0.4rem, 0.5vw + 0.15rem, 0.875rem)',
-                      }}
-                    >
-                      <line x1="0" y1="7" x2="40" y2="7" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke={isButtonHovered && isCodeComplete ? '#019170' : '#FFFFFF'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -485,17 +445,5 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     </div>
   );
 };
-
-// --- Helper Functions ---
-function maskEmail(email: string): string {
-  const [localPart, domain] = email.split('@');
-  if (!localPart || !domain) return email;
-  
-  const visibleStart = localPart.slice(0, 1);
-  const visibleEnd = localPart.length > 2 ? localPart.slice(-1) : '';
-  const maskedPart = '*'.repeat(Math.max(localPart.length - 2, 1));
-  
-  return `${visibleStart}${maskedPart}${visibleEnd}@${domain}`;
-}
 
 export default EmailVerificationModal;
