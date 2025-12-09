@@ -124,7 +124,7 @@ const App: React.FC = () => {
       try {
         const status = await getKycUserStatus(publicUserId);
         setKycStatus(status.kyc_status);
-        
+
         // Auto-show KYC modal if user needs verification
         if (needsKycVerification(status.kyc_status)) {
           setShowKycModal(true);
@@ -154,7 +154,7 @@ const App: React.FC = () => {
   // Handle KYC modal close - re-check status in case user completed KYC
   const handleKycModalClose = async () => {
     setShowKycModal(false);
-    
+
     // Re-fetch KYC status in case it changed while modal was open
     if (publicUserId) {
       try {
@@ -312,6 +312,18 @@ const App: React.FC = () => {
 
 
 
+
+  // Calculate total portfolio value
+  const portfolioValue = React.useMemo(() => {
+    return portfolio.reduce((total, position) => {
+      // Find current asset data to get price
+      const asset = allAssets.find(a => a.id.toString() === position.asset_id);
+      // Value at bid price (like Portfolio component)
+      const price = asset ? asset.bid : 0;
+      return total + (position.quantity * price);
+    }, 0);
+  }, [portfolio, allAssets]);
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gray-900 text-white">
@@ -341,7 +353,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} />
+        <TopBar wallet={wallet} portfolioValue={portfolioValue} />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">

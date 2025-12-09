@@ -14,7 +14,10 @@ import type { VerificationRequiredData } from './auth/LoginModal';
 
 interface TopBarProps {
     wallet: WalletType | null;
+    portfolioValue?: number;
 }
+// ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
+
 
 // Store pending verification info for verification modals
 // Includes all form data so user can return to edit with same state
@@ -40,7 +43,7 @@ interface PendingVerification {
     maskedWhatsapp?: string;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
+const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
     const { user, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -54,12 +57,12 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
     const [showPasswordResetSuccess, setShowPasswordResetSuccess] = useState(false);
     const [showEditEmailModal, setShowEditEmailModal] = useState(false);
     const [pendingVerification, setPendingVerification] = useState<PendingVerification | null>(null);
-    
+
     // Edit mode state for SignUpModal
     const [isEditMode, setIsEditMode] = useState(false);
     const [editStep, setEditStep] = useState<1 | 2>(1);
     const [editData, setEditData] = useState<EditModeData | undefined>(undefined);
-    
+
     // Ref to store WhatsApp data from email verification response (avoids async state issues)
     const whatsappDataRef = useRef<{ raw: string; masked: string } | null>(null);
 
@@ -190,8 +193,8 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                                             <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-400">In Orders</span>
-                                            <span className="font-medium text-gray-200">{reserved.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                            <span className="text-gray-400">Invested</span>
+                                            <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -247,8 +250,8 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
             </div>
 
             {/* Login Modal */}
-            <LoginModal 
-                isOpen={showLoginModal} 
+            <LoginModal
+                isOpen={showLoginModal}
                 onClose={() => {
                     setShowLoginModal(false);
                     setShowPasswordResetSuccess(false); // Clear success message when modal closes
@@ -273,8 +276,8 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     setIsEditMode(false);
                     setEditData(undefined);
                     // Store all form data so user can return to edit with same state
-                    setPendingVerification({ 
-                        email, 
+                    setPendingVerification({
+                        email,
                         userId,
                         fullName: formData.fullName,
                         dob: formData.dob,
@@ -303,7 +306,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     setShowSignUpModal(false);
                     setIsEditMode(false);
                     setEditData(undefined);
-                    
+
                     // Update pending verification with all form data
                     if (pendingVerification) {
                         setPendingVerification({
@@ -325,7 +328,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                             whatsappPhone: whatsappPhone || pendingVerification.whatsappPhone,
                         });
                     }
-                    
+
                     // Go back to the appropriate verification modal
                     if (editStep === 1) {
                         // Email was edited, go back to email verification
@@ -351,7 +354,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                 onVerificationSuccess={async () => {
                     setShowEmailVerificationModal(false);
                     const whatsappData = whatsappDataRef.current;
-                    
+
                     if (whatsappData && pendingVerification) {
                         setPendingVerification({
                             ...pendingVerification,
