@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Team, Order, Wallet, Position, Transaction } from './types';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
@@ -30,6 +30,19 @@ const App: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+
+  // Refs to track current state for subscription callbacks
+  const userRef = useRef(user);
+  const publicUserIdRef = useRef(publicUserId);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    publicUserIdRef.current = publicUserId;
+  }, [publicUserId]);
 
   // KYC State
   const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
@@ -82,8 +95,23 @@ const App: React.FC = () => {
       setPublicUserId(null);
       setKycStatus(null);
       setKycChecked(false);
+      // Clear portfolio and transactions on sign out
+      setPortfolio([]);
+      setTransactions([]);
+      setWallet(null);
+      setSelectedOrder(null);
     }
   }, [user]);
+
+  // Clear all user data when publicUserId becomes null
+  useEffect(() => {
+    if (!publicUserId) {
+      setPortfolio([]);
+      setTransactions([]);
+      setWallet(null);
+      setSelectedOrder(null);
+    }
+  }, [publicUserId]);
 
   // Check KYC status when we have the public user ID
   useEffect(() => {
@@ -139,21 +167,31 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    if (publicUserId) {
-      loadUserData();
-    }
+    // Always load assets (they're public)
     loadAssets();
     seedSportsAssets(); // Auto-seed if missing
 
-    // Set up Real-Time Subscriptions - only when we have the public user ID
-    if (!user || !publicUserId) return;
+    // Don't load user data or set up subscriptions if user is not logged in
+    if (!user || !publicUserId) {
+      return;
+    }
 
+    // Load user data only when both user and publicUserId exist
+    loadUserData();
+
+    // Set up Real-Time Subscriptions - only when we have the public user ID
     const walletSubscription = subscribeToWallet(publicUserId, (updatedWallet) => {
-      setWallet(updatedWallet);
+      // Guard: only update if user is still logged in (check refs for current state)
+      if (userRef.current && publicUserIdRef.current) {
+        setWallet(updatedWallet);
+      }
     });
 
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
-      fetchPortfolio(publicUserId).then(setPortfolio);
+      // Guard: only update if user is still logged in (check refs for current state)
+      if (userRef.current && publicUserIdRef.current) {
+        fetchPortfolio(publicUserIdRef.current).then(setPortfolio);
+      }
     });
 
     const assetsSubscription = subscribeToAssets(() => {
