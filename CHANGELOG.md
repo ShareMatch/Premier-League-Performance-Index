@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Wallet Balance:** Resolved a critical bug where buying assets reserved funds but didn't deduct them from the cash balance, leading to inflated balance displays after settlement.
 - **Navigation:** Restored missing "Motorsport" menu item.
+- **Trending Markets:** Filtered out settled markets (like F1) from the "Hot Questions" homepage section, replacing them with active markets (NFL, NBA).
 
 ## [2.9] - 2025-12-06
 ### Added
