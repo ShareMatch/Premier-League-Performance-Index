@@ -46,6 +46,17 @@ export const fetchPortfolio = async (userId: string) => {
     return data as Position[];
 };
 
+export const fetchTransactions = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+};
+
 export const placeTrade = async (
     userId: string,
     assetId: string,

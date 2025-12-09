@@ -7,6 +7,8 @@ export interface Team {
   color?: string;
   category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'other';
   market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL
+  is_settled?: boolean;
+  settled_date?: string;
 }
 
 export interface Order {
@@ -14,6 +16,8 @@ export interface Order {
   type: 'buy' | 'sell';
   price: number;
   holding?: number;
+  quantity?: number;
+  maxQuantity?: number;
 }
 
 export interface Wallet {
@@ -31,4 +35,18 @@ export interface Position {
   quantity: number;
   average_buy_price: number;
   current_value?: number;
+}
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  asset_id: string;
+  asset_name: string;
+  type: 'buy' | 'sell' | 'settlement' | 'deposit' | 'withdrawal' | 'trade_entry';
+  direction: 'buy' | 'sell';
+  price_per_unit: number;
+  quantity: number;
+  amount: number;
+  trade_status: 'pending' | 'completed' | 'failed' | 'cancelled' | 'win' | 'loss' | 'success';
+  created_at: string;
 }
