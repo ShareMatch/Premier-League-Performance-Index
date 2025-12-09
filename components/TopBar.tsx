@@ -193,7 +193,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                                             <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-400">Invested</span>
+                                            <span className="text-gray-400">Active Assets</span>
                                             <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                         </div>
                                     </div>
