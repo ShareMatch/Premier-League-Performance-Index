@@ -796,7 +796,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, onSwi
               <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-32 object-contain mb-3" />
+          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-32 object-contain mb-3 justify-center" />
           <h1
             className="text-white text-center leading-tight mb-10 whitespace-pre-line"
             style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2rem, 2.5vw + 0.5rem, 3rem)', fontWeight: 600 }}

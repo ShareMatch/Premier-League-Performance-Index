@@ -236,10 +236,24 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
             {/* AI Summary Modal */}
             {selectedNews && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-900/50">
-                            <h3 className="font-bold text-gray-200 flex items-center gap-2">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div 
+                        className="max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200"
+                        style={{
+                            borderRadius: '24px',
+                            background: 'rgba(4, 34, 34, 0.60)',
+                            backdropFilter: 'blur(40px)',
+                            WebkitBackdropFilter: 'blur(40px)',
+                        }}
+                    >
+                        <div 
+                            className="px-5 py-4 flex justify-between items-center"
+                            style={{
+                                background: '#021A1A',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                            }}
+                        >
+                            <h3 className="font-bold text-white flex items-center gap-2">
                                 <Sparkles className="w-4 h-4 text-[#3AA189]" />
                                 AI News Summary
                             </h3>
@@ -253,18 +267,18 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
                             {summaryLoading ? (
                                 <div className="space-y-3 animate-pulse">
-                                    <div className="h-2 bg-gray-700 rounded w-full"></div>
-                                    <div className="h-2 bg-gray-700 rounded w-5/6"></div>
-                                    <div className="h-2 bg-gray-700 rounded w-4/5"></div>
+                                    <div className="h-2 bg-white/10 rounded w-full"></div>
+                                    <div className="h-2 bg-white/10 rounded w-5/6"></div>
+                                    <div className="h-2 bg-white/10 rounded w-4/5"></div>
                                 </div>
                             ) : (
-                                <p className="text-gray-300 text-sm leading-relaxed">
+                                <p className="text-gray-200 text-sm leading-relaxed">
                                     {summary}
                                 </p>
                             )}
 
-                            <div className="mt-6 flex justify-end">
-                                <span className="text-xs text-gray-500">Powered by Google Gemini</span>
+                            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end">
+                                <span className="text-xs text-gray-400">Powered by Google Gemini</span>
                             </div>
                         </div>
                     </div>

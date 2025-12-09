@@ -113,29 +113,42 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
             {/* Gradient Background Effect */}
             <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
-            <div className="relative z-10 flex flex-col h-full">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-2 bg-gray-900/60 rounded-full px-3 py-1 border border-gray-700">
-                  {q.icon}
-                  <span className="text-xs font-medium text-gray-300">{q.market}</span>
+            <div className="relative z-10 flex flex-col h-full overflow-hidden">
+              <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex items-center gap-2 bg-gray-900/60 rounded-full px-3 py-1 border border-gray-700">
+                    {q.icon}
+                    <span className="text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
+                  </div>
+                  <span className="text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-gray-500 font-mono">Vol: {q.volume}</span>
-                  {(() => {
-                    const info = getMarketInfo(q.market);
-                    return (
+                {(() => {
+                  const info = getMarketInfo(q.market);
+                  return (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${
+                        info.isOpen 
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' 
+                          : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                      }`}>
+                        {info.isOpen ? 'Market Open' : 'Market Closed'}
+                      </span>
                       <InfoPopup
                         title={info.title}
                         content={info.content}
+                        volumeInfo={{ value: q.volume, description: info.volumeDescription }}
+                        buyInfo={{ price: q.yesPrice.toFixed(1), description: info.buyInfo.description }}
+                        sellInfo={{ price: q.noPrice.toFixed(1), description: info.sellInfo.description }}
                         details={info.details}
-                        iconSize={14}
+                        isMarketOpen={info.isOpen}
+                        iconSize={22}
                       />
-                    );
-                  })()}
-                </div>
+                    </div>
+                  );
+                })()}
               </div>
 
-              <h3 className="text-lg font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors line-clamp-2">
+              <h3 className="text-[clamp(0.875rem,1.5vw,1.125rem)] font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors leading-snug">
                 {q.question}
               </h3>
 

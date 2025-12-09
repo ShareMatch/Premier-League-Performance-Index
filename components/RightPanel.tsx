@@ -23,7 +23,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
     leagueName
 }) => {
     return (
-        <div className="h-full flex flex-col bg-gray-900 border-l border-gray-800 w-80 flex-shrink-0">
+        <div className="h-full flex flex-col bg-gray-900 border-l border-gray-800 w-[clamp(10rem,20vw,20rem)] flex-shrink-0">
 
             {/* Trade Slip Section - Only visible when order selected */}
             {selectedOrder && (

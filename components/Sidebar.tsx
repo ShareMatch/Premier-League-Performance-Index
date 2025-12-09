@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           ]
         },
         {
-          label: 'F1',
+          label: 'Motorsport',
           subItems: [
             { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
           ]
