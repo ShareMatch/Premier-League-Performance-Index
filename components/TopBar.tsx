@@ -256,7 +256,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                 onSwitchToSignUp={switchToSignUp}
                 onForgotPassword={handleForgotPassword}
                 onVerificationRequired={handleVerificationRequired}
-                successMessage={showPasswordResetSuccess ? "Password reset successful! Please log in with your new password." : undefined}
+                successMessage={showPasswordResetSuccess ? "Password reset successful! Log in with your new password." : undefined}
             />
 
             {/* Sign Up Modal */}
@@ -298,7 +298,6 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     }
                 }}
                 isEditMode={isEditMode}
-                editStep={editStep}
                 editData={editData}
                 onEditSuccess={async (email: string, whatsappPhone: string | undefined, formData: SignUpFormData) => {
                     setShowSignUpModal(false);
