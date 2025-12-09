@@ -78,7 +78,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                     <div className="inline-flex items-center justify-center p-3 bg-brand-emerald900/10 rounded-full mb-4 ring-1 ring-brand-emerald500/20">
                         <Sparkles className="w-8 h-8 text-brand-emerald500" />
                     </div>
-                    <h1 className="text-4xl font-bold text-white font-serif">AI Analytics Engine</h1>
+                    <h1 className="text-4xl font-bold text-white font-sans">AI Analytics Engine</h1>
                     <p className="text-gray-400 max-w-2xl mx-auto">
                         Exclusive deep-dive analysis for our community. Powered by real-time data and grounded in Sharia-compliant investment principles.
                     </p>
@@ -104,7 +104,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                         <button
                             onClick={getAnalysis}
                             disabled={loading}
-                            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-brand-emerald500 to-brand-emerald900 hover:from-emerald-400 hover:to-emerald-800 text-white font-bold rounded-full flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                            className="w-full md:w-auto px-8 py-3 bg-gradient-primary hover:bg-white hover:text-white text-white font-bold rounded-full flex items-center justify-center gap-2 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                         >
                             {loading ? (
                                 <>
@@ -128,15 +128,15 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                    h1: ({ node, ...props }) => <h1 className="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2" {...props} />,
-                                    h2: ({ node, ...props }) => <h2 className="text-2xl font-bold text-brand-emerald500 mt-8 mb-4" {...props} />,
-                                    h3: ({ node, ...props }) => <h3 className="text-xl font-semibold text-white mt-6 mb-3" {...props} />,
-                                    p: ({ node, ...props }) => <p className="text-gray-300 leading-relaxed mb-4" {...props} />,
-                                    ul: ({ node, ...props }) => <ul className="list-disc list-outside ml-6 space-y-2 mb-6 text-gray-300" {...props} />,
-                                    ol: ({ node, ...props }) => <ol className="list-decimal list-outside ml-6 space-y-2 mb-6 text-gray-300" {...props} />,
-                                    li: ({ node, ...props }) => <li className="pl-2" {...props} />,
-                                    strong: ({ node, ...props }) => <strong className="text-white font-semibold" {...props} />,
-                                    blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-brand-emerald500 pl-4 italic text-gray-400 my-6 bg-gray-800/30 p-4 rounded-r-lg" {...props} />,
+                                    h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2" {...props} />,
+                                    h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-brand-emerald500 mt-6 mb-3" {...props} />,
+                                    h3: ({ node, ...props }) => <h3 className="text-lg font-semibold text-white mt-4 mb-2" {...props} />,
+                                    p: ({ node, ...props }) => <p className="text-sm text-gray-300 leading-relaxed mb-3" {...props} />,
+                                    ul: ({ node, ...props }) => <ul className="list-disc list-outside ml-6 space-y-1.5 mb-4 text-sm text-gray-300" {...props} />,
+                                    ol: ({ node, ...props }) => <ol className="list-decimal list-outside ml-6 space-y-1.5 mb-4 text-sm text-gray-300" {...props} />,
+                                    li: ({ node, ...props }) => <li className="pl-2 text-sm" {...props} />,
+                                    strong: ({ node, ...props }) => <strong className="text-sm text-white font-semibold" {...props} />,
+                                    blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-brand-emerald500 pl-4 italic text-sm text-gray-400 my-4 bg-gray-800/30 p-3 rounded-r-lg" {...props} />,
                                 }}
                             >
                                 {analysis}

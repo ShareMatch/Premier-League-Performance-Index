@@ -108,10 +108,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${item.id === 'AI_ANALYTICS'
                     ? (item.active
-                      ? 'bg-violet-500/10 text-violet-400'
-                      : 'text-violet-400/80 hover:bg-violet-500/10 hover:text-violet-300')
+                      ? 'bg-brand-emerald500/10 text-brand-emerald500'
+                      : 'text-brand-emerald500 hover:bg-brand-emerald500/10 hover:text-brand-emerald500')
                     : (item.active
-                      ? 'bg-[#3AA189]/10 text-[#3AA189]'
+                      ? 'bg-brand-emerald500/10 text-brand-emerald500'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200')
                   }
                 `}
