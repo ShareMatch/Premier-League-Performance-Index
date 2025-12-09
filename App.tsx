@@ -359,49 +359,47 @@ const App: React.FC = () => {
                 ) : activeLeague === 'AI_ANALYTICS' ? (
                   <AIAnalyticsPage teams={allAssets} />
                 ) : (
-                  <div className="flex flex-col h-full">
-                    {/* Compact Header */}
-                    <div className="flex-shrink-0">
-                      <Header title={getLeagueTitle(activeLeague)} />
-                    </div>
+                  <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
 
-                    {/* Split View Content */}
-                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-hidden">
-
-                      {/* Left Column: Order Book (2/3) */}
-                      <div className="flex-[2] flex flex-col min-h-0">
-                        <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
-                          {/* Fixed Header */}
-                          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-                            <div className="text-left">Asset</div>
-                            <div>Sell</div>
-                            <div>Buy</div>
-                          </div>
-
-                          {/* Scrollable List */}
-                          <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
-                            {sortedTeams.map((team) => (
-                              <OrderBookRow
-                                key={team.id}
-                                team={team}
-                                onSelectOrder={handleSelectOrder}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                    {/* Left Column: Header + Order Book (2/3) */}
+                    <div className="flex-[2] flex flex-col min-h-0">
+                      {/* Header aligned with order book */}
+                      <div className="flex-shrink-0">
+                        <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
                       </div>
 
-                      {/* Right Column: AI & News (1/3) */}
-                      <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-                        <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                      {/* Order Book */}
+                      <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col min-h-0">
+                        {/* Fixed Header */}
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+                          <div className="text-left">Asset</div>
+                          <div>Sell</div>
+                          <div>Buy</div>
+                        </div>
 
-                        {/* News Feed */}
-                        <div className="flex-shrink-0">
-                          <NewsFeed topic={activeLeague as any} />
+                        {/* Scrollable List */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
+                          {sortedTeams.map((team) => (
+                            <OrderBookRow
+                              key={team.id}
+                              team={team}
+                              onSelectOrder={handleSelectOrder}
+                            />
+                          ))}
                         </div>
                       </div>
-
                     </div>
+
+                    {/* Right Column: AI & News (1/3) */}
+                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                      <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+
+                      {/* News Feed */}
+                      <div className="flex-shrink-0">
+                        <NewsFeed topic={activeLeague as any} />
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
