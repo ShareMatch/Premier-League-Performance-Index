@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10] - 2025-12-09
+### Added
+- **Market Settlement:** Implemented full backend settlement logic for closed markets (e.g., F1 2025).
+- **History View:** New dedicated "Transaction History" tab in the Right Panel to view all past trades and settlements.
+- **UI:** Visual indicators for settled assets (greyed out, labeled "SETTLED AT [PRICE] - [DATE]").
+
+### Changed
+- **Navigation:** Renamed "F1" to "Motorsport > Formula 1" in the sidebar for better categorization.
+- **Wallet Accounting:** Updated `place_trade` logic to correctly deduct cash balance immediately upon purchase, ensuring accurate portfolio accounting.
+
+### Fixed
+- **Wallet Balance:** Resolved a critical bug where buying assets reserved funds but didn't deduct them from the cash balance, leading to inflated balance displays after settlement.
+- **Navigation:** Restored missing "Motorsport" menu item.
+
 ## [2.9] - 2025-12-06
 ### Added
 - **Markets:** Full integration of NBA (Basketball) and NFL (American Football) markets.
