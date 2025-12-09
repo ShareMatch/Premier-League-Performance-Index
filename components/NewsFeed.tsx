@@ -236,49 +236,49 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
             {/* AI Summary Modal */}
             {selectedNews && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
                     <div 
-                        className="max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200"
+                        className="max-w-[95vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
                         style={{
-                            borderRadius: '24px',
+                            borderRadius: '16px',
                             background: 'rgba(4, 34, 34, 0.60)',
                             backdropFilter: 'blur(40px)',
                             WebkitBackdropFilter: 'blur(40px)',
                         }}
                     >
                         <div 
-                            className="px-5 py-4 flex justify-between items-center"
+                            className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
                             style={{
                                 background: '#021A1A',
                                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                             }}
                         >
-                            <h3 className="font-bold text-white flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-[#3AA189]" />
+                            <h3 className="font-bold text-white flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
+                                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#3AA189] flex-shrink-0" />
                                 AI News Summary
                             </h3>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors">
-                                <X className="w-5 h-5" />
+                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
+                                <X className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>
 
-                        <div className="p-6">
-                            <h4 className="font-bold text-lg text-white mb-4 leading-tight">{selectedNews.headline}</h4>
+                        <div className="p-4 sm:p-6">
+                            <h4 className="font-bold text-base sm:text-lg text-white mb-3 sm:mb-4 leading-tight">{selectedNews.headline}</h4>
 
                             {summaryLoading ? (
-                                <div className="space-y-3 animate-pulse">
+                                <div className="space-y-2 sm:space-y-3 animate-pulse">
                                     <div className="h-2 bg-white/10 rounded w-full"></div>
                                     <div className="h-2 bg-white/10 rounded w-5/6"></div>
                                     <div className="h-2 bg-white/10 rounded w-4/5"></div>
                                 </div>
                             ) : (
-                                <p className="text-gray-200 text-sm leading-relaxed">
+                                <p className="text-gray-200 text-xs sm:text-sm leading-relaxed">
                                     {summary}
                                 </p>
                             )}
 
-                            <div className="mt-6 pt-4 border-t border-white/10 flex justify-end">
-                                <span className="text-xs text-gray-400">Powered by Google Gemini</span>
+                            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-white/10 flex justify-end">
+                                <span className="text-[10px] sm:text-xs text-gray-400">Powered by Google Gemini</span>
                             </div>
                         </div>
                     </div>
