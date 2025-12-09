@@ -52,12 +52,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             { label: 'NFL', id: 'NFL', active: activeLeague === 'NFL' }
           ]
         },
-        {
-          label: 'Motorsport',
-          subItems: [
-            { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
-          ]
-        },
         { label: 'Golf', badge: 'SOON' },
         { label: 'Cricket', badge: 'SOON' },
       ]
