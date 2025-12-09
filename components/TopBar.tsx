@@ -238,7 +238,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                     ) : (
                         <button
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-[#064e3b] hover:bg-[#053d2f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            className="bg-gradient-primary text-white hover:bg-white hover:text-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-colors"
                         >
                             Sign In
                         </button>
