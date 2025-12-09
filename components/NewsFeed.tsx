@@ -199,7 +199,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
     return (
         <>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-64">
+            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80">
                 <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
                     <Newspaper className="w-4 h-4 text-[#3AA189]" />
                     <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
