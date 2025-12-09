@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Navigation:** Restored missing "Motorsport" menu item.
 - **Trending Markets:** Filtered out settled markets (like F1) from the "Hot Questions" homepage section, replacing them with active markets (NFL, NBA).
 - **UX:** Renamed "In Orders" to "Active Assets" to align with Shariah-compliant "asset-backed" terminology (replacing "Invested"). Updated logic to show total portfolio value + reserved funds.
+- **Markets:** Opened NBA and NFL markets.
+- **Compliance:** Prefixed all asset prices with "$" to clearly distinguish them as asset values rather than percentages, reinforcing Shariah compliance.
 
 ## [2.9] - 2025-12-06
 ### Added
