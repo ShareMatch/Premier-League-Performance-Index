@@ -126,7 +126,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 The with profits token (i.e., the NBA Finals champion) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '22 October 2026 - 21 June 2027',
-    isOpen: false,
+    isOpen: true,
   },
 
   NFL: {
@@ -146,7 +146,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 The with profits token (i.e., the Super Bowl champion) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '4 September 2026 - 8 February 2027',
-    isOpen: false,
+    isOpen: true,
   },
 };
 
