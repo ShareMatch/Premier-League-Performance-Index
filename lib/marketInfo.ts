@@ -4,116 +4,148 @@
 export interface MarketInfo {
   title: string;
   content: string;
-  volumeDescription: string;
-  buyInfo: { price?: string; description: string };
-  sellInfo: { price?: string; description: string };
-  details: { label: string; value: string }[];
+  seasonDates: string;
   isOpen: boolean;
 }
 
 export const marketInfoData: Record<string, MarketInfo> = {
   F1: {
-    title: 'Formula 1 General Information',
-    content: `A Formula 1 event-market links every user position to a real, permissible underlying asset supported by licensed digital rights. Formula 1's globally broadcast races, highly transparent timing systems, and precisely measured driver performance provide clear, independently verified outcomes that allow asset values to adjust fairly and objectively after each race.
+    title: 'F1 Drivers Performance Index',
+    content: `The F1 Drivers Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
 
-Participants hold ownership units whose value changes in line with these publicly observed results. Because the sport's ranking structure, lap times, and season format are fully documented and easily validated, all adjustments to asset value are driven by factual events rather than uncertainty.`,
-    volumeDescription: 'Total trading volume in this F1 market over the last 24 hours. Higher volume indicates more active trading and better liquidity.',
-    buyInfo: {
-      description: 'Purchase ownership units at the current offer price. Your position increases in value as the driver performs well in races and climbs the championship standings.',
-    },
-    sellInfo: {
-      description: 'Sell your ownership units at the current bid price. Use this to take profits or reduce your exposure to a particular driver.',
-    },
-    details: [
-      { label: 'Season Start Date', value: '16 March 2025' },
-      { label: 'Season End Date', value: '7 December 2025' },
-      { label: 'Smart Contract Start Date', value: '16 March 2025' },
-      { label: 'Smart Contract End Date', value: '7 December 2025' },
-    ],
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '16 March 2025 - 7 December 2025',
     isOpen: false,
   },
 
   EPL: {
-    title: 'Premier League General Information',
-    content: `The Premier League event-market connects every user position to a real, permissible underlying asset backed by licensed digital rights. The English Premier League's globally broadcast matches, official league standings, and verified match statistics provide transparent, independently confirmed outcomes that allow asset values to adjust fairly after each matchweek.
+    title: 'Premier League Performance Index',
+    content: `The Premier League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
 
-Participants hold ownership units whose value changes based on publicly observed league performance. With official points tables, goal differentials, and match results documented by the league, all asset value adjustments are driven by factual sporting outcomes rather than speculation.`,
-    volumeDescription: 'Total trading volume in this Premier League market over the last 24 hours. Higher volume indicates more active trading and better liquidity.',
-    buyInfo: {
-      description: 'Purchase ownership units at the current offer price. Your position gains value as the team wins matches, accumulates points, and rises in the league table.',
-    },
-    sellInfo: {
-      description: 'Sell your ownership units at the current bid price. Use this to lock in profits or exit your position in a team.',
-    },
-    details: [
-      { label: 'Season Start Date', value: '16 August 2025' },
-      { label: 'Season End Date', value: '24 May 2026' },
-      { label: 'Smart Contract Start Date', value: '16 August 2025' },
-      { label: 'Smart Contract End Date', value: '24 May 2026' },
-    ],
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official Premier League statistics.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the club at the top of the league table) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '16 August 2025 - 24 May 2026',
     isOpen: true,
   },
 
   UCL: {
-    title: 'Champions League General Information',
-    content: `The UEFA Champions League event-market ties every user position to a real, permissible underlying asset supported by licensed digital rights. Europe's premier club competition features globally broadcast matches with UEFA-verified results, official group standings, and knockout round progression that provide transparent outcomes for fair asset value adjustments.
+    title: 'Champions League Performance Index',
+    content: `The UEFA Champions League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
 
-Participants hold ownership units whose value shifts based on publicly verified tournament performance. With UEFA's official match reports, coefficient rankings, and tournament brackets fully documented, all asset adjustments reflect factual competitive results rather than uncertainty.`,
-    volumeDescription: 'Total trading volume in this Champions League market over the last 24 hours. Higher volume indicates more active trading and better liquidity.',
-    buyInfo: {
-      description: 'Purchase ownership units at the current offer price. Your position appreciates as the team advances through group stages and knockout rounds toward the final.',
-    },
-    sellInfo: {
-      description: 'Sell your ownership units at the current bid price. Use this to realize gains or reduce exposure before critical matches.',
-    },
-    details: [
-      { label: 'Season Start Date', value: '17 September 2025' },
-      { label: 'Season End Date', value: '30 May 2026' },
-      { label: 'Smart Contract Start Date', value: '17 September 2025' },
-      { label: 'Smart Contract End Date', value: '30 May 2026' },
-    ],
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official UEFA statistics and coefficient rankings.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club tournament performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the Champions League winner) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '17 September 2025 - 30 May 2026',
     isOpen: true,
   },
 
   SPL: {
-    title: 'Saudi Pro League General Information',
-    content: `The Saudi Pro League event-market links every user position to a real, permissible underlying asset backed by licensed digital rights. The Roshn Saudi League's broadcast matches, official standings, and verified statistics from the Saudi Arabian Football Federation provide clear, independently confirmed outcomes for objective asset value adjustments.
+    title: 'Saudi Pro League Performance Index',
+    content: `The Saudi Pro League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
 
-Participants hold ownership units whose value changes in line with publicly observed league results. With official league tables, match statistics, and seasonal records fully documented, all asset value changes are driven by verified sporting facts rather than speculation.`,
-    volumeDescription: 'Total trading volume in this Saudi Pro League market over the last 24 hours. Higher volume indicates more active trading and better liquidity.',
-    buyInfo: {
-      description: 'Purchase ownership units at the current offer price. Your position increases in value as the team performs well and climbs the Saudi Pro League standings.',
-    },
-    sellInfo: {
-      description: 'Sell your ownership units at the current bid price. Use this to secure profits or adjust your portfolio exposure.',
-    },
-    details: [
-      { label: 'Season Start Date', value: '22 August 2025' },
-      { label: 'Season End Date', value: '30 May 2026' },
-      { label: 'Smart Contract Start Date', value: '22 August 2025' },
-      { label: 'Smart Contract End Date', value: '30 May 2026' },
-    ],
-    isOpen: false,
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from the Saudi Arabian Football Federation.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club performance in the Roshn Saudi League.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the club at the top of the league table) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '22 August 2025 - 30 May 2026',
+    isOpen: true,
   },
 
   WC: {
-    title: 'World Cup General Information',
-    content: `The FIFA World Cup event-market connects every user position to a real, permissible underlying asset supported by licensed digital rights. The world's most-watched sporting event features FIFA-verified match results, official group standings, and knockout round outcomes that provide transparent, independently confirmed results for fair asset value adjustments.
+    title: 'FIFA World Cup Performance Index',
+    content: `The FIFA World Cup Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
 
-Participants hold ownership units whose value changes based on publicly verified tournament performance. With FIFA's official match reports, tournament brackets, and final standings fully documented and broadcast globally, all asset adjustments reflect factual competitive outcomes.`,
-    volumeDescription: 'Total trading volume in this World Cup market over the last 24 hours. Higher volume indicates more active trading and better liquidity.',
-    buyInfo: {
-      description: 'Purchase ownership units at the current offer price. Your position gains value as the national team progresses through the World Cup tournament stages.',
-    },
-    sellInfo: {
-      description: 'Sell your ownership units at the current bid price. Use this to take profits or exit positions before elimination rounds.',
-    },
-    details: [
-      { label: 'Tournament Start Date', value: '11 June 2026' },
-      { label: 'Tournament End Date', value: '19 July 2026' },
-      { label: 'Smart Contract Start Date', value: '11 June 2026' },
-      { label: 'Smart Contract End Date', value: '19 July 2026' },
-    ],
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official FIFA rankings and tournament history.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing national team tournament performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the World Cup champion) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '11 June 2026 - 19 July 2026',
+    isOpen: false,
+  },
+
+  NBA: {
+    title: 'NBA Performance Index',
+    content: `The NBA Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official NBA statistics and standings.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing franchise performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the NBA Finals champion) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '22 October 2026 - 21 June 2027',
+    isOpen: false,
+  },
+
+  NFL: {
+    title: 'NFL Performance Index',
+    content: `The NFL Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official NFL statistics and power rankings.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing franchise performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the Super Bowl champion) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '4 September 2026 - 8 February 2027',
     isOpen: false,
   },
 };
@@ -123,11 +155,7 @@ export const getMarketInfo = (market: string): MarketInfo => {
   return marketInfoData[market] || {
     title: 'Market Information',
     content: 'Information about this market is not available yet.',
-    volumeDescription: 'Total trading volume in this market over the last 24 hours.',
-    buyInfo: { description: 'Purchase ownership units at the current offer price.' },
-    sellInfo: { description: 'Sell your ownership units at the current bid price.' },
-    details: [],
+    seasonDates: '',
     isOpen: false,
   };
 };
-

@@ -138,7 +138,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {questions.map((q) => (
           <div
             key={q.id}
@@ -171,10 +171,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                       <InfoPopup
                         title={info.title}
                         content={info.content}
-                        volumeInfo={{ value: q.volume, description: info.volumeDescription }}
-                        buyInfo={{ price: q.yesPrice.toFixed(1), description: info.buyInfo.description }}
-                        sellInfo={{ price: q.noPrice.toFixed(1), description: info.sellInfo.description }}
-                        details={info.details}
+                        seasonDates={info.seasonDates}
                         isMarketOpen={info.isOpen}
                         iconSize={22}
                       />
@@ -183,7 +180,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                 })()}
               </div>
 
-              <h3 className="text-[clamp(0.875rem,1.5vw,1.125rem)] font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors leading-snug">
+              <h3 className="text-base font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors leading-snug">
                 {q.question}
               </h3>
 
