@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UX:** Renamed "In Orders" to "Active Assets" to align with Shariah-compliant "asset-backed" terminology (replacing "Invested"). Updated logic to show total portfolio value + reserved funds.
 - **Markets:** Opened NBA and NFL markets.
 - **Compliance:** Prefixed all asset prices with "$" to clearly distinguish them as asset values rather than percentages, reinforcing Shariah compliance.
+- **Navigation:** Removed "Climate" section from the sidebar.
 
 ## [2.9] - 2025-12-06
 ### Added
