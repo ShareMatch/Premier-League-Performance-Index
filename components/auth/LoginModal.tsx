@@ -247,7 +247,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           }}
         >
           {successMessage && (
-            <p className="text-center text-brand-emerald500 bg-brand-emerald500/10 border border-brand-emerald500/30 rounded-full px-4 py-2 font-sans text-sm">
+            <p className="text-center justify-center items-center text-brand-emerald500 bg-brand-emerald500/10 text-brand-emerald500 rounded-full px-2 py-2 font-sans text-sm">
               {successMessage}
             </p>
           )}
