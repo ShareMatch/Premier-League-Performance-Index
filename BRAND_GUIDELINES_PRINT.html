@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareMatch Developer Design System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            emerald900: '#064e3b',
+                            emerald500: '#10b981',
+                            cream: '#FDFBF7',
+                            amber500: '#f59e0b',
+                            amber400: '#fbbf24',
+                        },
+                        gray: {
+                            50: '#F9FAFB',
+                            200: '#E5E5E5',
+                            900: '#111827',
+                        }
+                    },
+                    borderRadius: {
+                        'modal': '40px',
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px rgba(0,0,0,0.08)',
+                        'heavy': '0 4px 12px rgba(0,0,0,0.10)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                -webkit-print-color-adjust: exact;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 p-8 md:p-12 max-w-5xl mx-auto">
+
+    <div class="fixed top-4 right-4 no-print">
+        <button onclick="window.print()"
+            class="bg-brand-emerald500 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-brand-emerald900 transition-colors">
+            Print to PDF
+        </button>
+    </div>
+
+    <header class="mb-12 border-b border-gray-200 pb-8">
+        <h1 class="text-4xl font-bold text-brand-emerald900 mb-2">ShareMatch Developer Design System</h1>
+        <p class="text-xl text-gray-600">Strict Guidelines & Canonical Tokens</p>
+        <div
+            class="mt-6 p-4 bg-brand-amber400/10 border border-brand-amber500 rounded-lg text-brand-amber500 font-medium">
+            ⚠️ This is the Source of Truth. Cursor must follow these rules strictly.
+        </div>
+    </header>
+
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">1. Required Rules</h2>
+        <ol class="list-decimal pl-5 space-y-3 text-lg">
+            <li><strong>Strict Token Usage:</strong> Always use <code>brand.*</code> tokens. <span
+                    class="text-red-600 font-bold">Never use hex codes.</span></li>
+            <li><strong>Typography:</strong> Always use <code>Inter</code>. <span
+                    class="text-red-600 font-bold">Playfair Display is FORBIDDEN.</span></li>
+            <li><strong>Component Primacy:</strong> Always use the defined patterns.</li>
+            <li><strong>Radius Rules:</strong> Button/Input = <code>rounded-full</code>, Card = <code>rounded-xl</code>.
+            </li>
+            <li><strong>No Inline Styles:</strong> Use Tailwind classes only.</li>
+            <li><strong>No Arbitrary Tailwind:</strong> Use <code>bg-gray-200</code> for inputs, not hex.</li>
+        </ol>
+    </section>
+
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">2. Canonical Design Tokens</h2>
+
+        <h3 class="text-xl font-semibold mb-4">Colors</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            <!-- Brand Colors -->
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-brand-emerald900 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Emerald 900</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-brand-emerald900</code>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-brand-emerald500 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Emerald 500</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-brand-emerald500</code>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-brand-cream border border-gray-200 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Cream</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-brand-cream</code>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-brand-amber500 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Amber 500</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-brand-amber500</code>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-gray-200 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Gray 200 (Inputs)</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-gray-200</code>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="h-24 w-full bg-gray-900 rounded-lg shadow-sm"></div>
+                <div>
+                    <p class="font-bold">Gray 900 (Text)</p>
+                    <code class="text-xs bg-gray-100 p-1 rounded">bg-gray-900</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b pb-2">3. Component Catalogue</h2>
+
+        <div class="space-y-12">
+            <!-- Navbar -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4">Navigation Bar</h3>
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-2">
+                    <nav
+                        class="h-16 bg-brand-emerald900 w-full flex items-center justify-between px-6 rounded-lg shadow-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="text-white font-bold text-xl">ShareMatch</span>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <span class="text-gray-300">Vision</span>
+                            <span class="text-gray-300">Tech</span>
+                        </div>
+                    </nav>
+                </div>
+                <code class="text-sm text-gray-500">h-16 bg-brand-emerald900</code>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Primary Button</h3>
+                    <button
+                        class="bg-gradient-to-b from-[#019170] via-[#3AA189] to-[#019170] text-white font-medium px-6 py-3 rounded-full shadow-lg">
+                        Get Started
+                    </button>
+                    <div class="mt-2 text-sm text-gray-500">
+                        <code>rounded-full bg-gradient-brand shadow-lg</code>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Secondary Button</h3>
+                    <button class="border border-brand-emerald500 text-brand-emerald500 px-6 py-3 rounded-full">
+                        Learn More
+                    </button>
+                    <div class="mt-2 text-sm text-gray-500">
+                        <code>rounded-full border border-brand-emerald500</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inputs -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4">Input Fields</h3>
+                <div class="max-w-md">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-gray-900 ml-1">Email Address</label>
+                        <div class="bg-gray-200 rounded-full px-5 py-3 flex items-center shadow-inner">
+                            <input class="bg-transparent w-full outline-none text-gray-900 placeholder-gray-500"
+                                placeholder="entry@sharematch.me" readonly />
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 text-sm text-gray-500">
+                    <code>bg-gray-200 rounded-full shadow-inner</code>
+                </div>
+            </div>
+
+            <!-- Cards -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Light Card</h3>
+                    <div class="bg-white rounded-xl shadow-card p-6 border border-gray-100">
+                        <h4 class="font-bold mb-2">Feature Title</h4>
+                        <p class="text-gray-600 text-sm">Standard content card with light branding.</p>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500">
+                        <code>bg-white rounded-xl shadow-card</code>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Glass/Dark Card</h3>
+                    <div class="bg-gray-900 rounded-xl p-6 border border-white/10">
+                        <h4 class="font-bold text-white mb-2">Tech Stack</h4>
+                        <p class="text-gray-400 text-sm">Dark mode or glassmorphism variant.</p>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-500">
+                        <code>bg-gray-900 rounded-xl border-white/10</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Badges -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4">Badges</h3>
+                <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand-emerald500/10 text-brand-emerald500">
+                    Active Status
+                </span>
+                <div class="mt-2 text-sm text-gray-500">
+                    <code>rounded-full bg-brand-emerald500/10 text-brand-emerald500</code>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</body>
+
+</html>
