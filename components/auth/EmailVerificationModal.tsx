@@ -284,19 +284,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         {/* Success Toast - Above Title */}
         {status === 'success' && (
           <div 
-            className="flex items-center gap-2 px-4 py-3 rounded-lg animate-in fade-in slide-in-from-top-2"
-            style={{
-              background: 'rgba(1, 145, 112, 0.15)',
-              border: '1px solid rgba(58, 161, 137, 0.4)',
-            }}
+            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500"
           >
-            <CheckCircle className="w-5 h-5 text-[#3AA189]" />
+            <CheckCircle className="w-5 h-5 text-brand-emerald500" />
             <p 
-              className="font-medium text-[#3AA189]"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.875rem, 1vw, 1rem)',
-              }}
+              className="font-medium text-brand-emerald500 font-sans text-sm"
             >
               Email verified successfully!
             </p>
@@ -329,12 +321,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
           <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
             {/* Description */}
             <p 
-              className="text-center text-white"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)',
-                lineHeight: 1.5,
-              }}
+              className="text-center text-white font-sans text-sm"
             >
               We've sent a 6-digit verification code to your email address. Please enter the code below to continue.
             </p>
@@ -358,10 +345,9 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             {/* Status Message */}
             {message && status !== 'success' && (
               <p 
-                className={`text-center text-sm ${
+                className={`text-center text-sm font-sans ${
                   status === 'error' ? 'text-red-400' : 'text-gray-400'
                 }`}
-                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 {message}
               </p>
@@ -377,11 +363,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Timer */}
             <p 
-              className="text-center text-white font-semibold"
-              style={{ 
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(1rem, 1.2vw, 1.25rem)',
-              }}
+              className="text-center text-white font-semibold font-sans text-lg"
             >
               {formatTime(timeLeft)}
             </p>
