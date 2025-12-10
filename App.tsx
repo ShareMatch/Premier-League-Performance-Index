@@ -19,7 +19,7 @@ import KYCModal from './components/kyc/KYCModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS'>('HOME');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -124,7 +124,7 @@ const App: React.FC = () => {
       try {
         const status = await getKycUserStatus(publicUserId);
         setKycStatus(status.kyc_status);
-        
+
         // Auto-show KYC modal if user needs verification
         if (needsKycVerification(status.kyc_status)) {
           setShowKycModal(true);
@@ -154,7 +154,7 @@ const App: React.FC = () => {
   // Handle KYC modal close - re-check status in case user completed KYC
   const handleKycModalClose = async () => {
     setShowKycModal(false);
-    
+
     // Re-fetch KYC status in case it changed while modal was open
     if (publicUserId) {
       try {
@@ -216,7 +216,7 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -304,6 +304,7 @@ const App: React.FC = () => {
       case 'F1': return 'Formula 1 Drivers Performance Index';
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
+      case 'T20': return 'T20 World Cup';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';
@@ -311,6 +312,18 @@ const App: React.FC = () => {
   };
 
 
+
+
+  // Calculate total portfolio value
+  const portfolioValue = React.useMemo(() => {
+    return portfolio.reduce((total, position) => {
+      // Find current asset data to get price
+      const asset = allAssets.find(a => a.id.toString() === position.asset_id);
+      // Value at bid price (like Portfolio component)
+      const price = asset ? asset.bid : 0;
+      return total + (position.quantity * price);
+    }, 0);
+  }, [portfolio, allAssets]);
 
   if (loading) {
     return (
@@ -341,7 +354,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} />
+        <TopBar wallet={wallet} portfolioValue={portfolioValue} />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">
