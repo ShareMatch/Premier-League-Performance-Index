@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '../types';
+import TermsConditionsModal from './TermsConditionsModal';
 
 interface TradeSlipProps {
   order: Order;
@@ -24,6 +25,8 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [modalType, setModalType] = useState<'terms' | 'risk' | null>(null);
 
   const orderCost = shares !== '' ? (shares * order.price).toFixed(2) : '0.00';
   const isBuy = order.type === 'buy';
@@ -156,11 +159,56 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
         <button onClick={() => addShares(100)} className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 text-sm transition-colors">+ 100</button>
       </div>
 
-      <div className="mt-4">
+      {/* Terms & Conditions Checkbox */}
+      <label className="flex items-center gap-2.5 cursor-pointer mt-2">
+        <div className="relative flex-shrink-0">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-5 h-5 border-2 border-gray-500 rounded bg-transparent peer-checked:bg-[#3AA189] peer-checked:border-[#3AA189] transition-colors flex items-center justify-center">
+            {termsAccepted && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        </div>
+        <span className="text-xs text-gray-400 leading-tight">
+          I accept the{' '}
+          <button 
+            type="button"
+            className="text-[#3AA189] hover:underline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setModalType('terms');
+            }}
+          >
+            Terms & Conditions
+          </button>{' '}
+          and{' '}
+          <button 
+            type="button"
+            className="text-[#3AA189] hover:underline" 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setModalType('risk');
+            }}
+          >
+            Risk & Performance Statement
+          </button>
+        </span>
+      </label>
+
+      <div className="mt-2">
         <button
           onClick={handleConfirm}
-          disabled={!shares || shares <= 0 || countdown !== null || isSubmitting}
-          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${!shares || shares <= 0 || isSubmitting
+          disabled={!shares || shares <= 0 || countdown !== null || isSubmitting || !termsAccepted}
+          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${!shares || shares <= 0 || isSubmitting || !termsAccepted
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
             : countdown !== null
               ? 'bg-[#1C7D83] text-gray-300 cursor-wait'
@@ -179,6 +227,13 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
           )}
         </button>
       </div>
+
+      {/* Terms & Risk Modals */}
+      <TermsConditionsModal
+        isOpen={modalType !== null}
+        onClose={() => setModalType(null)}
+        type={modalType || 'terms'}
+      />
     </div>
   );
 };

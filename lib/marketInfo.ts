@@ -43,7 +43,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the club at the top of the league table) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '16 August 2025 - 24 May 2026',
     isOpen: true,
@@ -63,7 +63,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the Champions League winner) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '17 September 2025 - 30 May 2026',
     isOpen: true,
@@ -83,7 +83,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the club at the top of the league table) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '22 August 2025 - 30 May 2026',
     isOpen: true,
@@ -103,7 +103,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the World Cup champion) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '11 June 2026 - 19 July 2026',
     isOpen: false,
@@ -123,7 +123,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the NBA Finals champion) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '22 October 2026 - 21 June 2027',
     isOpen: false,
@@ -143,7 +143,7 @@ Transparent Pricing: The pricing in the secondary market is solely determined by
 
 Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
 
-The with profits token (i.e., the Super Bowl champion) settles at its defined maximum value of $100.0.
+The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '4 September 2026 - 8 February 2027',
     isOpen: false,
