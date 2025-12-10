@@ -14,6 +14,7 @@ import type { VerificationRequiredData } from './auth/LoginModal';
 
 interface TopBarProps {
     wallet: WalletType | null;
+    onOpenSettings?: () => void;
 }
 
 // Store pending verification info for verification modals
@@ -40,7 +41,7 @@ interface PendingVerification {
     maskedWhatsapp?: string;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
+const TopBar: React.FC<TopBarProps> = ({ wallet, onOpenSettings }) => {
     const { user, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -216,9 +217,15 @@ const TopBar: React.FC<TopBarProps> = ({ wallet }) => {
                                         <p className="text-xs text-gray-400">Last logged in: Today</p>
                                     </div>
                                     <div className="py-1">
-                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                        <button 
+                                            onClick={() => {
+                                                setIsAvatarOpen(false);
+                                                onOpenSettings?.();
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                                        >
                                             <Settings className="h-4 w-4" /> Settings
-                                        </a>
+                                        </button>
                                         <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                             <FileText className="h-4 w-4" /> Portfolio
                                         </a>

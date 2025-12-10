@@ -226,12 +226,13 @@ serve(async (req: Request) => {
       }
     }
 
-    // Send OTPs if requested
+    // Send OTPs ONLY if explicitly requested (not automatically on change)
+    // The frontend handles OTP flow separately before calling this endpoint
     let emailOtpSent = false;
     let whatsappOtpSent = false;
 
-    // Send email OTP if email changed or explicitly requested
-    if ((emailChanged || body.sendEmailOtp) && sesRegion && sesFromEmail && sesAccessKey && sesSecretKey) {
+    // Send email OTP only if explicitly requested
+    if (body.sendEmailOtp && sesRegion && sesFromEmail && sesAccessKey && sesSecretKey) {
       const otpCode = generateOtp();
       const expiry = new Date(Date.now() + EMAIL_OTP_EXPIRY_MINUTES * 60000).toISOString();
       const targetEmail = newEmail || currentEmail;
@@ -267,8 +268,8 @@ serve(async (req: Request) => {
       emailOtpSent = emailResult.ok;
     }
 
-    // Send WhatsApp OTP if phone changed or explicitly requested
-    if ((whatsappChanged || body.sendWhatsAppOtp) && wabaProfileId && wabaApiKey) {
+    // Send WhatsApp OTP only if explicitly requested
+    if (body.sendWhatsAppOtp && wabaProfileId && wabaApiKey) {
       const otpCode = generateOtp();
       const expiry = new Date(Date.now() + WHATSAPP_OTP_EXPIRY_MINUTES * 60000).toISOString();
       const targetPhone = newWhatsappPhone || user.whatsapp_phone_e164;
