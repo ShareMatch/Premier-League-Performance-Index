@@ -50,15 +50,44 @@ serve(async (req: Request) => {
     });
 
     // Parse request body
-    const body = await req.json() as { phone?: string; email?: string };
+    // phone/email: Used to identify the user
+    // targetPhone: The phone number to send OTP to (for phone changes). Defaults to user's current number
+    // forProfileChange: Skip "already verified" check for profile changes
+    const body = await req.json() as { phone?: string; email?: string; targetPhone?: string; forProfileChange?: boolean };
     const phone = body.phone ? String(body.phone).trim() : null;
     const email = body.email ? String(body.email).trim().toLowerCase() : null;
+    const targetPhone = body.targetPhone ? String(body.targetPhone).trim() : null;
+    const forProfileChange = body.forProfileChange === true;
 
     if (!phone && !email) {
       return new Response(
         JSON.stringify({ error: "Phone number or email is required." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // If targetPhone is specified, validate format and check it's not already registered
+    if (targetPhone) {
+      const phoneRegex = /^\+[1-9]\d{6,14}$/;
+      if (!phoneRegex.test(targetPhone)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid phone number format." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if target phone is already registered to another user
+      const { count: existingCount } = await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("whatsapp_phone_e164", targetPhone);
+
+      if (existingCount && existingCount > 0) {
+        return new Response(
+          JSON.stringify({ error: "This WhatsApp number is already registered to another account." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Build query to find user
@@ -81,16 +110,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if email is verified first
-    if (!user.email_verified_at) {
+    // Check if email is verified first (skip for profile changes if already logged in)
+    if (!user.email_verified_at && !forProfileChange) {
       return new Response(
         JSON.stringify({ error: "Please verify your email first." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if WhatsApp already verified
-    if (user.whatsapp_phone_verified_at) {
+    // Check if WhatsApp already verified (skip for profile changes - allow changing to new number)
+    if (user.whatsapp_phone_verified_at && !forProfileChange) {
       return new Response(
         JSON.stringify({ error: "WhatsApp number already verified." }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -128,8 +157,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get WhatsApp phone number
-    const whatsappPhone = user.whatsapp_phone_e164 || phone;
+    // Get WhatsApp phone number - use targetPhone if provided (for profile changes)
+    const whatsappPhone = targetPhone || user.whatsapp_phone_e164 || phone;
 
     if (!whatsappPhone) {
       return new Response(
@@ -138,7 +167,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Send WhatsApp OTP
+    // Send WhatsApp OTP to the target number
     const sendResult = await sendWhatsAppOtp({
       mobileNumber: formatPhoneForWhatsApp(whatsappPhone),
       otpCode: otpCode,

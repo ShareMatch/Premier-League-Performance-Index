@@ -55,8 +55,13 @@ serve(async (req: Request) => {
     });
 
     // Parse request body
-    const body = await req.json() as { email: string };
+    // email: The user's current email (to look up the user)
+    // targetEmail: The email to send OTP to (optional, defaults to email) - used for email changes
+    // forProfileChange: Skip "already verified" check for profile changes
+    const body = await req.json() as { email: string; targetEmail?: string; forProfileChange?: boolean };
     const email = String(body.email ?? "").trim().toLowerCase();
+    const targetEmail = body.targetEmail ? String(body.targetEmail).trim().toLowerCase() : email;
+    const forProfileChange = body.forProfileChange === true;
 
     if (!email) {
       return new Response(
@@ -65,7 +70,31 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get user from database
+    // Validate target email format if different from current
+    if (targetEmail !== email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(targetEmail)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid target email format." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check if target email is already registered to another user
+      const { count: existingCount } = await supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("email", targetEmail);
+
+      if (existingCount && existingCount > 0) {
+        return new Response(
+          JSON.stringify({ error: "This email is already registered to another account." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Get user from database by current email
     const { data: user, error: fetchErr } = await supabase
       .from("users")
       .select("id, full_name, email_verified_at, email_otp_attempts")
@@ -79,8 +108,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if already verified
-    if (user.email_verified_at) {
+    // Check if already verified (skip this check for profile changes)
+    if (user.email_verified_at && !forProfileChange) {
       return new Response(
         JSON.stringify({ error: "Email already verified." }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -129,13 +158,13 @@ serve(async (req: Request) => {
     });
     const emailSubject = generateOtpEmailSubject(otpCode);
 
-    // Send email via SES
+    // Send email via SES - send to targetEmail (which may be different from user's current email)
     const emailResult = await sendSESEmail({
       accessKey: sesAccessKey,
       secretKey: sesSecretKey,
       region: sesRegion,
       from: sesFromEmail,
-      to: email,
+      to: targetEmail, // Send to target email (new email for profile changes)
       subject: emailSubject,
       html: emailHtml,
     });

@@ -265,15 +265,26 @@ export interface VerifyOtpResponse {
 
 /**
  * Send OTP verification code to email
+ * @param email - User's current email address (to identify the user)
+ * @param options - Optional settings
+ * @param options.targetEmail - Email to send OTP to (for email changes). Defaults to `email`
+ * @param options.forProfileChange - If true, allows sending OTP to already-verified emails
  */
-export const sendEmailOtp = async (email: string): Promise<SendOtpResponse> => {
+export const sendEmailOtp = async (
+    email: string, 
+    options?: { targetEmail?: string; forProfileChange?: boolean }
+): Promise<SendOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+            email, 
+            targetEmail: options?.targetEmail,
+            forProfileChange: options?.forProfileChange ?? false,
+        }),
     });
 
     const result = await response.json();
@@ -326,8 +337,17 @@ export interface VerifyWhatsAppOtpResponse {
 /**
  * Send OTP verification code to WhatsApp
  * Can identify user by either phone number or email
+ * @param params.phone - User's current phone (to identify user)
+ * @param params.email - User's email (alternative way to identify user)
+ * @param params.targetPhone - Phone to send OTP to (for phone changes). Defaults to current phone
+ * @param params.forProfileChange - If true, allows sending OTP to already-verified numbers
  */
-export const sendWhatsAppOtp = async (params: { phone?: string; email?: string }): Promise<SendWhatsAppOtpResponse> => {
+export const sendWhatsAppOtp = async (params: { 
+    phone?: string; 
+    email?: string; 
+    targetPhone?: string;
+    forProfileChange?: boolean;
+}): Promise<SendWhatsAppOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp-otp`, {
         method: 'POST',
         headers: {
@@ -349,8 +369,9 @@ export const sendWhatsAppOtp = async (params: { phone?: string; email?: string }
 /**
  * Verify OTP code for WhatsApp
  * Can identify user by either phone number or email
+ * forProfileChange: Skip "already verified" check when changing to a new WhatsApp number
  */
-export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string }): Promise<VerifyWhatsAppOtpResponse> => {
+export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string; forProfileChange?: boolean }): Promise<VerifyWhatsAppOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-whatsapp-otp`, {
         method: 'POST',
         headers: {
@@ -713,4 +734,42 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
     }
 
     return result as CheckEmailStatusResponse;
+};
+
+// ============================================
+// USER PROFILE / MY DETAILS
+// ============================================
+
+export interface UserDetails {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    phone_e164: string | null;
+    whatsapp_phone_e164: string | null;
+    dob: string | null;
+    country: string | null;
+    address_line: string | null;
+    city: string | null;
+    region: string | null;
+    postal_code: string | null;
+    kyc_status: string | null;
+    source_ip: string | null;
+}
+
+/**
+ * Fetch user details from the public.users table
+ */
+export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
+    const { data, error } = await supabase
+        .from('users')
+        .select('id, full_name, email, phone_e164, whatsapp_phone_e164, dob, country, address_line, city, region, postal_code, kyc_status, source_ip')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching user details:', error);
+        return null;
+    }
+
+    return data as UserDetails;
 };

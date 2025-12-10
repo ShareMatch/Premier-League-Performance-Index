@@ -16,9 +16,10 @@ import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeTo
 import { useAuth } from './components/auth/AuthProvider';
 import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
+import { MyDetailsPage } from './components/mydetails';
 
 const App: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -48,6 +49,9 @@ const App: React.FC = () => {
   const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
   const [kycChecked, setKycChecked] = useState(false);
+  
+  // My Details Page State
+  const [showMyDetails, setShowMyDetails] = useState(false);
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -341,7 +345,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} />
+        <TopBar wallet={wallet} onOpenSettings={() => setShowMyDetails(true)} />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">
@@ -450,6 +454,40 @@ const App: React.FC = () => {
           onKycComplete={handleKycComplete}
           initialStatus={kycStatus || undefined}
         />
+      )}
+
+      {/* My Details Page - Full Screen Overlay */}
+      {showMyDetails && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <MyDetailsPage
+            onBack={() => setShowMyDetails(false)}
+            userId={publicUserId || undefined}
+            userData={user ? {
+              name: user.user_metadata?.full_name || '',
+              email: user.email || '',
+              phone: user.user_metadata?.phone || '',
+              whatsapp: user.user_metadata?.whatsapp_phone || '',
+              address: user.user_metadata?.address_line || '',
+              city: user.user_metadata?.city || '',
+              state: user.user_metadata?.region || '',
+              country: user.user_metadata?.country || '',
+              postCode: user.user_metadata?.postal_code || '',
+              accountName: '',
+              accountNumber: '',
+              iban: '',
+              swiftBic: '',
+              bankName: '',
+            } : undefined}
+            onSignOut={async () => {
+              setShowMyDetails(false);
+              await signOut();
+            }}
+            onOpenKYCModal={() => {
+              setShowMyDetails(false);
+              setShowKycModal(true);
+            }}
+          />
+        </div>
       )}
     </div>
   );

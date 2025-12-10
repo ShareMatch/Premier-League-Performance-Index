@@ -31,10 +31,12 @@ serve(async (req: Request) => {
     });
 
     // Parse request body
-    const body = await req.json() as { phone?: string; token: string; email?: string };
+    // forProfileChange: Skip "already verified" check for profile changes (changing to new number)
+    const body = await req.json() as { phone?: string; token: string; email?: string; forProfileChange?: boolean };
     const phone = body.phone ? String(body.phone).trim() : null;
     const token = String(body.token ?? "").trim();
     const email = body.email ? String(body.email).trim().toLowerCase() : null;
+    const forProfileChange = body.forProfileChange === true;
 
     if (!token) {
       return new Response(
@@ -70,16 +72,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if email is verified first
-    if (!user.email_verified_at) {
+    // Check if email is verified first (skip for profile changes if already logged in)
+    if (!user.email_verified_at && !forProfileChange) {
       return new Response(
         JSON.stringify({ error: "Please verify your email first." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if WhatsApp already verified
-    if (user.whatsapp_phone_verified_at) {
+    // Check if WhatsApp already verified (skip for profile changes - user is changing to new number)
+    if (user.whatsapp_phone_verified_at && !forProfileChange) {
       return new Response(
         JSON.stringify({
           ok: true,
