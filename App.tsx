@@ -19,7 +19,7 @@ import KYCModal from './components/kyc/KYCModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS'>('HOME');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -304,6 +304,7 @@ const App: React.FC = () => {
       case 'F1': return 'Formula 1 Drivers Performance Index';
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
+      case 'T20': return 'T20 World Cup';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';
