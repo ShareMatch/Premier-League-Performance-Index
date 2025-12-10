@@ -6,7 +6,7 @@ export const seedSportsAssets = async () => {
         const { count, error: countError } = await supabase
             .from('assets')
             .select('*', { count: 'exact', head: true })
-            .in('market', ['NBA', 'NFL']);
+            .in('market', ['NBA', 'NFL', 'T20']);
 
         if (countError) {
             console.error('Error checking assets:', countError);
@@ -83,9 +83,32 @@ export const seedSportsAssets = async () => {
             { id: 460, name: 'New York Jets', market: 'NFL', bid: 0.1, offer: 0.2, last_change: 'none', color: '#125740', category: 'american_football' },
         ];
 
+        const t20Teams = [
+            { id: 461, name: 'India', market: 'T20', bid: 39.9, offer: 44.1, last_change: 'none', color: '#0078BC', category: 'cricket' },
+            { id: 462, name: 'Australia', market: 'T20', bid: 19.0, offer: 21.0, last_change: 'none', color: '#FFCD00', category: 'cricket' },
+            { id: 463, name: 'South Africa', market: 'T20', bid: 14.6, offer: 16.2, last_change: 'none', color: '#007749', category: 'cricket' },
+            { id: 464, name: 'England', market: 'T20', bid: 17.3, offer: 19.1, last_change: 'none', color: '#C8102E', category: 'cricket' },
+            { id: 465, name: 'Pakistan', market: 'T20', bid: 5.6, offer: 6.2, last_change: 'none', color: '#006600', category: 'cricket' },
+            { id: 466, name: 'New Zealand', market: 'T20', bid: 5.6, offer: 6.2, last_change: 'none', color: '#000000', category: 'cricket' },
+            { id: 467, name: 'West Indies', market: 'T20', bid: 4.5, offer: 5.0, last_change: 'none', color: '#7B0046', category: 'cricket' },
+            { id: 468, name: 'Afghanistan', market: 'T20', bid: 3.7, offer: 4.0, last_change: 'none', color: '#009900', category: 'cricket' },
+            { id: 469, name: 'Sri Lanka', market: 'T20', bid: 2.3, offer: 2.6, last_change: 'none', color: '#1C3C6E', category: 'cricket' },
+            { id: 470, name: 'Bangladesh', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#006A4E', category: 'cricket' },
+            { id: 471, name: 'Ireland', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#169B62', category: 'cricket' },
+            { id: 472, name: 'Zimbabwe', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#D40000', category: 'cricket' },
+            { id: 473, name: 'USA', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#3C3B6E', category: 'cricket' },
+            { id: 474, name: 'Netherlands', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#F36C21', category: 'cricket' },
+            { id: 475, name: 'Nepal', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#DC143C', category: 'cricket' },
+            { id: 476, name: 'Canada', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#FF0000', category: 'cricket' },
+            { id: 477, name: 'UAE', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#00732F', category: 'cricket' },
+            { id: 478, name: 'Oman', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#DB161B', category: 'cricket' },
+            { id: 479, name: 'Namibia', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#003580', category: 'cricket' },
+            { id: 480, name: 'Italy', market: 'T20', bid: 0.1, offer: 0.2, last_change: 'none', color: '#009246', category: 'cricket' },
+        ];
+
         const { error: insertError } = await supabase
             .from('assets')
-            .upsert([...nbaTeams, ...nflTeams], { onConflict: 'id' });
+            .upsert([...nbaTeams, ...nflTeams, ...t20Teams], { onConflict: 'id' });
 
         if (insertError) {
             console.error('Error seeding sports assets:', insertError);
