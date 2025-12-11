@@ -17,6 +17,7 @@ import { useAuth } from './components/auth/AuthProvider';
 import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
 import { MyDetailsPage } from './components/mydetails';
+import InactivityHandler from './components/auth/InactivityHandler';
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -48,6 +49,7 @@ const App: React.FC = () => {
   // KYC State
   const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
+  const [forceKycUpdateMode, setForceKycUpdateMode] = useState(false);
   const [kycChecked, setKycChecked] = useState(false);
   
   // My Details Page State
@@ -325,17 +327,22 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
-      {/* Mobile Menu Button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? <X /> : <Menu />}
-      </button>
+    <InactivityHandler
+      inactivityTimeout={5 * 60 * 1000} // 5 minutes
+      warningCountdown={120} // 2 minutes
+      enabled={!!user} // Only track when user is logged in
+    >
+      <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X /> : <Menu />}
+        </button>
 
-      {/* Sidebar */}
-      <Sidebar
+        {/* Sidebar */}
+        <Sidebar
         isOpen={isMobileMenuOpen}
         setIsOpen={setIsMobileMenuOpen}
         activeLeague={activeLeague}
@@ -449,10 +456,14 @@ const App: React.FC = () => {
       {publicUserId && (
         <KYCModal
           isOpen={showKycModal}
-          onClose={handleKycModalClose}
+          onClose={() => {
+            handleKycModalClose();
+            setForceKycUpdateMode(false); // Reset force mode when modal closes
+          }}
           userId={publicUserId}
           onKycComplete={handleKycComplete}
           initialStatus={kycStatus || undefined}
+          forceUpdateMode={forceKycUpdateMode}
         />
       )}
 
@@ -484,12 +495,16 @@ const App: React.FC = () => {
             }}
             onOpenKYCModal={() => {
               setShowMyDetails(false);
+              // Set force update mode when coming from My Details page
+              // This allows approved users to update their documents
+              setForceKycUpdateMode(true);
               setShowKycModal(true);
             }}
           />
         </div>
       )}
-    </div>
+      </div>
+    </InactivityHandler>
   );
 };
 

@@ -111,6 +111,26 @@ const getDocumentStatusConfig = (status: DocumentStatus) => {
   }
 };
 
+// Get button config based on KYC status
+const getButtonConfig = (status: KYCStatus): { show: boolean; label: string; variant: 'primary' | 'danger' } => {
+  switch (status) {
+    case 'not_started':
+    case 'not_verified':
+      return { show: true, label: 'Start KYC', variant: 'danger' };
+    case 'verified':
+      return { show: true, label: 'Update Documents', variant: 'primary' };
+    case 'rejected':
+    case 'resubmission_requested':
+      return { show: true, label: 'Resubmit', variant: 'danger' };
+    case 'expired':
+      return { show: true, label: 'Renew Documents', variant: 'danger' };
+    case 'pending':
+      return { show: false, label: '', variant: 'primary' }; // Hide button while pending
+    default:
+      return { show: true, label: 'Update KYC', variant: 'danger' };
+  }
+};
+
 const KYCVerificationCard: React.FC<KYCVerificationCardProps> = ({ 
   status, 
   documents, 
@@ -118,18 +138,23 @@ const KYCVerificationCard: React.FC<KYCVerificationCardProps> = ({
 }) => {
   const statusConfig = getStatusConfig(status);
   const StatusIcon = statusConfig.Icon;
+  const buttonConfig = getButtonConfig(status);
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden flex flex-col h-full border border-gray-700">
       {/* Header */}
       <div className="px-4 py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
         <h3 className="text-base font-semibold text-white font-sans">KYC Verification</h3>
-        {onUpdateKYC && (
+        {onUpdateKYC && buttonConfig.show && (
           <button
             onClick={onUpdateKYC}
-            className="px-3 py-1 text-xs font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
+            className={`px-4 py-1.5 text-xs font-sans font-medium rounded-full shadow-lg transition-colors ${
+              buttonConfig.variant === 'primary'
+                ? 'text-white bg-gradient-primary hover:opacity-90'
+                : 'text-white bg-red-500 hover:bg-red-600'
+            }`}
           >
-            Update KYC
+            {buttonConfig.label}
           </button>
         )}
       </div>
