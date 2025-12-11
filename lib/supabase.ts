@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // TODO: Revert to import.meta.env once .env loading issue is resolved
-const supabaseUrl = 'https://nilquprumeipoiljsezt.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbHF1cHJ1bWVpcG9pbGpzZXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQwMjQsImV4cCI6MjA3Mzk5MDAyNH0.Z1lCDDRvCgUBdYdzzZjahl44A2waYhbqc1rFDV0n20U';
+const supabaseUrl = 'https://hsmfanlcebcphogqqyzj.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzbWZhbmxjZWJjcGhvZ3FxeXpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQ0MTQsImV4cCI6MjA3Mzk5MDQxNH0.9rdYuJjECPhuscZoSE7ROVMPf3bpHuwHtx0vMQbOFvg';
 
 if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('Missing Supabase credentials. Please check your .env file.');
