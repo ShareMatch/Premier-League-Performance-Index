@@ -1,0 +1,22 @@
+-- T20 World Cup Teams (IDs 461-480)
+INSERT INTO assets (id, name, market, bid, offer, last_change, color, category, updated_at) VALUES
+(461, 'India', 'T20', 39.9, 44.1, 'none', '#0078BC', 'cricket', NOW()),
+(462, 'Australia', 'T20', 19.0, 21.0, 'none', '#FFCD00', 'cricket', NOW()),
+(463, 'South Africa', 'T20', 14.6, 16.2, 'none', '#007749', 'cricket', NOW()),
+(464, 'England', 'T20', 17.3, 19.1, 'none', '#C8102E', 'cricket', NOW()),
+(465, 'Pakistan', 'T20', 5.6, 6.2, 'none', '#006600', 'cricket', NOW()),
+(466, 'New Zealand', 'T20', 5.6, 6.2, 'none', '#000000', 'cricket', NOW()),
+(467, 'West Indies', 'T20', 4.5, 5.0, 'none', '#7B0046', 'cricket', NOW()),
+(468, 'Afghanistan', 'T20', 3.7, 4.0, 'none', '#009900', 'cricket', NOW()),
+(469, 'Sri Lanka', 'T20', 2.3, 2.6, 'none', '#1C3C6E', 'cricket', NOW()),
+(470, 'Bangladesh', 'T20', 0.1, 0.2, 'none', '#006A4E', 'cricket', NOW()),
+(471, 'Ireland', 'T20', 0.1, 0.2, 'none', '#169B62', 'cricket', NOW()),
+(472, 'Zimbabwe', 'T20', 0.1, 0.2, 'none', '#D40000', 'cricket', NOW()),
+(473, 'USA', 'T20', 0.1, 0.2, 'none', '#3C3B6E', 'cricket', NOW()),
+(474, 'Netherlands', 'T20', 0.1, 0.2, 'none', '#F36C21', 'cricket', NOW()),
+(475, 'Nepal', 'T20', 0.1, 0.2, 'none', '#DC143C', 'cricket', NOW()),
+(476, 'Canada', 'T20', 0.1, 0.2, 'none', '#FF0000', 'cricket', NOW()),
+(477, 'UAE', 'T20', 0.1, 0.2, 'none', '#00732F', 'cricket', NOW()),
+(478, 'Oman', 'T20', 0.1, 0.2, 'none', '#DB161B', 'cricket', NOW()),
+(479, 'Namibia', 'T20', 0.1, 0.2, 'none', '#003580', 'cricket', NOW()),
+(480, 'Italy', 'T20', 0.1, 0.2, 'none', '#009246', 'cricket', NOW());

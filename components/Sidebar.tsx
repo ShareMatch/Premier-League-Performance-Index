@@ -4,8 +4,8 @@ import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -35,6 +35,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           ]
         },
         {
+          label: 'Motorsport',
+          subItems: [
+            { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
+          ]
+        },
+        {
           label: 'Basketball',
           subItems: [
             { label: 'NBA', id: 'NBA', active: activeLeague === 'NBA' }
@@ -46,18 +52,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             { label: 'NFL', id: 'NFL', active: activeLeague === 'NFL' }
           ]
         },
+        { label: 'Golf', badge: 'SOON' },
         {
-          label: 'Motorsport',
+          label: 'Cricket',
           subItems: [
-            { label: 'Formula 1', id: 'F1', active: activeLeague === 'F1' }
+            { label: 'T20 World Cup', id: 'T20', active: activeLeague === 'T20' }
           ]
         },
-        { label: 'Golf', badge: 'SOON' },
-        { label: 'Cricket', badge: 'SOON' },
       ]
     },
     { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
-    { icon: Cloud, label: 'Climate', badge: 'SOON' },
+
     { icon: Globe, label: 'Global Events', badge: 'SOON' },
     { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
   ];
@@ -75,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
       {/* Sidebar */}
       <div className={`
         fixed md:static inset-y-0 left-0 z-50
-        w-64 bg-[#0B1221] border-r border-gray-800 flex flex-col
+        w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>

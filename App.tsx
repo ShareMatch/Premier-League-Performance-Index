@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Team, Order, Wallet, Position, Transaction } from './types';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
@@ -12,13 +12,14 @@ import Sidebar from './components/Sidebar';
 import AIAnalysis from './components/AIAnalysis';
 import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions } from './lib/api';
+import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 import { seedSportsAssets } from './lib/seedSports';
+import KYCModal from './components/kyc/KYCModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS'>('HOME');
+  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS'>('HOME');
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -29,6 +30,24 @@ const App: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+
+  // Refs to track current state for subscription callbacks
+  const userRef = useRef(user);
+  const publicUserIdRef = useRef(publicUserId);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    publicUserIdRef.current = publicUserId;
+  }, [publicUserId]);
+
+  // KYC State
+  const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [kycChecked, setKycChecked] = useState(false);
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -74,25 +93,105 @@ const App: React.FC = () => {
       getPublicUserId(user.id).then(setPublicUserId);
     } else {
       setPublicUserId(null);
+      setKycStatus(null);
+      setKycChecked(false);
+      // Clear portfolio and transactions on sign out
+      setPortfolio([]);
+      setTransactions([]);
+      setWallet(null);
+      setSelectedOrder(null);
     }
   }, [user]);
 
+  // Clear all user data when publicUserId becomes null
   useEffect(() => {
-    if (publicUserId) {
-      loadUserData();
+    if (!publicUserId) {
+      setPortfolio([]);
+      setTransactions([]);
+      setWallet(null);
+      setSelectedOrder(null);
     }
+  }, [publicUserId]);
+
+  // Check KYC status when we have the public user ID
+  useEffect(() => {
+    if (!publicUserId) {
+      setKycChecked(false);
+      return;
+    }
+
+    const checkKyc = async () => {
+      try {
+        const status = await getKycUserStatus(publicUserId);
+        setKycStatus(status.kyc_status);
+
+        // Auto-show KYC modal if user needs verification
+        if (needsKycVerification(status.kyc_status)) {
+          setShowKycModal(true);
+        }
+      } catch (error) {
+        console.error('Failed to check KYC status:', error);
+        // Default to not_started if we can't fetch status
+        setKycStatus('not_started');
+        setShowKycModal(true);
+      } finally {
+        setKycChecked(true);
+      }
+    };
+
+    checkKyc();
+  }, [publicUserId]);
+
+  // Handle KYC completion - just update status, DON'T auto-close
+  // User must click X to close the modal
+  const handleKycComplete = (status: KycStatus) => {
+    console.log('KYC status update received:', status);
+    setKycStatus(status);
+    // DON'T auto-close - user will click X when they're ready
+    // The modal will be hidden next time they open the app if approved
+  };
+
+  // Handle KYC modal close - re-check status in case user completed KYC
+  const handleKycModalClose = async () => {
+    setShowKycModal(false);
+
+    // Re-fetch KYC status in case it changed while modal was open
+    if (publicUserId) {
+      try {
+        const status = await getKycUserStatus(publicUserId);
+        setKycStatus(status.kyc_status);
+      } catch (error) {
+        console.error('Failed to refresh KYC status:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Always load assets (they're public)
     loadAssets();
     seedSportsAssets(); // Auto-seed if missing
 
-    // Set up Real-Time Subscriptions - only when we have the public user ID
-    if (!user || !publicUserId) return;
+    // Don't load user data or set up subscriptions if user is not logged in
+    if (!user || !publicUserId) {
+      return;
+    }
 
+    // Load user data only when both user and publicUserId exist
+    loadUserData();
+
+    // Set up Real-Time Subscriptions - only when we have the public user ID
     const walletSubscription = subscribeToWallet(publicUserId, (updatedWallet) => {
-      setWallet(updatedWallet);
+      // Guard: only update if user is still logged in (check refs for current state)
+      if (userRef.current && publicUserIdRef.current) {
+        setWallet(updatedWallet);
+      }
     });
 
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
-      fetchPortfolio(publicUserId).then(setPortfolio);
+      // Guard: only update if user is still logged in (check refs for current state)
+      if (userRef.current && publicUserIdRef.current) {
+        fetchPortfolio(publicUserIdRef.current).then(setPortfolio);
+      }
     });
 
     const assetsSubscription = subscribeToAssets(() => {
@@ -117,7 +216,7 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -132,6 +231,18 @@ const App: React.FC = () => {
   };
 
   const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
+    // Check if user is logged in
+    if (!user) {
+      alert('Please login to trade.');
+      return;
+    }
+
+    // Check if KYC is required
+    if (kycStatus && needsKycVerification(kycStatus)) {
+      setShowKycModal(true);
+      return;
+    }
+
     // Calculate max quantity based on available funds (for buy) or portfolio holdings (for sell)
     let maxQuantity = 0;
 
@@ -193,6 +304,7 @@ const App: React.FC = () => {
       case 'F1': return 'Formula 1 Drivers Performance Index';
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
+      case 'T20': return 'T20 World Cup';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';
@@ -200,6 +312,18 @@ const App: React.FC = () => {
   };
 
 
+
+
+  // Calculate total portfolio value
+  const portfolioValue = React.useMemo(() => {
+    return portfolio.reduce((total, position) => {
+      // Find current asset data to get price
+      const asset = allAssets.find(a => a.id.toString() === position.asset_id);
+      // Value at bid price (like Portfolio component)
+      const price = asset ? asset.bid : 0;
+      return total + (position.quantity * price);
+    }, 0);
+  }, [portfolio, allAssets]);
 
   if (loading) {
     return (
@@ -230,7 +354,7 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} />
+        <TopBar wallet={wallet} portfolioValue={portfolioValue} />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">
@@ -248,49 +372,47 @@ const App: React.FC = () => {
                 ) : activeLeague === 'AI_ANALYTICS' ? (
                   <AIAnalyticsPage teams={allAssets} />
                 ) : (
-                  <div className="flex flex-col h-full">
-                    {/* Compact Header */}
-                    <div className="flex-shrink-0">
-                      <Header title={getLeagueTitle(activeLeague)} />
-                    </div>
+                  <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
 
-                    {/* Split View Content */}
-                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-hidden">
-
-                      {/* Left Column: Order Book (2/3) */}
-                      <div className="flex-[2] flex flex-col min-h-0">
-                        <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col">
-                          {/* Fixed Header */}
-                          <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-                            <div className="text-left">Asset</div>
-                            <div>Sell</div>
-                            <div>Buy</div>
-                          </div>
-
-                          {/* Scrollable List */}
-                          <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
-                            {sortedTeams.map((team) => (
-                              <OrderBookRow
-                                key={team.id}
-                                team={team}
-                                onSelectOrder={handleSelectOrder}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                    {/* Left Column: Header + Order Book (2/3) */}
+                    <div className="flex-[2] flex flex-col min-h-0">
+                      {/* Header aligned with order book */}
+                      <div className="flex-shrink-0">
+                        <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
                       </div>
 
-                      {/* Right Column: AI & News (1/3) */}
-                      <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-                        <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                      {/* Order Book */}
+                      <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col min-h-0">
+                        {/* Fixed Header */}
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+                          <div className="text-left">Asset</div>
+                          <div>Sell</div>
+                          <div>Buy</div>
+                        </div>
 
-                        {/* News Feed */}
-                        <div className="flex-shrink-0">
-                          <NewsFeed topic={activeLeague as any} />
+                        {/* Scrollable List */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
+                          {sortedTeams.map((team) => (
+                            <OrderBookRow
+                              key={team.id}
+                              team={team}
+                              onSelectOrder={handleSelectOrder}
+                            />
+                          ))}
                         </div>
                       </div>
-
                     </div>
+
+                    {/* Right Column: AI & News (1/3) */}
+                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                      <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+
+                      {/* News Feed */}
+                      <div className="flex-shrink-0">
+                        <NewsFeed topic={activeLeague as any} />
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
@@ -329,6 +451,17 @@ const App: React.FC = () => {
         <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* KYC Modal */}
+      {publicUserId && (
+        <KYCModal
+          isOpen={showKycModal}
+          onClose={handleKycModalClose}
+          userId={publicUserId}
+          onKycComplete={handleKycComplete}
+          initialStatus={kycStatus || undefined}
         />
       )}
     </div>

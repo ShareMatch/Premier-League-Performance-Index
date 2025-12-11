@@ -1,0 +1,305 @@
+import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 'react';
+
+// Lazy load Sumsub SDK for code splitting (Vite/React compatible)
+const SumsubWebSdk = lazy(() => import('@sumsub/websdk-react'));
+
+// Supabase configuration - use the same values as lib/supabase.ts
+const SUPABASE_URL = 'https://nilquprumeipoiljsezt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbHF1cHJ1bWVpcG9pbGpzZXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQwMjQsImV4cCI6MjA3Mzk5MDAyNH0.Z1lCDDRvCgUBdYdzzZjahl44A2waYhbqc1rFDV0n20U';
+
+// Helper to call Supabase Edge Functions
+const callEdgeFunction = async (functionName: string, body?: any) => {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return { response, data: await response.json() };
+};
+
+// Loading component for SDK
+const SDKLoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3AA189] mx-auto mb-4"></div>
+      <p className="text-white text-xl">Loading verification SDK...</p>
+    </div>
+  </div>
+);
+
+export interface SumsubKYCProps {
+  userId: string;
+  levelName?: string;
+  onComplete?: (data: any) => void;
+  onError?: (error: any) => void;
+  onClose?: () => void;
+}
+
+export default function SumsubKYC({
+  userId,
+  levelName = "basic-kyc-level",
+  onComplete,
+  onError,
+  onClose,
+}: SumsubKYCProps) {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Prevent double-fetch in React Strict Mode
+  const fetchingRef = useRef(false);
+  
+  // Track if we've already saved the applicant ID
+  const applicantIdSavedRef = useRef(false);
+  
+  // Track if user has submitted documents in THIS session
+  const hasSubmittedInSessionRef = useRef(false);
+
+
+  // Fetch access token from backend
+  useEffect(() => {
+    // Prevent double-fetch in Strict Mode
+    if (fetchingRef.current) {
+      console.log('⏭️ Skipping duplicate fetch (Strict Mode)');
+      return;
+    }
+    fetchingRef.current = true;
+
+    const getAccessToken = async () => {
+      try {
+        setLoading(true);
+        console.log('🔵 Fetching Sumsub token via Edge Function for user:', userId);
+        
+        // Call Supabase Edge Function
+        const { response, data } = await callEdgeFunction('sumsub-access-token', { 
+          user_id: userId, 
+          levelName 
+        });
+
+        console.log('🔵 Sumsub response:', { ok: response.ok, status: response.status, data });
+
+        if (!response.ok) {
+          const errorMsg = data.error || data.detail || 'Failed to get access token';
+          console.error('❌ Token error:', errorMsg);
+          throw new Error(errorMsg);
+        }
+
+        if (!data.token) {
+          throw new Error('No token returned from server');
+        }
+
+        console.log('✅ Token received successfully');
+        setAccessToken(data.token);
+      } catch (err: any) {
+        console.error('❌ Access token error:', err);
+        setError(err.message);
+        onError?.(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getAccessToken();
+  }, [userId, levelName, onError]);
+
+  // Token expiration handler
+  const accessTokenExpirationHandler = useCallback(async () => {
+    console.log('🔄 Token expired, fetching new token via Edge Function...');
+    const { data } = await callEdgeFunction('sumsub-access-token', { 
+      user_id: userId, 
+      levelName 
+    });
+    return data.token;
+  }, [userId, levelName]);
+
+  // Save applicant ID to database (from SDK callback)
+  const saveApplicantId = useCallback(async (applicantId: string) => {
+    try {
+      console.log('📤 Saving applicant ID via Edge Function:', { applicantId });
+      const { response, data } = await callEdgeFunction('sumsub-update-status', {
+        user_id: userId,
+        applicant_id: applicantId,
+      });
+      if (response.ok) {
+        console.log('✅ Applicant ID saved:', data);
+      } else {
+        console.error('❌ Failed to save applicant ID:', data);
+      }
+    } catch (err) {
+      console.error('❌ Error saving applicant ID:', err);
+    }
+  }, [userId]);
+
+  // Update KYC status in database
+  const updateKycStatus = useCallback(async (reviewStatus: string, reviewAnswer: string, reviewRejectType?: string) => {
+    try {
+      console.log('📤 Updating KYC status via Edge Function:', { reviewStatus, reviewAnswer, reviewRejectType });
+      const { response, data } = await callEdgeFunction('sumsub-update-status', {
+        user_id: userId,
+        review_status: reviewStatus,
+        review_answer: reviewAnswer,
+        review_reject_type: reviewRejectType,
+      });
+      if (response.ok) {
+        console.log('✅ KYC status updated:', data);
+      } else {
+        console.error('❌ Failed to update KYC status:', data);
+      }
+    } catch (err) {
+      console.error('❌ Error updating KYC status:', err);
+    }
+  }, [userId]);
+
+  // Reset refs on mount (handles React Strict Mode re-mount)
+  useEffect(() => {
+    applicantIdSavedRef.current = false;
+    hasSubmittedInSessionRef.current = false;
+    
+    return () => {
+      console.log('🔄 SumsubKYC unmounting');
+    };
+  }, []);
+
+  // Message handler
+  const messageHandler = useCallback((type: string, payload: any) => {
+    console.log('📨 Sumsub message:', type, payload);
+    
+    if (type === 'idCheck.onApplicantLoaded') {
+      // Save applicant ID when SDK loads applicant (only once)
+      const applicantId = payload?.applicantId;
+      if (applicantId && !applicantIdSavedRef.current) {
+        applicantIdSavedRef.current = true;
+        console.log('📌 Applicant loaded:', applicantId);
+        saveApplicantId(applicantId);
+      }
+    } else if (type === 'idCheck.onApplicantSubmitted' || type === 'idCheck.onApplicantResubmitted') {
+      console.log(`✅ ${type} - marking session as submitted`);
+      // Mark that user has submitted documents in this session
+      hasSubmittedInSessionRef.current = true;
+      // Status will be updated via onApplicantStatusChanged event or webhook
+    } else if (type === 'idCheck.onApplicantStatusChanged') {
+      // Update database when status changes
+      const reviewStatus = payload?.reviewStatus;
+      const reviewAnswer = payload?.reviewResult?.reviewAnswer;
+      const isReprocessing = payload?.reprocessing === true;
+      
+      // Check multiple possible locations for reviewRejectType
+      const reviewRejectType = payload?.reviewResult?.reviewRejectType 
+        || payload?.reviewRejectType 
+        || payload?.rejectType;
+      const rejectLabels = payload?.reviewResult?.rejectLabels || payload?.rejectLabels || [];
+      const moderationComment = payload?.reviewResult?.moderationComment || payload?.moderationComment || null;
+      const buttonIds = payload?.reviewResult?.buttonIds || payload?.buttonIds || [];
+      
+      // Log full payload to debug
+      console.log('🔄 Applicant status changed - FULL PAYLOAD:', JSON.stringify(payload, null, 2));
+      console.log('🔄 Extracted values:', { reviewStatus, reviewAnswer, reviewRejectType, rejectLabels, isReprocessing, hasSubmittedInSession: hasSubmittedInSessionRef.current });
+      
+      // Always process status changes to update the database
+      // The webhook is the authoritative source, but we also update from SDK events for faster UX
+      console.log('✅ Processing status change...');
+      
+      // Update database whenever we have a review answer (GREEN or RED)
+      if (reviewAnswer === 'GREEN' || reviewAnswer === 'RED') {
+        // Determine the final status based on reviewAnswer and reviewRejectType
+        let kycStatus = 'pending';
+        let shouldCloseSDK = false;
+        
+        if (reviewAnswer === 'GREEN') {
+          kycStatus = 'approved';
+          shouldCloseSDK = true; // Close SDK for approved
+        } else if (reviewAnswer === 'RED') {
+          // RETRY means user can resubmit, FINAL means permanently rejected
+          const isFinalRejection = reviewRejectType === 'FINAL';
+          kycStatus = isFinalRejection ? 'rejected' : 'resubmission';
+          // Only close SDK for FINAL rejection, NOT for resubmission
+          shouldCloseSDK = isFinalRejection;
+          console.log('📋 Rejection type:', { reviewRejectType, isFinalRejection, kycStatus, shouldCloseSDK });
+        }
+        
+        // Update database with status and rejection type
+        console.log('📤 Calling updateKycStatus with:', { reviewStatus, reviewAnswer, reviewRejectType, kycStatus });
+        updateKycStatus(reviewStatus, reviewAnswer, reviewRejectType);
+        
+        // DON'T auto-close SDK - let user see the result and close manually via X button
+        // The SDK will show its own success/failure screen
+        console.log('✅ KYC status updated - SDK stays open for user to see result');
+        
+        // Note: User will close the modal manually by clicking X
+        // The onComplete callback is no longer called automatically
+      } else {
+        console.log('⏭️ No review answer yet, waiting for final result');
+      }
+    } else if (type === 'idCheck.onError') {
+      console.error('❌ Sumsub error:', payload);
+      onError?.(payload);
+    }
+  }, [onComplete, onError, updateKycStatus, saveApplicantId]);
+
+  // Error handler
+  const errorHandler = useCallback((error: any) => {
+    console.error('❌ Sumsub SDK error:', error);
+    onError?.(error);
+  }, [onError]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8 h-full">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3AA189] mx-auto mb-4"></div>
+          <p className="text-white text-xl">Loading KYC verification...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8 h-full">
+        <div className="text-center">
+          <p className="text-red-400 text-xl mb-4">Error loading KYC: {error}</p>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!accessToken) {
+    return (
+      <div className="flex items-center justify-center p-8 h-full">
+        <div className="text-center">
+          <p className="text-white text-xl">Initializing verification...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full rounded-lg overflow-hidden kyc-sdk-container">
+      <Suspense fallback={<SDKLoadingSpinner />}>
+        <SumsubWebSdk
+          accessToken={accessToken}
+          expirationHandler={accessTokenExpirationHandler}
+          config={{
+            lang: 'en',
+            customizationName: 'sharematch_dark_mode',
+          }}
+          options={{
+            addViewportTag: true,
+            adaptIframeHeight: true,  // SDK controls its own height
+          }}
+          onMessage={messageHandler}
+          onError={errorHandler}
+        />
+      </Suspense>
+    </div>
+  );
+}
