@@ -1,7 +1,9 @@
+// ---------- send-email-otp/index.ts ----------
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendSESEmail } from "../_shared/ses.ts";
+
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
+import { sendSendgridEmail } from "../_shared/sendgrid.ts"; // NEW
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -9,7 +11,6 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Configurable via environment variables
 const OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("OTP_EXPIRY_MINUTES") ?? "10");
 const MAX_ATTEMPTS = parseInt(Deno.env.get("OTP_MAX_ATTEMPTS") ?? "5");
 
@@ -18,78 +19,72 @@ function generateOtp(): string {
 }
 
 serve(async (req: Request) => {
-    // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
-        // --- Initialization and Environment Variable Checks ---
+        // -- ENV VARS --
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        const sesRegion = Deno.env.get("SES_REGION") ?? "";
-        const sesFromEmail = Deno.env.get("SES_FROM_EMAIL") ?? "";
-        const sesAccessKey = Deno.env.get("SES_ACCESS_KEY") ?? "";
-        const sesSecretKey = Deno.env.get("SES_SECRET_KEY") ?? "";
+        const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
+        const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
 
-        const missingVars: string[] = [];
+        const missingVars = [];
         if (!supabaseUrl) missingVars.push("SUPABASE_URL");
         if (!supabaseServiceKey) missingVars.push("SUPABASE_SERVICE_ROLE_KEY");
-        if (!sesRegion) missingVars.push("SES_REGION");
-        if (!sesFromEmail) missingVars.push("SES_FROM_EMAIL");
-        if (!sesAccessKey) missingVars.push("SES_ACCESS_KEY");
-        if (!sesSecretKey) missingVars.push("SES_SECRET_KEY");
+        if (!sendgridApiKey) missingVars.push("SENDGRID_API_KEY");
+        if (!sendgridFromEmail) missingVars.push("SENDGRID_FROM_EMAIL");
 
         if (missingVars.length > 0) {
-            console.error("Missing env vars:", missingVars);
+            console.error("Missing ENV vars:", missingVars);
             return new Response(
-                JSON.stringify({ error: "Server configuration error" }),
+                JSON.stringify({ error: "Server misconfigured" }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
-        
+
         const supabase = createClient(supabaseUrl, supabaseServiceKey, {
             auth: { persistSession: false },
         });
 
-        // Parse request body
-        const body = await req.json() as { email: string };
-        const email = String(body.email ?? "").trim().toLowerCase();
+        const body = await req.json();
+        const email = (body.email ?? "").trim().toLowerCase();
 
         if (!email) {
             return new Response(
-                JSON.stringify({ error: "Email address is required." }),
+                JSON.stringify({ error: "Email is required." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // --- NEW LOGIC: Fetch User ID and OTP State in ONE query ---
+        // -- FETCH USER + OTP STATE IN ONE QUERY --
         const { data: userData, error: fetchErr } = await supabase
             .from("users")
             .select(`
-                id, 
+                id,
                 full_name,
-                otp_state:user_otp_verification!inner (verified_at, otp_attempts, otp_code)
+                otp_state:user_otp_verification!inner (
+                    verified_at,
+                    otp_attempts,
+                    otp_code
+                )
             `)
             .eq("email", email)
             .eq("otp_state.channel", "email")
-            .limit(1)
             .single();
 
         if (fetchErr || !userData) {
-            console.error("User or OTP record not found:", fetchErr);
             return new Response(
-                JSON.stringify({ error: "User not found or verification record missing." }),
+                JSON.stringify({ error: "User not found or OTP record missing." }),
                 { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Extract current state
         const userId = userData.id;
-        const currentOtpState = userData.otp_state?.[0] || { verified_at: null, otp_attempts: 0 };
-        const currentAttempts = currentOtpState.otp_attempts || 0;
-        
-        // Check if already verified
+        const currentOtpState = userData.otp_state?.[0] || {};
+        const currentAttempts = currentOtpState.otp_attempts ?? 0;
+
         if (currentOtpState.verified_at) {
             return new Response(
                 JSON.stringify({ error: "Email already verified." }),
@@ -97,19 +92,18 @@ serve(async (req: Request) => {
             );
         }
 
-        // Check max attempts
         if (currentAttempts >= MAX_ATTEMPTS) {
             return new Response(
-                JSON.stringify({ error: "Maximum OTP attempts reached. Please contact support." }),
+                JSON.stringify({ error: "Maximum OTP attempts reached." }),
                 { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Generate OTP and expiry
+        // -- GENERATE OTP --
         const otpCode = generateOtp();
         const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000).toISOString();
 
-        // --- NEW LOGIC: UPSERT OTP state into user_otp_verification ---
+        // -- UPSERT OTP STATE --
         const { error: updateErr } = await supabase
             .from("user_otp_verification")
             .upsert({
@@ -118,43 +112,41 @@ serve(async (req: Request) => {
                 otp_code: otpCode,
                 otp_expires_at: expiry,
                 otp_attempts: currentAttempts + 1,
-            }, { onConflict: 'user_id, channel' });
+            }, { onConflict: "user_id, channel" });
 
         if (updateErr) {
-            console.error("Error storing OTP:", updateErr);
+            console.error(updateErr);
             return new Response(
-                JSON.stringify({ error: "Failed to generate OTP." }),
+                JSON.stringify({ error: "Failed to update OTP state." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Get optional config
+        // -- GENERATE EMAIL BODY --
         const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.com/logo.png";
 
-        // Generate email content using template
         const emailHtml = generateOtpEmailHtml({
             logoImageUrl,
-            userFullName: userData.full_name || "",
+            userFullName: userData.full_name ?? "",
             otpCode,
             expiryMinutes: OTP_EXPIRY_MINUTES,
         });
+
         const emailSubject = generateOtpEmailSubject(otpCode);
 
-        // Send email via SES
-        const emailResult = await sendSESEmail({
-            accessKey: sesAccessKey,
-            secretKey: sesSecretKey,
-            region: sesRegion,
-            from: sesFromEmail,
+        // -- SEND VIA SENDGRID --
+        const emailResult = await sendSendgridEmail({
+            apiKey: sendgridApiKey,
+            from: sendgridFromEmail,
             to: email,
             subject: emailSubject,
             html: emailHtml,
         });
 
         if (!emailResult.ok) {
-            console.error("SES error:", emailResult.status, emailResult.body);
+            console.error("SendGrid Error:", emailResult.status, emailResult.body);
             return new Response(
-                JSON.stringify({ error: "Failed to send verification email." }),
+                JSON.stringify({ error: "Failed to send email." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
@@ -162,16 +154,15 @@ serve(async (req: Request) => {
         return new Response(
             JSON.stringify({
                 ok: true,
-                message: `Verification code sent. Expires in ${OTP_EXPIRY_MINUTES} minute(s).`,
+                message: `Verification code sent. Expires in ${OTP_EXPIRY_MINUTES} minutes.`,
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
 
-    } catch (error: unknown) {
-        console.error("Error in send-email-otp:", error);
-        const message = error instanceof Error ? error.message : "Server error";
+    } catch (err) {
+        console.error("Unexpected error:", err);
         return new Response(
-            JSON.stringify({ error: message }),
+            JSON.stringify({ error: "Server error" }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }

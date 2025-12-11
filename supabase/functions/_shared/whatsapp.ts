@@ -55,7 +55,7 @@ export async function sendWhatsAppOtp(params: SendWhatsAppOtpParams): Promise<Wh
       ProfileId: profileId,
       APIKey: apiKey,
       MobileNumber: mobileNumber,
-      templateName: "auth",
+      templateName: "sharematchauth",
       Parameters: [otpCode],
       HeaderType: "Text",
       Text: "",

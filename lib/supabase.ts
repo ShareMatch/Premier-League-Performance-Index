@@ -1,17 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
 
-// TODO: Revert to import.meta.env once .env loading issue is resolved
-const supabaseUrl = 'https://hsmfanlcebcphogqqyzj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzbWZhbmxjZWJjcGhvZ3FxeXpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQ0MTQsImV4cCI6MjA3Mzk5MDQxNH0.9rdYuJjECPhuscZoSE7ROVMPf3bpHuwHtx0vMQbOFvg';
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Missing Supabase credentials. Please check your .env file.');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.warn('Missing Supabase credentials. Please check your configuration.');
 }
 
-export const supabase = createClient(
-    supabaseUrl,
-    supabaseAnonKey
-);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Placeholder for future data fetching functions
 export const fetchTeams = async () => {

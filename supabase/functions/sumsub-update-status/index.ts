@@ -103,10 +103,10 @@ serve(async (req) => {
       auth: { persistSession: false }
     })
 
-    // Get the auth_user_id and existing sumsub_applicant_id for later use
+    // Fetch auth_user_id from users (core table)
     const { data: userData, error: userFetchError } = await supabase
       .from('users')
-      .select('auth_user_id, sumsub_applicant_id')
+      .select('auth_user_id')
       .eq('id', user_id)
       .single()
 
@@ -115,28 +115,61 @@ serve(async (req) => {
     }
 
     const authUserId = userData?.auth_user_id
-    // Use provided applicant_id, or fall back to the one already in the database
-    const effectiveApplicantId = applicant_id || userData?.sumsub_applicant_id
+
+    // Fetch or create compliance record (normalized KYC data)
+    let { data: compliance, error: complianceError } = await supabase
+      .from('user_compliance')
+      .select('sumsub_applicant_id, sumsub_level, kyc_status, cooling_off_until, kyc_started_at, kyc_reviewed_at')
+      .eq('user_id', user_id)
+      .maybeSingle()
+
+    if (complianceError || !compliance) {
+      console.warn('Compliance record missing; creating default', { user_id, complianceError })
+      const { data: created, error: createError } = await supabase
+        .from('user_compliance')
+        .insert({
+          user_id,
+          kyc_status: 'not_started',
+          sumsub_level: SUMSUB_DEFAULT_LEVEL,
+          sumsub_applicant_id: null,
+          kyc_started_at: null,
+          kyc_reviewed_at: null,
+        })
+        .select('sumsub_applicant_id, sumsub_level, kyc_status, cooling_off_until, kyc_started_at, kyc_reviewed_at')
+        .maybeSingle()
+
+      if (createError || !created) {
+        console.error('Failed to create compliance record', { user_id, createError })
+        return new Response(
+          JSON.stringify({ error: 'Failed to init compliance record' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      compliance = created
+    }
+
+    // Use provided applicant_id, or fall back to the one already in the compliance table
+    const effectiveApplicantId = applicant_id || compliance?.sumsub_applicant_id
 
     console.log('User data:', { authUserId, effectiveApplicantId, providedApplicantId: applicant_id })
 
-    // Build update object - only existing columns
-    const updateData: Record<string, any> = {}
+    // Build compliance update object - only existing columns
+    const complianceUpdate: Record<string, any> = {}
 
     // Save applicant ID if provided (and not already in DB)
-    if (applicant_id && applicant_id !== userData?.sumsub_applicant_id) {
-      updateData.sumsub_applicant_id = applicant_id
-      updateData.sumsub_level = SUMSUB_DEFAULT_LEVEL
+    if (applicant_id && applicant_id !== compliance?.sumsub_applicant_id) {
+      complianceUpdate.sumsub_applicant_id = applicant_id
+      complianceUpdate.sumsub_level = SUMSUB_DEFAULT_LEVEL
     }
 
     // Map review answer to KYC status (prioritize review_answer over review_status)
     if (review_answer) {
       // We have a definitive answer from Sumsub
       if (review_answer === 'GREEN') {
-        updateData.kyc_status = 'approved'
+        complianceUpdate.kyc_status = 'approved'
         // Set 24-hour cooling off period
-        updateData.cooling_off_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        updateData.kyc_reviewed_at = new Date().toISOString()
+        complianceUpdate.cooling_off_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        complianceUpdate.kyc_reviewed_at = new Date().toISOString()
         console.log('Setting status to approved with cooling off period')
         
         // Fetch and update the verified name from Sumsub
@@ -166,56 +199,67 @@ serve(async (req) => {
       } else if (review_answer === 'RED') {
         // Check if it's a RETRY (resubmission allowed) or FINAL rejection
         const isFinalRejection = review_reject_type === 'FINAL'
-        updateData.kyc_status = isFinalRejection ? 'rejected' : 'resubmission_requested'
-        updateData.kyc_reviewed_at = new Date().toISOString()
-        console.log(`Rejection - type: ${review_reject_type}, isFinal: ${isFinalRejection}, status: ${updateData.kyc_status}`)
+        complianceUpdate.kyc_status = isFinalRejection ? 'rejected' : 'resubmission_requested'
+        complianceUpdate.kyc_reviewed_at = new Date().toISOString()
+        console.log(`Rejection - type: ${review_reject_type}, isFinal: ${isFinalRejection}, status: ${complianceUpdate.kyc_status}`)
       }
     } else if (review_status) {
       // No review answer yet, just status update
       if (review_status === 'init' || review_status === 'pending') {
-        updateData.kyc_status = 'started'
-        updateData.kyc_started_at = new Date().toISOString()
+        complianceUpdate.kyc_status = 'started'
+        complianceUpdate.kyc_started_at = new Date().toISOString()
       } else if (review_status === 'onHold') {
-        updateData.kyc_status = 'on_hold'
+        complianceUpdate.kyc_status = 'on_hold'
       } else if (review_status === 'completed') {
         // Completed but no answer - keep as pending
-        updateData.kyc_status = 'pending'
-        updateData.kyc_reviewed_at = new Date().toISOString()
+        complianceUpdate.kyc_status = 'pending'
+        complianceUpdate.kyc_reviewed_at = new Date().toISOString()
       }
     }
 
     // Only update if we have something to update
-    if (Object.keys(updateData).length === 0) {
+    if (Object.keys(complianceUpdate).length === 0) {
       return new Response(
         JSON.stringify({ ok: true, message: 'No updates needed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`Updating user ${user_id}:`, updateData)
+    console.log(`Updating compliance for user ${user_id}:`, complianceUpdate)
 
     const { error: updateError } = await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', user_id)
+      .from('user_compliance')
+      .update(complianceUpdate)
+      .eq('user_id', user_id)
 
     if (updateError) {
-      console.error('Failed to update user:', updateError)
+      console.error('Failed to update compliance:', updateError)
       return new Response(
         JSON.stringify({ error: 'Failed to update user' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Also update full_name in users if we have a verified name
+    if (complianceUpdate.full_name) {
+      const { error: fullNameUpdateError } = await supabase
+        .from('users')
+        .update({ full_name: complianceUpdate.full_name })
+        .eq('id', user_id)
+      if (fullNameUpdateError) {
+        console.error('Failed to update users.full_name:', fullNameUpdateError)
+      }
+    }
+
     // Also update the auth.users display name if we have a verified name and auth_user_id
-    if (updateData.full_name && authUserId) {
-      console.log(`Updating auth.users display name for ${authUserId} to: ${updateData.full_name}`)
+    if (complianceUpdate.full_name && authUserId) {
+      console.log(`Updating auth.users display name for ${authUserId} to: ${complianceUpdate.full_name}`)
       
       const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
         authUserId,
         { 
           user_metadata: { 
-            full_name: updateData.full_name 
+            full_name: complianceUpdate.full_name 
           } 
         }
       )
@@ -229,7 +273,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ ok: true, updated: updateData }),
+      JSON.stringify({ ok: true, updated: complianceUpdate }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Loader2 } from 'lucide-react';
 
-const SUPABASE_URL = 'https://nilquprumeipoiljsezt.supabase.co';
+import { SUPABASE_URL } from '../../lib/config';
 
 interface LoginResponse {
     success: boolean;
