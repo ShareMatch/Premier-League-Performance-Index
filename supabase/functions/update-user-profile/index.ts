@@ -32,6 +32,9 @@ interface UpdatePayload {
   // Whether to send verification OTP for changed email/phone
   sendEmailOtp?: boolean;
   sendWhatsAppOtp?: boolean;
+  // Skip verification reset - use when the new email/whatsapp was already verified via OTP
+  emailAlreadyVerified?: boolean;
+  whatsappAlreadyVerified?: boolean;
 }
 
 serve(async (req: Request) => {
@@ -136,8 +139,14 @@ serve(async (req: Request) => {
       }
 
       updateData.email = newEmail;
-      updateData.email_verified_at = null; // Reset verification
-      updateData.email_otp_attempts = 0;
+      // Only reset verification if not already verified via OTP
+      if (!body.emailAlreadyVerified) {
+        updateData.email_verified_at = null;
+        updateData.email_otp_attempts = 0;
+      } else {
+        // If already verified, set the timestamp to now
+        updateData.email_verified_at = new Date().toISOString();
+      }
       emailChanged = true;
     }
 
@@ -167,8 +176,14 @@ serve(async (req: Request) => {
       }
 
       updateData.whatsapp_phone_e164 = newWhatsappPhone;
-      updateData.whatsapp_phone_verified_at = null; // Reset verification
-      updateData.whatsapp_otp_attempts = 0;
+      // Only reset verification if not already verified via OTP
+      if (!body.whatsappAlreadyVerified) {
+        updateData.whatsapp_phone_verified_at = null;
+        updateData.whatsapp_otp_attempts = 0;
+      } else {
+        // If already verified, set the timestamp to now
+        updateData.whatsapp_phone_verified_at = new Date().toISOString();
+      }
       whatsappChanged = true;
     }
 

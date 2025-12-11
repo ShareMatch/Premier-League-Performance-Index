@@ -470,6 +470,9 @@ export interface UpdateProfilePayload {
     whatsappPhone?: string;
     sendEmailOtp?: boolean;
     sendWhatsAppOtp?: boolean;
+    // Skip verification reset - use when the new email/whatsapp was already verified via OTP
+    emailAlreadyVerified?: boolean;
+    whatsappAlreadyVerified?: boolean;
 }
 
 export interface UpdateProfileResponse {
@@ -683,6 +686,35 @@ export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResp
 };
 
 /**
+ * Reset KYC applicant - allows user to re-verify from scratch
+ * This resets the Sumsub applicant and sets user's status to 'not_started'
+ */
+export interface ResetKycResponse {
+    ok: boolean;
+    message: string;
+    applicantId?: string;
+}
+
+export const resetKycApplicant = async (userId: string): Promise<ResetKycResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-reset-applicant`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to reset KYC');
+    }
+
+    return result as ResetKycResponse;
+};
+
+/**
  * Determine if user needs to complete KYC before accessing the platform
  */
 export const needsKycVerification = (status: KycStatus): boolean => {
@@ -749,6 +781,7 @@ export interface UserDetails {
     dob: string | null;
     country: string | null;
     address_line: string | null;
+    address_line2: string | null;
     city: string | null;
     region: string | null;
     postal_code: string | null;

@@ -8,6 +8,9 @@ import EditDetailsModal from './EditDetailsModal';
 import EditMarketingPreferencesModal from './EditMarketingPreferencesModal';
 import ChangePasswordModal from './ChangePasswordModal';
 import DeleteAccountModal from './DeleteAccountModal';
+import PaymentDetailsCard, { PaymentMethod } from './PaymentDetailsCard';
+import PaymentMethodModal, { PaymentOption } from './PaymentMethodModal';
+import BankDetailsModal, { BankDetails } from './BankDetailsModal';
 import { EmailVerificationModal } from '../auth/EmailVerificationModal';
 import { WhatsAppVerificationModal } from '../auth/WhatsAppVerificationModal';
 import { 
@@ -39,6 +42,7 @@ interface UserData {
   whatsapp: string;
   // Address
   address: string;
+  address2: string;
   city: string;
   state: string;
   country: string;
@@ -124,9 +128,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     { id: 'email', label: 'Email', enabled: true },
     { id: 'whatsapp', label: 'WhatsApp', enabled: true },
     { id: 'sms', label: 'SMS', enabled: false },
-    { id: 'notifications', label: 'Notifications', enabled: false },
   ]);
   const [personalizedMarketing, setPersonalizedMarketing] = useState(true);
+
+  // Payment details state
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('none');
+  const [bankDetails, setBankDetails] = useState<BankDetails | undefined>(undefined);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
 
   // Build login history from user's source_ip (TODO: fetch from login_history table when available)
   const loginHistory = userDetails?.source_ip ? [
@@ -184,6 +193,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     phone: userDetails?.phone_e164 || userData?.phone || 'Nil',
     whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || 'Nil',
     address: userDetails?.address_line || userData?.address || 'Nil',
+    address2: userDetails?.address_line2 || userData?.address2 || 'Nil',
     city: userDetails?.city || userData?.city || 'Nil',
     state: userDetails?.region || userData?.state || 'Nil',
     country: userDetails?.country || userData?.country || 'Nil',
@@ -309,10 +319,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         console.log('✅ Email verified, updating via edge function to:', pendingChanges.email);
         
         // updateUserProfile uses service role key and can update both public.users and auth.users
+        // Pass emailAlreadyVerified: true since we just verified the OTP
         await updateUserProfile({
           currentEmail: currentEmail,
           newEmail: pendingChanges.email,
           phone: pendingChanges.phone || undefined,
+          emailAlreadyVerified: true, // Don't reset email_verified_at since we just verified
         });
         
         console.log('✅ Email updated successfully via edge function');
@@ -371,10 +383,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       if (pendingChanges.whatsappChanged && pendingChanges.whatsapp) {
         console.log('✅ WhatsApp verified, updating via edge function to:', pendingChanges.whatsapp);
         
+        // Pass whatsappAlreadyVerified: true since we just verified the OTP
         await updateUserProfile({
           currentEmail: currentEmail,
           whatsappPhone: pendingChanges.whatsapp,
           phone: pendingChanges.phone || undefined,
+          whatsappAlreadyVerified: true, // Don't reset whatsapp_phone_verified_at since we just verified
         });
         
         console.log('✅ WhatsApp updated successfully via edge function');
@@ -490,13 +504,24 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     setActiveModal(null);
   };
 
-  // Save Bank Details handler (placeholder - no bank table yet)
-  const handleSaveBankDetails = async (updatedFields: Record<string, string>) => {
-    console.log('Save bank details:', updatedFields);
+  // Handle payment method selection
+  const handleSelectPaymentMethod = (method: PaymentOption) => {
+    setShowPaymentMethodModal(false);
+    if (method === 'bank') {
+      setShowBankDetailsModal(true);
+    }
+    // Future: handle 'card' and 'crypto' when available
+  };
+
+  // Save Bank Details handler
+  const handleSaveBankDetails = async (details: BankDetails) => {
+    console.log('Save bank details:', details);
     // TODO: Save to bank_details table when available
     
-    // Close the edit modal
-    setActiveModal(null);
+    // For now, just store in state
+    setBankDetails(details);
+    setPaymentMethod('bank');
+    setShowBankDetailsModal(false);
   };
 
   // Save Marketing Preferences handler
@@ -591,9 +616,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             <DetailsCard
               title="Address"
               fields={[
-                { label: 'Address:', value: user.address },
+                { label: 'Address Line 1:', value: user.address },
+                { label: 'Address Line 2:', value: user.address2 },
                 { label: 'Town/City:', value: user.city },
-                { label: 'State:', value: user.state },
+                { label: 'State, Province or Region:', value: user.state },
                 { label: 'Country:', value: user.country },
                 { label: 'Post Code:', value: user.postCode },
               ]}
@@ -630,17 +656,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
               onEdit={() => setActiveModal('marketing')}
             />
 
-            {/* Bank Details */}
-            <DetailsCard
-              title="Bank Details"
-              fields={[
-                { label: 'Account Name:', value: user.accountName },
-                { label: 'Account Number:', value: user.accountNumber },
-                { label: 'IBAN:', value: user.iban },
-                { label: 'SWIFT/BIC Code:', value: user.swiftBic },
-                { label: 'Bank Name:', value: user.bankName },
-              ]}
-              onEdit={() => setActiveModal('bank')}
+            {/* Payment Details */}
+            <PaymentDetailsCard
+              paymentMethod={paymentMethod}
+              bankDetails={bankDetails}
+              onAddPayment={() => setShowPaymentMethodModal(true)}
+              onEdit={() => setShowBankDetailsModal(true)}
             />
 
             {/* Account Actions */}
@@ -669,7 +690,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         isOpen={activeModal === 'about'}
         onClose={() => setActiveModal(null)}
         title="About You"
-        note="Changing your email or WhatsApp will require OTP verification sent to the NEW contact info."
         fields={[
           { key: 'name', label: 'Name', value: user.name === 'Nil' ? '' : user.name, editable: false },
           { key: 'email', label: 'Email Address', value: user.email === 'Nil' ? '' : user.email, type: 'email', hint: 'OTP will be sent to the new email' },
@@ -694,19 +714,23 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onSave={handleSaveAddress}
       />
 
-      {/* Edit Bank Details Modal */}
-      <EditDetailsModal
-        isOpen={activeModal === 'bank'}
-        onClose={() => setActiveModal(null)}
-        title="Bank Details"
-        fields={[
-          { key: 'accountName', label: 'Account Name', value: user.accountName === 'Nil' ? '' : user.accountName },
-          { key: 'accountNumber', label: 'Account Number', value: user.accountNumber === 'Nil' ? '' : user.accountNumber },
-          { key: 'iban', label: 'IBAN', value: user.iban === 'Nil' ? '' : user.iban },
-          { key: 'swiftBic', label: 'SWIFT/BIC Code', value: user.swiftBic === 'Nil' ? '' : user.swiftBic },
-          { key: 'bankName', label: 'Bank Name', value: user.bankName === 'Nil' ? '' : user.bankName },
-        ]}
+      {/* Payment Method Selection Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelectMethod={handleSelectPaymentMethod}
+      />
+
+      {/* Bank Details Modal */}
+      <BankDetailsModal
+        isOpen={showBankDetailsModal}
+        onClose={() => setShowBankDetailsModal(false)}
+        onBack={() => {
+          setShowBankDetailsModal(false);
+          setShowPaymentMethodModal(true);
+        }}
         onSave={handleSaveBankDetails}
+        initialData={bankDetails}
       />
 
       {/* Edit Marketing Preferences Modal */}
