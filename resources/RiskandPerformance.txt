@@ -1,0 +1,31 @@
+Risk & Performance Statement
+ShareMatch Ltd
+IMPORTANT RISK DISCLOSURE
+Please read this Risk & Performance Statement carefully before making any investment decisions on our platform.
+BY USING THIS PLATFORM, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND ACCEPTED THESE RISKS.
+1. GENERAL RISK WARNING
+All investments carry risk. The value of your investment may go down as well as up, and you may receive back less than your original investment. Past performance is not a reliable indicator of future results.
+2. MARKET RISK
+The performance tokens traded on ShareMatch are subject to market volatility. Prices can fluctuate significantly based on supply and demand dynamics, market sentiment, external factors affecting the underlying sports leagues, and general economic conditions.
+3. LIQUIDITY RISK
+There is no guarantee that you will be able to sell your tokens when you want to. During periods of low trading activity, you may not find a buyer at your desired price, or at all.
+4. SETTLEMENT RISK
+At market closure, the winning token (top performer) settles at $100.0 and all other tokens settle at $0.1. This means you could lose substantially all of your investment if your chosen token does not finish at the top of the index.
+5. SMART CONTRACT RISK
+While our smart contracts are designed with security in mind, no system is completely free from risk. Technical vulnerabilities, bugs, or unforeseen circumstances could potentially affect the execution of trades or settlement.
+6. REGULATORY RISK
+The regulatory environment for digital assets and tokenised investments is evolving. Changes in laws or regulations could affect the operation of our platform or the value of your investments.
+7. OPERATIONAL RISK
+System failures, cyber attacks, or other operational issues could temporarily or permanently affect your ability to trade or access your account.
+8. NO INVESTMENT ADVICE
+ShareMatch does not provide investment advice. All trading decisions are made by you alone. You should consider seeking independent financial advice before making any investment decisions.
+9. SUITABILITY
+You should only invest money that you can afford to lose. These products may not be suitable for all investors. Consider your financial situation, investment objectives, and risk tolerance before investing.
+10. HAQQ MALI COMPLIANCE
+Our platform operates under the principles of Haqq Mali to ensure ethical and transparent trading. However, this does not eliminate investment risk.
+11. PERFORMANCE TRACKING
+Token prices are based solely on user supply and demand in the secondary market. ShareMatch does not manipulate prices or provide third-party data influence. Liquidity is provided by ShareMatch to facilitate trading.
+12. COOLING-OFF PERIOD
+After KYC approval, you will be subject to a 24-hour cooling-off period before you can trade. This is designed to give you time to consider your investment decisions carefully.
+13. CONTACT US
+For any questions regarding risks, please contact us at info@sharematch.me.

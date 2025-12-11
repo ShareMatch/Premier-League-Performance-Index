@@ -95,10 +95,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
             
+            // Handle SIGNED_OUT explicitly - clear all state
+            if (event === 'SIGNED_OUT') {
+                setSession(null);
+                setUser(null);
+                setLoading(false);
+                setIsPasswordRecovery(false);
+                sessionStorage.removeItem('password_recovery_mode');
+                sessionStorage.removeItem('password_recovery_error');
+                return;
+            }
+            
             // For all other events, check if we're in recovery mode (only for THIS tab)
             const inRecoveryMode = sessionStorage.getItem('password_recovery_mode') === 'true';
             
-            if (inRecoveryMode && event !== 'SIGNED_OUT') {
+            if (inRecoveryMode) {
                 setSession(session);
                 setLoading(false);
                 return;
@@ -114,6 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [isPasswordRecovery]);
 
     const signOut = async () => {
+        // Explicitly clear auth state immediately
+        setUser(null);
+        setSession(null);
+        setIsPasswordRecovery(false);
+        sessionStorage.removeItem('password_recovery_mode');
+        sessionStorage.removeItem('password_recovery_error');
+        // Sign out from Supabase (this will also trigger SIGNED_OUT event)
         await supabase.auth.signOut();
     };
 

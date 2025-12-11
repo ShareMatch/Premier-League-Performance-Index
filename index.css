@@ -49,10 +49,12 @@
 }
 
 /* Custom utility for hiding scrollbar but keeping functionality if needed */
-.no-scrollbar::-webkit-scrollbar {
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-.no-scrollbar {
+.no-scrollbar,
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -73,4 +75,16 @@
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
+}
+
+/* Sumsub SDK smooth transitions */
+#sumsub-websdk-container,
+[id^="sumsub"],
+iframe[src*="sumsub"] {
+  transition: height 0.3s ease-in-out !important;
+}
+
+/* Smooth container transitions for KYC modal */
+.kyc-sdk-container {
+  transition: all 0.3s ease-in-out;
 }
