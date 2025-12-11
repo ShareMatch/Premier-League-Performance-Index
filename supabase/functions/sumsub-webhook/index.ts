@@ -192,22 +192,22 @@ serve(async (req) => {
         console.log(`Rejection type: ${reviewResult?.reviewRejectType}, status: ${kycStatus}`)
       }
 
-      console.log(`Updating user ${externalUserId} KYC status to: ${kycStatus}`)
+      console.log(`Updating compliance for user ${externalUserId} KYC status to: ${kycStatus}`)
 
-      // Build update data
-      const updateData: Record<string, any> = {
+      // Build compliance update data
+      const complianceUpdate: Record<string, any> = {
         kyc_status: kycStatus,
         sumsub_applicant_id: applicantId,
         kyc_reviewed_at: new Date().toISOString(),
       }
 
       if (levelName) {
-        updateData.sumsub_level = levelName
+        complianceUpdate.sumsub_level = levelName
       }
 
       // Set cooling off period for approved users (24 hours)
       if (kycStatus === 'approved') {
-        updateData.cooling_off_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        complianceUpdate.cooling_off_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         
         // Fetch the verified name from Sumsub and update it
         if (SUMSUB_APP_TOKEN && SUMSUB_SECRET_KEY && applicantId) {
@@ -219,34 +219,61 @@ serve(async (req) => {
           )
           
           if (verifiedName) {
-            updateData.full_name = verifiedName
+            complianceUpdate.full_name = verifiedName
             console.log(`Updating full_name to verified name: ${verifiedName}`)
           }
         }
       }
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update(updateData)
-        .eq('id', externalUserId)
+      // Fetch or create compliance row
+      let { data: compliance, error: complianceError } = await supabase
+        .from('user_compliance')
+        .select('user_id')
+        .eq('user_id', externalUserId)
+        .maybeSingle()
 
-      if (updateError) {
-        console.error('Failed to update user:', updateError)
+      if (complianceError || !compliance) {
+        const { error: createError } = await supabase
+          .from('user_compliance')
+          .insert({ user_id: externalUserId, kyc_status: 'not_started' })
+        if (createError) {
+          console.error('Failed to init compliance row:', createError)
+        }
+      }
+
+      const { error: complianceUpdateError } = await supabase
+        .from('user_compliance')
+        .update(complianceUpdate)
+        .eq('user_id', externalUserId)
+
+      if (complianceUpdateError) {
+        console.error('Failed to update compliance:', complianceUpdateError)
         return new Response(
-          JSON.stringify({ error: 'Failed to update user' }),
+          JSON.stringify({ error: 'Failed to update compliance' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
+      // Also update users.full_name if we have verified name
+      if (complianceUpdate.full_name) {
+        const { error: fullNameUpdateError } = await supabase
+          .from('users')
+          .update({ full_name: complianceUpdate.full_name })
+          .eq('id', externalUserId)
+        if (fullNameUpdateError) {
+          console.error('Failed to update users.full_name:', fullNameUpdateError)
+        }
+      }
+
       // Also update the auth.users display name if we have a verified name and auth_user_id
-      if (updateData.full_name && authUserId) {
-        console.log(`Updating auth.users display name for ${authUserId} to: ${updateData.full_name}`)
+      if (complianceUpdate.full_name && authUserId) {
+        console.log(`Updating auth.users display name for ${authUserId} to: ${complianceUpdate.full_name}`)
         
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           authUserId,
           { 
             user_metadata: { 
-              full_name: updateData.full_name 
+              full_name: complianceUpdate.full_name 
             } 
           }
         )
@@ -259,7 +286,7 @@ serve(async (req) => {
         }
       }
 
-      console.log(`User ${externalUserId} updated successfully`)
+      console.log(`Compliance for user ${externalUserId} updated successfully`)
     }
 
     // Handle applicantCreated webhook
@@ -267,6 +294,22 @@ serve(async (req) => {
       const { externalUserId, applicantId, levelName } = payload
 
       if (externalUserId && applicantId) {
+        // Ensure compliance row exists
+        let { data: compliance, error: complianceError } = await supabase
+          .from('user_compliance')
+          .select('user_id')
+          .eq('user_id', externalUserId)
+          .maybeSingle()
+
+        if (complianceError || !compliance) {
+          const { error: createError } = await supabase
+            .from('user_compliance')
+            .insert({ user_id: externalUserId, kyc_status: 'not_started' })
+          if (createError) {
+            console.error('Failed to init compliance row (applicantCreated):', createError)
+          }
+        }
+
         const updateData: Record<string, any> = { 
           sumsub_applicant_id: applicantId,
           kyc_started_at: new Date().toISOString(),
@@ -277,9 +320,9 @@ serve(async (req) => {
         }
 
         const { error: updateError } = await supabase
-          .from('users')
+          .from('user_compliance')
           .update(updateData)
-          .eq('id', externalUserId)
+          .eq('user_id', externalUserId)
 
         if (updateError) {
           console.error('Failed to save applicant ID:', updateError)

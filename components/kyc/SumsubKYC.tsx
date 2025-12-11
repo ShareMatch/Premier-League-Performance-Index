@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 
 const SumsubWebSdk = lazy(() => import('@sumsub/websdk-react'));
 
 // Supabase configuration - use the same values as lib/supabase.ts
-const SUPABASE_URL = 'https://nilquprumeipoiljsezt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pbHF1cHJ1bWVpcG9pbGpzZXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQwMjQsImV4cCI6MjA3Mzk5MDAyNH0.Z1lCDDRvCgUBdYdzzZjahl44A2waYhbqc1rFDV0n20U';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/config';
 
 // Helper to call Supabase Edge Functions
 const callEdgeFunction = async (functionName: string, body?: any) => {

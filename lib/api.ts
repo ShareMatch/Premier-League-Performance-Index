@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
 
 export const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -169,9 +170,6 @@ export const subscribeToAssets = (callback: () => void) => {
 // ============================================
 // AUTH API - Registration & Verification
 // ============================================
-
-const SUPABASE_URL = 'https://hsmfanlcebcphogqqyzj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzbWZhbmxjZWJjcGhvZ3FxeXpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg0MTQ0MTQsImV4cCI6MjA3Mzk5MDQxNH0.9rdYuJjECPhuscZoSE7ROVMPf3bpHuwHtx0vMQbOFvg';
 
 export interface RegistrationData {
     full_name: string;
