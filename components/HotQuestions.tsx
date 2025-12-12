@@ -43,7 +43,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid, // Using bid as proxy for "No" sell price
         volume: '£1.2M',
-        icon: <Trophy className="w-5 h-5 text-purple-400" />,
+        IconComponent: Trophy,
+        iconColor: 'text-purple-400',
         color: 'from-purple-500/20 to-blue-500/20',
         borderColor: 'group-hover:border-purple-500/50'
       });
@@ -58,7 +59,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£850K',
-        icon: <Flag className="w-5 h-5 text-red-400" />,
+        IconComponent: Flag,
+        iconColor: 'text-red-400',
         color: 'from-red-500/20 to-orange-500/20',
         borderColor: 'group-hover:border-red-500/50'
       });
@@ -73,7 +75,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£420K',
-        icon: <Activity className="w-5 h-5 text-green-400" />,
+        IconComponent: Activity,
+        iconColor: 'text-green-400',
         color: 'from-green-500/20 to-emerald-500/20',
         borderColor: 'group-hover:border-green-500/50'
       });
@@ -89,7 +92,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£2.1M',
-        icon: <Trophy className="w-5 h-5 text-blue-400" />,
+        IconComponent: Trophy,
+        iconColor: 'text-blue-400',
         color: 'from-blue-600/20 to-indigo-600/20',
         borderColor: 'group-hover:border-blue-500/50'
       });
@@ -104,7 +108,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£3.5M',
-        icon: <Activity className="w-5 h-5 text-orange-400" />,
+        IconComponent: Activity,
+        iconColor: 'text-orange-400',
         color: 'from-orange-500/20 to-amber-500/20',
         borderColor: 'group-hover:border-orange-500/50'
       });
@@ -119,7 +124,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         yesPrice: top.offer,
         noPrice: top.bid,
         volume: '£5.2M',
-        icon: <Trophy className="w-5 h-5 text-blue-800" />,
+        IconComponent: Trophy,
+        iconColor: 'text-blue-800',
         color: 'from-blue-800/20 to-blue-900/20',
         borderColor: 'group-hover:border-blue-800/50'
       });
@@ -130,43 +136,44 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
   }, [teams]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-[#3AA189]" />
+        <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#3AA189]" />
           Trending Markets
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-4">
         {questions.map((q) => (
           <div
             key={q.id}
             onClick={() => onNavigate(q.market as any)}
-            className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-5 cursor-pointer transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10 ${q.borderColor}`}
+            className={`group relative bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-3 sm:p-5 cursor-pointer transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10 ${q.borderColor}`}
           >
             {/* Gradient Background Effect */}
             <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
             <div className="relative z-10 flex flex-col h-full">
-              <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
+              {/* Header - horizontal layout on mobile */}
+              <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
                 <div className="flex flex-col gap-1 min-w-0">
-                  <div className="flex items-center gap-2 bg-gray-900/60 rounded-full px-3 py-1 border border-gray-700">
-                    {q.icon}
-                    <span className="text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900/60 rounded-full px-2 sm:px-3 py-1 border border-gray-700">
+                    <q.IconComponent className={`w-3.5 h-3.5 sm:w-5 sm:h-5 ${q.iconColor}`} />
+                    <span className="text-[10px] sm:text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
                   </div>
-                  <span className="text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
+                  <span className="text-[10px] sm:text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
                 </div>
                 {(() => {
                   const info = getMarketInfo(q.market);
                   return (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${
-                        info.isOpen 
-                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' 
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                      <span className={`px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
                           : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                      }`}>
-                        {info.isOpen ? 'Market Open' : 'Market Closed'}
+                        }`}>
+                        {info.isOpen ? 'Open' : 'Closed'}
                       </span>
                       <InfoPopup
                         title={info.title}
@@ -180,18 +187,18 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                 })()}
               </div>
 
-              <h3 className="text-base font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors leading-snug">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-100 mb-3 sm:mb-6 group-hover:text-white transition-colors leading-snug line-clamp-2">
                 {q.question}
               </h3>
 
-              <div className="mt-auto grid grid-cols-2 gap-3">
-                <button className="flex flex-col items-center justify-center bg-[#3AA189]/10 hover:bg-[#3AA189]/20 border border-[#3AA189]/30 rounded-lg p-2 transition-colors group/btn">
-                  <span className="text-xs text-[#3AA189] font-medium mb-1">Buy</span>
-                  <span className="text-lg font-bold text-[#3AA189]">{q.yesPrice.toFixed(1)}</span>
+              <div className="mt-auto grid grid-cols-2 gap-2 sm:gap-3">
+                <button className="flex flex-col items-center justify-center bg-[#3AA189]/10 hover:bg-[#3AA189]/20 border border-[#3AA189]/30 rounded-lg p-1.5 sm:p-2 transition-colors group/btn">
+                  <span className="text-[10px] sm:text-xs text-[#3AA189] font-medium mb-0.5 sm:mb-1">Buy</span>
+                  <span className="text-base sm:text-lg font-bold text-[#3AA189]">${q.yesPrice.toFixed(1)}</span>
                 </button>
-                <button className="flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg p-2 transition-colors group/btn">
-                  <span className="text-xs text-red-400 font-medium mb-1">Sell</span>
-                  <span className="text-lg font-bold text-red-400">{q.noPrice.toFixed(1)}</span>
+                <button className="flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg p-1.5 sm:p-2 transition-colors group/btn">
+                  <span className="text-[10px] sm:text-xs text-red-400 font-medium mb-0.5 sm:mb-1">Sell</span>
+                  <span className="text-base sm:text-lg font-bold text-red-400">${q.noPrice.toFixed(1)}</span>
                 </button>
               </div>
             </div>

@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '../types';
 import TermsConditionsModal from './TermsConditionsModal';
+import { TRADING_CONFIG } from '../lib/config';
 
 interface TradeSlipProps {
   order: Order;
   onClose: () => void;
   onConfirm: (quantity: number) => Promise<void>;
   leagueName: string;
+  walletBalance?: number;
 }
+
+
+
+
+
+
+
 
 const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -21,17 +30,31 @@ const TimerIcon: React.FC<{ className?: string, style?: React.CSSProperties }> =
   </svg>
 );
 
-const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, leagueName }) => {
+const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, leagueName, walletBalance = 0 }) => {
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [modalType, setModalType] = useState<'terms' | 'risk' | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const orderCost = shares !== '' ? (shares * order.price).toFixed(2) : '0.00';
   const isBuy = order.type === 'buy';
+  
+  // Fee percentage from config - ONLY applies to SELL orders
+  const FEE_RATE = TRADING_CONFIG.FEE_RATE;
+  
+  // Calculate costs
+  const subtotal = shares !== '' ? shares * order.price : 0;
+  // Fee only on sell - deducted from what user receives
+  const fee = isBuy ? 0 : subtotal * FEE_RATE;
+  // For buy: pay exact subtotal. For sell: receive subtotal minus fee
+  const totalAmount = isBuy ? subtotal : subtotal - fee;
+  
+  const orderCost = subtotal.toFixed(2);
+  const feeAmount = fee.toFixed(2);
+  const totalDisplay = totalAmount.toFixed(2);
 
-  // Calculate returns
+  // Calculate returns (based on subtotal, not including fees)
   const maxReturn = shares !== '' ? (shares * 100).toFixed(2) : '0.00';
   const minReturn = shares !== '' ? (shares * 0.1).toFixed(2) : '0.00';
 
@@ -84,6 +107,12 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
 
   const handleConfirm = () => {
     if (shares && shares > 0) {
+      // Check if user has enough funds for buy orders (no fee on buy)
+      if (isBuy && subtotal > walletBalance) {
+        setError(`Insufficient funds. You need $${subtotal.toFixed(2)} but only have $${walletBalance.toFixed(2)}`);
+        return;
+      }
+      setError(null);
       setCountdown(5);
     }
   };
@@ -114,7 +143,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
               <p className="font-bold text-gray-200 truncate">{order.team.name}</p>
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isBuy ? 'text-[#3AA189]' : 'text-red-400'}`}>{order.price.toFixed(1)}</p>
+          <p className={`text-2xl font-bold ${isBuy ? 'text-[#3AA189]' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
         </div>
       </div>
 
@@ -122,7 +151,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
         <div className="flex justify-between items-baseline">
           <label htmlFor="shares" className="text-sm font-medium text-gray-400">Number of Units</label>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Total Value: ${orderCost}</p>
+            <p className="text-xs text-gray-500">Subtotal: ${orderCost}</p>
             {!isBuy && order.holding && (
               <p className="text-xs text-gray-400">Max Sell: {order.holding}</p>
             )}
@@ -203,6 +232,47 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
           </button>
         </span>
       </label>
+
+      {/* Fee Breakdown - Only show fee for sell orders */}
+      {shares !== '' && shares > 0 && (
+        <div className="text-xs text-gray-400 space-y-1 border-t border-gray-700 pt-2">
+          {isBuy ? (
+            // Buy: No fee, just show total
+            <div className="flex justify-between font-medium text-gray-200">
+              <span>Total Cost:</span>
+              <span>${orderCost}</span>
+            </div>
+          ) : (
+            // Sell: Show breakdown with fee deducted
+            <>
+              <div className="flex justify-between">
+                <span>Sale Amount:</span>
+                <span>${orderCost}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Processing Fee (5%):</span>
+                <span>-${feeAmount}</span>
+              </div>
+              <div className="flex justify-between font-medium text-gray-200">
+                <span>You Receive:</span>
+                <span>${totalDisplay}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* Fee Notice */}
+      {/* <p className="text-xs text-gray-500">
+        ShareMatch charges a 5% processing fee on all transactions.
+      </p> */}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-md p-2">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
 
       <div className="mt-2">
         <button

@@ -70,7 +70,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     };
 
     return (
-        <div className="h-full flex flex-col p-6 overflow-y-auto custom-scrollbar">
+        <div className="h-full flex flex-col p-6 overflow-y-auto scrollbar-hide">
             <div className="max-w-4xl mx-auto w-full space-y-8">
 
                 {/* Header */}

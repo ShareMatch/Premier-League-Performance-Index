@@ -18,6 +18,7 @@ import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
 import { MyDetailsPage } from './components/mydetails';
 import InactivityHandler from './components/auth/InactivityHandler';
+import { SESSION_CONFIG, FEATURES } from './lib/config';
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -54,6 +55,9 @@ const App: React.FC = () => {
   
   // My Details Page State
   const [showMyDetails, setShowMyDetails] = useState(false);
+  
+  // Right Panel State (for mobile/responsive)
+  const [showRightPanel, setShowRightPanel] = useState(false);
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -130,7 +134,7 @@ const App: React.FC = () => {
       try {
         const status = await getKycUserStatus(publicUserId);
         setKycStatus(status.kyc_status);
-        
+
         // Auto-show KYC modal if user needs verification
         if (needsKycVerification(status.kyc_status)) {
           setShowKycModal(true);
@@ -160,7 +164,7 @@ const App: React.FC = () => {
   // Handle KYC modal close - re-check status in case user completed KYC
   const handleKycModalClose = async () => {
     setShowKycModal(false);
-    
+
     // Re-fetch KYC status in case it changed while modal was open
     if (publicUserId) {
       try {
@@ -222,7 +226,7 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -272,6 +276,9 @@ const App: React.FC = () => {
       quantity: 0, // Default to 0, let user input
       maxQuantity
     });
+    
+    // On mobile/tablet (below 2xl), show the RightPanel overlay
+    setShowRightPanel(true);
   };
 
   const handleConfirmTrade = async (quantity: number) => {
@@ -297,6 +304,8 @@ const App: React.FC = () => {
 
   const handleCloseTradeSlip = () => {
     setSelectedOrder(null);
+    // On mobile, also close the RightPanel when trade slip is closed
+    setShowRightPanel(false);
   };
 
   const sortedTeams = [...teams].sort((a, b) => b.offer - a.offer);
@@ -310,6 +319,7 @@ const App: React.FC = () => {
       case 'F1': return 'Formula 1 Drivers Performance Index';
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
+      case 'T20': return 'T20 World Cup';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';
@@ -317,6 +327,18 @@ const App: React.FC = () => {
   };
 
 
+
+
+  // Calculate total portfolio value
+  const portfolioValue = React.useMemo(() => {
+    return portfolio.reduce((total, position) => {
+      // Find current asset data to get price
+      const asset = allAssets.find(a => a.id.toString() === position.asset_id);
+      // Value at bid price (like Portfolio component)
+      const price = asset ? asset.bid : 0;
+      return total + (position.quantity * price);
+    }, 0);
+  }, [portfolio, allAssets]);
 
   if (loading) {
     return (
@@ -328,14 +350,14 @@ const App: React.FC = () => {
 
   return (
     <InactivityHandler
-      inactivityTimeout={5 * 60 * 1000} // 5 minutes
-      warningCountdown={120} // 2 minutes
-      enabled={!!user} // Only track when user is logged in
+      inactivityTimeout={SESSION_CONFIG.INACTIVITY_TIMEOUT_MS}
+      warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
+      enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
       <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - Visible below xl (1280px) */}
         <button
-          className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
+          className="xl:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? <X /> : <Menu />}
@@ -352,14 +374,18 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} onOpenSettings={() => setShowMyDetails(true)} />
+        <TopBar 
+          wallet={wallet} 
+          onOpenSettings={() => setShowMyDetails(true)} 
+          onOpenPortfolio={() => setShowRightPanel(true)}
+        />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">
 
           {/* Center Content */}
           <div className="flex-1 flex flex-col min-w-0 relative">
-            <div className={`flex-1 p-4 sm:p-6 md:p-8 custom-scrollbar ${activeLeague === 'HOME' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+            <div className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === 'HOME' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
               <div className="max-w-5xl mx-auto h-full flex flex-col">
 
                 {activeLeague === 'HOME' ? (
@@ -370,26 +396,27 @@ const App: React.FC = () => {
                 ) : activeLeague === 'AI_ANALYTICS' ? (
                   <AIAnalyticsPage teams={allAssets} />
                 ) : (
-                  <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
+                  /* Mobile: Vertical stack (scrollable) | Desktop: Side by side (fixed height) */
+                  <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:h-full xl:overflow-hidden">
 
-                    {/* Left Column: Header + Order Book (2/3) */}
-                    <div className="flex-[2] flex flex-col min-h-0">
+                    {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
+                    <div className="w-full xl:flex-[2] flex flex-col xl:min-h-0">
                       {/* Header aligned with order book */}
                       <div className="flex-shrink-0">
                         <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
                       </div>
 
-                      {/* Order Book */}
-                      <div className="flex-1 bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col min-h-0">
-                        {/* Fixed Header */}
-                        <div className="grid grid-cols-3 gap-4 p-4 bg-gray-800 border-b border-gray-700 text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+                      {/* Order Book - Fixed height on mobile, flex on desktop */}
+                      <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[280px] sm:h-[350px] xl:h-auto xl:flex-1">
+                        {/* Fixed Header - Responsive padding and text */}
+                        <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
                           <div className="text-left">Asset</div>
                           <div>Sell</div>
                           <div>Buy</div>
                         </div>
 
                         {/* Scrollable List */}
-                        <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-gray-700">
+                        <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
                           {sortedTeams.map((team) => (
                             <OrderBookRow
                               key={team.id}
@@ -401,12 +428,12 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Right Column: AI & News (1/3) */}
-                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                    {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
+                    <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
                       <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
 
                       {/* News Feed */}
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 pb-4 xl:pb-0">
                         <NewsFeed topic={activeLeague as any} />
                       </div>
                     </div>
@@ -427,8 +454,9 @@ const App: React.FC = () => {
             <Ticker onNavigate={handleNavigate} teams={allAssets} />
           </div>
 
-          {/* Right Panel - Hidden on mobile, visible on desktop */}
-          <div className="hidden lg:block h-full">
+          {/* Right Panel - Hidden on smaller screens/150% zoom, visible on 2xl+ */}
+          {/* Desktop: Always visible at 1536px+ */}
+          <div className="hidden 2xl:block h-full">
             <RightPanel
               portfolio={portfolio}
               transactions={transactions}
@@ -438,6 +466,28 @@ const App: React.FC = () => {
               allAssets={allAssets}
               onNavigate={handleNavigate}
               leagueName={getLeagueTitle(activeLeague)}
+              walletBalance={wallet?.balance || 0}
+            />
+          </div>
+          
+          {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+          <div 
+            className={`2xl:hidden fixed inset-y-0 right-0 z-40 h-full transform transition-transform duration-300 ease-in-out ${
+              showRightPanel ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            <RightPanel
+              portfolio={portfolio}
+              transactions={transactions}
+              selectedOrder={selectedOrder}
+              onCloseTradeSlip={() => setSelectedOrder(null)}
+              onConfirmTrade={handleConfirmTrade}
+              allAssets={allAssets}
+              onNavigate={handleNavigate}
+              leagueName={getLeagueTitle(activeLeague)}
+              walletBalance={wallet?.balance || 0}
+              onClose={() => setShowRightPanel(false)}
+              isMobile={true}
             />
           </div>
 
@@ -447,8 +497,16 @@ const App: React.FC = () => {
       {/* Overlay for mobile menu */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 xl:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      
+      {/* Overlay for right panel on mobile/tablet */}
+      {showRightPanel && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 2xl:hidden"
+          onClick={() => setShowRightPanel(false)}
         />
       )}
 

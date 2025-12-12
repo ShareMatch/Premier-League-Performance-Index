@@ -137,11 +137,31 @@ serve(async (req) => {
     const signature = req.headers.get('x-payload-digest') || ''
     const algorithm = req.headers.get('x-payload-digest-alg') || 'HMAC_SHA256_HEX'
     
-    console.log('Webhook received - signature header present:', !!signature)
+    console.log('=== Webhook Debug ===')
+    console.log('Signature header present:', !!signature)
+    console.log('Signature value:', signature.substring(0, 20) + '...')
+    console.log('Algorithm header:', algorithm)
+    console.log('Secret key length:', SUMSUB_WEBHOOK_SECRET.length)
+    console.log('Body length:', bodyText.length)
 
     // Verify signature
     if (!verifyWebhookSignature(bodyText, signature, SUMSUB_WEBHOOK_SECRET, algorithm)) {
-      console.error('Invalid webhook signature')
+      // Calculate what we expected for debugging
+      const algoMap: Record<string, string> = {
+        'HMAC_SHA1_HEX': 'sha1',
+        'HMAC_SHA256_HEX': 'sha256',
+        'HMAC_SHA512_HEX': 'sha512',
+      }
+      const algo = algoMap[algorithm] || 'sha256'
+      const expectedSig = createHmac(algo, SUMSUB_WEBHOOK_SECRET)
+        .update(bodyText)
+        .digest('hex')
+      
+      console.error('=== Signature Mismatch ===')
+      console.error('Received:', signature.substring(0, 30) + '...')
+      console.error('Expected:', expectedSig.substring(0, 30) + '...')
+      console.error('Algorithm used:', algo)
+      
       return new Response(
         JSON.stringify({ error: 'Invalid signature' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

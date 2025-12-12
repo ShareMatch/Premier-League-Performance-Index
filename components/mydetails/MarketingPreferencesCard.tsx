@@ -19,37 +19,37 @@ const MarketingPreferencesCard: React.FC<MarketingPreferencesCardProps> = ({
   onEdit,
 }) => {
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden flex flex-col h-full border border-gray-700">
-      {/* Header */}
-      <div className="px-4 py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
-        <h3 className="text-base font-semibold text-white font-sans">Marketing Preferences</h3>
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-md sm:rounded-xl overflow-hidden flex flex-col md:h-full border border-gray-700">
+      {/* Header - Compact on mobile */}
+      <div className="px-2 sm:px-4 py-1 sm:py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
+        <h3 className="text-[10px] sm:text-base font-semibold text-white font-sans">Marketing Preferences</h3>
         {onEdit && (
           <button
             onClick={onEdit}
-            className="text-brand-emerald500 hover:text-brand-emerald500/80 transition-colors text-xs font-sans font-medium"
+            className="text-brand-emerald500 hover:text-brand-emerald500/80 transition-colors text-[8px] sm:text-xs font-sans font-medium"
           >
             Edit
           </button>
         )}
       </div>
 
-      {/* Content - Display only, not interactive */}
-      <div className="p-4 space-y-3 flex-1">
-        {/* Communication Preferences - Display only */}
+      {/* Content - Compact on mobile */}
+      <div className="p-2 sm:p-4 space-y-2 sm:space-y-3 flex-1">
+        {/* Communication Preferences */}
         <div>
-          <p className="text-gray-500 text-xs mb-2 font-sans">Keep me informed by:</p>
-          <div className="space-y-1.5">
+          <p className="text-gray-500 text-[9px] sm:text-xs mb-1 sm:mb-2 font-sans">Keep me informed by:</p>
+          <div className="space-y-0.5 sm:space-y-1.5">
             {preferences.map((pref) => (
               <div 
                 key={pref.id}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2"
               >
                 {pref.enabled ? (
-                  <CheckCircle2 className="w-4 h-4 text-brand-emerald500 flex-shrink-0" />
+                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <Circle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
                 )}
-                <span className={`text-sm font-sans ${pref.enabled ? 'text-white' : 'text-gray-400'}`}>
+                <span className={`text-[9px] sm:text-sm font-sans ${pref.enabled ? 'text-white' : 'text-gray-400'}`}>
                   {pref.label}
                 </span>
               </div>
@@ -57,16 +57,16 @@ const MarketingPreferencesCard: React.FC<MarketingPreferencesCardProps> = ({
           </div>
         </div>
 
-        {/* Personalized Marketing - Display only */}
-        <div className="pt-2">
-          <p className="text-gray-500 text-xs mb-2 font-sans">Personalised marketing:</p>
-          <div className="flex items-start gap-2">
+        {/* Personalized Marketing */}
+        <div className="pt-1 sm:pt-2">
+          <p className="text-gray-500 text-[9px] sm:text-xs mb-1 sm:mb-2 font-sans">Personalised marketing:</p>
+          <div className="flex items-start gap-1 sm:gap-2">
             {personalizedMarketing ? (
-              <CheckCircle2 className="w-4 h-4 text-brand-emerald500 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500 flex-shrink-0 mt-0.5" />
             ) : (
-              <Circle className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+              <Circle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0 mt-0.5" />
             )}
-            <span className={`text-xs leading-relaxed font-sans ${personalizedMarketing ? 'text-white' : 'text-gray-400'}`}>
+            <span className={`text-[9px] sm:text-xs leading-tight font-sans ${personalizedMarketing ? 'text-white' : 'text-gray-400'}`}>
               I allow my customer profile to be used to provide me with personalised offers and marketing
             </span>
           </div>

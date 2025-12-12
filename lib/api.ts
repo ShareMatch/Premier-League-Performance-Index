@@ -57,6 +57,8 @@ export const fetchTransactions = async (userId: string) => {
     return data;
 };
 
+import { TRADING_CONFIG } from './config';
+
 export const placeTrade = async (
     userId: string,
     assetId: string,
@@ -65,7 +67,12 @@ export const placeTrade = async (
     price: number,
     quantity: number
 ) => {
-    const totalCost = price * quantity;
+    const subtotal = price * quantity;
+    // Fee ONLY on sell - deducted from what user receives
+    const fee = direction === 'sell' ? subtotal * TRADING_CONFIG.FEE_RATE : 0;
+    // For buys: user pays exact subtotal (no fee)
+    // For sells: user receives subtotal - fee
+    const totalCost = direction === 'buy' ? subtotal : subtotal - fee;
 
     const { data, error } = await supabase.rpc('place_trade', {
         p_user_id: userId,

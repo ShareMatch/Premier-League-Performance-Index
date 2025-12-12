@@ -76,59 +76,56 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
   }, [loginHistory]);
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden flex flex-col h-full border border-gray-700">
-      {/* Header */}
-      <div className="px-4 py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
-        <h3 className="text-base font-semibold text-white font-sans">Account Actions</h3>
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-md sm:rounded-xl overflow-hidden flex flex-col md:h-full border border-gray-700">
+      {/* Header - Compact on mobile */}
+      <div className="px-2 sm:px-4 py-1 sm:py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
+        <h3 className="text-[10px] sm:text-base font-semibold text-white font-sans">Account Actions</h3>
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex-1 flex flex-col">
+      {/* Content - Compact on mobile */}
+      <div className="p-2 sm:p-4 flex-1 flex flex-col">
         {/* Login History */}
-        <div className="space-y-2 flex-1">
+        <div className="space-y-1 sm:space-y-2 flex-1">
           {loginHistory.map((activity) => (
             <div 
               key={activity.id}
-              className="py-2"
+              className="py-1 sm:py-2"
             >
-              <div className="text-white text-sm font-medium font-sans mb-1.5">{activity.timestamp}</div>
-              <div className="flex items-center justify-between">
-                <div className={`text-xs font-sans ${activity.successful ? 'text-brand-emerald500' : 'text-red-500'}`}>
+              <div className="text-white text-[9px] sm:text-sm font-medium font-sans mb-0.5 sm:mb-1.5">{activity.timestamp}</div>
+              <div className="flex items-center justify-between gap-1">
+                <div className={`text-[9px] sm:text-xs font-sans ${activity.successful ? 'text-brand-emerald500' : 'text-red-500'}`}>
                   {activity.successful ? 'Login successful' : 'Login failed'}
                 </div>
-                <div className="text-gray-400 text-xs flex items-center gap-1.5 font-sans">
+                <div className="text-gray-400 text-[9px] sm:text-xs flex items-center gap-1 sm:gap-1.5 font-sans">
                   {countryFlags[activity.id] ? (
                     <img
                       src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}
                       alt={activity.location}
-                      className="w-6 h-auto rounded-sm flex-shrink-0"
+                      className="w-4 sm:w-6 h-auto rounded-sm flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-6 h-4 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
+                    <div className="w-4 sm:w-6 h-2.5 sm:h-4 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
                   )}
-                  <span>{activity.location}</span>
+                  <span className="truncate">{activity.location}</span>
                 </div>
               </div>
-              <div className="text-gray-500 text-xs font-sans mt-1.5">IP: {activity.ip}</div>
+              <div className="text-gray-500 text-[8px] sm:text-xs font-sans mt-0.5 sm:mt-1.5 truncate">IP: {activity.ip}</div>
             </div>
           ))}
         </div>
 
-        {/* Action Buttons - Row Layout */}
-        <div className="pt-3 mt-3 border-t border-gray-700">
-          <div className="flex gap-2">
-            {/* Left: Change Password */}
+        {/* Action Buttons */}
+        <div className="pt-1.5 sm:pt-3 mt-1.5 sm:mt-3 border-t border-gray-700">
+          <div className="flex gap-1.5 sm:gap-2">
             <button
               onClick={onChangePassword}
-              className="flex-1 px-4 py-2.5 text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
+              className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[9px] sm:text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
             >
               Change Password
             </button>
-            
-            {/* Right: Sign Out */}
             <button
               onClick={onSignOut}
-              className="flex-1 px-4 py-2.5 text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
+              className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[9px] sm:text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
             >
               Sign Out
             </button>

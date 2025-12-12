@@ -4,8 +4,8 @@ import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => void;
+  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS';
+  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
@@ -53,11 +53,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
           ]
         },
         { label: 'Golf', badge: 'SOON' },
-        { label: 'Cricket', badge: 'SOON' },
+        {
+          label: 'Cricket',
+          subItems: [
+            { label: 'T20 World Cup', id: 'T20', active: activeLeague === 'T20' }
+          ]
+        },
       ]
     },
     { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
-    { icon: Cloud, label: 'Climate', badge: 'SOON' },
+
     { icon: Globe, label: 'Global Events', badge: 'SOON' },
     { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
   ];
@@ -65,19 +70,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
   return (
     <>
       {/* Mobile Overlay */}
+      {/* Overlay for mobile/tablet (below xl/1280px) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 xl:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Hidden below xl (1280px), visible on desktop */}
       <div className={`
-        fixed md:static inset-y-0 left-0 z-50
-        w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
+        fixed xl:static inset-y-0 left-0 z-50
+        w-64 xl:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'}
       `}>
         <div className="p-6 flex items-center gap-3">
           <img

@@ -5,8 +5,8 @@ export interface Team {
   offer: number;
   lastChange: 'up' | 'down' | 'none';
   color?: string;
-  category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'other';
-  market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL
+  category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'other';
+  market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL, T20
   is_settled?: boolean;
   settled_date?: string;
 }

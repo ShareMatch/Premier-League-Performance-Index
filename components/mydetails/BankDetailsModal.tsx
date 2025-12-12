@@ -1,99 +1,112 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ArrowLeft, Building2 } from 'lucide-react';
+import { X, ArrowLeft, Building2, Copy, Check, Globe, CreditCard, Landmark } from 'lucide-react';
 
-export interface BankDetails {
-  accountName: string;
-  accountNumber: string;
-  iban: string;
-  swiftBic: string;
-  bankName: string;
+interface BankProvider {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  variant: 'emerald' | 'blue' | 'purple';
+  details: { label: string; value: string }[];
 }
 
 interface BankDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBack: () => void;
-  onSave: (details: BankDetails) => Promise<void>;
-  initialData?: BankDetails;
+  onSave?: (details: any) => Promise<void>;
+  initialData?: any;
 }
 
 const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
   isOpen,
   onClose,
   onBack,
-  onSave,
-  initialData,
 }) => {
-  const [formData, setFormData] = useState<BankDetails>({
-    accountName: '',
-    accountNumber: '',
-    iban: '',
-    swiftBic: '',
-    bankName: '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Reset form when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(initialData || {
-        accountName: '',
-        accountNumber: '',
-        iban: '',
-        swiftBic: '',
-        bankName: '',
-      });
-      setError(null);
-    }
-  }, [isOpen, initialData]);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const fields: { key: keyof BankDetails; label: string; placeholder: string; required?: boolean }[] = [
-    { key: 'accountName', label: 'Account Name', placeholder: 'Enter account holder name', required: true },
-    { key: 'accountNumber', label: 'Account Number', placeholder: 'Enter account number', required: true },
-    { key: 'iban', label: 'IBAN', placeholder: 'Enter IBAN (optional)' },
-    { key: 'swiftBic', label: 'SWIFT/BIC Code', placeholder: 'Enter SWIFT/BIC code' },
-    { key: 'bankName', label: 'Bank Name', placeholder: 'Enter bank name', required: true },
+  const bankProviders: BankProvider[] = [
+    {
+      id: 'uae',
+      name: 'UAE (ENBD)',
+      icon: <Landmark className="w-5 h-5" />,
+      variant: 'emerald',
+      details: [
+        { label: 'Bank Name', value: 'Emirates NBD' },
+        { label: 'Account Name', value: 'ShareMatch Trading LLC' },
+        { label: 'Account Number', value: '1017 8523 6901 001' },
+        { label: 'IBAN', value: 'AE12 0260 0010 1785 2369 010' },
+        { label: 'SWIFT/BIC', value: 'EABORAEKXXX' },
+        { label: 'Branch', value: 'Dubai Main Branch' },
+      ],
+    },
+    // {
+    //   id: 'uk',
+    //   name: 'UK (Barclays)',
+    //   icon: <Globe className="w-5 h-5" />,
+    //   variant: 'blue',
+    //   details: [
+    //     { label: 'Bank Name', value: 'Barclays Bank UK PLC' },
+    //     { label: 'Account Name', value: 'ShareMatch Ltd' },
+    //     { label: 'Account Number', value: '2049 8176 3250' },
+    //     { label: 'Sort Code', value: '20-45-78' },
+    //     { label: 'IBAN', value: 'GB82 BARC 2045 7820 4981 76' },
+    //     { label: 'SWIFT/BIC', value: 'BARCGB22XXX' },
+    //   ],
+    // },
+    // {
+    //   id: 'international',
+    //   name: 'International (SWIFT)',
+    //   icon: <CreditCard className="w-5 h-5" />,
+    //   variant: 'purple',
+    //   details: [
+    //     { label: 'Bank Name', value: 'Citibank N.A.' },
+    //     { label: 'Account Name', value: 'ShareMatch International Inc' },
+    //     { label: 'Account Number', value: '3680 9241 5078' },
+    //     { label: 'IBAN', value: 'US67 CITI 0214 9036 8092 41' },
+    //     { label: 'SWIFT/BIC', value: 'CITIUS33XXX' },
+    //     { label: 'Routing Number', value: '021000089' },
+    //   ],
+    // },
   ];
 
-  const handleChange = (key: keyof BankDetails, value: string) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-    setError(null);
+  const handleCopy = async (providerId: string, label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(`${providerId}-${label}`);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
-  const handleSave = async () => {
-    // Basic validation
-    if (!formData.accountName.trim()) {
-      setError('Account name is required');
-      return;
-    }
-    if (!formData.accountNumber.trim()) {
-      setError('Account number is required');
-      return;
-    }
-    if (!formData.bankName.trim()) {
-      setError('Bank name is required');
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave(formData);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save bank details');
-    } finally {
-      setSaving(false);
+  const getVariantClasses = (variant: 'emerald' | 'blue' | 'purple') => {
+    switch (variant) {
+      case 'emerald':
+        return {
+          header: 'bg-brand-emerald500/10',
+          iconBg: 'bg-brand-emerald500/20',
+          iconText: 'text-brand-emerald500',
+        };
+      case 'blue':
+        return {
+          header: 'bg-blue-500/10',
+          iconBg: 'bg-blue-500/20',
+          iconText: 'text-blue-400',
+        };
+      case 'purple':
+        return {
+          header: 'bg-purple-500/10',
+          iconBg: 'bg-purple-500/20',
+          iconText: 'text-purple-400',
+        };
     }
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50"
@@ -101,104 +114,118 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-xl bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6">
+      <div className="relative w-full max-w-2xl bg-modal-outer/60 backdrop-blur-[40px] rounded-xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-10"
+          className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         {/* Inner Container */}
-        <div
-          className="flex flex-col bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
-          style={{
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-            backgroundOrigin: "border-box",
-            backgroundClip: "padding-box, border-box",
-          }}
-        >
-          {/* Header with Back Button */}
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col bg-modal-inner rounded-xl p-3 sm:p-5 gap-3 sm:gap-4 border border-white/10">
+          {/* Header */}
+          <div className="flex items-center gap-2 sm:gap-3 pr-6">
             <button
               onClick={onBack}
-              className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors flex-shrink-0"
             >
-              <ArrowLeft className="w-4 h-4 text-white" />
+              <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-brand-emerald500" />
-              </div>
-              <h2 className="text-white font-bold font-sans text-xl">
-                Bank Transfer Details
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              {/* <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-emerald500" />
+              </div> */}
+              <h2 className="text-white font-bold font-sans text-base sm:text-xl truncate">
+                Add ShareMatch as Beneficiary
               </h2>
             </div>
           </div>
 
-          {/* Error Banner */}
-          {error && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30">
-              <p className="text-red-400 text-xs font-sans">{error}</p>
-            </div>
-          )}
+          {/* Info Text */}
+          <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+            Copy the bank details below and add ShareMatch as a beneficiary in your banking app. Use the appropriate bank based on your location for faster transfers.
+          </p>
 
-          {/* Form Fields */}
-          <div className="flex flex-col gap-4">
-            {fields.map((field) => (
-              <div key={field.key} className="flex flex-col w-full gap-1.5">
-                <label
-                  htmlFor={`bank-${field.key}`}
-                  className="text-white text-sm font-medium font-sans"
+          {/* Bank Provider Cards */}
+          <div className="flex flex-col gap-3">
+            {bankProviders.map((provider) => {
+              const variantClasses = getVariantClasses(provider.variant);
+
+              return (
+                <div
+                  key={provider.id}
+                  className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
                 >
-                  {field.label}
-                  {field.required && <span className="text-brand-emerald500 ml-0.5">*</span>}
-                </label>
-                <div className="flex items-center w-full bg-gray-200 rounded-full shadow-inner h-10 px-4 focus-within:ring-2 focus-within:ring-brand-emerald500">
-                  <input
-                    id={`bank-${field.key}`}
-                    type="text"
-                    value={formData[field.key]}
-                    onChange={(e) => handleChange(field.key, e.target.value)}
-                    className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
-                    placeholder={field.placeholder}
-                  />
+                  {/* Card Header */}
+                  <div className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 ${variantClasses.header} border-b border-white/10`}>
+                    <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${variantClasses.iconBg}`}>
+                      <span className={variantClasses.iconText}>{provider.icon}</span>
+                    </div>
+                    <span className="text-white font-semibold text-xs sm:text-sm">{provider.name}</span>
+                  </div>
+
+                  {/* Card Details */}
+                  <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+                    {provider.details.map((detail) => {
+                      const fieldKey = `${provider.id}-${detail.label}`;
+                      const isCopied = copiedField === fieldKey;
+
+                      return (
+                        <div
+                          key={detail.label}
+                          className="flex items-center justify-between gap-2 group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="text-gray-500 text-[9px] sm:text-[10px] uppercase tracking-wider block">
+                              {detail.label}
+                            </span>
+                            <span className="text-white text-[11px] sm:text-xs font-mono truncate block">
+                              {detail.value}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleCopy(provider.id, detail.label, detail.value)}
+                            className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all ${
+                              isCopied
+                                ? 'bg-brand-emerald500/20 text-brand-emerald500'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                            }`}
+                            title={isCopied ? 'Copied!' : 'Copy'}
+                          >
+                            {isCopied ? (
+                              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={onBack}
-              className="flex-1 py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-sm hover:bg-brand-emerald500/10 transition-colors"
-            >
-              Back
-            </button>
-            <div
-              className={`flex-1 rounded-full transition-all duration-300 p-0.5 ${
-                isButtonHovered
-                  ? 'border border-white shadow-glow'
-                  : 'border border-brand-emerald500'
-              }`}
-              onMouseEnter={() => setIsButtonHovered(true)}
-              onMouseLeave={() => setIsButtonHovered(false)}
-            >
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`w-full py-2 rounded-full font-medium font-sans text-sm transition-all duration-300 disabled:opacity-60 ${
-                  isButtonHovered
-                    ? 'bg-white text-brand-emerald500'
-                    : 'bg-gradient-primary text-white'
-                }`}
-              >
-                {saving ? 'Saving...' : 'Save Details'}
-              </button>
+          {/* Footer Note */}
+          {/* <div className="flex items-start gap-2 px-2 py-2 sm:px-3 sm:py-2.5 rounded-xl bg-brand-amber500/10 border border-brand-amber500/20">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-brand-amber500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-brand-amber500 text-[10px] sm:text-xs font-bold">!</span>
             </div>
-          </div>
+            <p className="text-brand-amber500/80 text-[10px] sm:text-xs leading-relaxed">
+              Always use your registered email or user ID as the payment reference to ensure your deposit is credited correctly.
+            </p>
+          </div> */}
+
+          {/* Done Button */}
+          <button
+            onClick={onClose}
+            className="w-full py-2 sm:py-2.5 rounded-full bg-gradient-primary text-white font-medium text-xs sm:text-sm hover:opacity-90 transition-opacity"
+          >
+            Done
+          </button>
         </div>
       </div>
     </div>
@@ -208,4 +235,3 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
 };
 
 export default BankDetailsModal;
-
