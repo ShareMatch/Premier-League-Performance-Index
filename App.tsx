@@ -90,7 +90,8 @@ const App: React.FC = () => {
   // Load public user ID when auth user changes
   useEffect(() => {
     if (user) {
-      getPublicUserId(user.id).then(setPublicUserId);
+      // Pass both auth_user_id and email for better fallback support
+      getPublicUserId(user.id, user.email).then(setPublicUserId);
     } else {
       setPublicUserId(null);
       setKycStatus(null);
