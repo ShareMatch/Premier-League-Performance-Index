@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendSESEmail } from "../_shared/ses.ts";
+import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
@@ -27,19 +27,15 @@ serve(async (req: Request) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const sesRegion = Deno.env.get("SES_REGION") ?? "";
-    const sesFromEmail = Deno.env.get("SES_FROM_EMAIL") ?? "";
-    const sesAccessKey = Deno.env.get("SES_ACCESS_KEY") ?? "";
-    const sesSecretKey = Deno.env.get("SES_SECRET_KEY") ?? "";
+    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
+    const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
 
     // Validate required env vars
     const missingVars: string[] = [];
     if (!supabaseUrl) missingVars.push("SUPABASE_URL");
     if (!supabaseServiceKey) missingVars.push("SUPABASE_SERVICE_ROLE_KEY");
-    if (!sesRegion) missingVars.push("SES_REGION");
-    if (!sesFromEmail) missingVars.push("SES_FROM_EMAIL");
-    if (!sesAccessKey) missingVars.push("SES_ACCESS_KEY");
-    if (!sesSecretKey) missingVars.push("SES_SECRET_KEY");
+    if (!sendgridApiKey) missingVars.push("SENDGRID_API_KEY");
+    if (!sendgridFromEmail) missingVars.push("SENDGRID_FROM_EMAIL");
 
     if (missingVars.length > 0) {
       console.error("Missing env vars:", missingVars);
@@ -89,10 +85,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if already verified - can't change email after verification
-    if (user.email_verified_at) {
+    // Check if user is fully verified - can't change email after full verification
+    const { data: userCompliance } = await supabase
+      .from("user_compliance")
+      .select("is_user_verified")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (userCompliance?.is_user_verified) {
       return new Response(
-        JSON.stringify({ error: "Email already verified. Cannot change email." }),
+        JSON.stringify({ error: "Account is fully verified. Cannot change email." }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -107,17 +109,29 @@ serve(async (req: Request) => {
     }
 
     // Check if new email already exists
-    const { count: emailCount } = await supabase
+    const { data: existingUser } = await supabase
       .from("users")
-      .select("id", { count: "exact", head: true })
+      .select("id")
       .eq("email", newEmail)
-      .neq("id", user.id);
+      .neq("id", user.id)
+      .single();
 
-    if (emailCount && emailCount > 0) {
-      return new Response(
-        JSON.stringify({ error: "This email is already registered." }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (existingUser) {
+      // Check if the existing user is fully verified
+      const { data: existingCompliance } = await supabase
+        .from("user_compliance")
+        .select("is_user_verified")
+        .eq("user_id", existingUser.id)
+        .maybeSingle();
+
+      // If existing user is fully verified, block the email change
+      if (existingCompliance?.is_user_verified) {
+        return new Response(
+          JSON.stringify({ error: "This email belongs to an existing verified account. Please use a different email." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // If existing user is not fully verified, allow overwriting (don't return error)
     }
 
     // Generate new OTP
@@ -167,7 +181,7 @@ serve(async (req: Request) => {
     }
 
     // Get optional config
-    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.com/logo.png";
+    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
 
     // Generate email content using template
     const emailHtml = generateOtpEmailHtml({
@@ -178,19 +192,17 @@ serve(async (req: Request) => {
     });
     const emailSubject = generateOtpEmailSubject(otpCode);
 
-    // Send email via SES to new email
-    const emailResult = await sendSESEmail({
-      accessKey: sesAccessKey,
-      secretKey: sesSecretKey,
-      region: sesRegion,
-      from: sesFromEmail,
+    // Send email via SendGrid to new email
+    const emailResult = await sendSendgridEmail({
+      apiKey: sendgridApiKey,
+      from: sendgridFromEmail,
       to: newEmail,
       subject: emailSubject,
       html: emailHtml,
     });
 
     if (!emailResult.ok) {
-      console.error("SES error:", emailResult.status, emailResult.body);
+      console.error("SendGrid error:", emailResult.status, emailResult.body);
       return new Response(
         JSON.stringify({ error: "Failed to send verification email." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

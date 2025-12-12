@@ -163,7 +163,6 @@ serve(async (req: Request) => {
         });
 
         if (!sendResult.ok) {
-            console.error("WhatsApp send error:", sendResult.error, sendResult.body);
             return new Response(
                 JSON.stringify({ error: "Failed to send WhatsApp message. Please try again." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

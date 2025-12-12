@@ -50,7 +50,13 @@ async function cleanupUserRecords(supabase: any, userId: string, authUserId: str
     
     // Delete Auth record
     if (authUserId) {
-        await supabase.auth.admin.deleteUser(authUserId);
+        console.log(`Deleting associated auth user: ${authUserId}`);
+        try {
+            await supabase.auth.admin.deleteUser(authUserId);
+        } catch (authDeleteErr) {
+            console.error(`Failed to delete auth user ${authUserId}:`, authDeleteErr);
+            // Don't fail the whole cleanup if auth delete fails
+        }
     }
 }
 
@@ -100,8 +106,13 @@ serve(async (req: Request) => {
                     { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
                 );
             }
+            // Clean up incomplete user records
             await cleanupUserRecords(supabase, existingUser.id, existingUser.auth_user_id);
         }
+
+        // Note: We don't proactively check for orphaned auth users here
+        // because listUsers() is expensive. Instead, we handle auth creation
+        // failures below by cleaning up conflicting auth users.
 
         // ... (Phone and WhatsApp duplicate checks remain the same) ...
         
@@ -113,17 +124,58 @@ serve(async (req: Request) => {
         let authUserId: string;
 
         // --- Create auth user WITHOUT email confirmation (Standard Supabase Auth) ---
-        const { data: authData, error: authErr } = await supabase.auth.admin.createUser({
-            email,
-            password,
-            email_confirm: false, 
-            user_metadata: { full_name: fullName, phone: phone },
-        });
+        let authData;
+        let authErr;
+
+        try {
+            const result = await supabase.auth.admin.createUser({
+                email,
+                password,
+                email_confirm: false,
+                user_metadata: { full_name: fullName, phone: phone },
+            });
+            authData = result.data;
+            authErr = result.error;
+        } catch (createErr) {
+            authErr = createErr;
+        }
+
+        // Handle duplicate email errors by cleaning up conflicting auth user
+        if (authErr && (authErr.message?.includes('already been registered') ||
+                       authErr.message?.includes('already exists') ||
+                       authErr.message?.includes('User already registered'))) {
+            console.log("Auth user creation failed due to duplicate email, attempting cleanup...");
+
+            try {
+                // Try to find and delete the conflicting auth user
+                const { data: authUsers } = await supabase.auth.admin.listUsers();
+                const conflictingUser = authUsers?.users?.find(user => user.email === email);
+
+                if (conflictingUser) {
+                    console.log(`Deleting conflicting auth user: ${conflictingUser.id}`);
+                    await supabase.auth.admin.deleteUser(conflictingUser.id);
+
+                    // Retry auth user creation
+                    console.log("Retrying auth user creation...");
+                    const retryResult = await supabase.auth.admin.createUser({
+                        email,
+                        password,
+                        email_confirm: false,
+                        user_metadata: { full_name: fullName, phone: phone },
+                    });
+
+                    authData = retryResult.data;
+                    authErr = retryResult.error;
+                }
+            } catch (cleanupErr) {
+                console.error("Failed to cleanup conflicting auth user:", cleanupErr);
+            }
+        }
 
         if (authErr || !authData?.user) {
             console.error("Auth create error:", authErr);
             return new Response(
-                JSON.stringify({ error: "Failed to create authentication", details: authErr?.message }),
+                JSON.stringify({ error: "Failed to create authentication account. Please try again." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }

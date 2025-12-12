@@ -88,9 +88,17 @@ serve(async (req: Request) => {
 
     const emailVerified = emailVerification?.verified_at !== null;
     const whatsappVerified = whatsappVerification?.verified_at !== null;
-    const derivedVerified = compliance?.is_user_verified === true;
+    const isUserVerified = compliance?.is_user_verified === true;
     const kycStatus = compliance?.kyc_status || "unverified";
-    const fullyVerified = derivedVerified || (emailVerified && whatsappVerified);
+
+    // Account is fully verified if user has completed full verification process
+    const fullyVerified = isUserVerified;
+
+    // Account is locked if fully verified (is_user_verified = true)
+    const accountLocked = isUserVerified;
+
+    // Can overwrite if account is not fully verified
+    const canOverwrite = !isUserVerified;
 
     return new Response(
       JSON.stringify({
@@ -99,6 +107,8 @@ serve(async (req: Request) => {
         whatsappVerified,
         fullyVerified,
         kyc_status: kycStatus,
+        accountLocked,
+        canOverwrite,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

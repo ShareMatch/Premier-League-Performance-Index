@@ -90,16 +90,15 @@ serve(async (req: Request) => {
                 );
             }
             
-            // 2. If Auth succeeded but the user is NOT fully verified (i.e., isFullyVerified is false), 
-            //    we block the login and return the mandatory verification message.
+            // 2. If user exists but is NOT fully verified, treat as "account doesn't exist"
+            // This prevents information leakage about which emails have accounts
             if (userId && !isFullyVerified) {
                 return new Response(
                     JSON.stringify({
                         success: false,
-                        message: "Account not found or not fully verified. Please sign up again.",
-                        requiresVerification: true,
+                        message: "No account found with this email. Please sign up to create an account.",
                     }),
-                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                    { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
                 );
             }
 

@@ -26,7 +26,7 @@ export async function sendSendgridEmail({
             to: [{ email: to }]
           }
         ],
-        from: { email: from },
+        from: { email: from, name: "Sharematch" },
         subject,
         content: [
           {

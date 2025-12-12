@@ -123,7 +123,7 @@ serve(async (req: Request) => {
         }
 
         // -- GENERATE EMAIL BODY --
-        const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.com/logo.png";
+        const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
 
         const emailHtml = generateOtpEmailHtml({
             logoImageUrl,

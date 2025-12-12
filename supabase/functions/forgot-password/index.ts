@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendSESEmail } from "../_shared/ses.ts";
+import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { buildResetEmailHTML } from "../_shared/email-templates.ts";
 
 const corsHeaders = {
@@ -29,10 +29,8 @@ serve(async (req: Request) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const sesAccessKey = Deno.env.get("SES_ACCESS_KEY") ?? "";
-    const sesSecretKey = Deno.env.get("SES_SECRET_KEY") ?? "";
-    const sesRegion = Deno.env.get("SES_REGION") ?? "us-east-1";
-    const sesFromEmail = Deno.env.get("SES_FROM_EMAIL") ?? "";
+    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
+    const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
     const publicUrl = Deno.env.get("PUBLIC_URL") ?? "https://www.sharematch.co";
 
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -40,8 +38,8 @@ serve(async (req: Request) => {
       return neutralResponse();
     }
 
-    if (!sesAccessKey || !sesSecretKey || !sesFromEmail) {
-      console.error("Missing SES configuration");
+    if (!sendgridApiKey || !sendgridFromEmail) {
+      console.error("Missing SendGrid configuration");
       return neutralResponse();
     }
 
@@ -115,26 +113,24 @@ serve(async (req: Request) => {
     const emailHtml = buildResetEmailHTML(resetLink);
     const emailSubject = "Reset your ShareMatch password";
 
-    console.log("🔵 [forgot-password] Sending email via SES...");
+    console.log("🔵 [forgot-password] Sending email via SendGrid...");
 
-    // Send the email via SES
-    const sesResult = await sendSESEmail({
-      accessKey: sesAccessKey,
-      secretKey: sesSecretKey,
-      region: sesRegion,
-      from: sesFromEmail,
+    // Send the email via SendGrid
+    const sendgridResult = await sendSendgridEmail({
+      apiKey: sendgridApiKey,
+      from: sendgridFromEmail,
       to: email,
       subject: emailSubject,
       html: emailHtml,
     });
 
-    console.log("🟢 [forgot-password] SES result:", {
-      ok: sesResult.ok,
-      status: sesResult.status,
+    console.log("🟢 [forgot-password] SendGrid result:", {
+      ok: sendgridResult.ok,
+      status: sendgridResult.status,
     });
 
-    if (!sesResult.ok) {
-      console.error("🔴 [forgot-password] SES error:", sesResult.body);
+    if (!sendgridResult.ok) {
+      console.error("🔴 [forgot-password] SendGrid error:", sendgridResult.body);
     }
 
     // Always return neutral response

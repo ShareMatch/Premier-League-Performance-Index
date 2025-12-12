@@ -92,10 +92,16 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if WhatsApp already verified - can't change after verification
-    if (user.whatsapp_phone_verified_at) {
+    // Check if user is fully verified - can't change WhatsApp after full verification
+    const { data: userCompliance } = await supabase
+      .from("user_compliance")
+      .select("is_user_verified")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (userCompliance?.is_user_verified) {
       return new Response(
-        JSON.stringify({ error: "WhatsApp already verified. Cannot change phone number." }),
+        JSON.stringify({ error: "Account is fully verified. Cannot change WhatsApp number." }),
         { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -110,17 +116,29 @@ serve(async (req: Request) => {
     }
 
     // Check if new WhatsApp phone already exists
-    const { count: phoneCount } = await supabase
+    const { data: existingUserWithPhone } = await supabase
       .from("users")
-      .select("id", { count: "exact", head: true })
+      .select("id")
       .eq("whatsapp_phone_e164", newWhatsappPhone)
-      .neq("id", user.id);
+      .neq("id", user.id)
+      .single();
 
-    if (phoneCount && phoneCount > 0) {
-      return new Response(
-        JSON.stringify({ error: "This WhatsApp number is already registered." }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (existingUserWithPhone) {
+      // Check if the existing user is fully verified
+      const { data: existingCompliance } = await supabase
+        .from("user_compliance")
+        .select("is_user_verified")
+        .eq("user_id", existingUserWithPhone.id)
+        .maybeSingle();
+
+      // If existing user is fully verified, block the phone change
+      if (existingCompliance?.is_user_verified) {
+        return new Response(
+          JSON.stringify({ error: "This WhatsApp number belongs to an existing verified account. Please use a different number." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // If existing user is not fully verified, allow overwriting (don't return error)
     }
 
     // Generate new OTP
