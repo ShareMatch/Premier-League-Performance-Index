@@ -22,16 +22,18 @@ export interface WhatsAppApiResponse {
 /**
  * Format phone number for WhatsApp API
  * Removes + prefix and any non-digit characters
+ * WhatsApp API typically expects: country code + number (no + prefix)
+ * e.g., +1 234 567 8901 → 12345678901
  */
 export function formatPhoneForWhatsApp(phone: string): string {
   // Remove all non-digit characters (including +)
   let cleaned = phone.replace(/\D/g, '');
-  
+
   // If the number starts with '00', remove it (international prefix)
   if (cleaned.startsWith('00')) {
     cleaned = cleaned.slice(2);
   }
-  
+
   return cleaned;
 }
 
@@ -70,7 +72,6 @@ export async function sendWhatsAppOtp(params: SendWhatsAppOtpParams): Promise<Wh
       CTAButtonURLParameter2: ""
     };
 
-
     const response = await fetch(WABA_API_URL, {
       method: "POST",
       headers: {
@@ -81,16 +82,79 @@ export async function sendWhatsAppOtp(params: SendWhatsAppOtpParams): Promise<Wh
 
     const responseText = await response.text();
 
+    // Check HTTP status first
     if (!response.ok) {
-      console.error("WhatsApp API error:", response.status, responseText);
       return {
         ok: false,
         status: response.status,
         body: responseText,
-        error: `WhatsApp API returned ${response.status}`,
+        error: `WhatsApp API HTTP ${response.status}: ${response.statusText}`,
       };
     }
 
+    // Check for actual delivery success, not just HTTP status
+    let deliveryConfirmed = false;
+    let deliveryError = null;
+
+    try {
+      const responseJson = JSON.parse(responseText);
+
+      // Check for explicit success indicators
+      if (responseJson.success === true ||
+          responseJson.status === 'success' ||
+          responseJson.status === 'delivered' ||
+          responseJson.message?.toLowerCase().includes('success') ||
+          responseJson.message?.toLowerCase().includes('delivered') ||
+          responseJson.message?.toLowerCase().includes('sent')) {
+        deliveryConfirmed = true;
+      }
+
+      // Check for failure indicators
+      const hasError = responseJson.error ||
+                      responseJson.status === 'error' ||
+                      responseJson.status === 'failed' ||
+                      responseJson.success === false ||
+                      responseJson.message?.toLowerCase().includes('error') ||
+                      responseJson.message?.toLowerCase().includes('failed') ||
+                      responseJson.message?.toLowerCase().includes('invalid') ||
+                      responseJson.message?.toLowerCase().includes('rejected') ||
+                      responseJson.message?.toLowerCase().includes('blocked');
+
+      if (hasError) {
+        deliveryError = responseJson.error || responseJson.message || 'API reported failure';
+      }
+
+    } catch (parseErr) {
+      // Response is not JSON, check for text-based success/failure
+      const successIndicators = ['success', 'delivered', 'sent', 'queued', 'accepted'];
+      const errorIndicators = ['error', 'failed', 'invalid', 'unauthorized', 'forbidden', 'rejected', 'blocked'];
+
+      const hasSuccessText = successIndicators.some(word => responseText.toLowerCase().includes(word));
+      const hasErrorText = errorIndicators.some(word => responseText.toLowerCase().includes(word));
+
+      if (hasSuccessText && !hasErrorText) {
+        deliveryConfirmed = true;
+      } else if (hasErrorText) {
+        deliveryError = `Text error detected: ${responseText.substring(0, 100)}`;
+      }
+    }
+
+    // If HTTP is ok but no delivery confirmation and no explicit error, assume success
+    // This handles APIs that return generic success responses
+    if (response.ok && !deliveryError && !deliveryConfirmed) {
+      // For WhatsApp APIs, 200 status typically means accepted for delivery
+      // We'll trust the HTTP status unless we detect explicit errors
+      deliveryConfirmed = true;
+    }
+
+    if (deliveryError) {
+      return {
+        ok: false,
+        status: response.status,
+        body: responseText,
+        error: deliveryError,
+      };
+    }
 
     return {
       ok: true,
@@ -100,11 +164,10 @@ export async function sendWhatsAppOtp(params: SendWhatsAppOtpParams): Promise<Wh
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error sending WhatsApp OTP:", errorMessage);
     return {
       ok: false,
       status: 500,
-      error: errorMessage,
+      error: `Network error: ${errorMessage}`,
     };
   }
 }

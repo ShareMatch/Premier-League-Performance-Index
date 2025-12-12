@@ -60,8 +60,11 @@ export function generateForgotPasswordEmailSubject(): string {
 /**
  * Build password reset email HTML - simplified version with magic link
  */
-export function buildResetEmailHTML(magicLink: string): string {
-  return PASSWORD_RESET_TEMPLATE.replace(/\${magicLink}/g, magicLink);
+export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
+  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
+  return PASSWORD_RESET_TEMPLATE
+    .replace(/\${magicLink}/g, magicLink)
+    .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
 }
 
 // ============================================
@@ -869,7 +872,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="https://sharematch-website.dev-782.workers.dev/sharematch.png" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
                         </td>
                     </tr>
                     <!-- Content Section -->

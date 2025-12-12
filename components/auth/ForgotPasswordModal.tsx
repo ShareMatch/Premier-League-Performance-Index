@@ -146,6 +146,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setEmailSent(true);
       setCountdown(300);
       setCanResend(false);
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }

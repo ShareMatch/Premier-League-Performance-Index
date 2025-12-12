@@ -57,6 +57,7 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
       }
     } catch (err: any) {
       setError(err.message || 'Failed to update email. Please try again.');
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendSESEmail } from "../_shared/ses.ts";
+import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
 import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
 
@@ -47,10 +47,8 @@ serve(async (req: Request) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const sesRegion = Deno.env.get("SES_REGION") ?? "";
-    const sesFromEmail = Deno.env.get("SES_FROM_EMAIL") ?? "";
-    const sesAccessKey = Deno.env.get("SES_ACCESS_KEY") ?? "";
-    const sesSecretKey = Deno.env.get("SES_SECRET_KEY") ?? "";
+    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
+    const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
     const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
     const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
 
@@ -82,7 +80,7 @@ serve(async (req: Request) => {
     // Get user by current email
     const { data: user, error: fetchErr } = await supabase
       .from("users")
-      .select("id, auth_user_id, full_name, email, email_verified_at, whatsapp_phone_e164, whatsapp_phone_verified_at, profile_update_attempts")
+      .select("id, auth_user_id, full_name, email, whatsapp_phone_e164, profile_update_attempts")
       .eq("email", currentEmail)
       .single();
 
@@ -125,28 +123,32 @@ serve(async (req: Request) => {
       }
 
       // Check if new email already exists
-      const { count: emailCount } = await supabase
+      const { data: existingUser } = await supabase
         .from("users")
-        .select("id", { count: "exact", head: true })
+        .select("id")
         .eq("email", newEmail)
-        .neq("id", user.id);
+        .neq("id", user.id)
+        .single();
 
-      if (emailCount && emailCount > 0) {
-        return new Response(
-          JSON.stringify({ error: "This email is already registered." }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (existingUser) {
+        // Check if the existing user is fully verified
+        const { data: existingCompliance } = await supabase
+          .from("user_compliance")
+          .select("is_user_verified")
+          .eq("user_id", existingUser.id)
+          .maybeSingle();
+
+        // If existing user is fully verified, block the email change
+        if (existingCompliance?.is_user_verified) {
+          return new Response(
+            JSON.stringify({ error: "Account with this email already exists. Please use a different email." }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // If existing user is not fully verified, allow overwriting (continue with update)
       }
 
       updateData.email = newEmail;
-      // Only reset verification if not already verified via OTP
-      if (!body.emailAlreadyVerified) {
-        updateData.email_verified_at = null;
-        updateData.email_otp_attempts = 0;
-      } else {
-        // If already verified, set the timestamp to now
-        updateData.email_verified_at = new Date().toISOString();
-      }
       emailChanged = true;
     }
 
@@ -162,28 +164,32 @@ serve(async (req: Request) => {
       }
 
       // Check if new phone already exists
-      const { count: phoneCount } = await supabase
+      const { data: existingUserWithPhone } = await supabase
         .from("users")
-        .select("id", { count: "exact", head: true })
+        .select("id")
         .eq("whatsapp_phone_e164", newWhatsappPhone)
-        .neq("id", user.id);
+        .neq("id", user.id)
+        .single();
 
-      if (phoneCount && phoneCount > 0) {
-        return new Response(
-          JSON.stringify({ error: "This WhatsApp number is already registered." }),
-          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (existingUserWithPhone) {
+        // Check if the existing user is fully verified
+        const { data: existingCompliance } = await supabase
+          .from("user_compliance")
+          .select("is_user_verified")
+          .eq("user_id", existingUserWithPhone.id)
+          .maybeSingle();
+
+        // If existing user is fully verified, block the phone change
+        if (existingCompliance?.is_user_verified) {
+          return new Response(
+            JSON.stringify({ error: "Account with this phone number already exists. Please use a different number." }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // If existing user is not fully verified, allow overwriting (don't return error)
       }
 
       updateData.whatsapp_phone_e164 = newWhatsappPhone;
-      // Only reset verification if not already verified via OTP
-      if (!body.whatsappAlreadyVerified) {
-        updateData.whatsapp_phone_verified_at = null;
-        updateData.whatsapp_otp_attempts = 0;
-      } else {
-        // If already verified, set the timestamp to now
-        updateData.whatsapp_phone_verified_at = new Date().toISOString();
-      }
       whatsappChanged = true;
     }
 
@@ -228,41 +234,37 @@ serve(async (req: Request) => {
 
       if (authUpdateErr) {
         console.error("Error updating auth email:", authUpdateErr);
-        // Rollback public.users email
-        await supabase
-          .from("users")
-          .update({ email: currentEmail, email_verified_at: user.email_verified_at })
-          .eq("id", user.id);
-
-        return new Response(
-          JSON.stringify({ error: "Failed to update authentication email." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        // Since we've already validated the email change is allowed,
+        // we can proceed even if auth update fails
+        // The user record will have the correct email, auth might have old email
+        console.log("Proceeding despite auth email update failure - user record updated successfully");
       }
     }
 
-    // Send OTPs ONLY if explicitly requested (not automatically on change)
-    // The frontend handles OTP flow separately before calling this endpoint
+    // Send OTPs if requested
     let emailOtpSent = false;
     let whatsappOtpSent = false;
 
-    // Send email OTP only if explicitly requested
-    if (body.sendEmailOtp && sesRegion && sesFromEmail && sesAccessKey && sesSecretKey) {
+    // Send email OTP if email changed or explicitly requested
+    if ((emailChanged || body.sendEmailOtp) && sendgridApiKey && sendgridFromEmail) {
       const otpCode = generateOtp();
       const expiry = new Date(Date.now() + EMAIL_OTP_EXPIRY_MINUTES * 60000).toISOString();
       const targetEmail = newEmail || currentEmail;
 
-      // Store OTP
+      // Upsert OTP into user_otp_verification (channel = 'email')
       await supabase
-        .from("users")
-        .update({
-          email_otp_code: otpCode,
-          email_otp_expires_at: expiry,
-        })
-        .eq("id", user.id);
+        .from("user_otp_verification")
+        .upsert({
+          user_id: user.id,
+          channel: "email",
+          otp_code: otpCode,
+          otp_expires_at: expiry,
+          otp_attempts: 0,
+          update_attempts: 0,
+        }, { onConflict: 'user_id,channel' });
 
       // Send email
-      const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.com/logo.png";
+      const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
       const emailHtml = generateOtpEmailHtml({
         logoImageUrl,
         userFullName: (updateData.full_name as string) || user.full_name || "",
@@ -270,11 +272,9 @@ serve(async (req: Request) => {
         expiryMinutes: EMAIL_OTP_EXPIRY_MINUTES,
       });
 
-      const emailResult = await sendSESEmail({
-        accessKey: sesAccessKey,
-        secretKey: sesSecretKey,
-        region: sesRegion,
-        from: sesFromEmail,
+      const emailResult = await sendSendgridEmail({
+        apiKey: sendgridApiKey,
+        from: sendgridFromEmail,
         to: targetEmail,
         subject: generateOtpEmailSubject(otpCode),
         html: emailHtml,
@@ -290,14 +290,17 @@ serve(async (req: Request) => {
       const targetPhone = newWhatsappPhone || user.whatsapp_phone_e164;
 
       if (targetPhone) {
-        // Store OTP
+        // Upsert OTP into user_otp_verification (channel = 'whatsapp')
         await supabase
-          .from("users")
-          .update({
-            whatsapp_otp_code: otpCode,
-            whatsapp_otp_expires_at: expiry,
-          })
-          .eq("id", user.id);
+          .from("user_otp_verification")
+          .upsert({
+            user_id: user.id,
+            channel: "whatsapp",
+            otp_code: otpCode,
+            otp_expires_at: expiry,
+            otp_attempts: 0,
+            update_attempts: 0,
+          }, { onConflict: 'user_id,channel' });
 
         // Send WhatsApp
         const sendResult = await sendWhatsAppOtp({

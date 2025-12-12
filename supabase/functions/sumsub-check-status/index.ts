@@ -47,24 +47,24 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Get user's applicant ID from database
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('id, sumsub_applicant_id, kyc_status, sumsub_level')
-      .eq('id', user_id)
-      .single()
+    // Get user's applicant ID and KYC status from compliance table
+    const { data: compliance, error: complianceError } = await supabase
+      .from('user_compliance')
+      .select('sumsub_applicant_id, kyc_status, sumsub_level')
+      .eq('user_id', user_id)
+      .maybeSingle()
 
-    if (userError || !user) {
+    if (complianceError || !compliance) {
       return new Response(
         JSON.stringify({ error: 'User not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (!user.sumsub_applicant_id) {
+    if (!compliance.sumsub_applicant_id) {
       return new Response(
         JSON.stringify({ 
-          kyc_status: user.kyc_status || 'not_started',
+          kyc_status: compliance.kyc_status || 'unverified',
           message: 'No applicant ID found'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -73,7 +73,7 @@ serve(async (req) => {
 
     // Query Sumsub API for applicant status
     const ts = Math.floor(Date.now() / 1000).toString()
-    const statusPath = `/resources/applicants/${user.sumsub_applicant_id}/status`
+    const statusPath = `/resources/applicants/${compliance.sumsub_applicant_id}/status`
     const statusSignature = createHmac('sha256', SUMSUB_SECRET_KEY)
       .update(ts + 'GET' + statusPath)
       .digest('hex')
@@ -94,7 +94,7 @@ serve(async (req) => {
       console.error('Sumsub status check failed:', statusData)
       return new Response(
         JSON.stringify({ 
-          kyc_status: user.kyc_status || 'pending',
+          kyc_status: compliance.kyc_status || 'pending',
           error: 'Failed to check Sumsub status'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -126,7 +126,7 @@ serve(async (req) => {
     }
 
     // Update database if status changed - only existing columns
-    if (kycStatus !== user.kyc_status) {
+    if (kycStatus !== compliance.kyc_status) {
       const updateData: Record<string, any> = { 
         kyc_status: kycStatus,
         kyc_reviewed_at: new Date().toISOString(),
@@ -138,9 +138,9 @@ serve(async (req) => {
       }
 
       await supabase
-        .from('users')
+        .from('user_compliance')
         .update(updateData)
-        .eq('id', user_id)
+        .eq('user_id', user_id)
     }
 
     // Return status with rejection details from Sumsub (not stored in DB)

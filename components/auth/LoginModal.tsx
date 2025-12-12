@@ -200,6 +200,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       onClose();
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }

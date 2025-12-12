@@ -51,22 +51,111 @@ serve(async (req) => {
     // Create Supabase client with service role (bypasses RLS)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Get user from database including current KYC status
+    // Get user core profile (normalized schema)
+    console.log('Querying users with id:', user_id, 'Type:', typeof user_id)
+    let resolvedUserId = user_id
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, full_name, sumsub_applicant_id, kyc_status')
+      .select('id, email, full_name, auth_user_id')
       .eq('id', user_id)
-      .single()
+      .maybeSingle()
 
-    if (userError || !user) {
-      console.error('User not found:', userError)
+    console.log('Primary lookup result:', { data: !!user, error: userError?.message })
+
+    // Fallback: if caller passed auth_user_id instead of public.users.id
+    let userData = user
+    let userErr = userError
+    if (!userData && !userErr) {
+      console.log('Trying fallback lookup by auth_user_id')
+      const fallback = await supabase
+        .from('users')
+        .select('id, email, full_name, auth_user_id')
+        .eq('auth_user_id', user_id)
+        .maybeSingle()
+      userData = fallback.data
+      userErr = fallback.error
+      console.log('Fallback lookup result:', { data: !!fallback.data, error: fallback.error?.message })
+      if (fallback.data?.id) {
+        resolvedUserId = fallback.data.id
+      }
+    }
+
+    if (userErr || !userData) {
+      console.error('Final user lookup failed:', {
+        user_id,
+        userErr: userErr?.message,
+        userErrCode: userErr?.code,
+        userErrDetails: userErr?.details,
+        resolvedUserId
+      })
       return new Response(
-        JSON.stringify({ error: 'User not found' }),
+        JSON.stringify({
+          error: 'User not found',
+          details: userErr?.message,
+          code: userErr?.code
+        }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Generating Sumsub token for user:', user.email, 'current status:', user.kyc_status)
+    console.log('User found:', {
+      id: userData.id,
+      email: userData.email,
+      resolvedUserId
+    })
+
+    // Fetch compliance record (normalized schema)
+    let { data: compliance, error: complianceError } = await supabase
+      .from('user_compliance')
+      .select('kyc_status, sumsub_applicant_id, sumsub_level, sumsub_reuse_token, cooling_off_until, kyc_started_at, kyc_reviewed_at')
+      .eq('user_id', resolvedUserId)
+      .maybeSingle()
+
+    // If compliance record exists but kyc_started_at is null, update it
+    if (compliance && !compliance.kyc_started_at) {
+      console.log('Updating existing compliance record with kyc_started_at', { resolvedUserId })
+      const now = new Date().toISOString()
+      const { error: updateError } = await supabase
+        .from('user_compliance')
+        .update({ kyc_started_at: now })
+        .eq('user_id', resolvedUserId)
+
+      if (updateError) {
+        console.error('Failed to update kyc_started_at:', updateError)
+      } else {
+        compliance.kyc_started_at = now // Update local object
+      }
+    }
+
+    if (complianceError || !compliance) {
+      console.warn('Compliance record missing; creating default', { resolvedUserId, complianceError })
+      const now = new Date().toISOString()
+      const { data: created, error: createError } = await supabase
+        .from('user_compliance')
+        .insert({
+          user_id: resolvedUserId,
+          kyc_status: 'unverified',
+          sumsub_level: null,
+          sumsub_applicant_id: null,
+          kyc_started_at: now, // Set when user first requests access token
+          kyc_reviewed_at: null,
+        })
+        .select('kyc_status, sumsub_applicant_id, sumsub_level, sumsub_reuse_token, cooling_off_until, kyc_started_at, kyc_reviewed_at')
+        .maybeSingle()
+
+      if (createError || !created) {
+        console.error('Failed to create compliance record', { resolvedUserId, createError })
+        return new Response(
+          JSON.stringify({ error: 'Compliance record not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      compliance = created
+    }
+
+    const kycStatus = compliance.kyc_status
+    console.log('Generating Sumsub token for user:', userData.email, 'current status:', kycStatus)
 
     // Generate Sumsub API signature
     const ts = Math.floor(Date.now() / 1000).toString()
@@ -105,17 +194,17 @@ serve(async (req) => {
 
     // Only update KYC status to 'started' for NEW users (not for resubmissions)
     // For resubmissions, keep the existing status - it will be updated by webhook/SDK callback
-    const isNewKyc = !user.kyc_status || user.kyc_status === 'not_started'
+    const isNewKyc = !kycStatus || kycStatus === 'not_started'
     
     if (isNewKyc) {
       const { error: updateError } = await supabase
-        .from('users')
+        .from('user_compliance')
         .update({ 
           kyc_status: 'started',
           sumsub_level: SUMSUB_DEFAULT_LEVEL,
           kyc_started_at: new Date().toISOString(),
         })
-        .eq('id', user_id)
+        .eq('user_id', resolvedUserId)
 
       if (updateError) {
         console.error('Failed to update KYC status:', updateError)
@@ -124,16 +213,16 @@ serve(async (req) => {
     } else {
       // For resubmissions, just update the level if not set
       const { error: updateError } = await supabase
-        .from('users')
+        .from('user_compliance')
         .update({ 
           sumsub_level: SUMSUB_DEFAULT_LEVEL,
         })
-        .eq('id', user_id)
+        .eq('user_id', resolvedUserId)
 
       if (updateError) {
         console.error('Failed to update sumsub_level:', updateError)
       }
-      console.log('Resubmission - keeping existing status:', user.kyc_status)
+      console.log('Resubmission - keeping existing status:', kycStatus)
     }
 
     return new Response(
