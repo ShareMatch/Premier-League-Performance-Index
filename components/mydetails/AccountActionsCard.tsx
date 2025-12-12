@@ -79,39 +79,43 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
     <div className="bg-gray-800/50 backdrop-blur-sm rounded-md sm:rounded-xl overflow-hidden flex flex-col md:h-full border border-gray-700">
       {/* Header - Compact on mobile */}
       <div className="px-2 sm:px-4 py-1 sm:py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
-        <h3 className="text-[10px] sm:text-base font-semibold text-white font-sans">Account Actions</h3>
+        <h3 className="text-[10px] sm:text-base font-semibold text-white font-sans">Account & Security</h3>
       </div>
 
       {/* Content - Compact on mobile */}
       <div className="p-2 sm:p-4 flex-1 flex flex-col">
-        {/* Login History */}
+        {/* Last Login Section */}
         <div className="space-y-1 sm:space-y-2 flex-1">
-          {loginHistory.map((activity) => (
-            <div 
-              key={activity.id}
-              className="py-1 sm:py-2"
-            >
-              <div className="text-white text-[9px] sm:text-sm font-medium font-sans mb-0.5 sm:mb-1.5">{activity.timestamp}</div>
-              <div className="flex items-center justify-between gap-1">
-                <div className={`text-[9px] sm:text-xs font-sans ${activity.successful ? 'text-brand-emerald500' : 'text-red-500'}`}>
-                  {activity.successful ? 'Login successful' : 'Login failed'}
+          {loginHistory.length > 0 ? (
+            loginHistory.map((activity) => (
+              <div 
+                key={activity.id}
+                className="py-1 sm:py-2"
+              >
+                <div className="text-white text-[9px] sm:text-sm font-medium font-sans mb-0.5 sm:mb-1.5">{activity.timestamp}</div>
+                <div className="flex items-center justify-between gap-1">
+                  <div className={`text-[9px] sm:text-xs font-sans ${activity.successful ? 'text-brand-emerald500' : 'text-red-500'}`}>
+                    {activity.successful ? 'Login successful' : 'Login failed'}
+                  </div>
+                  <div className="text-gray-400 text-[9px] sm:text-xs flex items-center gap-1 sm:gap-1.5 font-sans">
+                    {countryFlags[activity.id] ? (
+                      <img
+                        src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}
+                        alt={activity.location}
+                        className="w-4 sm:w-6 h-auto rounded-sm flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-4 sm:w-6 h-2.5 sm:h-4 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
+                    )}
+                    <span className="truncate">{activity.location}</span>
+                  </div>
                 </div>
-                <div className="text-gray-400 text-[9px] sm:text-xs flex items-center gap-1 sm:gap-1.5 font-sans">
-                  {countryFlags[activity.id] ? (
-                    <img
-                      src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}
-                      alt={activity.location}
-                      className="w-4 sm:w-6 h-auto rounded-sm flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-4 sm:w-6 h-2.5 sm:h-4 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
-                  )}
-                  <span className="truncate">{activity.location}</span>
-                </div>
+                <div className="text-gray-500 text-[8px] sm:text-xs font-sans mt-0.5 sm:mt-1.5 truncate">IP: {activity.ip}</div>
               </div>
-              <div className="text-gray-500 text-[8px] sm:text-xs font-sans mt-0.5 sm:mt-1.5 truncate">IP: {activity.ip}</div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-gray-500 text-[9px] sm:text-xs font-sans py-2">No login history available</div>
+          )}
         </div>
 
         {/* Action Buttons */}

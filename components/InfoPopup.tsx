@@ -66,7 +66,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
                   ? 'bg-[#3AA189]/20 text-[#3AA189]' 
                   : 'bg-amber-500/20 text-amber-500'
               }`}>
-                {isMarketOpen ? 'Open' : 'Closed'}
+                {isMarketOpen ? 'Market Open' : 'Market Closed'}
               </span>
             )}
             <button 

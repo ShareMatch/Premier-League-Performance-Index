@@ -785,13 +785,14 @@ export interface UserDetails {
     whatsapp_phone_e164: string | null;
     dob: string | null;
     country: string | null;
+    country_code: string | null;
     address_line: string | null;
-    address_line2: string | null;
     city: string | null;
     region: string | null;
     postal_code: string | null;
-    kyc_status: string | null;
     source_ip: string | null;
+    created_at: string | null;
+    updated_at: string | null;
 }
 
 /**
@@ -800,7 +801,7 @@ export interface UserDetails {
 export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
     const { data, error } = await supabase
         .from('users')
-        .select('id, full_name, email, phone_e164, whatsapp_phone_e164, dob, country, address_line, city, region, postal_code, kyc_status, source_ip')
+        .select('id, full_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
         .eq('id', userId)
         .single();
 
@@ -810,4 +811,40 @@ export const fetchUserDetails = async (userId: string): Promise<UserDetails | nu
     }
 
     return data as UserDetails;
+};
+
+// ============================================
+// USER BANKING DETAILS
+// ============================================
+
+export interface UserBankingDetails {
+    id: string;
+    user_id: string;
+    account_name: string | null;
+    bank_name: string | null;
+    account_number: string | null;
+    iban: string | null;
+    swift_bic: string | null;
+    currency: string | null;
+    is_verified: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Fetch user banking details from the user_banking_details table
+ */
+export const fetchUserBankingDetails = async (userId: string): Promise<UserBankingDetails | null> => {
+    const { data, error } = await supabase
+        .from('user_banking_details')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching user banking details:', error);
+        return null;
+    }
+
+    return data as UserBankingDetails | null;
 };

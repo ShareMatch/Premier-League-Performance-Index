@@ -173,7 +173,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                           ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
                           : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
                         }`}>
-                        {info.isOpen ? 'Open' : 'Closed'}
+                        {info.isOpen ? 'Market Open' : 'Market Closed'}
                       </span>
                       <InfoPopup
                         title={info.title}
