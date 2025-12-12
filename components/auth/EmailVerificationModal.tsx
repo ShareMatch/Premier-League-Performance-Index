@@ -227,6 +227,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setStatus('error');
       setMessage(error.message || 'Invalid code. Please try again.');
       setCode(Array(CODE_LENGTH).fill(''));
+      setIsButtonHovered(false);
     }
   };
 
@@ -256,6 +257,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     } catch (error: any) {
       setStatus('error');
       setMessage(error.message || 'Failed to send code. Please try again.');
+      setIsButtonHovered(false);
     }
   };
 

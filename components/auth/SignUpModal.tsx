@@ -3,6 +3,54 @@ import { X, ChevronDown, ChevronLeft, ChevronRight, Check, Lock, Search } from '
 import { countries, Country } from '../../data/countries';
 import { registerUser, RegistrationError, updateUserProfile, checkEmailVerificationStatus } from '../../lib/api';
 
+// Utility function to parse E.164 phone number into country code and phone number
+const parsePhoneNumber = (phone: string): { countryCode: string; phoneNumber: string; countryIso: string } => {
+  if (!phone) {
+    return { countryCode: '+1', phoneNumber: '', countryIso: 'US' };
+  }
+
+  // Remove all spaces and non-digit characters except +
+  const cleaned = phone.replace(/[^\d+]/g, '');
+  
+  if (!cleaned.startsWith('+')) {
+    // If no country code, return as-is
+    return { countryCode: '+1', phoneNumber: cleaned, countryIso: 'US' };
+  }
+
+  // Try to match country codes (1-4 digits after +)
+  // Check all possible country codes from longest to shortest
+  for (let codeLength = 4; codeLength >= 1; codeLength--) {
+    const countryCode = cleaned.substring(0, codeLength + 1); // +1, +44, +971, etc.
+    const phoneNumber = cleaned.substring(codeLength + 1);
+    
+    // Find matching country
+    const country = countries.find(c => c.dial_code === countryCode);
+    if (country && phoneNumber.length > 0) {
+      return {
+        countryCode: country.dial_code,
+        phoneNumber: phoneNumber,
+        countryIso: country.code,
+      };
+    }
+  }
+
+  // Fallback: try to extract first 1-3 digits as country code
+  const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
+  if (match) {
+    const [, codeDigits, rest] = match;
+    const countryCode = `+${codeDigits}`;
+    const country = countries.find(c => c.dial_code === countryCode);
+    return {
+      countryCode: countryCode,
+      phoneNumber: rest,
+      countryIso: country?.code || 'US',
+    };
+  }
+
+  // Default fallback
+  return { countryCode: '+1', phoneNumber: cleaned.substring(1), countryIso: 'US' };
+};
+
 // --- Types ---
 export interface FormData {
   // Step 1
@@ -667,6 +715,25 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
   // This restores the exact form state the user had before
   useEffect(() => {
     if (isOpen && isEditMode && editData) {
+      // Parse phone numbers if they're in E.164 format (full number with country code)
+      let phoneData = { countryCode: editData.phoneCode || '+1', phoneNumber: editData.phone || '', countryIso: editData.phoneIso || 'US' };
+      if (editData.phone && editData.phone.startsWith('+') && !editData.phoneCode) {
+        phoneData = parsePhoneNumber(editData.phone);
+      }
+
+      let whatsappData = { countryCode: editData.whatsappCode || '+1', phoneNumber: '', countryIso: editData.whatsappIso || 'US' };
+      if (editData.whatsappPhone) {
+        // If whatsappPhone is provided and includes country code, parse it
+        if (editData.whatsappPhone.startsWith('+')) {
+          whatsappData = parsePhoneNumber(editData.whatsappPhone);
+        } else {
+          // If it's just the phone number without country code, use the provided code
+          whatsappData.phoneNumber = editData.whatsappPhone;
+          whatsappData.countryCode = editData.whatsappCode || '+1';
+          whatsappData.countryIso = editData.whatsappIso || 'US';
+        }
+      }
+
       setFormData({
         // Step 1 fields - not used in edit mode
         fullName: '',
@@ -676,13 +743,13 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         password: '',
         confirmPassword: '',
         referralCode: '',
-        // Step 2 fields - use provided values directly
-        phone: editData.phone || '',
-        phoneCode: editData.phoneCode || '+1',
-        phoneIso: editData.phoneIso || 'US',
-        whatsapp: editData.whatsappPhone || '',
-        whatsappCode: editData.whatsappCode || '+1',
-        whatsappIso: editData.whatsappIso || 'US',
+        // Step 2 fields - parse phone numbers to avoid duplicate country codes
+        phone: phoneData.phoneNumber,
+        phoneCode: phoneData.countryCode,
+        phoneIso: phoneData.countryIso,
+        whatsapp: whatsappData.phoneNumber,
+        whatsappCode: whatsappData.countryCode,
+        whatsappIso: whatsappData.countryIso,
         useSameNumber: editData.useSameNumber || false,
         agreeToWhatsappOtp: editData.agreeToWhatsappOtp ?? true,
         agreeToTerms: editData.agreeToTerms ?? true,
@@ -847,6 +914,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       }
     } catch (error: any) {
       setErrors({ form: error.message || 'Failed to update profile' });
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }
@@ -896,6 +964,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       } else {
         setErrors({ form: 'An unexpected error occurred. Please try again.' });
       }
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }

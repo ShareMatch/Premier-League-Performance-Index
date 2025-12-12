@@ -110,7 +110,8 @@ serve(async (req: Request) => {
     }
 
     // Build the email HTML using the simplified template
-    const emailHtml = buildResetEmailHTML(resetLink);
+    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
+    const emailHtml = buildResetEmailHTML(resetLink, logoImageUrl);
     const emailSubject = "Reset your ShareMatch password";
 
     console.log("🔵 [forgot-password] Sending email via SendGrid...");

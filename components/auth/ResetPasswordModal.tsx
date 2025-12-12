@@ -185,6 +185,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       onSuccess();
     } catch (err: any) {
       setError(err.message || 'Failed to update password. The link may have expired.');
+      setIsButtonHovered(false);
     } finally {
       setLoading(false);
     }

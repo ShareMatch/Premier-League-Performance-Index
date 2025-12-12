@@ -235,6 +235,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
       setStatus('error');
       setMessage(error.message || 'Invalid code. Please try again.');
       setCode(Array(CODE_LENGTH).fill(''));
+      setIsButtonHovered(false);
     }
   };
 
@@ -264,6 +265,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     } catch (error: any) {
       setStatus('error');
       setMessage(error.message || 'Failed to send code. Please try again.');
+      setIsButtonHovered(false);
     }
   };
 
@@ -279,13 +281,58 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     
     // If it starts with +, format it
     if (cleaned.startsWith('+')) {
-      // Country codes are typically 1-3 digits after +
-      // For UAE (+971), it's 3 digits, but we'll try to detect common patterns
-      // Common country codes: 1 (US/Canada), 44 (UK), 971 (UAE), etc.
+      // Try to match country codes (1-4 digits after +)
+      for (let codeLength = 4; codeLength >= 1; codeLength--) {
+        const countryCode = cleaned.substring(0, codeLength + 1); // +1, +44, +971, etc.
+        const phoneNumber = cleaned.substring(codeLength + 1);
+        
+        if (phoneNumber.length > 0) {
+          // Format based on common patterns
+          let formatted = phoneNumber;
+          
+          // UAE (+971): XX XXX XXXX
+          if (countryCode === '+971' && phoneNumber.length === 9) {
+            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 5)} ${phoneNumber.substring(5)}`;
+          }
+          // US/Canada (+1): XXX XXX XXXX
+          else if (countryCode === '+1' && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(3, 6)} ${phoneNumber.substring(6)}`;
+          }
+          // UK (+44): XXXX XXXXXX
+          else if (countryCode === '+44' && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4)}`;
+          }
+          // Saudi Arabia (+966): XX XXX XXXX
+          else if (countryCode === '+966' && phoneNumber.length === 9) {
+            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 5)} ${phoneNumber.substring(5)}`;
+          }
+          // India (+91): XXXXX XXXXX
+          else if (countryCode === '+91' && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 5)} ${phoneNumber.substring(5)}`;
+          }
+          // Pakistan (+92): XXX XXXXXXX
+          else if (countryCode === '+92' && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(3)}`;
+          }
+          // Default: group in chunks of 3-4 digits
+          else if (phoneNumber.length > 4) {
+            formatted = `${phoneNumber.substring(0, phoneNumber.length - 4)} ${phoneNumber.substring(phoneNumber.length - 4)}`;
+          }
+          
+          return `${countryCode} ${formatted}`;
+        }
+      }
+      
+      // Fallback: try simple pattern matching
       const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
       if (match) {
         const [, countryCode, rest] = match;
-        return `+${countryCode} ${rest}`;
+        // Simple formatting: add space after country code, then group digits
+        let formatted = rest;
+        if (rest.length > 4) {
+          formatted = `${rest.substring(0, rest.length - 4)} ${rest.substring(rest.length - 4)}`;
+        }
+        return `+${countryCode} ${formatted}`;
       }
       return cleaned; // Return as-is if pattern doesn't match
     }
