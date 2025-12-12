@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
           content={marketInfo.content}
           seasonDates={marketInfo.seasonDates}
           isMarketOpen={marketInfo.isOpen}
-          iconSize={18}
+          iconSize={25}
         />
       </div>
     </div>

@@ -40,57 +40,62 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
   const logoUrl = team.market ? getLogoUrl(team.name, team.market) : null;
 
   return (
-    <div className={`grid grid-cols-3 gap-4 items-center p-3 sm:p-4 text-sm sm:text-base transition-colors duration-500 ${flashClass}`}>
-      <div className="font-medium text-gray-200 text-left flex items-center gap-2">
+    <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
+      {/* Asset name with responsive logo */}
+      <div className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0">
         {logoUrl && !logoError ? (
-          <img
-            src={logoUrl}
-            alt={`${team.name} logo`}
-            className="w-6 h-6 object-contain"
-            onError={() => setLogoError(true)}
-          />
+          <div 
+            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5 sm:p-1"
+          >
+            <img
+              src={logoUrl}
+              alt={`${team.name} logo`}
+              className="w-full h-full object-contain"
+              onError={() => setLogoError(true)}
+            />
+          </div>
         ) : (
           <div
-            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
             style={{ backgroundColor: team.color || '#6B7280' }}
           >
-            <span className="text-white text-xs font-bold">
+            <span className="text-white text-[10px] sm:text-xs font-bold">
               {team.name.charAt(0)}
             </span>
           </div>
         )}
-        <span className="truncate">{team.name}</span>
+        <span className="truncate text-xs sm:text-sm">{team.name}</span>
       </div>
 
       {team.is_settled ? (
-        <div className="col-span-2 flex flex-col items-end pr-2">
-          <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Settled at</span>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500 text-xs">{team.settled_date || 'Dec 8, 2025'}</span>
-            <span className={`text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
-              {team.bid.toFixed(1)}
+        <div className="col-span-2 flex flex-col items-end pr-1 sm:pr-2">
+          <span className="text-gray-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Settled</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-gray-500 text-[10px] sm:text-xs hidden sm:inline">{team.settled_date || 'Dec 8, 2025'}</span>
+            <span className={`text-sm sm:text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
+              ${team.bid.toFixed(1)}
             </span>
           </div>
         </div>
       ) : (
         <>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
             onClick={() => onSelectOrder(team, 'sell')}
             role="button"
             tabIndex={0}
-            aria-label={`Sell ${team.name} Performance Index at ${team.bid.toFixed(1)}`}
+            aria-label={`Sell ${team.name} Performance Index at $${team.bid.toFixed(1)}`}
           >
-            <span className="font-semibold text-red-400">{team.bid.toFixed(1)}</span>
+            <span className="font-semibold text-red-400 text-xs sm:text-sm">${team.bid.toFixed(1)}</span>
           </div>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-2 -my-2"
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
             onClick={() => onSelectOrder(team, 'buy')}
             role="button"
             tabIndex={0}
-            aria-label={`Buy ${team.name} Performance Index at ${team.offer.toFixed(1)}`}
+            aria-label={`Buy ${team.name} Performance Index at $${team.offer.toFixed(1)}`}
           >
-            <span className="font-semibold text-[#3AA189]">{team.offer.toFixed(1)}</span>
+            <span className="font-semibold text-[#3AA189] text-xs sm:text-sm">${team.offer.toFixed(1)}</span>
           </div>
         </>
       )}

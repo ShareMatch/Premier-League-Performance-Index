@@ -141,14 +141,14 @@ const KYCVerificationCard: React.FC<KYCVerificationCardProps> = ({
   const buttonConfig = getButtonConfig(status);
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden flex flex-col h-full border border-gray-700">
-      {/* Header */}
-      <div className="px-4 py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700">
-        <h3 className="text-base font-semibold text-white font-sans">KYC Verification</h3>
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-md sm:rounded-xl overflow-hidden flex flex-col md:h-full border border-gray-700">
+      {/* Header - Compact on mobile */}
+      <div className="px-2 sm:px-4 py-1 sm:py-3 flex justify-between items-center flex-shrink-0 bg-gray-800 border-b border-gray-700 gap-1">
+        <h3 className="text-[10px] sm:text-base font-semibold text-white font-sans">KYC Verification</h3>
         {onUpdateKYC && buttonConfig.show && (
           <button
             onClick={onUpdateKYC}
-            className={`px-4 py-1.5 text-xs font-sans font-medium rounded-full shadow-lg transition-colors ${
+            className={`px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap ${
               buttonConfig.variant === 'primary'
                 ? 'text-white bg-gradient-primary hover:opacity-90'
                 : 'text-white bg-red-500 hover:bg-red-600'
@@ -159,33 +159,33 @@ const KYCVerificationCard: React.FC<KYCVerificationCardProps> = ({
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-3 flex-1">
+      {/* Content - Compact on mobile */}
+      <div className="p-2 sm:p-4 space-y-1.5 sm:space-y-3 flex-1">
         {/* Status Badge */}
         <div 
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full ${statusConfig.className}`}
+          className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-full ${statusConfig.className}`}
         >
-          <StatusIcon className="w-4 h-4" />
-          <span className="font-semibold text-sm font-sans">
+          <StatusIcon className="w-2.5 h-2.5 sm:w-4 sm:h-4" />
+          <span className="font-semibold text-[9px] sm:text-sm font-sans">
             {statusConfig.label}
           </span>
         </div>
 
         {/* Status Message */}
-        <p className="text-gray-500 text-xs font-sans">{statusConfig.message}</p>
+        <p className="text-gray-500 text-[9px] sm:text-xs font-sans leading-tight">{statusConfig.message}</p>
 
-        {/* Documents List */}
-        <div className="space-y-2">
+        {/* Documents List - Compact on mobile */}
+        <div className="space-y-1 sm:space-y-2">
           {documents.map((doc, index) => {
             const docConfig = getDocumentStatusConfig(doc.status);
             return (
               <div 
                 key={index}
-                className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-700"
+                className="flex items-center justify-between px-1.5 sm:px-4 py-1.5 sm:py-3 rounded sm:rounded-lg bg-gray-900/50 border border-gray-700 gap-1"
               >
-                <span className="text-white text-sm font-medium font-sans">{doc.name}</span>
+                <span className="text-white text-[9px] sm:text-sm font-medium font-sans truncate">{doc.name}</span>
                 <span 
-                  className={`text-xs font-semibold font-sans px-2.5 py-1 rounded-full ${docConfig.className}`}
+                  className={`text-[8px] sm:text-xs font-semibold font-sans px-1 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap ${docConfig.className}`}
                 >
                   {docConfig.label}
                 </span>

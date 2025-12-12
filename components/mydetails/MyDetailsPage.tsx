@@ -579,7 +579,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col font-sans">
+    <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
       {/* Header - Sticky on scroll */}
       <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
@@ -594,11 +594,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       </div>
 
       {/* Content - Scrollable */}
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto scrollbar-hide">
         <div className="max-w-7xl mx-auto">
           {/* Cards Grid - Responsive: 1 col mobile, 2 cols tablet, 3 cols desktop */}
-          {/* All cards same height using grid auto-rows */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" style={{ gridAutoRows: '1fr' }}>
+          {/* On mobile: cards take natural height. On tablet+: equal heights */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 md:[grid-auto-rows:1fr]">
             {/* Row 1 */}
             {/* About You */}
             <DetailsCard
@@ -628,15 +628,15 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
             {/* KYC Verification */}
             {loading ? (
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden animate-pulse border border-gray-700">
-                <div className="h-12 bg-gray-800" />
-                <div className="p-4 space-y-3">
-                  <div className="h-6 bg-gray-700 rounded-full w-24" />
-                  <div className="h-3 bg-gray-700 rounded w-40" />
-                  <div className="space-y-2">
-                    <div className="h-10 bg-gray-700 rounded-lg" />
-                    <div className="h-10 bg-gray-700 rounded-lg" />
-                    <div className="h-10 bg-gray-700 rounded-lg" />
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-md sm:rounded-xl overflow-hidden animate-pulse border border-gray-700">
+                <div className="h-6 sm:h-12 bg-gray-800" />
+                <div className="p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="h-3 sm:h-6 bg-gray-700 rounded-full w-12 sm:w-24" />
+                  <div className="h-1.5 sm:h-3 bg-gray-700 rounded w-20 sm:w-40" />
+                  <div className="space-y-0.5 sm:space-y-2">
+                    <div className="h-5 sm:h-10 bg-gray-700 rounded sm:rounded-lg" />
+                    <div className="h-5 sm:h-10 bg-gray-700 rounded sm:rounded-lg" />
+                    <div className="h-5 sm:h-10 bg-gray-700 rounded sm:rounded-lg" />
                   </div>
                 </div>
               </div>
@@ -674,8 +674,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           </div>
 
           {/* Footer Links */}
-          <div className="mt-6 pb-4 text-left">
-            <p className="text-gray-500 text-xs font-sans">
+          <div className="mt-4 sm:mt-6 pb-4 text-left">
+            <p className="text-gray-500 text-[10px] sm:text-xs font-sans">
               Read our{' '}
               <button className="text-brand-emerald500 hover:underline font-sans">Privacy Policy</button>,{' '}
               <button className="text-brand-emerald500 hover:underline font-sans">Terms & Conditions</button> and{' '}
