@@ -235,7 +235,7 @@ serve(async (req) => {
       if (complianceError || !compliance) {
         const { error: createError } = await supabase
           .from('user_compliance')
-          .insert({ user_id: externalUserId, kyc_status: 'not_started' })
+          .insert({ user_id: externalUserId, kyc_status: 'unverified' })
         if (createError) {
           console.error('Failed to init compliance row:', createError)
         }
@@ -304,7 +304,7 @@ serve(async (req) => {
         if (complianceError || !compliance) {
           const { error: createError } = await supabase
             .from('user_compliance')
-            .insert({ user_id: externalUserId, kyc_status: 'not_started' })
+            .insert({ user_id: externalUserId, kyc_status: 'unverified' })
           if (createError) {
             console.error('Failed to init compliance row (applicantCreated):', createError)
           }

@@ -52,7 +52,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // Get user core profile (normalized schema)
-    console.log('Querying users with id:', user_id)
+    console.log('Querying users with id:', user_id, 'Type:', typeof user_id)
     let resolvedUserId = user_id
     const { data: user, error: userError } = await supabase
       .from('users')
@@ -60,10 +60,13 @@ serve(async (req) => {
       .eq('id', user_id)
       .maybeSingle()
 
+    console.log('Primary lookup result:', { data: !!user, error: userError?.message })
+
     // Fallback: if caller passed auth_user_id instead of public.users.id
     let userData = user
     let userErr = userError
     if (!userData && !userErr) {
+      console.log('Trying fallback lookup by auth_user_id')
       const fallback = await supabase
         .from('users')
         .select('id, email, full_name, auth_user_id')
@@ -71,18 +74,35 @@ serve(async (req) => {
         .maybeSingle()
       userData = fallback.data
       userErr = fallback.error
+      console.log('Fallback lookup result:', { data: !!fallback.data, error: fallback.error?.message })
       if (fallback.data?.id) {
         resolvedUserId = fallback.data.id
       }
     }
 
     if (userErr || !userData) {
-      console.error('User not found:', { user_id, userErr })
+      console.error('Final user lookup failed:', {
+        user_id,
+        userErr: userErr?.message,
+        userErrCode: userErr?.code,
+        userErrDetails: userErr?.details,
+        resolvedUserId
+      })
       return new Response(
-        JSON.stringify({ error: 'User not found' }),
+        JSON.stringify({
+          error: 'User not found',
+          details: userErr?.message,
+          code: userErr?.code
+        }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('User found:', {
+      id: userData.id,
+      email: userData.email,
+      resolvedUserId
+    })
 
     // Fetch compliance record (normalized schema)
     let { data: compliance, error: complianceError } = await supabase
@@ -91,16 +111,33 @@ serve(async (req) => {
       .eq('user_id', resolvedUserId)
       .maybeSingle()
 
+    // If compliance record exists but kyc_started_at is null, update it
+    if (compliance && !compliance.kyc_started_at) {
+      console.log('Updating existing compliance record with kyc_started_at', { resolvedUserId })
+      const now = new Date().toISOString()
+      const { error: updateError } = await supabase
+        .from('user_compliance')
+        .update({ kyc_started_at: now })
+        .eq('user_id', resolvedUserId)
+
+      if (updateError) {
+        console.error('Failed to update kyc_started_at:', updateError)
+      } else {
+        compliance.kyc_started_at = now // Update local object
+      }
+    }
+
     if (complianceError || !compliance) {
       console.warn('Compliance record missing; creating default', { resolvedUserId, complianceError })
+      const now = new Date().toISOString()
       const { data: created, error: createError } = await supabase
         .from('user_compliance')
         .insert({
           user_id: resolvedUserId,
-          kyc_status: 'not_started',
+          kyc_status: 'unverified',
           sumsub_level: null,
           sumsub_applicant_id: null,
-          kyc_started_at: null,
+          kyc_started_at: now, // Set when user first requests access token
           kyc_reviewed_at: null,
         })
         .select('kyc_status, sumsub_applicant_id, sumsub_level, sumsub_reuse_token, cooling_off_until, kyc_started_at, kyc_reviewed_at')

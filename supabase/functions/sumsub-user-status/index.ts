@@ -115,7 +115,7 @@ serve(async (req) => {
 
         // Base response - we'll update can_resubmit after fetching from Sumsub
         const response: Record<string, any> = {
-            kyc_status: user.kyc_status || 'not_started',
+            kyc_status: user.kyc_status || 'unverified',
             ok_to_trade: okToTrade,
             cooling_off_active: coolingOffActive,
             cooling_off_until: user.cooling_off_until,

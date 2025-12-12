@@ -129,7 +129,7 @@ serve(async (req) => {
         .from('user_compliance')
         .insert({
           user_id,
-          kyc_status: 'not_started',
+          kyc_status: 'unverified',
           sumsub_level: SUMSUB_DEFAULT_LEVEL,
           sumsub_applicant_id: null,
           kyc_started_at: null,
@@ -184,8 +184,18 @@ serve(async (req) => {
           )
           
           if (verifiedName) {
-            updateData.full_name = verifiedName
-            console.log(`Updating full_name to verified name: ${verifiedName}`)
+            // Create users table update for verified name
+            const usersUpdate = { full_name: verifiedName }
+            const { error: usersUpdateError } = await supabase
+              .from('users')
+              .update(usersUpdate)
+              .eq('id', user_id)
+
+            if (usersUpdateError) {
+              console.error('Failed to update verified name in users table:', usersUpdateError)
+            } else {
+              console.log(`Updated full_name to verified name: ${verifiedName}`)
+            }
           } else {
             console.log('No verified name returned from Sumsub')
           }
@@ -207,7 +217,10 @@ serve(async (req) => {
       // No review answer yet, just status update
       if (review_status === 'init' || review_status === 'pending') {
         complianceUpdate.kyc_status = 'started'
-        complianceUpdate.kyc_started_at = new Date().toISOString()
+        // Only set kyc_started_at if not already set
+        if (!compliance?.kyc_started_at) {
+          complianceUpdate.kyc_started_at = new Date().toISOString()
+        }
       } else if (review_status === 'onHold') {
         complianceUpdate.kyc_status = 'on_hold'
       } else if (review_status === 'completed') {

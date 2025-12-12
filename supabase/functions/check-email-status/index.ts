@@ -41,30 +41,56 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if user exists and get verification status
-    const { data: user, error: fetchErr } = await supabase
+    // Step 1: find user by email
+    const { data: user, error: fetchUserErr } = await supabase
       .from("users")
-      .select("email_verified_at, whatsapp_phone_verified_at")
+      .select("id")
       .eq("email", email)
       .single();
 
-    if (fetchErr || !user) {
-      // User doesn't exist
+    if (fetchUserErr || !user) {
       return new Response(
         JSON.stringify({
           exists: false,
           emailVerified: false,
           whatsappVerified: false,
           fullyVerified: false,
+          kyc_status: "unverified",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // User exists - check verification status
-    const emailVerified = user.email_verified_at !== null;
-    const whatsappVerified = user.whatsapp_phone_verified_at !== null;
-    const fullyVerified = emailVerified && whatsappVerified;
+    // Step 2: Check email verification from user_otp_verification table
+    const { data: emailVerification, error: emailErr } = await supabase
+      .from("user_otp_verification")
+      .select("verified_at")
+      .eq("user_id", user.id)
+      .eq("channel", "email")
+      .not("verified_at", "is", null)
+      .maybeSingle();
+
+    // Step 3: Check WhatsApp verification from user_otp_verification table
+    const { data: whatsappVerification, error: whatsappErr } = await supabase
+      .from("user_otp_verification")
+      .select("verified_at")
+      .eq("user_id", user.id)
+      .eq("channel", "whatsapp")
+      .not("verified_at", "is", null)
+      .maybeSingle();
+
+    // Step 4: fetch derived verification from user_compliance
+    const { data: compliance, error: complianceErr } = await supabase
+      .from("user_compliance")
+      .select("is_user_verified, kyc_status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const emailVerified = emailVerification?.verified_at !== null;
+    const whatsappVerified = whatsappVerification?.verified_at !== null;
+    const derivedVerified = compliance?.is_user_verified === true;
+    const kycStatus = compliance?.kyc_status || "unverified";
+    const fullyVerified = derivedVerified || (emailVerified && whatsappVerified);
 
     return new Response(
       JSON.stringify({
@@ -72,6 +98,7 @@ serve(async (req: Request) => {
         emailVerified,
         whatsappVerified,
         fullyVerified,
+        kyc_status: kycStatus,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -64,7 +64,7 @@ serve(async (req) => {
     if (!compliance.sumsub_applicant_id) {
       return new Response(
         JSON.stringify({ 
-          kyc_status: compliance.kyc_status || 'not_started',
+          kyc_status: compliance.kyc_status || 'unverified',
           message: 'No applicant ID found'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

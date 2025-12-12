@@ -1,3 +1,6 @@
+// SendGrid API configuration
+const SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
+
 export async function sendSendgridEmail({
     apiKey,
     from,
@@ -11,7 +14,7 @@ export async function sendSendgridEmail({
     subject: string;
     html: string;
   }) {
-    const result = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const result = await fetch(SENDGRID_API_URL, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,

@@ -79,7 +79,7 @@ serve(async (req: Request) => {
     // Get user by current email
     const { data: user, error: fetchErr } = await supabase
       .from("users")
-      .select("id, auth_user_id, full_name, email, email_verified_at, whatsapp_phone_e164, whatsapp_phone_verified_at, profile_update_attempts")
+      .select("id, auth_user_id, full_name, email, whatsapp_phone_e164, profile_update_attempts")
       .eq("email", currentEmail)
       .single();
 
@@ -136,8 +136,6 @@ serve(async (req: Request) => {
       }
 
       updateData.email = newEmail;
-      updateData.email_verified_at = null; // Reset verification
-      updateData.email_otp_attempts = 0;
       emailChanged = true;
     }
 
@@ -167,8 +165,6 @@ serve(async (req: Request) => {
       }
 
       updateData.whatsapp_phone_e164 = newWhatsappPhone;
-      updateData.whatsapp_phone_verified_at = null; // Reset verification
-      updateData.whatsapp_otp_attempts = 0;
       whatsappChanged = true;
     }
 
@@ -236,14 +232,17 @@ serve(async (req: Request) => {
       const expiry = new Date(Date.now() + EMAIL_OTP_EXPIRY_MINUTES * 60000).toISOString();
       const targetEmail = newEmail || currentEmail;
 
-      // Store OTP
+      // Upsert OTP into user_otp_verification (channel = 'email')
       await supabase
-        .from("users")
-        .update({
-          email_otp_code: otpCode,
-          email_otp_expires_at: expiry,
-        })
-        .eq("id", user.id);
+        .from("user_otp_verification")
+        .upsert({
+          user_id: user.id,
+          channel: "email",
+          otp_code: otpCode,
+          otp_expires_at: expiry,
+          otp_attempts: 0,
+          update_attempts: 0,
+        }, { onConflict: 'user_id,channel' });
 
       // Send email
       const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.com/logo.png";
@@ -274,14 +273,17 @@ serve(async (req: Request) => {
       const targetPhone = newWhatsappPhone || user.whatsapp_phone_e164;
 
       if (targetPhone) {
-        // Store OTP
+        // Upsert OTP into user_otp_verification (channel = 'whatsapp')
         await supabase
-          .from("users")
-          .update({
-            whatsapp_otp_code: otpCode,
-            whatsapp_otp_expires_at: expiry,
-          })
-          .eq("id", user.id);
+          .from("user_otp_verification")
+          .upsert({
+            user_id: user.id,
+            channel: "whatsapp",
+            otp_code: otpCode,
+            otp_expires_at: expiry,
+            otp_attempts: 0,
+            update_attempts: 0,
+          }, { onConflict: 'user_id,channel' });
 
         // Send WhatsApp
         const sendResult = await sendWhatsAppOtp({
