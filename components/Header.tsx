@@ -15,7 +15,7 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
       {/* Left: Title & Subtitle */}
       <div className="flex flex-col">
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-          {title} <span className="text-emerald-500">Performance Index</span>
+          {title.replace(/ Performance Index$/i, '')} <span className="text-emerald-500">Performance Index</span>
         </h1>
         <p className="text-gray-400 text-xs sm:text-sm">Tokenised Asset Marketplace</p>
       </div>
