@@ -12,6 +12,7 @@ interface RightPanelProps {
     onConfirmTrade: (quantity: number) => Promise<void>;
     allAssets: Team[];
     onNavigate: (league: League) => void;
+    onSelectOrder: (team: Team, type: 'buy' | 'sell') => void;
     leagueName: string;
 }
 
@@ -23,6 +24,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
     onConfirmTrade,
     allAssets,
     onNavigate,
+    onSelectOrder,
     leagueName
 }) => {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'history'>('portfolio');
@@ -70,14 +72,21 @@ const RightPanel: React.FC<RightPanelProps> = ({
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 {activeTab === 'portfolio' ? (
                     <>
-                        <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
-                            Your Portfolio
-                        </h2>
+                        <div className="flex flex-col gap-1 mb-4">
+                            <h2 className="text-lg font-bold text-gray-200 flex items-center gap-2">
+                                <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
+                                Your Portfolio
+                            </h2>
+                            <p className="text-[10px] text-gray-500 pl-4 font-medium flex items-center gap-1">
+                                <span className="w-1 h-1 bg-[#005430] rounded-full inline-block"></span>
+                                Values reflect potential sell price (realisable value)
+                            </p>
+                        </div>
                         <Portfolio
                             portfolio={portfolio}
                             allAssets={allAssets}
                             onNavigate={onNavigate}
+                            onSelectAsset={onSelectOrder}
                         />
                     </>
                 ) : (

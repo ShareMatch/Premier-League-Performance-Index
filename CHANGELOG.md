@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Unified fonts in Portfolio (removed monospace) to match global design system.
 - **UI:** Added pulsing animation to "Market Open" badges for live status visibility.
 - **UI:** Added visual "Season Progress Bar" with start/end dates to all Market Information popups.
+- **UI:** Added helper text to Portfolio to clarify that values reflect "Realizable Value" (Sell Price).
+- **UX:** Enhanced Portfolio interaction: Clicking a holding now opens the Market Page AND the Transaction Slip (defaulting to Buy) for immediate trading.
 - **UI:** Increased size and visibility of "Info" icons in market headers.
 - **UI:** Fixed responsive layout overlap between AI Analysis button and Header on smaller screens.
 - **Markets:** Opened **FIFA World Cup** market in preparation for upcoming events.
