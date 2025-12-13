@@ -413,8 +413,6 @@ const App: React.FC = () => {
 
                     {/* Right Column: AI & News (1/3) */}
                     <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
-                      <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
-
                       {/* News Feed */}
                       <div className="flex-shrink-0">
                         <NewsFeed topic={activeLeague as any} />

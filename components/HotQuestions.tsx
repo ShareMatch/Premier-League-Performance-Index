@@ -162,7 +162,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                   return (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                        ? 'bg-[#005430] text-white border-[#005430]'
+                        ? 'bg-[#005430] text-white border-[#005430] animate-pulse'
                         : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
                         }`}>
                         {info.isOpen ? 'Market Open' : 'Market Closed'}

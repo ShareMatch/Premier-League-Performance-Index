@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Added `$` prefix to Ticker prices, Index Valuation text, and Portfolio unit prices for consistency.
 - **UI:** Styled Transaction Slip price with "White on Green" badge for better visibility.
 - **UI:** Unified fonts in Portfolio (removed monospace) to match global design system.
+- **UI:** Added pulsing animation to "Market Open" badges for live status visibility.
+- **UI:** Fixed responsive layout overlap between AI Analysis button and Header on smaller screens.
 
 ### Fixed
 - **News Feed:** Resolved critical "400 Bad Request" error by removing conflicting JSON mode configuration.

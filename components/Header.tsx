@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <span
           className={`px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-bold rounded border whitespace-nowrap ${marketInfo.isOpen
-            ? 'bg-[#005430] text-white border-[#005430]'
+            ? 'bg-[#005430] text-white border-[#005430] animate-pulse'
             : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
             }`}
         >
