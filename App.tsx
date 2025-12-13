@@ -385,13 +385,8 @@ const App: React.FC = () => {
                     {/* Left Column: Header + Order Book (2/3) */}
                     <div className="flex-[2] flex flex-col min-h-0">
                       {/* Header aligned with order book */}
-                      <div className="flex-shrink-0 mb-4 sm:mb-0">
-                        <div className="flex flex-col-reverse sm:block relative">
-                          <div className="sm:absolute sm:top-0 sm:right-0 sm:z-10 w-full sm:w-auto mt-4 sm:mt-0">
-                            <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
-                          </div>
-                          <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
-                        </div>
+                      <div className="flex-shrink-0">
+                        <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
                       </div>
 
                       {/* Order Book */}
@@ -418,6 +413,11 @@ const App: React.FC = () => {
 
                     {/* Right Column: AI & News (1/3) */}
                     <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                      {/* AI Analysis */}
+                      <div className="flex-shrink-0">
+                        <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                      </div>
+
                       {/* News Feed */}
                       <div className="flex-shrink-0">
                         <NewsFeed topic={activeLeague as any} />

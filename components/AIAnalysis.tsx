@@ -86,7 +86,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
   };
 
   return (
-    <div className="my-6">
+    <div className="mb-4">
       <div className="flex justify-center gap-4">
         <button
           onClick={getAnalysis}
