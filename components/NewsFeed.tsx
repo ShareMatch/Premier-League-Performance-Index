@@ -108,7 +108,11 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
         setIsUpdating(true);
         try {
             const { data, error } = await supabase.functions.invoke('fetch-news', {
-                body: { topic }
+                body: {
+                    topic,
+                    apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+                    force: true // Force update to fix stale data
+                }
             });
 
             if (error) throw error;

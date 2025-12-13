@@ -13,7 +13,7 @@ serve(async (req) => {
     }
 
     try {
-        const { topic } = await req.json();
+        const { topic, apiKey: bodyApiKey, force } = await req.json();
         if (!topic) throw new Error("Topic is required");
 
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -30,14 +30,15 @@ serve(async (req) => {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
         const lastUpdated = updateData?.last_updated_at ? new Date(updateData.last_updated_at) : null;
 
-        if (lastUpdated && lastUpdated > sixHoursAgo) {
+        // Skip check if force is true
+        if (!force && lastUpdated && lastUpdated > sixHoursAgo) {
             return new Response(JSON.stringify({ message: "News is fresh", updated: false }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
         }
 
         // 2. Fetch from Google Gemini with Search Grounding
-        const apiKey = Deno.env.get("GEMINI_API_KEY");
+        const apiKey = Deno.env.get("GEMINI_API_KEY") || bodyApiKey;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
         const client = new GoogleGenAI({ apiKey });
