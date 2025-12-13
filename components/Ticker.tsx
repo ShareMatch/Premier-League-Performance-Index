@@ -67,7 +67,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
                         <span className="font-bold text-gray-300">{team.name}</span>
                         <span className="text-gray-400">{team.bid.toFixed(1)}</span>
                         {team.lastChange === 'up' ? (
-                            <TrendingUp className="w-3 h-3 text-[#3AA189]" />
+                            <TrendingUp className="w-3 h-3 text-[#005430]" />
                         ) : team.lastChange === 'down' ? (
                             <TrendingDown className="w-3 h-3 text-red-500" />
                         ) : (

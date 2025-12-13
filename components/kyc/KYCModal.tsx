@@ -36,7 +36,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         setError(null);
         const status = await getKycUserStatus(userId);
         setKycData(status);
-        
+
         // Determine initial view based on status
         switch (status.kyc_status) {
           case 'approved':
@@ -84,7 +84,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
   const handleKycComplete = (data: any) => {
     console.log('KYC Complete (manual close):', data);
     const status = data.kycStatus as KycStatus;
-    
+
     // Update local state but DON'T change the view or close the modal
     // Let the SDK show its own success/failure screen
     // User will click X when ready to close
@@ -137,7 +137,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div className="flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-[#3AA189]" />
+            <ShieldCheck className="w-6 h-6 text-[#005430]" />
             <h2 className="text-xl font-semibold text-white">Identity Verification</h2>
           </div>
           <button
@@ -152,7 +152,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center p-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3AA189]"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#005430]"></div>
             </div>
           ) : view === 'intro' ? (
             <IntroView onStart={handleStartKyc} />
@@ -175,14 +175,14 @@ export const KYCModal: React.FC<KYCModalProps> = ({
           ) : view === 'cooling_off' ? (
             <CoolingOffView coolingOffUntil={kycData?.cooling_off_until} onClose={onClose} />
           ) : view === 'rejected' ? (
-            <RejectedView 
-              kycData={kycData} 
+            <RejectedView
+              kycData={kycData}
               onRetry={handleRetryKyc}
               onClose={onClose}
             />
           ) : view === 'resubmission' ? (
-            <ResubmissionView 
-              kycData={kycData} 
+            <ResubmissionView
+              kycData={kycData}
               onRetry={handleRetryKyc}
               onClose={onClose}
             />
@@ -202,16 +202,16 @@ export const KYCModal: React.FC<KYCModalProps> = ({
 // Intro View - explains what KYC is and why it's needed
 const IntroView: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   <div className="p-8 text-center">
-    <div className="w-20 h-20 bg-[#3AA189]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-      <ShieldCheck className="w-10 h-10 text-[#3AA189]" />
+    <div className="w-20 h-20 bg-[#005430]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+      <ShieldCheck className="w-10 h-10 text-[#005430]" />
     </div>
-    
+
     <h3 className="text-2xl font-bold text-white mb-4">
       Verify Your Identity
     </h3>
-    
+
     <p className="text-gray-400 mb-8 max-w-md mx-auto">
-      To ensure a secure trading environment and comply with regulations, 
+      To ensure a secure trading environment and comply with regulations,
       we need to verify your identity before you can start trading.
     </p>
 
@@ -235,7 +235,7 @@ const IntroView: React.FC<{ onStart: () => void }> = ({ onStart }) => (
 
     <button
       onClick={onStart}
-      className="px-8 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+      className="px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
     >
       Start Verification
     </button>
@@ -248,13 +248,13 @@ const PendingView: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
       <Clock className="w-10 h-10 text-yellow-500" />
     </div>
-    
+
     <h3 className="text-2xl font-bold text-white mb-4">
       Verification In Progress
     </h3>
-    
+
     <p className="text-gray-400 mb-8 max-w-md mx-auto">
-      Your documents are being reviewed. This usually takes a few minutes, 
+      Your documents are being reviewed. This usually takes a few minutes,
       but can take up to 24 hours in some cases. We'll notify you once complete.
     </p>
 
@@ -273,19 +273,19 @@ const ApprovedView: React.FC<{ onClose: () => void }> = ({ onClose }) => (
     <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
       <CheckCircle className="w-10 h-10 text-green-500" />
     </div>
-    
+
     <h3 className="text-2xl font-bold text-white mb-4">
       Verification Complete!
     </h3>
-    
+
     <p className="text-gray-400 mb-8 max-w-md mx-auto">
-      Your identity has been verified. You can now access all features 
+      Your identity has been verified. You can now access all features
       of the platform and start trading.
     </p>
 
     <button
       onClick={onClose}
-      className="px-8 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+      className="px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
     >
       Start Trading
     </button>
@@ -303,7 +303,7 @@ const CoolingOffView: React.FC<{ coolingOffUntil: string | null; onClose: () => 
     const updateTime = () => {
       const now = new Date();
       const diff = endTime.getTime() - now.getTime();
-      
+
       if (diff <= 0) {
         setTimeLeft('Ready!');
         return;
@@ -324,13 +324,13 @@ const CoolingOffView: React.FC<{ coolingOffUntil: string | null; onClose: () => 
       <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
         <Clock className="w-10 h-10 text-blue-500" />
       </div>
-      
+
       <h3 className="text-2xl font-bold text-white mb-4">
         Verification Approved!
       </h3>
-      
+
       <p className="text-gray-400 mb-4 max-w-md mx-auto">
-        Your identity has been verified. As a security measure, there's a 24-hour 
+        Your identity has been verified. As a security measure, there's a 24-hour
         cooling-off period before you can start trading.
       </p>
 
@@ -349,8 +349,8 @@ const CoolingOffView: React.FC<{ coolingOffUntil: string | null; onClose: () => 
 };
 
 // Rejected View - KYC failed permanently
-const RejectedView: React.FC<{ 
-  kycData: KycUserStatusResponse | null; 
+const RejectedView: React.FC<{
+  kycData: KycUserStatusResponse | null;
   onRetry: () => void;
   onClose: () => void;
 }> = ({ kycData, onRetry, onClose }) => {
@@ -363,11 +363,11 @@ const RejectedView: React.FC<{
       <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
         <XCircle className="w-10 h-10 text-red-500" />
       </div>
-      
+
       <h3 className="text-2xl font-bold text-white mb-4">
         Verification Failed
       </h3>
-      
+
       <p className="text-gray-400 mb-6 max-w-md mx-auto">
         {getRejectionSummary(kycData?.reject_type || null, rejectLabels)}
       </p>
@@ -393,7 +393,7 @@ const RejectedView: React.FC<{
         {canRetry && (
           <button
             onClick={onRetry}
-            className="px-8 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+            className="px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
           >
             Try Again
           </button>
@@ -410,8 +410,8 @@ const RejectedView: React.FC<{
 };
 
 // Resubmission View - KYC needs corrections
-const ResubmissionView: React.FC<{ 
-  kycData: KycUserStatusResponse | null; 
+const ResubmissionView: React.FC<{
+  kycData: KycUserStatusResponse | null;
   onRetry: () => void;
   onClose: () => void;
 }> = ({ kycData, onRetry, onClose }) => {
@@ -423,13 +423,13 @@ const ResubmissionView: React.FC<{
       <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
         <AlertTriangle className="w-10 h-10 text-yellow-500" />
       </div>
-      
+
       <h3 className="text-2xl font-bold text-white mb-4">
         Action Required
       </h3>
-      
+
       <p className="text-gray-400 mb-6 max-w-md mx-auto">
-        We need you to fix some issues with your verification. 
+        We need you to fix some issues with your verification.
         Please review the details below and try again.
       </p>
 
@@ -453,7 +453,7 @@ const ResubmissionView: React.FC<{
       <div className="flex gap-4 justify-center">
         <button
           onClick={onRetry}
-          className="px-8 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+          className="px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
         >
           Fix & Resubmit
         </button>

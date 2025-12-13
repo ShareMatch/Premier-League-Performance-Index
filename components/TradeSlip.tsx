@@ -97,7 +97,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
       <div className="bg-gray-700/50 rounded-md p-3 flex flex-col gap-3">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-2 text-sm">
-            <span className="bg-[#3AA189] text-white text-xs font-bold px-2 py-0.5 rounded">LIVE</span>
+            <span className="bg-[#005430] text-white text-xs font-bold px-2 py-0.5 rounded">LIVE</span>
             <SoccerBallIcon className="w-4 h-4 text-gray-400" />
             <span className="font-semibold text-gray-300">{leagueName} Performance Index</span>
           </div>
@@ -110,11 +110,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
               <SoccerBallIcon className="w-6 h-6 text-gray-300" />
             </div>
             <div>
-              <p className="text-xs text-gray-400">Asset - <span className={isBuy ? 'text-[#3AA189]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
+              <p className="text-xs text-gray-400">Asset - <span className={isBuy ? 'text-[#005430]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
               <p className="font-bold text-gray-200 truncate">{order.team.name}</p>
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isBuy ? 'text-[#3AA189]' : 'text-red-400'}`}>{order.price.toFixed(1)}</p>
+          <p className={`text-2xl font-bold ${isBuy ? 'text-[#005430]' : 'text-red-400'}`}>{order.price.toFixed(1)}</p>
         </div>
       </div>
 
@@ -134,7 +134,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
           value={shares}
           onChange={handleShareChange}
           placeholder="Enter Number"
-          className="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#3AA189] focus:outline-none"
+          className="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#005430] focus:outline-none"
           min="0"
           max={!isBuy && order.holding ? order.holding : undefined}
         />
@@ -144,7 +144,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
             <p className="text-gray-400">Max Return</p>
-            <p className="text-[#3AA189] font-bold">${maxReturn}</p>
+            <p className="text-[#005430] font-bold">${maxReturn}</p>
           </div>
           <div className="bg-gray-700/30 p-2 rounded border border-gray-700">
             <p className="text-gray-400">Min Return</p>
@@ -168,7 +168,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
             onChange={(e) => setTermsAccepted(e.target.checked)}
             className="sr-only peer"
           />
-          <div className="w-5 h-5 border-2 border-gray-500 rounded bg-transparent peer-checked:bg-[#3AA189] peer-checked:border-[#3AA189] transition-colors flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-gray-500 rounded bg-transparent peer-checked:bg-[#005430] peer-checked:border-[#005430] transition-colors flex items-center justify-center">
             {termsAccepted && (
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -178,9 +178,9 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
         </div>
         <span className="text-xs text-gray-400 leading-tight">
           I accept the{' '}
-          <button 
+          <button
             type="button"
-            className="text-[#3AA189] hover:underline" 
+            className="text-[#005430] hover:underline"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -190,9 +190,9 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
             Terms & Conditions
           </button>{' '}
           and{' '}
-          <button 
+          <button
             type="button"
-            className="text-[#3AA189] hover:underline" 
+            className="text-[#005430] hover:underline"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -212,7 +212,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
             ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
             : countdown !== null
               ? 'bg-[#1C7D83] text-gray-300 cursor-wait'
-              : 'bg-[#3AA189] hover:bg-[#47b89e] text-white'
+              : 'bg-[#005430] hover:bg-[#005430]/90 text-white'
             }`}
         >
           {countdown !== null ? (

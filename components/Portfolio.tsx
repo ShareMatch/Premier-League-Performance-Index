@@ -61,10 +61,10 @@ const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate 
                     <div>
                         <div className="font-medium text-gray-200 text-sm">{holding.asset_name}</div>
                         <div className="text-xs text-gray-500">{holding.quantity} units</div>
-                        <div className="text-[10px] text-[#3AA189] mt-0.5">{getMarketName(holding.market)}</div>
+                        <div className="text-[10px] text-[#005430] mt-0.5">{getMarketName(holding.market)}</div>
                     </div>
                     <div className="text-right">
-                        <div className="text-sm font-mono text-[#3AA189]">
+                        <div className="text-sm font-mono text-[#005430]">
                             ${(holding.quantity * holding.currentPrice).toFixed(2)}
                         </div>
                         <div className="text-[10px] text-gray-500">
