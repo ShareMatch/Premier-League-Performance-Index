@@ -61,8 +61,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
             TASK:
             1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders in the ${leagueName}.
             2. Compare the real-world sentiment/news with these market prices.
-            3. Identify ONE "Best Buy" (undervalued team) and ONE "Sell" (overvalued team).
             4. Provide a concise, data-driven rationale for each trade based on the *latest* news you found.
+            
+            IMPORTANT: DO NOT mention specific percentage probabilities (%) or specific prices in your text. The user can already see these. Focus purely on the qualitative analysis (injuries, form, news, sentiment) that justifies why the market might be wrong.
             
             Keep the response concise (under 150 words) and focused on actionable trading advice.`;
 
