@@ -14,13 +14,28 @@ serve(async (req) => {
 
     try {
         const { topic, apiKey: bodyApiKey, force } = await req.json();
-        if (!topic) throw new Error("Topic is required");
+
+        // Define topic map EARLY to use in search
+        const topicMap: Record<string, string> = {
+            'EPL': 'Premier League football news, transfers, and match reports',
+            'UCL': 'Champions League football news',
+            'SPL': 'Saudi Pro League football news',
+            'WC': 'FIFA World Cup news',
+            'F1': 'Formula 1 racing news and results',
+            'NBA': 'NBA basketball news and trades',
+            'NFL': 'NFL football news',
+            'T20': 'T20 Cricket World Cup news and scores', // Added T20
+            'Eurovision': 'Eurovision Song Contest latest news and odds',
+            'Global': 'Major sports news headlines'
+        };
+
+        const searchQuery = topicMap[topic] || 'Sports news';
 
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // 1. Check if update needed
+        // 1. Check if update needed (Logic preserved)
         const { data: updateData } = await supabase
             .from("news_updates")
             .select("last_updated_at")
@@ -30,14 +45,13 @@ serve(async (req) => {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
         const lastUpdated = updateData?.last_updated_at ? new Date(updateData.last_updated_at) : null;
 
-        // Skip check if force is true
         if (!force && lastUpdated && lastUpdated > sixHoursAgo) {
             return new Response(JSON.stringify({ message: "News is fresh", updated: false }), {
                 headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
         }
 
-        // 2. Fetch from Google Gemini with Search Grounding
+        // 2. Fetch from Gemini
         const apiKey = Deno.env.get("GEMINI_API_KEY") || bodyApiKey;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
@@ -45,26 +59,40 @@ serve(async (req) => {
         const model = genAI.getGenerativeModel({
             model: 'gemini-1.5-flash',
             tools: [{ googleSearch: {} }],
-            systemInstruction: "You are a news aggregator. You strictly output a JSON array of news items based on Google Search results.",
             generationConfig: { responseMimeType: "application/json" }
         });
+
+        const prompt = `Search for the latest news about: "${searchQuery}".
+        
+        Strictly output a JSON ARRAY of 5 objects. format:
+        [
+          {
+            "headline": "Article Title",
+            "source": "Publisher Name",
+            "published_at": "ISO date string (must be recent)",
+            "url": "https://link-to-article"
+          }
+        ]
+        
+        Include legitimate URLs found in the search results.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const generatedText = response.text();
-        console.log("Gemini Response:", generatedText);
 
         let articles = [];
         try {
             articles = JSON.parse(generatedText || "[]");
         } catch (e) {
-            console.error("Failed to parse Gemini JSON:", e);
-            throw new Error("Failed to parse news data");
+            console.error("Failed to parse JSON:", e);
+            // Return error to client for debugging
+            throw new Error(`JSON Parse Error: ${e.message}. Raw Text: ${generatedText}`);
         }
 
-        // 3. Insert into Database (Delete old -> Insert new)
+        // 3. Database Update
+        let dbStatus = "skipped";
         if (Array.isArray(articles) && articles.length > 0) {
-            // Delete old items for this topic
+            // Delete old
             await supabase.from("news_articles").delete().eq("topic", topic);
 
             const newsItems = articles.map((a: any) => ({
@@ -75,28 +103,25 @@ serve(async (req) => {
                 published_at: a.published_at || new Date().toISOString(),
             }));
 
-            // Insert new items
+            // Insert new
             const { error: insertError } = await supabase.from("news_articles").insert(newsItems);
-
-            if (insertError) {
-                console.error("Insert Error:", insertError);
-                throw insertError;
-            }
+            if (insertError) throw insertError;
+            dbStatus = "updated";
         }
 
         // 4. Update Timestamp
-        const { error: updateError } = await supabase
-            .from("news_updates")
-            .upsert({ topic, last_updated_at: new Date().toISOString() });
+        await supabase.from("news_updates").upsert({ topic, last_updated_at: new Date().toISOString() });
 
-        if (updateError) throw updateError;
-
-        return new Response(JSON.stringify({ message: "News updated", updated: true, count: articles.length }), {
+        return new Response(JSON.stringify({
+            message: "Success",
+            dbStatus,
+            count: articles.length,
+            debug_raw: generatedText // Returinig raw text for debugging
+        }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
 
     } catch (error: any) {
-        console.error("News Fetch Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
