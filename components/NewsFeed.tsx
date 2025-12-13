@@ -127,6 +127,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                     .limit(10);
 
                 if (newData) setNewsItems(newData);
+            } else {
+                setDebugMessage(JSON.stringify(data, null, 2));
+            }
+
+            if (data?.error || data?.dbStatus === 'empty') {
+                setDebugMessage(JSON.stringify(data, null, 2));
             }
         } catch (err) {
             console.error('Error updating news:', err);
@@ -134,6 +140,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             setIsUpdating(false);
         }
     };
+
+    // DEBUG STATE
+    const [debugMessage, setDebugMessage] = useState<string>("");
 
     useEffect(() => {
         fetchNews();
@@ -210,7 +219,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                         {loading && newsItems.length === 0 ? (
                             <div className="text-center text-gray-500 text-sm py-4">Loading news...</div>
                         ) : newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-sm py-4">No news available.</div>
+                            <div className="text-center text-gray-500 text-sm py-4 flex flex-col gap-2">
+                                <span>No news available.</span>
+                                {debugMessage && (
+                                    <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
+                                        DEBUG: {debugMessage}
+                                    </pre>
+                                )}
+                            </div>
                         ) : (
                             newsItems.map((item) => (
                                 <div
