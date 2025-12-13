@@ -115,7 +115,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                                         </div>
                                         <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
                                             <span className="text-xs text-gray-500">Total</span>
-                                            <span className="font-mono font-medium text-gray-300">
+                                            <span className="font-bold text-gray-300">
                                                 ${(tx.amount).toFixed(2)}
                                             </span>
                                         </div>
