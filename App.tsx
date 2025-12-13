@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Team, Order, Wallet, Position, Transaction } from './types';
+import { Team, Order, Wallet, Position, Transaction, League } from './types';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
 import RightPanel from './components/RightPanel';
@@ -19,7 +19,13 @@ import KYCModal from './components/kyc/KYCModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS'>('HOME');
+  const [activeLeague, setActiveLeague] = useState<League>('HOME');
+
+  // ... (skipping unchanged lines)
+
+
+
+
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -217,7 +223,7 @@ const App: React.FC = () => {
     setSelectedOrder(null);
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: League) => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -306,6 +312,7 @@ const App: React.FC = () => {
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
       case 'T20': return 'T20 World Cup';
+      case 'Eurovision': return 'Eurovision Song Contest';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';

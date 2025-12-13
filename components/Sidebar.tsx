@@ -1,11 +1,12 @@
+import { League } from '../types';
 import React, { useState } from 'react';
 import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => void;
+  activeLeague: League;
+  onLeagueChange: (league: League) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {

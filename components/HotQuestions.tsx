@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
-import { Team } from '../types';
+import { Team, League } from '../types';
 import { ArrowRight, TrendingUp, Trophy, Flag, Activity } from 'lucide-react';
 import InfoPopup from './InfoPopup';
 import { getMarketInfo } from '../lib/marketInfo';
 
 interface HotQuestionsProps {
   teams: Team[];
-  onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+  onNavigate: (league: League) => void;
 }
 
 const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
@@ -162,8 +162,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                   return (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                          : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                        : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
                         }`}>
                         {info.isOpen ? 'Market Open' : 'Market Closed'}
                       </span>

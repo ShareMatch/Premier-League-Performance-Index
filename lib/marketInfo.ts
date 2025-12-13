@@ -168,6 +168,26 @@ All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '1 June 2026 - 29 June 2026',
     isOpen: true,
   },
+
+  Eurovision: {
+    title: 'Eurovision Song Contest Performance Index',
+    content: `The Eurovision Song Contest Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+
+Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official contest rankings and odds.
+
+Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing country performance.
+
+Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
+
+Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
+
+Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
+
+The with profits token (i.e., the contest winner) settles at its defined maximum value of $100.0.
+All other tokens settle at their defined minimum value of $0.1.`,
+    seasonDates: '13 May 2026 - 17 May 2026',
+    isOpen: true,
+  },
 };
 
 // Helper function to get market info with fallback

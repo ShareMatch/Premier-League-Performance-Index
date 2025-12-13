@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import type { Team } from '../types';
+import { Team, League } from '../types';
 
 interface TickerProps {
-    onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+    onNavigate: (league: League) => void;
     teams: Team[];
 }
 

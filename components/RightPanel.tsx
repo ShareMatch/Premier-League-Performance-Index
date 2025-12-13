@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import TradeSlip from './TradeSlip';
 import Portfolio from './Portfolio';
-import type { Order, Position, Team, Transaction } from '../types';
+import { Wallet, Position, Order, Team, Transaction, League } from '../types';
 import { History, Activity } from 'lucide-react';
 
 interface RightPanelProps {
@@ -11,7 +11,7 @@ interface RightPanelProps {
     onCloseTradeSlip: () => void;
     onConfirmTrade: (quantity: number) => Promise<void>;
     allAssets: Team[];
-    onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS') => void;
+    onNavigate: (league: League) => void;
     leagueName: string;
 }
 
