@@ -80,17 +80,20 @@ serve(async (req) => {
         const response = await result.response;
         const generatedText = response.text();
 
+        const cleanedText = generatedText.replace(/```json\n|\n```|```/g, "").trim();
+
         let articles = [];
         try {
-            articles = JSON.parse(generatedText || "[]");
+            articles = JSON.parse(cleanedText || "[]");
         } catch (e) {
             console.error("Failed to parse JSON:", e);
-            // Return error to client for debugging
-            throw new Error(`JSON Parse Error: ${e.message}. Raw Text: ${generatedText}`);
+            throw new Error(`JSON Parse Error: ${e.message}. Cleaned Text: ${cleanedText}`);
         }
 
         // 3. Database Update
         let dbStatus = "skipped";
+
+        // Only update timestamp if we actually got news
         if (Array.isArray(articles) && articles.length > 0) {
             // Delete old
             await supabase.from("news_articles").delete().eq("topic", topic);
@@ -107,10 +110,21 @@ serve(async (req) => {
             const { error: insertError } = await supabase.from("news_articles").insert(newsItems);
             if (insertError) throw insertError;
             dbStatus = "updated";
-        }
 
-        // 4. Update Timestamp
-        await supabase.from("news_updates").upsert({ topic, last_updated_at: new Date().toISOString() });
+            // 4. Update Timestamp - ONLY on success
+            await supabase.from("news_updates").upsert({ topic, last_updated_at: new Date().toISOString() });
+        } else {
+            console.warn("No articles found in response");
+            // Do NOT update timestamp so it retries
+            return new Response(JSON.stringify({
+                message: "No articles found",
+                dbStatus: "empty",
+                count: 0,
+                debug_raw: generatedText
+            }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+        }
 
         return new Response(JSON.stringify({
             message: "Success",
