@@ -59,7 +59,7 @@ serve(async (req) => {
         const model = genAI.getGenerativeModel({
             model: 'gemini-2.5-flash',
             tools: [{ googleSearch: {} }],
-            generationConfig: { responseMimeType: "application/json" }
+            // generationConfig: { responseMimeType: "application/json" } // Removed to fix conflict with Tools
         });
 
         const prompt = `Search for the latest news about: "${searchQuery}".
