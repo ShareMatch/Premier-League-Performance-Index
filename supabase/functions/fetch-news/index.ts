@@ -46,6 +46,9 @@ serve(async (req) => {
                 'SPL': 'Saudi Pro League football',
                 'WC': 'FIFA World Cup',
                 'F1': 'Formula 1 racing',
+                'NBA': 'NBA basketball',
+                'NFL': 'NFL football',
+                'Eurovision': 'Eurovision Song Contest',
                 'Global': 'Sports news'
             };
             const query = queryMap[topic] || 'Sports';

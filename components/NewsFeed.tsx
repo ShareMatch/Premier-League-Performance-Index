@@ -38,7 +38,7 @@ const isHaram = (text: string): boolean => {
 };
 
 interface NewsFeedProps {
-    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Global';
+    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Eurovision' | 'Global';
 }
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
@@ -51,19 +51,23 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
     const getTitle = (topic: string) => {
         switch (topic) {
-            case 'EPL': return 'England Premier League News Wire';
-            case 'UCL': return 'UEFA Champions League News Wire';
+            case 'EPL': return 'Premier League News Wire';
+            case 'UCL': return 'Champions League News Wire';
             case 'SPL': return 'Saudi Pro League News Wire';
             case 'WC': return 'FIFA World Cup News Wire';
             case 'F1': return 'Formula 1 News Wire';
             case 'NBA': return 'NBA News Wire';
             case 'NFL': return 'NFL News Wire';
-            default: return 'Global Sports News Wire';
+            case 'Eurovision': return 'Eurovision News Wire';
+            default: return 'ShareMatch NewsWire';
         }
     };
 
     const title = getTitle(topic);
-    const promptContext = topic === 'F1' ? 'Formula 1' : topic === 'NBA' ? 'Basketball' : topic === 'NFL' ? 'American Football' : 'Football';
+    const promptContext = topic === 'F1' ? 'Formula 1' :
+        topic === 'NBA' ? 'Basketball' :
+            topic === 'NFL' ? 'American Football' :
+                topic === 'Eurovision' ? 'Eurovision Song Contest' : 'Football';
 
     const fetchNews = async () => {
         setLoading(true);
@@ -237,7 +241,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             {/* AI Summary Modal */}
             {selectedNews && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-                    <div 
+                    <div
                         className="max-w-[95vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
                         style={{
                             borderRadius: '16px',
@@ -246,7 +250,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                             WebkitBackdropFilter: 'blur(40px)',
                         }}
                     >
-                        <div 
+                        <div
                             className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
                             style={{
                                 background: '#021A1A',
