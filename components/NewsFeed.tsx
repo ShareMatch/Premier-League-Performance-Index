@@ -195,7 +195,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
         <>
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80">
                 <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
-                    <Newspaper className="w-4 h-4 text-[#005430]" />
+                    <Newspaper className="w-4 h-4 text-white" />
                     <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
                     {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />}
                     <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
@@ -214,7 +214,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                                     className="border-b border-gray-700/50 last:border-0 pb-3 last:pb-0 cursor-pointer group/item"
                                     onClick={() => handleNewsClick(item)}
                                 >
-                                    <p className="text-sm font-medium text-gray-300 group-hover/item:text-[#005430] transition-colors line-clamp-2">
+                                    <p className="text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
                                         {item.headline}
                                     </p>
                                     <div className="flex justify-between mt-1 text-xs text-gray-500">

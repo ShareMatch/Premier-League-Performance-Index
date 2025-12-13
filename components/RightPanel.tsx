@@ -47,7 +47,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <button
                     onClick={() => setActiveTab('portfolio')}
                     className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'portfolio'
-                        ? 'text-[#005430] border-b-2 border-[#005430] bg-gray-800/20'
+                        ? 'text-white border-b-2 border-[#005430] bg-gray-800/20'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/10'
                         }`}
                 >
@@ -57,7 +57,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'history'
-                        ? 'text-[#005430] border-b-2 border-[#005430] bg-gray-800/20'
+                        ? 'text-white border-b-2 border-[#005430] bg-gray-800/20'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/10'
                         }`}
                 >

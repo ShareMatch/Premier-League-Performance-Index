@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12] - 2025-12-13
+### Changed
+- **Branding:** Rebranded entire application to use new corporate green (#005430) as primary color.
+- **UI Contrast:** Implemented high-contrast "white on green" styling for:
+    - Sidebar buttons (AI Analytics)
+    - Header badges (Market Status)
+    - Order Book (Buy/Sell prices)
+    - Portfolio (Asset values and active tabs)
+    - Trending Markets (Action buttons)
+- **News Feed:** Upgraded news fetching engine to use **Google Gemini Search Grounding** for real-time, accurate results, replacing deprecated NewsAPI.
+- **News Feed:** Updated feed titles to "ShareMatch [Topic] News Wire".
+
 ## [2.11] - 2025-12-13
 ### Added
 - **Eurovision Market**: Added "Eurovision Song Contest Performance Index" to Global Events.
