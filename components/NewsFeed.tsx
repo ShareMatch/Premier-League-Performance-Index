@@ -134,172 +134,174 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             if (data?.error || data?.dbStatus === 'empty') {
                 setDebugMessage(JSON.stringify(data, null, 2));
             }
-        } catch (err) {
-            console.error('Error updating news:', err);
-        } finally {
-            setIsUpdating(false);
         }
-    };
-
-    // DEBUG STATE
-    const [debugMessage, setDebugMessage] = useState<string>("");
-
-    useEffect(() => {
-        fetchNews();
-    }, [topic]);
-
-    const handleNewsClick = async (item: NewsItem) => {
-        setSelectedNews(item);
-        setSummary('');
-        setLoading(true); // Re-use loading state for modal or create separate one? 
-        // Let's create a local loading state for the modal to avoid hiding the feed
-        // Actually, let's just use a separate state variable for summary loading
-    };
-
-    // Separate loading state for summary
-    const [summaryLoading, setSummaryLoading] = useState(false);
-
-    const generateSummary = async (item: NewsItem) => {
-        setSummaryLoading(true);
-        try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('API Key not found.');
-
-            const ai = new GoogleGenAI({ apiKey });
-            const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash',
-                contents: prompt,
-            });
-
-            setSummary(response.text || 'No summary generated.');
         } catch (err: any) {
-            console.error(err);
-            setSummary('Failed to generate summary.');
-        } finally {
-            setSummaryLoading(false);
-        }
-    };
+        console.error('Error updating news:', err);
+        setDebugMessage(`Client Error: ${err.message || JSON.stringify(err)}`);
+    } finally {
+        setIsUpdating(false);
+    }
+};
 
-    // Trigger summary generation when modal opens
-    useEffect(() => {
-        if (selectedNews) {
-            generateSummary(selectedNews);
-        }
-    }, [selectedNews]);
+// DEBUG STATE
+const [debugMessage, setDebugMessage] = useState<string>("");
 
-    const closeModal = () => {
-        setSelectedNews(null);
-        setSummary('');
-    };
+useEffect(() => {
+    fetchNews();
+}, [topic]);
 
-    const formatTime = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+const handleNewsClick = async (item: NewsItem) => {
+    setSelectedNews(item);
+    setSummary('');
+    setLoading(true); // Re-use loading state for modal or create separate one? 
+    // Let's create a local loading state for the modal to avoid hiding the feed
+    // Actually, let's just use a separate state variable for summary loading
+};
 
-        if (diffInHours < 1) return 'Just now';
-        if (diffInHours < 24) return `${diffInHours}h ago`;
-        return `${Math.floor(diffInHours / 24)}d ago`;
-    };
+// Separate loading state for summary
+const [summaryLoading, setSummaryLoading] = useState(false);
 
-    return (
-        <>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80">
-                <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
-                    <Newspaper className="w-4 h-4 text-white" />
-                    <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
-                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />}
-                    <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
+const generateSummary = async (item: NewsItem) => {
+    setSummaryLoading(true);
+    try {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) throw new Error('API Key not found.');
+
+        const ai = new GoogleGenAI({ apiKey });
+        const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+        });
+
+        setSummary(response.text || 'No summary generated.');
+    } catch (err: any) {
+        console.error(err);
+        setSummary('Failed to generate summary.');
+    } finally {
+        setSummaryLoading(false);
+    }
+};
+
+// Trigger summary generation when modal opens
+useEffect(() => {
+    if (selectedNews) {
+        generateSummary(selectedNews);
+    }
+}, [selectedNews]);
+
+const closeModal = () => {
+    setSelectedNews(null);
+    setSummary('');
+};
+
+const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return `${Math.floor(diffInHours / 24)}d ago`;
+};
+
+return (
+    <>
+        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80">
+            <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
+                <Newspaper className="w-4 h-4 text-white" />
+                <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
+                {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />}
+                <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
+            </div>
+
+            <div className="flex-1 overflow-hidden relative group">
+                <div className="absolute inset-0 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+                    {loading && newsItems.length === 0 ? (
+                        <div className="text-center text-gray-500 text-sm py-4">Loading news...</div>
+                    ) : newsItems.length === 0 ? (
+                        <div className="text-center text-gray-500 text-sm py-4 flex flex-col gap-2">
+                            <span>No news available.</span>
+                            {debugMessage && (
+                                <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
+                                    DEBUG: {debugMessage}
+                                </pre>
+                            )}
+                        </div>
+                    ) : (
+                        newsItems.map((item) => (
+                            <div
+                                key={item.id}
+                                className="border-b border-gray-700/50 last:border-0 pb-3 last:pb-0 cursor-pointer group/item"
+                                onClick={() => handleNewsClick(item)}
+                            >
+                                <p className="text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
+                                    {item.headline}
+                                </p>
+                                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                                    <span>{item.source}</span>
+                                    <span>{formatTime(item.published_at)}</span>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
+            </div>
+        </div>
 
-                <div className="flex-1 overflow-hidden relative group">
-                    <div className="absolute inset-0 overflow-y-auto p-4 space-y-4 scrollbar-hide">
-                        {loading && newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-sm py-4">Loading news...</div>
-                        ) : newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-sm py-4 flex flex-col gap-2">
-                                <span>No news available.</span>
-                                {debugMessage && (
-                                    <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
-                                        DEBUG: {debugMessage}
-                                    </pre>
-                                )}
+        {/* AI Summary Modal */}
+        {selectedNews && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+                <div
+                    className="max-w-[95vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                    style={{
+                        borderRadius: '16px',
+                        background: 'rgba(4, 34, 34, 0.60)',
+                        backdropFilter: 'blur(40px)',
+                        WebkitBackdropFilter: 'blur(40px)',
+                    }}
+                >
+                    <div
+                        className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
+                        style={{
+                            background: '#021A1A',
+                            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                        }}
+                    >
+                        <h3 className="font-bold text-white flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
+                            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
+                            AI News Summary
+                        </h3>
+                        <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
+                            <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </button>
+                    </div>
+
+                    <div className="p-4 sm:p-6">
+                        <h4 className="font-bold text-base sm:text-lg text-white mb-3 sm:mb-4 leading-tight">{selectedNews.headline}</h4>
+
+                        {summaryLoading ? (
+                            <div className="space-y-2 sm:space-y-3 animate-pulse">
+                                <div className="h-2 bg-white/10 rounded w-full"></div>
+                                <div className="h-2 bg-white/10 rounded w-5/6"></div>
+                                <div className="h-2 bg-white/10 rounded w-4/5"></div>
                             </div>
                         ) : (
-                            newsItems.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="border-b border-gray-700/50 last:border-0 pb-3 last:pb-0 cursor-pointer group/item"
-                                    onClick={() => handleNewsClick(item)}
-                                >
-                                    <p className="text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
-                                        {item.headline}
-                                    </p>
-                                    <div className="flex justify-between mt-1 text-xs text-gray-500">
-                                        <span>{item.source}</span>
-                                        <span>{formatTime(item.published_at)}</span>
-                                    </div>
-                                </div>
-                            ))
+                            <p className="text-gray-200 text-xs sm:text-sm leading-relaxed">
+                                {summary}
+                            </p>
                         )}
+
+                        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-white/10 flex justify-end">
+                            <span className="text-[10px] sm:text-xs text-gray-400">Powered by Google Gemini</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* AI Summary Modal */}
-            {selectedNews && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-                    <div
-                        className="max-w-[95vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
-                        style={{
-                            borderRadius: '16px',
-                            background: 'rgba(4, 34, 34, 0.60)',
-                            backdropFilter: 'blur(40px)',
-                            WebkitBackdropFilter: 'blur(40px)',
-                        }}
-                    >
-                        <div
-                            className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
-                            style={{
-                                background: '#021A1A',
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                            }}
-                        >
-                            <h3 className="font-bold text-white flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
-                                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
-                                AI News Summary
-                            </h3>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
-                                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </button>
-                        </div>
-
-                        <div className="p-4 sm:p-6">
-                            <h4 className="font-bold text-base sm:text-lg text-white mb-3 sm:mb-4 leading-tight">{selectedNews.headline}</h4>
-
-                            {summaryLoading ? (
-                                <div className="space-y-2 sm:space-y-3 animate-pulse">
-                                    <div className="h-2 bg-white/10 rounded w-full"></div>
-                                    <div className="h-2 bg-white/10 rounded w-5/6"></div>
-                                    <div className="h-2 bg-white/10 rounded w-4/5"></div>
-                                </div>
-                            ) : (
-                                <p className="text-gray-200 text-xs sm:text-sm leading-relaxed">
-                                    {summary}
-                                </p>
-                            )}
-
-                            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-white/10 flex justify-end">
-                                <span className="text-[10px] sm:text-xs text-gray-400">Powered by Google Gemini</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
+        )}
+    </>
+);
 };
 
 export default NewsFeed;
