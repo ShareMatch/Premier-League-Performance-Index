@@ -18,14 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **News Feed:** Updated feed titles to "ShareMatch [Topic] News Wire".
 - **News Feed:** Switched AI model to **Gemini 2.5 Flash** for improved performance and tool compatibility.
 - **UI:** Added `$` prefix to Ticker prices, Index Valuation text, and Portfolio unit prices for consistency.
-- **UI:** Styled Transaction Slip price with "White on Green" badge for better visibility.
-- **UI:** Unified fonts in Portfolio (removed monospace) to match global design system.
-- **UI:** Added pulsing animation to "Market Open" badges for live status visibility.
+- **UI:** Removed blocky background from Market Headers for a cleaner, responsive design using high-contrast text.
+- **UI:** Fixed "Performance Index" title duplication in page headers.
 - **UI:** Added visual "Season Progress Bar" with start/end dates to all Market Information popups.
 - **UI:** Added helper text to Portfolio to clarify that values reflect "Realizable Value" (Sell Price).
 - **UX:** Enhanced Portfolio interaction: Clicking a holding now opens the Market Page AND the Transaction Slip (defaulting to Buy) for immediate trading.
+- **UX:** Repositioned "AI Market Analysis" button to the right sidebar column to prevent overlapping with the main header on smaller screens.
+- **AI:** Updated AI Analysis prompt to strictly exclude specific prices and percentages, focusing solely on qualitative news and sentiment.
+- **Fix:** Corrected settled prices for F1 Drivers (Lando Norris settled at $100).
 - **UI:** Increased size and visibility of "Info" icons in market headers.
-- **UI:** Fixed responsive layout overlap between AI Analysis button and Header on smaller screens.
 - **Markets:** Opened **FIFA World Cup** market in preparation for upcoming events.
 
 ### Fixed
