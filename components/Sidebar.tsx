@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
       `}>
         <div className="p-6 flex items-center gap-3">
           <img
-            src="/logo-wordmark-green.png"
+            src="/logo-wordmark-green.svg"
             alt="ShareMatch"
             className="w-full h-auto rounded-lg shadow-lg shadow-brand/10"
           />
