@@ -220,7 +220,7 @@ const App: React.FC = () => {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
       setTeams(filtered);
     }
-    setSelectedOrder(null);
+    // Trade slip persisted on navigation
   }, [activeLeague, allAssets]);
 
   const handleNavigate = (league: League) => {
@@ -451,7 +451,7 @@ const App: React.FC = () => {
               allAssets={allAssets}
               onNavigate={handleNavigate}
               onSelectOrder={handleSelectOrder}
-              leagueName={getLeagueTitle(activeLeague)}
+              leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
             />
           </div>
 
