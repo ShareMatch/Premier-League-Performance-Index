@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **News Feed:** Upgraded news fetching engine to use **Google Gemini Search Grounding** for real-time, accurate results, replacing deprecated NewsAPI.
 - **News Feed:** Updated feed titles to "ShareMatch [Topic] News Wire".
 - **News Feed:** Switched AI model to **Gemini 2.5 Flash** for improved performance and tool compatibility.
+- **UI:** Added `$` prefix to Ticker prices, Index Valuation text, and Portfolio unit prices for consistency.
+- **UI:** Styled Transaction Slip price with "White on Green" badge for better visibility.
+- **UI:** Unified fonts in Portfolio (removed monospace) to match global design system.
 
 ### Fixed
 - **News Feed:** Resolved critical "400 Bad Request" error by removing conflicting JSON mode configuration.

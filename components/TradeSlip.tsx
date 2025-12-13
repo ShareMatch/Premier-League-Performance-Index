@@ -114,7 +114,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
               <p className="font-bold text-gray-200 truncate">{order.team.name}</p>
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isBuy ? 'text-[#005430]' : 'text-red-400'}`}>{order.price.toFixed(1)}</p>
+          <p className={`text-2xl font-bold ${isBuy ? 'bg-[#005430] text-white px-2 py-1 rounded' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
         </div>
       </div>
 
