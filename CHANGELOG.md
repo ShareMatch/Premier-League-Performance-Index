@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13] - 2025-12-13
+### Added
+- **AI Analytics:** Added missing markets: T20 Cricket and Eurovision to the analysis engine.
+
+### Changed
+- **Mobile UX:** Improved filter button layout on AI Analytics page to wrap correctly on mobile devices for better accessibility.
+
 ## [2.12] - 2025-12-13
 ### Changed
 - **Branding:** Rebranded entire application to use new corporate green (#005430) as primary color.
