@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { GoogleGenAI } from "https://esm.sh/@google/genai@0.1.3";
+import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -41,42 +41,16 @@ serve(async (req) => {
         const apiKey = Deno.env.get("GEMINI_API_KEY") || bodyApiKey;
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
-        const client = new GoogleGenAI({ apiKey });
-
-        const topicMap: Record<string, string> = {
-            'EPL': 'Premier League football news, transfers, and match reports',
-            'UCL': 'Champions League football news',
-            'SPL': 'Saudi Pro League football news',
-            'WC': 'FIFA World Cup news',
-            'F1': 'Formula 1 racing news and results',
-            'NBA': 'NBA basketball news and trades',
-            'NFL': 'NFL football news',
-            'Eurovision': 'Eurovision Song Contest latest news and odds',
-            'Global': 'Major sports news headlines'
-        };
-
-        const searchQuery = topicMap[topic] || 'Sports news';
-
-        const prompt = `Find the top 5 most recent and important news articles about "${searchQuery}". 
-        
-        Return a JSON array where each object has:
-        - headline: strict title of the article
-        - source: name of the publisher (e.g. BBC, ESPN)
-        - published_at: ISO date string of publication (must be recent)
-        - url: link to the article (if available from search metadata, otherwise omit)
-        
-        Ensure the news is REAL and RECENT (last 24-48 hours). Do NOT fabricate news.`;
-
-        const response = await client.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: prompt,
-            config: {
-                tools: [{ googleSearch: {} }],
-                responseMimeType: 'application/json',
-                systemInstruction: "You are a news aggregator. You strictly output a JSON array of news items based on Google Search results."
-            }
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-1.5-flash',
+            tools: [{ googleSearch: {} }],
+            systemInstruction: "You are a news aggregator. You strictly output a JSON array of news items based on Google Search results.",
+            generationConfig: { responseMimeType: "application/json" }
         });
 
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
         const generatedText = response.text();
         console.log("Gemini Response:", generatedText);
 
