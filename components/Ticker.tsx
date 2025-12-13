@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Team, League } from '../types';
+import { marketInfoData } from '../lib/marketInfo';
 
 interface TickerProps {
     onNavigate: (league: League) => void;
@@ -9,9 +10,15 @@ interface TickerProps {
 
 const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
     const tickerItems = useMemo(() => {
+        // Filter out teams from closed markets
+        const activeTeams = teams.filter(t => {
+            const marketInfo = marketInfoData[t.market || 'Unknown'];
+            return marketInfo && marketInfo.isOpen;
+        });
+
         // Group teams by market
         const marketGroups: { [key: string]: Team[] } = {};
-        teams.forEach(t => {
+        activeTeams.forEach(t => {
             const m = t.market || 'Unknown';
             if (!marketGroups[m]) marketGroups[m] = [];
             marketGroups[m].push(t);
@@ -65,7 +72,8 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
                         onClick={() => handleItemClick(team)}
                     >
                         <span className="font-bold text-gray-300">{team.name}</span>
-                        <span className="text-gray-400">${team.bid.toFixed(1)}</span>
+                        <span className="text-gray-400 font-medium text-xs text-emerald-500">Buy</span>
+                        <span className="text-gray-400">${team.offer.toFixed(1)}</span>
                         {team.lastChange === 'up' ? (
                             <TrendingUp className="w-3 h-3 text-[#005430]" />
                         ) : team.lastChange === 'down' ? (
