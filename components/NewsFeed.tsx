@@ -117,7 +117,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
             if (error) throw error;
 
-            if (data?.updated) {
+            if (data?.dbStatus === 'updated' || data?.updated) {
                 // Refetch to get new items
                 const { data: newData } = await supabase
                     .from('news_articles')
