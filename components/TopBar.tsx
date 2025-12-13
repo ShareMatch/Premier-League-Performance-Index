@@ -162,29 +162,25 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
 
     return (
         <>
-            <div className="h-16 bg-[#005430] md:bg-gray-900 border-b border-[#005430] md:border-gray-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 transition-colors">
+            <div className="h-14 md:h-16 bg-[#005430] md:bg-gray-900 border-b border-[#005430] md:border-gray-800 flex items-center justify-between px-3 md:px-6 flex-shrink-0 transition-colors z-50 relative">
 
                 {/* Left: Mobile Menu & Branding (Visible on Mobile Only) */}
-                <div className="flex items-center gap-3 md:hidden">
+                <div className="flex items-center gap-2 md:hidden overflow-hidden">
                     <button
                         onClick={onMobileMenuClick}
-                        className="text-white p-1 hover:bg-white/10 rounded-md transition-colors"
+                        className="text-white p-1 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
                     </button>
+                    {/* Use Icon only on very small screens if needed, or stick to wordmark but smaller height */}
                     <img
-                        src="/logos/lockup-primary-white.svg"
+                        src="/logos/mobile-header-logo.svg"
                         alt="ShareMatch"
-                        className="h-8 w-auto"
+                        className="h-6 w-auto object-contain max-w-[120px]"
                     />
                 </div>
 
-                {/* Spacer for desktop to push right items to the end if needed, 
-                    though justify-between handles most. 
-                    If desktop needs specific left/right, we can adjust.
-                    Currently desktop has no left items in TopBar, so this spacer is effective 
-                    or the flex container handles it. 
-                */}
+                {/* Spacer for desktop */}
                 <div className="hidden md:block"></div>
 
                 {/* Right: Date, Balance, Avatar */}
@@ -193,82 +189,118 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
                         {formatTime(currentTime)}
                     </div>
 
-                    {/* Balance Dropdown - Only show if user is logged in and not in recovery mode */}
+                    {/* Mobile: Combined Quick Actions (Betfair style) */}
                     {user && !isPasswordRecovery && (
-                        <div className="relative">
+                        <div className="md:hidden flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 overflow-hidden shadow-sm">
+                            {/* Balance Part */}
                             <button
-                                className="flex items-center gap-2 bg-white/10 md:bg-[#005430] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-white/20 md:hover:bg-[#005430]/90 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
                                 onClick={() => setIsBalanceOpen(!isBalanceOpen)}
                             >
-                                <Wallet className="h-4 w-4" />
-                                <span className="font-bold text-sm md:text-base">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                                <span className="font-bold text-white text-sm">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <ChevronDown className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
                             </button>
 
-                            {isBalanceOpen && (
-                                <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                                    <div className="px-4 py-2 border-b border-gray-700">
-                                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
-                                        <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                                    </div>
-                                    <div className="px-4 py-2">
-                                        <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-gray-400">Available</span>
-                                            <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-400">Active Assets</span>
-                                            <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Divider */}
+                            <div className="w-[1px] h-4 bg-[#006035]/50"></div>
+
+                            {/* User Icon Part */}
+                            <button
+                                className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
+                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                            >
+                                <User className="h-4 w-4 text-white" />
+                            </button>
                         </div>
                     )}
 
-                    {/* Avatar Dropdown or Sign In - Hide logged-in state during recovery mode */}
-                    {user && !isPasswordRecovery ? (
-                        <div className="relative">
-                            <button
-                                className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-white/10 md:bg-[#005430]/10 flex items-center justify-center text-white md:text-[#005430] hover:bg-white/20 md:hover:bg-[#005430]/20 transition-colors"
-                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
-                            >
-                                <User className="h-5 w-5" />
-                            </button>
+                    {/* Desktop: Separate Buttons (Unchanged) */}
+                    {user && !isPasswordRecovery && (
+                        <div className="hidden md:flex items-center gap-6">
+                            <div className="relative">
+                                <button
+                                    className="flex items-center gap-2 bg-[#005430] text-white px-4 py-2 rounded-lg hover:bg-[#005430]/90 transition-colors"
+                                    onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                                >
+                                    <Wallet className="h-4 w-4" />
+                                    <span className="font-bold">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {/* Balance Dropdown Logic reused below... actually need to make sure dropdowns position correctly for mobile too */}
+                            </div>
 
-                            {isAvatarOpen && (
-                                <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-50 py-1 animate-in fade-in slide-in-from-top-2">
-                                    <div className="px-4 py-3 border-b border-gray-700">
-                                        <p className="text-sm font-bold text-white truncate">{user.email}</p>
-                                        <p className="text-xs text-gray-400">Last logged in: Today</p>
-                                    </div>
-                                    <div className="py-1">
-                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                            <Settings className="h-4 w-4" /> Settings
-                                        </a>
-                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                            <FileText className="h-4 w-4" /> Portfolio
-                                        </a>
-                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                            <Shield className="h-4 w-4" /> Rules & Regulations
-                                        </a>
-                                        <button
-                                            onClick={() => signOut()}
-                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
-                                        >
-                                            <LogOut className="h-4 w-4" /> Sign Out
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                            <div className="relative">
+                                <button
+                                    className="h-10 w-10 rounded-full bg-[#005430]/10 flex items-center justify-center text-[#005430] hover:bg-[#005430]/20 transition-colors"
+                                    onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                                >
+                                    <User className="h-5 w-5" />
+                                </button>
+                            </div>
                         </div>
-                    ) : (
+                    )}
+
+                    {/* Sign In Button (Logged Out) */}
+                    {!user && (
                         <button
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-white text-[#005430] md:bg-gradient-primary md:text-white hover:bg-gray-100 hover:text-[#005430] px-4 py-2 rounded-full text-sm font-medium transition-colors border border-transparent md:border-0 shadow-lg"
+                            className="bg-white text-[#005430] md:bg-gradient-primary md:text-white hover:bg-gray-100 hover:text-[#005430] px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors border border-transparent md:border-0 shadow-lg"
                         >
                             Sign In
                         </button>
+                    )}
+
+                    {/* Shared Dropdowns (Positioned Absolutely) */}
+                    {/* NOTE: We need to render these dropdowns OUTSIDE the mobile container if they are to show up correctly, 
+                         or ensure the parent containers are relative. 
+                         Let's put them here attached to the right side of the main container.
+                     */}
+
+                    {/* Balance Dropdown */}
+                    {isBalanceOpen && (
+                        <div className="absolute top-14 right-2 md:right-20 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-2 border-b border-gray-700">
+                                <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                            </div>
+                            <div className="px-4 py-2">
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-gray-400">Available</span>
+                                    <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">Active Assets</span>
+                                    <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Avatar Dropdown */}
+                    {isAvatarOpen && (
+                        <div className="absolute top-14 right-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                            <div className="px-4 py-3 border-b border-gray-700">
+                                <p className="text-sm font-bold text-white truncate">{user?.email}</p>
+                                <p className="text-xs text-gray-400">Last logged in: Today</p>
+                            </div>
+                            <div className="py-1">
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                    <Settings className="h-4 w-4" /> Settings
+                                </a>
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                    <FileText className="h-4 w-4" /> Portfolio
+                                </a>
+                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                    <Shield className="h-4 w-4" /> Rules & Regulations
+                                </a>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                                >
+                                    <LogOut className="h-4 w-4" /> Sign Out
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
