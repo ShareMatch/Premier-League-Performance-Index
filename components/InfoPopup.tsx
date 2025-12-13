@@ -29,6 +29,30 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
   const closeModal = () => setIsOpen(false);
 
+  // Helper to parse dates and calculate progress
+  const getProgress = (dateRange: string) => {
+    try {
+      const [startStr, endStr] = dateRange.split(' - ').map(s => s.trim());
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+      const now = new Date();
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+      const totalDuration = end.getTime() - start.getTime();
+      const elapsed = now.getTime() - start.getTime();
+
+      let percentage = (elapsed / totalDuration) * 100;
+      percentage = Math.max(0, Math.min(100, percentage)); // Clamp between 0 and 100
+
+      return { percentage, startStr, endStr };
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const progressInfo = seasonDates ? getProgress(seasonDates) : null;
+
   // Modal content - rendered via portal to document.body
   const modalContent = isOpen ? (
     <div
@@ -63,7 +87,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {isMarketOpen !== undefined && (
               <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold rounded whitespace-nowrap ${isMarketOpen
-                ? 'bg-[#005430] text-white'
+                ? 'bg-[#005430] text-white animate-pulse'
                 : 'bg-amber-500/20 text-amber-500'
                 }`}>
                 {isMarketOpen ? 'Market Open' : 'Market Closed'}
@@ -80,20 +104,26 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
         {/* Content */}
         <div className="px-3 sm:px-5 py-4 sm:py-5">
+          {/* Season Progress Bar */}
+          {progressInfo && (
+            <div className="mb-5 pb-5 border-b border-white/10">
+              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-gray-400 mb-2">
+                <span>Start: {progressInfo.startStr}</span>
+                <span>End: {progressInfo.endStr}</span>
+              </div>
+              <div className="h-2 bg-gray-700/50 rounded-full overflow-hidden relative">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#005430] to-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${progressInfo.percentage}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           <p className="text-gray-200 text-[11px] sm:text-xs leading-relaxed whitespace-pre-line">
             {content}
           </p>
-
-          {/* Season Dates */}
-          {seasonDates && (
-            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/10">
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0 text-[11px] sm:text-xs">
-                <span className="text-gray-400">Event Dates</span>
-                <span className="text-white font-medium">{seasonDates}</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
