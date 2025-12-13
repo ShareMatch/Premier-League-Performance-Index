@@ -50,17 +50,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
     const [isUpdating, setIsUpdating] = useState(false);
 
     const getTitle = (topic: string) => {
-        switch (topic) {
-            case 'EPL': return 'Premier League News Wire';
-            case 'UCL': return 'Champions League News Wire';
-            case 'SPL': return 'Saudi Pro League News Wire';
-            case 'WC': return 'FIFA World Cup News Wire';
-            case 'F1': return 'Formula 1 News Wire';
-            case 'NBA': return 'NBA News Wire';
-            case 'NFL': return 'NFL News Wire';
-            case 'Eurovision': return 'Eurovision News Wire';
-            default: return 'ShareMatch NewsWire';
-        }
+        return `ShareMatch ${topic === 'Global' ? '' : topic + ' '}News Wire`;
     };
 
     const title = getTitle(topic);
