@@ -5,9 +5,10 @@ interface PortfolioProps {
     portfolio: Position[];
     allAssets: Team[];
     onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+    onSelectAsset: (team: Team, type: 'buy' | 'sell') => void;
 }
 
-const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate, onSelectAsset }) => {
 
     const getMarketName = (market: string): string => {
         const marketNames: Record<string, string> = {
@@ -15,7 +16,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate 
             'UCL': 'Champions League',
             'WC': 'World Cup',
             'SPL': 'Saudi Pro League',
-            'F1': 'Formula 1'
+            'F1': 'Formula 1',
+            'NBA': 'NBA',
+            'NFL': 'NFL'
         };
         return marketNames[market] || market;
     };
@@ -34,9 +37,15 @@ const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate 
         }).filter(h => h.quantity > 0);
     }, [portfolio, allAssets]);
 
-    const handleRowClick = (market: string) => {
-        if (market && market !== 'Unknown') {
-            onNavigate(market as any);
+    const handleRowClick = (holding: any) => {
+        // 1. Navigate to the market
+        if (holding.market && holding.market !== 'Unknown') {
+            onNavigate(holding.market as any);
+        }
+
+        // 2. Open the Transaction Slip (Default to Buy)
+        if (holding.asset) {
+            onSelectAsset(holding.asset, 'buy');
         }
     };
 
@@ -54,7 +63,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ portfolio, allAssets, onNavigate 
                 <div
                     key={holding.id}
                     className="bg-gray-800/50 p-3 rounded border border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700/50 transition-colors"
-                    onClick={() => handleRowClick(holding.market)}
+                    onClick={() => handleRowClick(holding)}
                     role="button"
                     tabIndex={0}
                 >

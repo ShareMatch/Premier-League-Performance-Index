@@ -450,6 +450,7 @@ const App: React.FC = () => {
               onConfirmTrade={handleConfirmTrade}
               allAssets={allAssets}
               onNavigate={handleNavigate}
+              onSelectOrder={handleSelectOrder}
               leagueName={getLeagueTitle(activeLeague)}
             />
           </div>
