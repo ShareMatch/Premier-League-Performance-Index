@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11] - 2025-12-13
+### Added
+- **Eurovision Market**: Added "Eurovision Song Contest Performance Index" to Global Events.
+- **Assets**: Added initial asset listings for Eurovision 2026.
+- **Frontend Refactor**: Introduced shared `League` type in `types.ts`.
+
+### Changed
+- **Asset Prices**: Updated prices for all markets.
+- **Sidebar**: Fixed issue where "Eurovision" link was not clickable.
+- **Global Events**: Enabled "Global Events" in sidebar.
+
 ## [2.10] - 2025-12-09
 ### Added
 - **Market Settlement:** Implemented full backend settlement logic for closed markets (e.g., F1 2025).
