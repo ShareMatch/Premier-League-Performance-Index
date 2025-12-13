@@ -64,7 +64,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
     },
     { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
 
-    { icon: Globe, label: 'Global Events', badge: 'SOON' },
+    {
+      icon: Globe,
+      label: 'Global Events',
+      subItems: [
+        { label: 'Eurovision', id: 'Eurovision', active: activeLeague === 'Eurovision' }
+      ]
+    },
     { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
   ];
 
