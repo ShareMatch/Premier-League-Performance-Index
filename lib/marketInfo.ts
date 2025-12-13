@@ -106,7 +106,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
     seasonDates: '11 June 2026 - 19 July 2026',
-    isOpen: false,
+    isOpen: true,
   },
 
   NBA: {
