@@ -111,7 +111,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                 body: {
                     topic,
                     apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-                    force: true // Force update to fix stale data
+                    // force: true // Removed to re-enable caching
                 }
             });
 
