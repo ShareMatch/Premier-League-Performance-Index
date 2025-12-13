@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         { label: 'Eurovision', id: 'Eurovision', active: activeLeague === 'Eurovision' }
       ]
     },
-    { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
+    { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS', className: 'text-brand-emerald500 font-bold bg-brand-emerald500/10' },
   ];
 
   return (
@@ -120,8 +120,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${item.id === 'AI_ANALYTICS'
                     ? (item.active
-                      ? 'bg-brand-emerald500/10 text-brand-emerald500'
-                      : 'text-brand-emerald500 hover:bg-brand-emerald500/10 hover:text-brand-emerald500')
+                      ? 'bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold'
+                      : 'text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20')
                     : (item.active
                       ? 'bg-brand-emerald500/10 text-brand-emerald500'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200')

@@ -14,7 +14,7 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
     <div className="flex items-center justify-between py-3 sm:py-4">
       {/* Left: Title & Subtitle */}
       <div className="flex flex-col">
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-[#005430]">
+        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold bg-[#005430] text-white px-3 py-1 rounded-lg shadow-lg shadow-[#005430]/20 inline-block">
           {title} Performance Index
         </h1>
         <p className="text-gray-400 text-xs sm:text-sm">Tokenised Asset Marketplace</p>
@@ -24,8 +24,8 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <span
           className={`px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-bold rounded border whitespace-nowrap ${marketInfo.isOpen
-              ? 'bg-[#005430]/10 text-[#005430] border-[#005430]/30'
-              : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+            ? 'bg-[#005430] text-white border-[#005430]'
+            : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
             }`}
         >
           {marketInfo.isOpen ? 'Market Open' : 'Market Closed'}

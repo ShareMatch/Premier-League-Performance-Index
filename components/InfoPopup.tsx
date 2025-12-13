@@ -63,8 +63,8 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {isMarketOpen !== undefined && (
               <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold rounded whitespace-nowrap ${isMarketOpen
-                  ? 'bg-[#005430]/20 text-[#005430]'
-                  : 'bg-amber-500/20 text-amber-500'
+                ? 'bg-[#005430] text-white'
+                : 'bg-amber-500/20 text-amber-500'
                 }`}>
                 {isMarketOpen ? 'Market Open' : 'Market Closed'}
               </span>

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { GoogleGenAI } from "https://esm.sh/@google/genai@0.1.3";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -35,43 +36,69 @@ serve(async (req) => {
             });
         }
 
-        // 2. Fetch from NewsAPI
-        const apiKey = Deno.env.get("NEWS_API_KEY");
+        // 2. Fetch from Google Gemini with Search Grounding
+        const apiKey = Deno.env.get("GEMINI_API_KEY");
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
+
+        const client = new GoogleGenAI({ apiKey });
+
+        const topicMap: Record<string, string> = {
+            'EPL': 'Premier League football news, transfers, and match reports',
+            'UCL': 'Champions League football news',
+            'SPL': 'Saudi Pro League football news',
+            'WC': 'FIFA World Cup news',
+            'F1': 'Formula 1 racing news and results',
+            'NBA': 'NBA basketball news and trades',
+            'NFL': 'NFL football news',
+            'Eurovision': 'Eurovision Song Contest latest news and odds',
+            'Global': 'Major sports news headlines'
+        };
+
+        const searchQuery = topicMap[topic] || 'Sports news';
+
+        const prompt = `Find the top 5 most recent and important news articles about "${searchQuery}". 
+        
+        Return a JSON array where each object has:
+        - headline: strict title of the article
+        - source: name of the publisher (e.g. BBC, ESPN)
+        - published_at: ISO date string of publication (must be recent)
+        - url: link to the article (if available from search metadata, otherwise omit)
+        
+        Ensure the news is REAL and RECENT (last 24-48 hours). Do NOT fabricate news.`;
+
+        const response = await client.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+                responseMimeType: 'application/json',
+                systemInstruction: "You are a news aggregator. You strictly output a JSON array of news items based on Google Search results."
+            }
+        });
+
+        const generatedText = response.text();
+        console.log("Gemini Response:", generatedText);
+
         let articles = [];
-
-        if (apiKey) {
-            const queryMap = {
-                'EPL': 'Premier League football',
-                'UCL': 'Champions League football',
-                'SPL': 'Saudi Pro League football',
-                'WC': 'FIFA World Cup',
-                'F1': 'Formula 1 racing',
-                'NBA': 'NBA basketball',
-                'NFL': 'NFL football',
-                'Eurovision': 'Eurovision Song Contest',
-                'Global': 'Sports news'
-            };
-            const query = queryMap[topic] || 'Sports';
-            const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-            if (data.status === 'ok') articles = data.articles;
-            else console.error("News API Error:", data);
+        try {
+            articles = JSON.parse(generatedText || "[]");
+        } catch (e) {
+            console.error("Failed to parse Gemini JSON:", e);
+            throw new Error("Failed to parse news data");
         }
 
         // 3. Insert into Database (Delete old -> Insert new)
-        if (articles.length > 0) {
+        if (Array.isArray(articles) && articles.length > 0) {
             // Delete old items for this topic
             await supabase.from("news_articles").delete().eq("topic", topic);
 
             const newsItems = articles.map((a: any) => ({
                 topic,
-                headline: a.title || "No Headline",
-                source: a.source?.name || "Unknown",
-                url: a.url,
-                published_at: a.publishedAt || new Date().toISOString(),
-            })).filter((i: any) => i.url && i.headline);
+                headline: a.headline || "News Update",
+                source: a.source || "ShareMatch Wire",
+                url: a.url || null,
+                published_at: a.published_at || new Date().toISOString(),
+            }));
 
             // Insert new items
             const { error: insertError } = await supabase.from("news_articles").insert(newsItems);
@@ -89,11 +116,12 @@ serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        return new Response(JSON.stringify({ message: "News updated", updated: true }), {
+        return new Response(JSON.stringify({ message: "News updated", updated: true, count: articles.length }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
 
     } catch (error: any) {
+        console.error("News Fetch Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
