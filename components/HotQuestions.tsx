@@ -172,7 +172,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                         content={info.content}
                         seasonDates={info.seasonDates}
                         isMarketOpen={info.isOpen}
-                        iconSize={22}
+                        iconSize={24}
+                        iconClassName="text-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer"
                       />
                     </div>
                   );
