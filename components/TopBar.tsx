@@ -174,7 +174,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
                     </button>
                     {/* Use Icon only on very small screens if needed, or stick to wordmark but smaller height */}
                     <img
-                        src="/logos/mobile-header-logo.svg"
+                        src="/logos/mobile-header-logo-matched.svg"
                         alt="ShareMatch"
                         className="h-6 w-auto object-contain max-w-[120px]"
                     />
