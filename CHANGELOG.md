@@ -21,13 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Styled Transaction Slip price with "White on Green" badge for better visibility.
 - **UI:** Unified fonts in Portfolio (removed monospace) to match global design system.
 - **UI:** Added pulsing animation to "Market Open" badges for live status visibility.
+- **UI:** Increased size and visibility of "Info" icons in market headers.
 - **UI:** Fixed responsive layout overlap between AI Analysis button and Header on smaller screens.
+- **Markets:** Opened **FIFA World Cup** market in preparation for upcoming events.
 
 ### Fixed
 - **News Feed:** Resolved critical "400 Bad Request" error by removing conflicting JSON mode configuration.
 - **News Feed:** Resolved "404 Model Not Found" error by updating deprecated `v1beta` model alias.
-- **News Feed:** Fixed client-side bug where news list would not refresh despite successful backend update (mismatch between `dbStatus` and `updated` flags).
-- **News Feed:** Re-enabled 6-hour caching mechanism to optimize API usage and reduce costs.
+- **News Feed:** Fixed client-side bug where news list would not refresh despite successful backend update.
+- **News Feed:** Re-enabled 6-hour caching mechanism to optimize API usage.
+- **News Feed:** Added robust error handling to display specific API errors in the client debug panel.
 
 ## [2.11] - 2025-12-13
 ### Added
