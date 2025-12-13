@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UI:** Added visual "Season Progress Bar" with start/end dates to all Market Information popups.
 - **UI:** Added helper text to Portfolio to clarify that values reflect "Realizable Value" (Sell Price).
 - **UX:** Enhanced Portfolio interaction: Clicking a holding now opens the Market Page AND the Transaction Slip (defaulting to Buy) for immediate trading.
+- **UX:** Trade Slip now persists during navigation, preventing accidental cancellation of trades.
 - **UI:** Updated Ticker to hide assets from closed markets (like F1).
 - **UI:** Updated Ticker to display Buy Price (Offer) instead of Sell Price, with explicit "Buy" label.
 - **UX:** Repositioned "AI Market Analysis" button to the right sidebar column to prevent overlapping with the main header on smaller screens.
