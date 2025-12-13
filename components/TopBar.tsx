@@ -173,7 +173,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                     {user && !isPasswordRecovery && (
                         <div className="relative">
                             <button
-                                className="flex items-center gap-2 bg-[#3AA189] text-white px-4 py-2 rounded-lg hover:bg-[#2d826f] transition-colors"
+                                className="flex items-center gap-2 bg-[#005430] text-white px-4 py-2 rounded-lg hover:bg-[#005430]/90 transition-colors"
                                 onClick={() => setIsBalanceOpen(!isBalanceOpen)}
                             >
                                 <Wallet className="h-4 w-4" />
@@ -206,7 +206,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                     {user && !isPasswordRecovery ? (
                         <div className="relative">
                             <button
-                                className="h-10 w-10 rounded-full bg-[#3AA189]/10 flex items-center justify-center text-[#3AA189] hover:bg-[#3AA189]/20 transition-colors"
+                                className="h-10 w-10 rounded-full bg-[#005430]/10 flex items-center justify-center text-[#005430] hover:bg-[#005430]/20 transition-colors"
                                 onClick={() => setIsAvatarOpen(!isAvatarOpen)}
                             >
                                 <User className="h-5 w-5" />

@@ -133,7 +133,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-[#3AA189]" />
+          <TrendingUp className="w-6 h-6 text-[#005430]" />
           Trending Markets
         </h2>
       </div>
@@ -162,7 +162,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                   return (
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                        ? 'bg-[#005430]/10 text-[#005430] border-[#005430]/30'
                         : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
                         }`}>
                         {info.isOpen ? 'Market Open' : 'Market Closed'}
@@ -184,9 +184,9 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
               </h3>
 
               <div className="mt-auto grid grid-cols-2 gap-3">
-                <button className="flex flex-col items-center justify-center bg-[#3AA189]/10 hover:bg-[#3AA189]/20 border border-[#3AA189]/30 rounded-lg p-2 transition-colors group/btn">
-                  <span className="text-xs text-[#3AA189] font-medium mb-1">Buy</span>
-                  <span className="text-lg font-bold text-[#3AA189]">${q.yesPrice.toFixed(1)}</span>
+                <button className="flex flex-col items-center justify-center bg-[#005430]/10 hover:bg-[#005430]/20 border border-[#005430]/30 rounded-lg p-2 transition-colors group/btn">
+                  <span className="text-xs text-[#005430] font-medium mb-1">Buy</span>
+                  <span className="text-lg font-bold text-[#005430]">${q.yesPrice.toFixed(1)}</span>
                 </button>
                 <button className="flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg p-2 transition-colors group/btn">
                   <span className="text-xs text-red-400 font-medium mb-1">Sell</span>

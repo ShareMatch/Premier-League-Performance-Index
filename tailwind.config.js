@@ -12,14 +12,14 @@ export default {
         extend: {
             colors: {
                 brand: {
-                    emerald900: '#064e3b',
-                    emerald500: '#10b981',
+                    emerald900: '#005430',
+                    emerald500: '#005430',
                     cream: '#FDFBF7',
                     amber500: '#f59e0b',
                     amber400: '#fbbf24',
                     // Legacy support
-                    dark: '#064e3b',
-                    DEFAULT: '#10b981',
+                    dark: '#005430',
+                    DEFAULT: '#005430',
                     accent: '#f59e0b',
                     gold: '#fbbf24',
                 },
@@ -40,10 +40,10 @@ export default {
             boxShadow: {
                 'card': '0 1px 3px rgba(0,0,0,0.08)',
                 'heavy': '0 4px 12px rgba(0,0,0,0.10)',
-                'glow': '0 0 15px rgba(16,185,129,0.3)',
+                'glow': '0 0 15px rgba(0, 84, 48, 0.3)',
             },
             backgroundImage: {
-                'gradient-primary': 'linear-gradient(180deg, #019170 15.25%, #3AA189 49.58%, #019170 83.9%)',
+                'gradient-primary': 'linear-gradient(180deg, #005430 15.25%, #005430 49.58%, #005430 83.9%)',
             },
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],

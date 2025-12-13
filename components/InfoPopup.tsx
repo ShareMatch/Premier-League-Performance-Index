@@ -23,7 +23,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   seasonDates,
   isMarketOpen,
   iconSize = 16,
-  iconClassName = 'text-[#3AA189] hover:text-[#2d8a73] transition-colors cursor-pointer',
+  iconClassName = 'text-[#005430] hover:text-[#005430]/80 transition-colors cursor-pointer',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,14 +31,14 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
   // Modal content - rendered via portal to document.body
   const modalContent = isOpen ? (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
       onClick={(e) => {
         e.stopPropagation();
         closeModal();
       }}
     >
-      <div 
+      <div
         className="max-w-[95vw] sm:max-w-lg md:max-w-2xl w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
         style={{
           borderRadius: '16px',
@@ -49,7 +49,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div 
+        <div
           className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
           style={{
             background: '#021A1A',
@@ -57,21 +57,20 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           }}
         >
           <h3 className="font-bold text-white flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm truncate mr-2">
-            <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#3AA189] flex-shrink-0" />
+            <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
             <span className="truncate">{title}</span>
           </h3>
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {isMarketOpen !== undefined && (
-              <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold rounded whitespace-nowrap ${
-                isMarketOpen 
-                  ? 'bg-[#3AA189]/20 text-[#3AA189]' 
+              <span className={`px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold rounded whitespace-nowrap ${isMarketOpen
+                  ? 'bg-[#005430]/20 text-[#005430]'
                   : 'bg-amber-500/20 text-amber-500'
-              }`}>
+                }`}>
                 {isMarketOpen ? 'Market Open' : 'Market Closed'}
               </span>
             )}
-            <button 
-              onClick={closeModal} 
+            <button
+              onClick={closeModal}
               className="text-gray-400 hover:text-white transition-colors"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />

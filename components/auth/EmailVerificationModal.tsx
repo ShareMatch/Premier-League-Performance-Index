@@ -34,7 +34,7 @@ const OTPInput: React.FC<{
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const inputValue = e.target.value;
-    
+
     // Only allow digits
     if (!/^\d*$/.test(inputValue)) return;
 
@@ -82,14 +82,14 @@ const OTPInput: React.FC<{
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
-    
+
     if (pastedData.length > 0) {
       const newValue = [...value];
       for (let i = 0; i < CODE_LENGTH; i++) {
         newValue[i] = pastedData[i] || '';
       }
       onChange(newValue);
-      
+
       // Focus the last filled input or the next empty one
       const focusIndex = Math.min(pastedData.length, CODE_LENGTH - 1);
       focusInput(focusIndex);
@@ -110,7 +110,7 @@ const OTPInput: React.FC<{
       {Array.from({ length: CODE_LENGTH }).map((_, index) => (
         <input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
@@ -130,9 +130,9 @@ const OTPInput: React.FC<{
             outline-none
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${hasError 
-              ? 'ring-2 ring-red-500 focus:ring-red-500' 
-              : 'focus:ring-2 focus:ring-[#3AA189]'
+            ${hasError
+              ? 'ring-2 ring-red-500 focus:ring-red-500'
+              : 'focus:ring-2 focus:ring-[#005430]'
             }
           `}
           style={{ fontFamily: "'Inter', sans-serif" }}
@@ -301,11 +301,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
         {/* Success Toast - Above Title */}
         {status === 'success' && (
-          <div 
+          <div
             className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500"
           >
             <CheckCircle className="w-5 h-5 text-brand-emerald500" />
-            <p 
+            <p
               className="font-medium text-brand-emerald500 font-sans text-sm"
             >
               Email verified successfully!
@@ -314,7 +314,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         )}
 
         {/* Title - Outside Inner Container */}
-        <h1 
+        <h1
           className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap font-bold"
           style={{ fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)" }}
         >
@@ -338,7 +338,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
           {/* Verification Form - Always visible */}
           <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
             {/* Description */}
-            <p 
+            <p
               className="text-center text-white font-sans text-sm"
             >
               We've sent a 6-digit verification code to your email address. Please enter the code below to continue.
@@ -362,10 +362,9 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Status Message */}
             {message && status !== 'success' && (
-              <p 
-                className={`text-center text-sm font-sans ${
-                  status === 'error' ? 'text-red-400' : 'text-gray-400'
-                }`}
+              <p
+                className={`text-center text-sm font-sans ${status === 'error' ? 'text-red-400' : 'text-gray-400'
+                  }`}
               >
                 {message}
               </p>
@@ -381,7 +380,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             />
 
             {/* Timer */}
-            <p 
+            <p
               className="text-center text-white font-semibold font-sans text-lg"
             >
               {formatTime(timeLeft)}
@@ -389,7 +388,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Resend */}
             <div className="text-center">
-              <span 
+              <span
                 className="text-white text-sm"
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
@@ -399,11 +398,10 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 type="button"
                 onClick={handleResend}
                 disabled={isResendDisabled}
-                className={`text-sm font-semibold transition-colors ${
-                  isResendDisabled 
-                    ? 'text-gray-500 cursor-not-allowed' 
-                    : 'text-[#3AA189] hover:text-white'
-                }`}
+                className={`text-sm font-semibold transition-colors ${isResendDisabled
+                  ? 'text-gray-500 cursor-not-allowed'
+                  : 'text-[#005430] hover:text-white'
+                  }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 Resend
@@ -413,23 +411,21 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             {/* Verify Button - Inside Container */}
             <div className="flex justify-center pt-2">
               <div
-                className={`rounded-full transition-all duration-300 p-0.5 ${
-                  isButtonHovered && isCodeComplete
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
-                }`}
+                className={`rounded-full transition-all duration-300 p-0.5 ${isButtonHovered && isCodeComplete
+                  ? 'border border-white shadow-glow'
+                  : 'border border-brand-emerald500'
+                  }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
                 <button
                   type="button"
-                  onClick={handleVerify}
+                  onClick={() => handleVerify()}
                   disabled={isVerifyDisabled}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                    isButtonHovered && isCodeComplete
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
-                  }`}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${isButtonHovered && isCodeComplete
+                    ? 'bg-white text-brand-emerald500'
+                    : 'bg-gradient-primary text-white'
+                    }`}
                 >
                   {status === 'verifying' ? 'Verifying...' : 'Verify'}
                   {status !== 'verifying' && (

@@ -91,15 +91,15 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
         <button
           onClick={getAnalysis}
           disabled={loading}
-          className="bg-brand-emerald500/80 hover:bg-[#3AA189] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
         >
           <SparkleIcon className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
           <span className="text-sm">
             {loading
               ? "Analyzing..."
               : analysis
-              ? "Regenerate Analysis"
-              : "Get AI Market Analysis"}
+                ? "Regenerate Analysis"
+                : "Get AI Market Analysis"}
           </span>
         </button>
 
@@ -133,7 +133,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
 
       {analysis && !loading && isVisible && (
         <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-sm font-bold text-[#3AA189] flex items-center gap-2 mb-2">
+          <h3 className="text-sm font-bold text-[#005430] flex items-center gap-2 mb-2">
             <SparkleIcon className="w-4 h-4" />
             AI Market Commentary
           </h3>

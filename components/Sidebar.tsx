@@ -106,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             <input
               type="text"
               placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs focus:outline-none focus:border-[#3AA189] text-gray-300 placeholder-gray-600 transition-colors"
+              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs focus:outline-none focus:border-[#005430] text-gray-300 placeholder-gray-600 transition-colors"
             />
           </div>
         </div>
@@ -187,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                               className={`
                                 w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
                                 ${deepItem.active
-                                  ? 'bg-[#3AA189] text-white font-medium shadow-lg shadow-[#3AA189]/20'
+                                  ? 'bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20'
                                   : (deepItem as any).badge
                                     ? 'text-gray-600 cursor-not-allowed'
                                     : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'

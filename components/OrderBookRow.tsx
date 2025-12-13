@@ -24,7 +24,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
   }, [team.lastChange, team.bid, team.offer]);
 
   const flashClass = flash === 'up'
-    ? 'bg-[#3AA189]/20'
+    ? 'bg-[#005430]/20'
     : flash === 'down'
       ? 'bg-red-500/20'
       : '';
@@ -90,7 +90,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
             tabIndex={0}
             aria-label={`Buy ${team.name} Performance Index at $${team.offer.toFixed(1)}`}
           >
-            <span className="font-semibold text-[#3AA189]">${team.offer.toFixed(1)}</span>
+            <span className="font-semibold text-[#005430]">${team.offer.toFixed(1)}</span>
           </div>
         </>
       )}

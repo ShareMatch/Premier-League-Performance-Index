@@ -47,7 +47,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <button
                     onClick={() => setActiveTab('portfolio')}
                     className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'portfolio'
-                        ? 'text-[#3AA189] border-b-2 border-[#3AA189] bg-gray-800/20'
+                        ? 'text-[#005430] border-b-2 border-[#005430] bg-gray-800/20'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/10'
                         }`}
                 >
@@ -57,7 +57,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'history'
-                        ? 'text-[#3AA189] border-b-2 border-[#3AA189] bg-gray-800/20'
+                        ? 'text-[#005430] border-b-2 border-[#005430] bg-gray-800/20'
                         : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/10'
                         }`}
                 >
@@ -71,7 +71,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 {activeTab === 'portfolio' ? (
                     <>
                         <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-[#3AA189] rounded-sm"></span>
+                            <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                             Your Portfolio
                         </h2>
                         <Portfolio
@@ -99,7 +99,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                                             <span className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === 'settlement'
                                                 ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                                                 : tx.direction === 'buy'
-                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                                    ? 'bg-brand/10 text-brand border border-brand/20'
                                                     : 'bg-red-500/10 text-red-500 border border-red-500/20'
                                                 }`}>
                                                 {tx.type === 'settlement' ? 'Settled' : tx.direction}
