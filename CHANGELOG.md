@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Trending Markets (Action buttons)
 - **News Feed:** Upgraded news fetching engine to use **Google Gemini Search Grounding** for real-time, accurate results, replacing deprecated NewsAPI.
 - **News Feed:** Updated feed titles to "ShareMatch [Topic] News Wire".
+- **News Feed:** Switched AI model to **Gemini 2.5 Flash** for improved performance and tool compatibility.
+
+### Fixed
+- **News Feed:** Resolved critical "400 Bad Request" error by removing conflicting JSON mode configuration.
+- **News Feed:** Resolved "404 Model Not Found" error by updating deprecated `v1beta` model alias.
+- **News Feed:** Fixed client-side bug where news list would not refresh despite successful backend update (mismatch between `dbStatus` and `updated` flags).
+- **News Feed:** Re-enabled 6-hour caching mechanism to optimize API usage and reduce costs.
 
 ## [2.11] - 2025-12-13
 ### Added
