@@ -150,11 +150,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   {item.subItems.map((subItem) => (
                     <div key={subItem.label}>
                       <button
-                        onClick={() => subItem.subItems && toggleExpand(subItem.label)}
+                        onClick={() => subItem.subItems ? toggleExpand(subItem.label) : (subItem.id && onLeagueChange(subItem.id as any))}
                         className={`
                           w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                          ${(subItem as any).badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200'}
-                          text-gray-400
+                          ${(subItem as any).badge
+                            ? 'cursor-not-allowed opacity-60 text-gray-400'
+                            : subItem.active
+                              ? 'bg-brand-emerald500/10 text-brand-emerald500'
+                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                          }
                         `}
                       >
                         <div className="flex items-center gap-2">
