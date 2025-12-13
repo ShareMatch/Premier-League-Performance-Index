@@ -137,9 +137,8 @@ serve(async (req) => {
 
     } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), {
-            return new Response(JSON.stringify({ error: error.message }), {
-                status: 200, // Return 200 so client can read the error message
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-        }
+            status: 200, // Return 200 so client can read the error message
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
 });
