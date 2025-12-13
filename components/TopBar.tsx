@@ -15,6 +15,7 @@ import type { VerificationRequiredData } from './auth/LoginModal';
 interface TopBarProps {
     wallet: WalletType | null;
     portfolioValue?: number;
+    onMobileMenuClick: () => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -43,7 +44,7 @@ interface PendingVerification {
     maskedWhatsapp?: string;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
+const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMenuClick }) => {
     const { user, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -161,10 +162,33 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
 
     return (
         <>
-            <div className="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-end px-6 flex-shrink-0">
+            <div className="h-16 bg-[#005430] md:bg-gray-900 border-b border-[#005430] md:border-gray-800 flex items-center justify-between px-4 md:px-6 flex-shrink-0 transition-colors">
+
+                {/* Left: Mobile Menu & Branding (Visible on Mobile Only) */}
+                <div className="flex items-center gap-3 md:hidden">
+                    <button
+                        onClick={onMobileMenuClick}
+                        className="text-white p-1 hover:bg-white/10 rounded-md transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                    </button>
+                    <img
+                        src="/logos/lockup-primary-white.svg"
+                        alt="ShareMatch"
+                        className="h-8 w-auto"
+                    />
+                </div>
+
+                {/* Spacer for desktop to push right items to the end if needed, 
+                    though justify-between handles most. 
+                    If desktop needs specific left/right, we can adjust.
+                    Currently desktop has no left items in TopBar, so this spacer is effective 
+                    or the flex container handles it. 
+                */}
+                <div className="hidden md:block"></div>
 
                 {/* Right: Date, Balance, Avatar */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 md:gap-6">
                     <div className="text-sm font-medium text-gray-400 hidden lg:block border-r border-gray-800 pr-6">
                         {formatTime(currentTime)}
                     </div>
@@ -173,11 +197,11 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                     {user && !isPasswordRecovery && (
                         <div className="relative">
                             <button
-                                className="flex items-center gap-2 bg-[#005430] text-white px-4 py-2 rounded-lg hover:bg-[#005430]/90 transition-colors"
+                                className="flex items-center gap-2 bg-white/10 md:bg-[#005430] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-white/20 md:hover:bg-[#005430]/90 transition-colors"
                                 onClick={() => setIsBalanceOpen(!isBalanceOpen)}
                             >
                                 <Wallet className="h-4 w-4" />
-                                <span className="font-bold">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                <span className="font-bold text-sm md:text-base">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
                                 <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
                             </button>
 
@@ -206,7 +230,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                     {user && !isPasswordRecovery ? (
                         <div className="relative">
                             <button
-                                className="h-10 w-10 rounded-full bg-[#005430]/10 flex items-center justify-center text-[#005430] hover:bg-[#005430]/20 transition-colors"
+                                className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-white/10 md:bg-[#005430]/10 flex items-center justify-center text-white md:text-[#005430] hover:bg-white/20 md:hover:bg-[#005430]/20 transition-colors"
                                 onClick={() => setIsAvatarOpen(!isAvatarOpen)}
                             >
                                 <User className="h-5 w-5" />
@@ -241,7 +265,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0 }) => {
                     ) : (
                         <button
                             onClick={() => setShowLoginModal(true)}
-                            className="bg-gradient-primary text-white hover:bg-white hover:text-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                            className="bg-white text-[#005430] md:bg-gradient-primary md:text-white hover:bg-gray-100 hover:text-[#005430] px-4 py-2 rounded-full text-sm font-medium transition-colors border border-transparent md:border-0 shadow-lg"
                         >
                             Sign In
                         </button>

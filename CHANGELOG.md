@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Global Search:** Implemented fully functional sidebar search bar to find assets across all markets.
 - **Voice Search:** Integrated Voice-to-Text using Web Speech API for hands-free search capability.
 - **UX:** Search results now display market context (e.g., "Arsenal • EPL" vs "Arsenal • UCL") to handle duplicate team names.
+- **Mobile Branding:** Redesigned mobile header with Corporate Green background and integrated ShareMatch logo, mirroring premium app design.
 
 ## [2.13] - 2025-12-13
 ### Added

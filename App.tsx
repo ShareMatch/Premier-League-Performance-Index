@@ -343,14 +343,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
-      {/* Mobile Menu Button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      >
-        {isMobileMenuOpen ? <X /> : <Menu />}
-      </button>
-
       {/* Sidebar */}
       <Sidebar
         isOpen={isMobileMenuOpen}
@@ -363,7 +355,11 @@ const App: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <TopBar wallet={wallet} portfolioValue={portfolioValue} />
+        <TopBar
+          wallet={wallet}
+          portfolioValue={portfolioValue}
+          onMobileMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        />
 
         {/* Content Container (Main + Right Panel) */}
         <div className="flex-1 flex overflow-hidden">
