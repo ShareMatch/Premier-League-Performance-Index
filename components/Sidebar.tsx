@@ -1,16 +1,21 @@
-import { League } from '../types';
-import React, { useState } from 'react';
-import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search, Sparkles } from 'lucide-react';
+import { League, Team } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search, Sparkles, Mic, X } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   activeLeague: League;
   onLeagueChange: (league: League) => void;
+  allAssets: Team[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange, allAssets }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Sports', 'Football']);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Team[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const toggleExpand = (label: string) => {
     setExpandedItems(prev =>
@@ -18,6 +23,63 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         ? prev.filter(item => item !== label)
         : [...prev, label]
     );
+  };
+
+  // Search Logic
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results = allAssets.filter(asset =>
+      asset.name.toLowerCase().includes(query)
+    ).slice(0, 10); // Limit to 10 results
+
+    setSearchResults(results);
+  }, [searchQuery, allAssets]);
+
+  const handleSearchResultClick = (asset: Team) => {
+    if (asset.market) {
+      onLeagueChange(asset.market as League);
+      setSearchQuery('');
+      setSearchResults([]);
+      setIsOpen(false); // Close mobile menu if open
+    }
+  };
+
+  // Voice Search Logic
+  const startListening = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("Voice search is not supported in this browser.");
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearchQuery(transcript);
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    };
+
+    recognition.start();
   };
 
   const menuItems = [
@@ -100,14 +162,59 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         </div>
 
         {/* Search Bar */}
-        <div className="px-4 mb-4">
+        <div className="px-4 mb-4 relative z-50">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs focus:outline-none focus:border-[#005430] text-gray-300 placeholder-gray-600 transition-colors"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isListening ? "Listening..." : "Search..."}
+              className={`w-full pl-9 pr-8 py-2 bg-gray-900 border ${isListening ? 'border-brand-emerald500 animate-pulse' : 'border-gray-800'} rounded-lg text-xs focus:outline-none focus:border-[#005430] text-gray-300 placeholder-gray-600 transition-colors`}
             />
+
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                onClick={startListening}
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${isListening ? 'text-brand-emerald500' : 'text-gray-400 hover:text-white'}`}
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
+
+            {/* Search Results Dropdown */}
+            {searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar z-50">
+                {searchResults.map(asset => (
+                  <button
+                    key={asset.id}
+                    onClick={() => handleSearchResultClick(asset)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-800 border-b border-gray-800 last:border-0 transition-colors flex items-center justify-between group"
+                  >
+                    <span className="text-sm text-gray-200 group-hover:text-white font-medium truncate">{asset.name}</span>
+                    {asset.market && (
+                      <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded border border-gray-700 group-hover:border-gray-600">
+                        {asset.market}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* No Results State */}
+            {searchQuery.length > 1 && searchResults.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-4 text-center z-50">
+                <p className="text-xs text-gray-500">No results found for "{searchQuery}"</p>
+              </div>
+            )}
           </div>
         </div>
 

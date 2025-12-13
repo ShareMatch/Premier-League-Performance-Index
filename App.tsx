@@ -357,6 +357,7 @@ const App: React.FC = () => {
         setIsOpen={setIsMobileMenuOpen}
         activeLeague={activeLeague}
         onLeagueChange={handleNavigate}
+        allAssets={allAssets}
       />
 
       {/* Main Content Area */}
