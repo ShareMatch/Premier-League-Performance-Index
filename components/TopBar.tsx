@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut } from 'lucide-react';
-import type { Wallet as WalletType } from '../types';
+import { Wallet, ChevronDown, User, Settings, FileText, Shield, LogOut, Search, X, Mic, Menu } from 'lucide-react';
+import type { Wallet as WalletType, Team, League } from '../types';
 import { useAuth } from './auth/AuthProvider';
 import { LoginModal } from './auth/LoginModal';
 import { SignUpModal, EditModeData, FormData as SignUpFormData } from './auth/SignUpModal';
@@ -16,6 +16,9 @@ interface TopBarProps {
     wallet: WalletType | null;
     portfolioValue?: number;
     onMobileMenuClick: () => void;
+    activeLeague?: League;
+    onNavigate?: (league: League) => void;
+    allAssets?: Team[];
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -44,7 +47,14 @@ interface PendingVerification {
     maskedWhatsapp?: string;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMenuClick }) => {
+const TopBar: React.FC<TopBarProps> = ({
+    wallet,
+    portfolioValue = 0,
+    onMobileMenuClick,
+    activeLeague,
+    onNavigate,
+    allAssets = []
+}) => {
     const { user, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -66,6 +76,68 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
 
     // Ref to store WhatsApp data from email verification response (avoids async state issues)
     const whatsappDataRef = useRef<{ raw: string; masked: string } | null>(null);
+
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<Team[]>([]);
+    const [isListening, setIsListening] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // Search Logic
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setSearchResults([]);
+            return;
+        }
+
+        const query = searchQuery.toLowerCase();
+        const results = allAssets.filter(asset =>
+            asset.name.toLowerCase().includes(query)
+        ).slice(0, 10); // Limit to 10 results
+
+        setSearchResults(results);
+    }, [searchQuery, allAssets]);
+
+    const handleSearchResultClick = (asset: Team) => {
+        if (asset.market && onNavigate) {
+            onNavigate(asset.market as League);
+            setSearchQuery('');
+            setSearchResults([]);
+        }
+    };
+
+    // Voice Search Logic
+    const startListening = () => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            alert("Voice search is not supported in this browser.");
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setSearchQuery(transcript);
+            if (searchInputRef.current) {
+                searchInputRef.current.focus();
+            }
+        };
+
+        recognition.start();
+    };
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -162,32 +234,178 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
 
     return (
         <>
-            <div className="h-14 md:h-16 bg-[#005430] md:bg-gray-900 border-b border-[#005430] md:border-gray-800 flex items-center justify-between px-3 md:px-6 flex-shrink-0 transition-colors z-50 relative">
+            <div className="h-14 md:h-16 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 md:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
 
-                {/* Left: Mobile Menu & Branding (Visible on Mobile Only) */}
-                <div className="flex items-center gap-2 md:hidden overflow-hidden">
+                {/* Left: Mobile Menu & Logo */}
+                <div className="flex items-center gap-3">
                     <button
+                        className="md:hidden text-white/80 hover:text-white transition-colors"
                         onClick={onMobileMenuClick}
-                        className="text-white p-1 hover:bg-white/10 rounded-md transition-colors flex-shrink-0"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12" /><line x1="4" x2="20" y1="6" y2="6" /><line x1="4" x2="20" y1="18" y2="18" /></svg>
+                        <Menu className="h-6 w-6" />
                     </button>
-                    {/* Use Icon only on very small screens if needed, or stick to wordmark but smaller height */}
+
+                    {/* Logo - Always visible now */}
                     <img
                         src="/logos/mobile-header-logo-matched.svg"
                         alt="ShareMatch"
-                        className="h-9 w-auto object-contain max-w-[160px]"
+                        className="h-7 md:h-9 w-auto object-contain"
                     />
                 </div>
 
-                {/* Spacer for desktop */}
-                <div className="hidden md:block"></div>
+                {/* Center: Search Bar (Desktop) */}
+                <div className="hidden md:flex flex-1 max-w-2xl mx-8 relative z-50">
+                    <div className="relative w-full group">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={isListening ? "Listening..." : "Find teams, competitions, and markets..."}
+                            className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
+                        />
+
+                        {/* Search Actions */}
+                        {searchQuery ? (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#005430]"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={startListening}
+                                className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening ? 'text-[#005430]' : 'text-gray-400 hover:text-gray-200'}`}
+                            >
+                                <Mic className="h-4 w-4" />
+                            </button>
+                        )}
+
+                        {/* Search Results Dropdown */}
+                        {searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-md shadow-xl overflow-hidden max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-1">
+                                {searchResults.map(asset => (
+                                    <button
+                                        key={asset.id}
+                                        onClick={() => handleSearchResultClick(asset)}
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors flex items-center justify-between group"
+                                    >
+                                        <span className="text-sm text-gray-800 font-medium">{asset.name}</span>
+                                        {asset.market && (
+                                            <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                {asset.market}
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Right: Date, Balance, Avatar */}
-                <div className="flex items-center gap-3 md:gap-6">
-                    <div className="text-sm font-medium text-gray-400 hidden lg:block border-r border-gray-800 pr-6">
-                        {formatTime(currentTime)}
+                <div className="flex items-center gap-3 md:gap-4">
+                    {/* Date - Desktop Only */}
+                    <div className="hidden md:flex flex-col items-end mr-2 text-white/80">
+                        <span className="text-xs font-medium">
+                            {formatTime(currentTime)}
+                        </span>
                     </div>
+
+                    {/* Auth Buttons */}
+                    {!user && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowLoginModal(true)}
+                                className="hidden md:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                            >
+                                Log In
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowLoginModal(false);
+                                    setShowSignUpModal(true);
+                                }}
+                                className="px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                            >
+                                Join Now
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Desktop Balance - Only show if user is logged in */}
+                    {user && !isPasswordRecovery && (
+                        <div className="hidden md:relative md:block">
+                            <button
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? 'bg-[#003820]' : ''}`}
+                                onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                            >
+                                <span className="font-bold text-white text-sm">
+                                    {balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <ChevronDown className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isBalanceOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-2 border-b border-gray-700">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                        <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    </div>
+                                    <div className="px-4 py-2">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-400">Available</span>
+                                            <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-400">Active Assets</span>
+                                            <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Desktop Avatar Dropdown */}
+                    {user && !isPasswordRecovery && (
+                        <div className="hidden md:relative md:block">
+                            <button
+                                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? 'bg-[#004225] text-white' : ''}`}
+                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                            >
+                                <User className="h-5 w-5" />
+                            </button>
+
+                            {isAvatarOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-3 border-b border-gray-700">
+                                        <p className="text-sm font-bold text-white truncate">{user?.email}</p>
+                                        <p className="text-xs text-gray-400">Last logged in: Today</p>
+                                    </div>
+                                    <div className="py-1">
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <Settings className="h-4 w-4" /> Settings
+                                        </a>
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <FileText className="h-4 w-4" /> Portfolio
+                                        </a>
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <Shield className="h-4 w-4" /> Rules & Regulations
+                                        </a>
+                                        <button
+                                            onClick={() => signOut()}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                                        >
+                                            <LogOut className="h-4 w-4" /> Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Mobile: Combined Quick Actions (Betfair style) */}
                     {user && !isPasswordRecovery && (
@@ -211,95 +429,6 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
                             >
                                 <User className="h-4 w-4 text-white" />
                             </button>
-                        </div>
-                    )}
-
-                    {/* Desktop: Separate Buttons (Unchanged) */}
-                    {user && !isPasswordRecovery && (
-                        <div className="hidden md:flex items-center gap-6">
-                            <div className="relative">
-                                <button
-                                    className="flex items-center gap-2 bg-[#005430] text-white px-4 py-2 rounded-lg hover:bg-[#005430]/90 transition-colors"
-                                    onClick={() => setIsBalanceOpen(!isBalanceOpen)}
-                                >
-                                    <Wallet className="h-4 w-4" />
-                                    <span className="font-bold">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                    <ChevronDown className={`h-4 w-4 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {/* Balance Dropdown Logic reused below... actually need to make sure dropdowns position correctly for mobile too */}
-                            </div>
-
-                            <div className="relative">
-                                <button
-                                    className="h-10 w-10 rounded-full bg-[#005430]/10 flex items-center justify-center text-[#005430] hover:bg-[#005430]/20 transition-colors"
-                                    onClick={() => setIsAvatarOpen(!isAvatarOpen)}
-                                >
-                                    <User className="h-5 w-5" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Sign In Button (Logged Out) */}
-                    {!user && (
-                        <button
-                            onClick={() => setShowLoginModal(true)}
-                            className="bg-white text-[#005430] md:bg-gradient-primary md:text-white hover:bg-gray-100 hover:text-[#005430] px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors border border-transparent md:border-0 shadow-lg"
-                        >
-                            Sign In
-                        </button>
-                    )}
-
-                    {/* Shared Dropdowns (Positioned Absolutely) */}
-                    {/* NOTE: We need to render these dropdowns OUTSIDE the mobile container if they are to show up correctly, 
-                         or ensure the parent containers are relative. 
-                         Let's put them here attached to the right side of the main container.
-                     */}
-
-                    {/* Balance Dropdown */}
-                    {isBalanceOpen && (
-                        <div className="absolute top-14 right-2 md:right-20 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
-                            <div className="px-4 py-2 border-b border-gray-700">
-                                <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
-                                <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                            </div>
-                            <div className="px-4 py-2">
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-gray-400">Available</span>
-                                    <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400">Active Assets</span>
-                                    <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Avatar Dropdown */}
-                    {isAvatarOpen && (
-                        <div className="absolute top-14 right-2 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
-                            <div className="px-4 py-3 border-b border-gray-700">
-                                <p className="text-sm font-bold text-white truncate">{user?.email}</p>
-                                <p className="text-xs text-gray-400">Last logged in: Today</p>
-                            </div>
-                            <div className="py-1">
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                    <Settings className="h-4 w-4" /> Settings
-                                </a>
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                    <FileText className="h-4 w-4" /> Portfolio
-                                </a>
-                                <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                    <Shield className="h-4 w-4" /> Rules & Regulations
-                                </a>
-                                <button
-                                    onClick={() => signOut()}
-                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
-                                >
-                                    <LogOut className="h-4 w-4" /> Sign Out
-                                </button>
-                            </div>
                         </div>
                     )}
                 </div>
