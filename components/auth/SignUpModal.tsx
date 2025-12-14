@@ -1011,7 +1011,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                 Create Your <br /> Account
               </h1>
               <p className="mt-8 text-gray-400 text-center font-medium text-lg leading-relaxed px-4">
-                Join our trading community.
+                Real Markets. Real Transparency.
               </p>
             </>
           )}
