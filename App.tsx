@@ -342,23 +342,25 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isMobileMenuOpen}
-        setIsOpen={setIsMobileMenuOpen}
+    <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      {/* Top Bar - Full Width */}
+      <TopBar
+        wallet={wallet}
+        portfolioValue={portfolioValue}
+        onMobileMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         activeLeague={activeLeague}
-        onLeagueChange={handleNavigate}
+        onNavigate={handleNavigate}
         allAssets={allAssets}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Bar */}
-        <TopBar
-          wallet={wallet}
-          portfolioValue={portfolioValue}
-          onMobileMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar
+          isOpen={isMobileMenuOpen}
+          setIsOpen={setIsMobileMenuOpen}
+          activeLeague={activeLeague}
+          onLeagueChange={handleNavigate}
+          allAssets={allAssets}
         />
 
         {/* Content Container (Main + Right Panel) */}
