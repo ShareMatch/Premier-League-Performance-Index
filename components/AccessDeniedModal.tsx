@@ -48,7 +48,7 @@ const AccessDeniedModal: React.FC<AccessDeniedModalProps> = ({ isOpen, onClose, 
                             The ShareMatch AI Analytics Engine is a premium utility designed exclusively for active market participants.
                         </p>
                         <p className="text-gray-400 text-xs px-4">
-                            To access these advanced predictive insights, you must own at least one token asset. This ensures a fair exchange of value and aligns with our principles of real utility.
+                            To access these advanced predictive insights, you must own at least one token asset.
                         </p>
                     </div>
 
