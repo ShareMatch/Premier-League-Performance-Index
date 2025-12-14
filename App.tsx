@@ -14,8 +14,9 @@ import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
-import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
+import AIAnalyticsBanner from './components/AIAnalyticsBanner';
+import AccessDeniedModal from './components/AccessDeniedModal';
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
@@ -54,6 +55,18 @@ const App: React.FC = () => {
   const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
   const [kycChecked, setKycChecked] = useState(false);
+
+  // AI Analytics Access Control
+  const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+
+  const handleAIAnalyticsClick = () => {
+    // Check if user has any assets in portfolio
+    if (!portfolio || portfolio.length === 0) {
+      setShowAccessDeniedModal(true);
+      return;
+    }
+    setActiveLeague('AI_ANALYTICS');
+  };
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -353,6 +366,14 @@ const App: React.FC = () => {
         allAssets={allAssets}
       />
 
+      {/* AI Analytics Banner */}
+      <div className="w-full">
+        <AIAnalyticsBanner
+          onClick={handleAIAnalyticsClick}
+          isActive={activeLeague === 'AI_ANALYTICS'}
+        />
+      </div>
+
       {/* Main Layout: Sidebar + Content */}
       <div className="flex-1 flex overflow-hidden">
         <Sidebar
@@ -475,6 +496,16 @@ const App: React.FC = () => {
           initialStatus={kycStatus || undefined}
         />
       )}
+
+      {/* Access Denied Modal (AI Analytics) */}
+      <AccessDeniedModal
+        isOpen={showAccessDeniedModal}
+        onClose={() => setShowAccessDeniedModal(false)}
+        onViewMarket={() => {
+          setActiveLeague('EPL'); // Navigate to a market (e.g. EPL) so they can buy tokens
+          setShowAccessDeniedModal(false);
+        }}
+      />
     </div>
   );
 };

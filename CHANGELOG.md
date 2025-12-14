@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Search:** Moved Search functionality from Sidebar to Top Header for better accessibility.
 - **Mobile Search:** Restored mobile search functionality with a dedicated search overlay and toggle button.
 - **Voice Search (Mobile):** Added microphone support to the mobile search overlay for consistent experience.
+- **AI Analytics:** Added high-impact "AI Analytics Engine" banner below the header.
+- **Access Control:** Restricted AI Analytics access to token holders only (Shariah compliant "Real Utility" check).
 - **Branding:** Significantly increased desktop logo size for better visibility.
 
 ## [2.13] - 2025-12-13
