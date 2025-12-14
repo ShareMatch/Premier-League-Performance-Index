@@ -250,9 +250,16 @@ const TopBar: React.FC<TopBarProps> = ({
                             className="flex-1 bg-transparent border-none text-white placeholder-gray-400 focus:ring-0 text-base"
                             autoFocus
                         />
-                        {searchQuery && (
+                        {searchQuery ? (
                             <button onClick={() => setSearchQuery('')} className="text-gray-400">
                                 <X className="h-5 w-5" />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={startListening}
+                                className={`text-gray-400 ${isListening ? 'text-[#005430] animate-pulse' : ''}`}
+                            >
+                                <Mic className={`h-5 w-5 ${isListening ? 'text-white' : ''}`} />
                             </button>
                         )}
                         <button
