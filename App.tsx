@@ -9,9 +9,10 @@ import NewsFeed from './components/NewsFeed';
 import HomeDashboard from './components/HomeDashboard';
 import OrderBookRow from './components/OrderBookRow';
 import Sidebar from './components/Sidebar';
-import AIAnalysis from './components/AIAnalysis';
-import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
+import AIAnalysis from './components/AIAnalysis';
+// Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
+const AIAnalyticsPage = React.lazy(() => import('./components/AIAnalyticsPage'));
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 import KYCModal from './components/kyc/KYCModal';
@@ -189,7 +190,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Always load assets (they're public)
     loadAssets();
-    seedSportsAssets(); // Auto-seed if missing
+
 
     // Don't load user data or set up subscriptions if user is not logged in
     if (!user || !publicUserId) {
@@ -398,7 +399,13 @@ const App: React.FC = () => {
                     teams={allAssets}
                   />
                 ) : activeLeague === 'AI_ANALYTICS' ? (
-                  <AIAnalyticsPage teams={allAssets} />
+                  <React.Suspense fallback={
+                    <div className="h-full flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                    </div>
+                  }>
+                    <AIAnalyticsPage teams={allAssets} />
+                  </React.Suspense>
                 ) : (
                   <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
 
