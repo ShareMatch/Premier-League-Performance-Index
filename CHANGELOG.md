@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mobile Header:** Fixed mobile header branding (Green background, Logo transparency matched).
 - **Desktop Header:** Refactored to full-width "Betfair-style" header, integrating Logo and Search Bar.
 - **Search:** Moved Search functionality from Sidebar to Top Header for better accessibility.
+- **Mobile Search:** Restored mobile search functionality with a dedicated search overlay and toggle button.
+- **Voice Search (Mobile):** Added microphone support to the mobile search overlay for consistent experience.
+- **Branding:** Significantly increased desktop logo size for better visibility.
 
 ## [2.13] - 2025-12-13
 ### Added
