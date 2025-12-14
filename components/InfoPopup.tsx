@@ -23,7 +23,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   seasonDates,
   isMarketOpen,
   iconSize = 16,
-  iconClassName = 'text-[#005430] hover:text-[#005430]/80 transition-colors cursor-pointer',
+  iconClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -131,16 +131,15 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
   return (
     <>
-      {/* Info Icon Trigger */}
       <button
         onClick={(e) => {
           e.stopPropagation(); // Prevent click from bubbling to parent
           setIsOpen(true);
         }}
-        className={iconClassName}
+        className={`${iconClassName} w-6 h-6 rounded-full bg-[#005430] hover:bg-[#006035] flex items-center justify-center transition-all shadow-sm border border-emerald-800/20 group/info`}
         aria-label="More information"
       >
-        <Info size={iconSize} />
+        <span className="text-white font-serif italic text-sm font-bold antialiased pr-[1px]">i</span>
       </button>
 
       {/* Render modal via portal to document.body - bypasses parent CSS issues */}

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Dynamic Trending Markets:** Overhauled "Trending Markets" with live updates every 3-5s, explosive animations, and strict filtering (Price > $5, Open Markets only).
 
+### Changed
+- **UI:** Standardized "Info" icon across pages to a consistent "White 'i' in Green Circle" design for better visibility.
+
 ### Fixed
 - **Critical:** Resolved "Blank Screen" crash on startup caused by a reference to a missing `seedSportsAssets` function.
 - **Performance:** Implemented lazy loading for `AIAnalyticsPage` to improve initial load time.

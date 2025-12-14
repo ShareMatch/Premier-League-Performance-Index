@@ -35,8 +35,6 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
           content={marketInfo.content}
           seasonDates={marketInfo.seasonDates}
           isMarketOpen={marketInfo.isOpen}
-          iconSize={24}
-          iconClassName="text-emerald-500 hover:text-emerald-400 transition-colors cursor-pointer"
         />
       </div>
     </div>
