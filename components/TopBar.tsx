@@ -176,7 +176,7 @@ const TopBar: React.FC<TopBarProps> = ({ wallet, portfolioValue = 0, onMobileMen
                     <img
                         src="/logos/mobile-header-logo-matched.svg"
                         alt="ShareMatch"
-                        className="h-6 w-auto object-contain max-w-[120px]"
+                        className="h-9 w-auto object-contain max-w-[160px]"
                     />
                 </div>
 
