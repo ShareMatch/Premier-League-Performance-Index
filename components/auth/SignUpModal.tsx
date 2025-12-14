@@ -979,7 +979,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
       {/* Modal */}
       <div
-        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-modal-outer/60 backdrop-blur-[40px] rounded-modal z-[101]"
+        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-[#005430] rounded-modal z-[101]"
         style={{
           maxWidth: 'min(90vw, 900px)',
           maxHeight: '95vh',
@@ -1030,11 +1030,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         {/* Right Side - Form */}
         <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
           <div
-            className="bg-modal-inner rounded-xl p-3 md:p-4 flex flex-col border border-transparent"
+            className="rounded-xl p-3 md:p-4 flex flex-col border border-white/5 bg-[#004225]"
             style={{
-              backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
               minHeight: '460px',
             }}
           >
