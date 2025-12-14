@@ -19,7 +19,7 @@ const AIAnalyticsBanner: React.FC<AIAnalyticsBannerProps> = ({ onClick, isActive
       `}
         >
             {/* Background Effects */}
-            <div className={`absolute inset-0 opacity-20 bg-[url('/grid.svg')] ${isActive ? 'opacity-30' : ''}`} />
+            <div className={`absolute inset-0 opacity-20 bg-black/20 ${isActive ? 'opacity-30' : ''}`} />
 
             {/* Content Container */}
             <div className="relative h-full flex items-center justify-center gap-3 md:gap-4 px-4">
