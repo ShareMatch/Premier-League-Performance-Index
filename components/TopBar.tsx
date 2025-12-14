@@ -364,406 +364,405 @@ const TopBar: React.FC<TopBarProps> = ({
                         </div>
                     </>
                 )}
-            </div>
 
-            {/* Right: Date, Balance, Avatar */}
-            <div className="flex items-center gap-3 md:gap-4">
-                {/* Date - Desktop Only */}
-                <div className="hidden md:flex flex-col items-end mr-2 text-white/80">
-                    <span className="text-xs font-medium">
-                        {formatTime(currentTime)}
-                    </span>
+                {/* Right: Date, Balance, Avatar */}
+                <div className="flex items-center gap-3 md:gap-4">
+                    {/* Date - Desktop Only */}
+                    <div className="hidden md:flex flex-col items-end mr-2 text-white/80">
+                        <span className="text-xs font-medium">
+                            {formatTime(currentTime)}
+                        </span>
+                    </div>
+
+                    {/* Auth Buttons */}
+                    {!user && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowLoginModal(true)}
+                                className="hidden md:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                            >
+                                Log In
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowLoginModal(false);
+                                    setShowSignUpModal(true);
+                                }}
+                                className="px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                            >
+                                Join Now
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Desktop Balance - Only show if user is logged in */}
+                    {user && !isPasswordRecovery && (
+                        <div className="hidden md:relative md:block">
+                            <button
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? 'bg-[#003820]' : ''}`}
+                                onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                            >
+                                <span className="font-bold text-white text-sm">
+                                    {balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <ChevronDown className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isBalanceOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-2 border-b border-gray-700">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                        <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    </div>
+                                    <div className="px-4 py-2">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-400">Available</span>
+                                            <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-400">Active Assets</span>
+                                            <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Desktop Avatar Dropdown */}
+                    {user && !isPasswordRecovery && (
+                        <div className="hidden md:relative md:block">
+                            <button
+                                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? 'bg-[#004225] text-white' : ''}`}
+                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                            >
+                                <User className="h-5 w-5" />
+                            </button>
+
+                            {isAvatarOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-3 border-b border-gray-700">
+                                        <p className="text-sm font-bold text-white truncate">{user?.email}</p>
+                                        <p className="text-xs text-gray-400">Last logged in: Today</p>
+                                    </div>
+                                    <div className="py-1">
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <Settings className="h-4 w-4" /> Settings
+                                        </a>
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <FileText className="h-4 w-4" /> Portfolio
+                                        </a>
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <Shield className="h-4 w-4" /> Rules & Regulations
+                                        </a>
+                                        <button
+                                            onClick={() => signOut()}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                                        >
+                                            <LogOut className="h-4 w-4" /> Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Mobile: Combined Quick Actions (Betfair style) */}
+                    {user && !isPasswordRecovery && (
+                        <div className="md:hidden flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 overflow-hidden shadow-sm">
+                            {/* Balance Part */}
+                            <button
+                                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
+                                onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                            >
+                                <span className="font-bold text-white text-sm">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <ChevronDown className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Divider */}
+                            <div className="w-[1px] h-4 bg-[#006035]/50"></div>
+
+                            {/* User Icon Part */}
+                            <button
+                                className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
+                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                            >
+                                <User className="h-4 w-4 text-white" />
+                            </button>
+                        </div>
+                    )}
                 </div>
+            </div >
 
-                {/* Auth Buttons */}
-                {!user && (
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setShowLoginModal(true)}
-                            className="hidden md:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
-                        >
-                            Log In
-                        </button>
-                        <button
-                            onClick={() => {
-                                setShowLoginModal(false);
-                                setShowSignUpModal(true);
-                            }}
-                            className="px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
-                        >
-                            Join Now
-                        </button>
-                    </div>
-                )}
-
-                {/* Desktop Balance - Only show if user is logged in */}
-                {user && !isPasswordRecovery && (
-                    <div className="hidden md:relative md:block">
-                        <button
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? 'bg-[#003820]' : ''}`}
-                            onClick={() => setIsBalanceOpen(!isBalanceOpen)}
-                        >
-                            <span className="font-bold text-white text-sm">
-                                {balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                            <ChevronDown className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {isBalanceOpen && (
-                            <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
-                                <div className="px-4 py-2 border-b border-gray-700">
-                                    <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
-                                    <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
-                                </div>
-                                <div className="px-4 py-2">
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-400">Available</span>
-                                        <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-400">Active Assets</span>
-                                        <span className="font-medium text-gray-200">{(reserved + portfolioValue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Desktop Avatar Dropdown */}
-                {user && !isPasswordRecovery && (
-                    <div className="hidden md:relative md:block">
-                        <button
-                            className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? 'bg-[#004225] text-white' : ''}`}
-                            onClick={() => setIsAvatarOpen(!isAvatarOpen)}
-                        >
-                            <User className="h-5 w-5" />
-                        </button>
-
-                        {isAvatarOpen && (
-                            <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
-                                <div className="px-4 py-3 border-b border-gray-700">
-                                    <p className="text-sm font-bold text-white truncate">{user?.email}</p>
-                                    <p className="text-xs text-gray-400">Last logged in: Today</p>
-                                </div>
-                                <div className="py-1">
-                                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                        <Settings className="h-4 w-4" /> Settings
-                                    </a>
-                                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                        <FileText className="h-4 w-4" /> Portfolio
-                                    </a>
-                                    <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                        <Shield className="h-4 w-4" /> Rules & Regulations
-                                    </a>
-                                    <button
-                                        onClick={() => signOut()}
-                                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
-                                    >
-                                        <LogOut className="h-4 w-4" /> Sign Out
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Mobile: Combined Quick Actions (Betfair style) */}
-                {user && !isPasswordRecovery && (
-                    <div className="md:hidden flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 overflow-hidden shadow-sm">
-                        {/* Balance Part */}
-                        <button
-                            className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                            onClick={() => setIsBalanceOpen(!isBalanceOpen)}
-                        >
-                            <span className="font-bold text-white text-sm">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            <ChevronDown className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Divider */}
-                        <div className="w-[1px] h-4 bg-[#006035]/50"></div>
-
-                        {/* User Icon Part */}
-                        <button
-                            className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                            onClick={() => setIsAvatarOpen(!isAvatarOpen)}
-                        >
-                            <User className="h-4 w-4 text-white" />
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div >
-
-            {/* Login Modal */ }
+            {/* Login Modal */}
             < LoginModal
-    isOpen = { showLoginModal }
-    onClose = {() => {
-    setShowLoginModal(false);
-    setShowPasswordResetSuccess(false); // Clear success message when modal closes
-}}
-onSwitchToSignUp = { switchToSignUp }
-onForgotPassword = { handleForgotPassword }
-onVerificationRequired = { handleVerificationRequired }
-successMessage = { showPasswordResetSuccess? "Password reset successful! Log in with your new password.": undefined }
-    />
-
-    {/* Sign Up Modal */ }
-    < SignUpModal
-isOpen = { showSignUpModal }
-onClose = {() => {
-    setShowSignUpModal(false);
-    setIsEditMode(false);
-    setEditData(undefined);
-}}
-onSwitchToLogin = { switchToLogin }
-onSuccess = { async(email: string, userId: string, formData: SignUpFormData) => {
-    setShowSignUpModal(false);
-    setIsEditMode(false);
-    setEditData(undefined);
-    // Store all form data so user can return to edit with same state
-    setPendingVerification({
-        email,
-        userId,
-        fullName: formData.fullName,
-        dob: formData.dob,
-        countryOfResidence: formData.countryOfResidence,
-        referralCode: formData.referralCode,
-        phone: formData.phone,
-        phoneCode: formData.phoneCode,
-        phoneIso: formData.phoneIso,
-        whatsappPhone: formData.whatsapp,
-        whatsappCode: formData.whatsappCode,
-        whatsappIso: formData.whatsappIso,
-        useSameNumber: formData.useSameNumber,
-        agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
-        agreeToTerms: formData.agreeToTerms,
-    });
-    setShowEmailVerificationModal(true);
-    try {
-        await sendEmailOtp(email);
-    } catch {
-        // Modal will still open, user can click resend
-    }
-}}
-isEditMode = { isEditMode }
-editData = { editData }
-onEditSuccess = { async(email: string, whatsappPhone: string | undefined, formData: SignUpFormData) => {
-    setShowSignUpModal(false);
-    setIsEditMode(false);
-    setEditData(undefined);
-
-    // Update pending verification with all form data
-    if (pendingVerification) {
-        setPendingVerification({
-            ...pendingVerification,
-            // Update with new form data
-            fullName: formData.fullName,
-            dob: formData.dob,
-            countryOfResidence: formData.countryOfResidence,
-            referralCode: formData.referralCode,
-            phone: formData.phone,
-            phoneCode: formData.phoneCode,
-            phoneIso: formData.phoneIso,
-            whatsappCode: formData.whatsappCode,
-            whatsappIso: formData.whatsappIso,
-            useSameNumber: formData.useSameNumber,
-            agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
-            agreeToTerms: formData.agreeToTerms,
-            email,
-            whatsappPhone: whatsappPhone || pendingVerification.whatsappPhone,
-        });
-    }
-
-    // Go back to the appropriate verification modal
-    if (editStep === 1) {
-        // Email was edited, go back to email verification
-        setShowEmailVerificationModal(true);
-        // OTP already sent by the update API
-    } else {
-        // Phone was edited, go back to WhatsApp verification
-        setShowWhatsAppVerificationModal(true);
-        // OTP already sent by the update API
-    }
-}}
+                isOpen={showLoginModal}
+                onClose={() => {
+                    setShowLoginModal(false);
+                    setShowPasswordResetSuccess(false); // Clear success message when modal closes
+                }}
+                onSwitchToSignUp={switchToSignUp}
+                onForgotPassword={handleForgotPassword}
+                onVerificationRequired={handleVerificationRequired}
+                successMessage={showPasswordResetSuccess ? "Password reset successful! Log in with your new password." : undefined}
             />
 
-{/* Email Verification Modal */ }
-<EmailVerificationModal
-    isOpen={showEmailVerificationModal && pendingVerification !== null}
-    onClose={() => {
-        setShowEmailVerificationModal(false);
-        setPendingVerification(null);
-        whatsappDataRef.current = null;
-    }}
-    email={pendingVerification?.email || ''}
-    onVerificationSuccess={async () => {
-        setShowEmailVerificationModal(false);
-        const whatsappData = whatsappDataRef.current;
+            {/* Sign Up Modal */}
+            < SignUpModal
+                isOpen={showSignUpModal}
+                onClose={() => {
+                    setShowSignUpModal(false);
+                    setIsEditMode(false);
+                    setEditData(undefined);
+                }}
+                onSwitchToLogin={switchToLogin}
+                onSuccess={async (email: string, userId: string, formData: SignUpFormData) => {
+                    setShowSignUpModal(false);
+                    setIsEditMode(false);
+                    setEditData(undefined);
+                    // Store all form data so user can return to edit with same state
+                    setPendingVerification({
+                        email,
+                        userId,
+                        fullName: formData.fullName,
+                        dob: formData.dob,
+                        countryOfResidence: formData.countryOfResidence,
+                        referralCode: formData.referralCode,
+                        phone: formData.phone,
+                        phoneCode: formData.phoneCode,
+                        phoneIso: formData.phoneIso,
+                        whatsappPhone: formData.whatsapp,
+                        whatsappCode: formData.whatsappCode,
+                        whatsappIso: formData.whatsappIso,
+                        useSameNumber: formData.useSameNumber,
+                        agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
+                        agreeToTerms: formData.agreeToTerms,
+                    });
+                    setShowEmailVerificationModal(true);
+                    try {
+                        await sendEmailOtp(email);
+                    } catch {
+                        // Modal will still open, user can click resend
+                    }
+                }}
+                isEditMode={isEditMode}
+                editData={editData}
+                onEditSuccess={async (email: string, whatsappPhone: string | undefined, formData: SignUpFormData) => {
+                    setShowSignUpModal(false);
+                    setIsEditMode(false);
+                    setEditData(undefined);
 
-        if (whatsappData && pendingVerification) {
-            setPendingVerification({
-                ...pendingVerification,
-                whatsappPhone: whatsappData.raw,
-                maskedWhatsapp: whatsappData.masked,
-            });
-            setShowWhatsAppVerificationModal(true);
-            try {
-                await sendWhatsAppOtp({ email: pendingVerification.email });
-            } catch {
-                // Modal will still open, user can click resend
-            }
-        } else {
-            setPendingVerification(null);
-            setShowLoginModal(true);
-        }
-        whatsappDataRef.current = null;
-    }}
-    onVerifyCode={async (code) => {
-        if (!pendingVerification?.email) return false;
-        try {
-            const result = await verifyEmailOtp(pendingVerification.email, code);
-            if (result.whatsappData) {
-                whatsappDataRef.current = result.whatsappData;
-            }
-            return result.ok;
-        } catch (error) {
-            throw error;
-        }
-    }}
-    onResendCode={async () => {
-        if (!pendingVerification?.email) return false;
-        try {
-            const result = await sendEmailOtp(pendingVerification.email);
-            return result.ok;
-        } catch (error) {
-            throw error;
-        }
-    }}
-    onEditEmail={() => {
-        // Open simple email edit modal (not full signup form)
-        setShowEmailVerificationModal(false);
-        setShowEditEmailModal(true);
-    }}
-/>
+                    // Update pending verification with all form data
+                    if (pendingVerification) {
+                        setPendingVerification({
+                            ...pendingVerification,
+                            // Update with new form data
+                            fullName: formData.fullName,
+                            dob: formData.dob,
+                            countryOfResidence: formData.countryOfResidence,
+                            referralCode: formData.referralCode,
+                            phone: formData.phone,
+                            phoneCode: formData.phoneCode,
+                            phoneIso: formData.phoneIso,
+                            whatsappCode: formData.whatsappCode,
+                            whatsappIso: formData.whatsappIso,
+                            useSameNumber: formData.useSameNumber,
+                            agreeToWhatsappOtp: formData.agreeToWhatsappOtp,
+                            agreeToTerms: formData.agreeToTerms,
+                            email,
+                            whatsappPhone: whatsappPhone || pendingVerification.whatsappPhone,
+                        });
+                    }
 
-{/* Edit Email Modal - Simple email-only edit */ }
-<EditEmailModal
-    isOpen={showEditEmailModal}
-    onClose={() => {
-        setShowEditEmailModal(false);
-        setShowEmailVerificationModal(true);
-    }}
-    currentEmail={pendingVerification?.email || ''}
-    onSave={async (newEmail) => {
-        if (!pendingVerification) return false;
-        try {
-            const { updateUserProfile } = await import('../lib/api');
-            const result = await updateUserProfile({
-                currentEmail: pendingVerification.email,
-                newEmail: newEmail,
-                sendEmailOtp: true,
-            });
-            if (result.ok) {
-                // Update pending verification with new email
-                setPendingVerification({
-                    ...pendingVerification,
-                    email: newEmail,
-                });
-                // Close edit modal and return to email verification
-                setShowEditEmailModal(false);
-                setShowEmailVerificationModal(true);
-                return true;
-            }
-            return false;
-        } catch (error: any) {
-            throw error;
-        }
-    }}
-/>
+                    // Go back to the appropriate verification modal
+                    if (editStep === 1) {
+                        // Email was edited, go back to email verification
+                        setShowEmailVerificationModal(true);
+                        // OTP already sent by the update API
+                    } else {
+                        // Phone was edited, go back to WhatsApp verification
+                        setShowWhatsAppVerificationModal(true);
+                        // OTP already sent by the update API
+                    }
+                }}
+            />
 
-{/* WhatsApp Verification Modal */ }
-<WhatsAppVerificationModal
-    isOpen={showWhatsAppVerificationModal}
-    onClose={() => {
-        setShowWhatsAppVerificationModal(false);
-        setPendingVerification(null);
-    }}
-    whatsappPhone={pendingVerification?.whatsappPhone || ''}
-    onVerificationSuccess={() => {
-        setShowWhatsAppVerificationModal(false);
-        setPendingVerification(null);
-        setShowLoginModal(true);
-    }}
-    onVerifyCode={async (code) => {
-        if (!pendingVerification) return false;
-        try {
-            const result = await verifyWhatsAppOtp({
-                email: pendingVerification.email,
-                token: code,
-            });
-            return result.ok;
-        } catch (error) {
-            throw error;
-        }
-    }}
-    onResendCode={async () => {
-        if (!pendingVerification) return false;
-        try {
-            const result = await sendWhatsAppOtp({
-                email: pendingVerification.email,
-            });
-            return result.ok;
-        } catch (error) {
-            throw error;
-        }
-    }}
-    onEditPhone={() => {
-        // Close verification modal and open SignUp in edit mode at step 2 with all their data
-        setShowWhatsAppVerificationModal(false);
-        setIsEditMode(true);
-        setEditStep(2);
-        setEditData({
-            email: pendingVerification?.email || '',
-            fullName: pendingVerification?.fullName,
-            dob: pendingVerification?.dob,
-            countryOfResidence: pendingVerification?.countryOfResidence,
-            referralCode: pendingVerification?.referralCode,
-            phone: pendingVerification?.phone,
-            phoneCode: pendingVerification?.phoneCode,
-            phoneIso: pendingVerification?.phoneIso,
-            whatsappPhone: pendingVerification?.whatsappPhone,
-            whatsappCode: pendingVerification?.whatsappCode,
-            whatsappIso: pendingVerification?.whatsappIso,
-            useSameNumber: pendingVerification?.useSameNumber,
-            agreeToWhatsappOtp: pendingVerification?.agreeToWhatsappOtp,
-            agreeToTerms: pendingVerification?.agreeToTerms,
-        });
-        setShowSignUpModal(true);
-    }}
-/>
+            {/* Email Verification Modal */}
+            <EmailVerificationModal
+                isOpen={showEmailVerificationModal && pendingVerification !== null}
+                onClose={() => {
+                    setShowEmailVerificationModal(false);
+                    setPendingVerification(null);
+                    whatsappDataRef.current = null;
+                }}
+                email={pendingVerification?.email || ''}
+                onVerificationSuccess={async () => {
+                    setShowEmailVerificationModal(false);
+                    const whatsappData = whatsappDataRef.current;
 
-{/* Forgot Password Modal */ }
-<ForgotPasswordModal
-    isOpen={showForgotPasswordModal}
-    onClose={() => setShowForgotPasswordModal(false)}
-    onBackToLogin={handleBackToLoginFromForgot}
-    onSwitchToSignUp={() => {
-        setShowForgotPasswordModal(false);
-        setShowSignUpModal(true);
-    }}
-/>
+                    if (whatsappData && pendingVerification) {
+                        setPendingVerification({
+                            ...pendingVerification,
+                            whatsappPhone: whatsappData.raw,
+                            maskedWhatsapp: whatsappData.masked,
+                        });
+                        setShowWhatsAppVerificationModal(true);
+                        try {
+                            await sendWhatsAppOtp({ email: pendingVerification.email });
+                        } catch {
+                            // Modal will still open, user can click resend
+                        }
+                    } else {
+                        setPendingVerification(null);
+                        setShowLoginModal(true);
+                    }
+                    whatsappDataRef.current = null;
+                }}
+                onVerifyCode={async (code) => {
+                    if (!pendingVerification?.email) return false;
+                    try {
+                        const result = await verifyEmailOtp(pendingVerification.email, code);
+                        if (result.whatsappData) {
+                            whatsappDataRef.current = result.whatsappData;
+                        }
+                        return result.ok;
+                    } catch (error) {
+                        throw error;
+                    }
+                }}
+                onResendCode={async () => {
+                    if (!pendingVerification?.email) return false;
+                    try {
+                        const result = await sendEmailOtp(pendingVerification.email);
+                        return result.ok;
+                    } catch (error) {
+                        throw error;
+                    }
+                }}
+                onEditEmail={() => {
+                    // Open simple email edit modal (not full signup form)
+                    setShowEmailVerificationModal(false);
+                    setShowEditEmailModal(true);
+                }}
+            />
 
-{/* Reset Password Modal */ }
-<ResetPasswordModal
-    isOpen={showResetPasswordModal}
-    onClose={() => {
-        setShowResetPasswordModal(false);
-        clearPasswordRecovery();
-        setShowLoginModal(true);
-    }}
-    onSuccess={handleResetPasswordSuccess}
-/>
+            {/* Edit Email Modal - Simple email-only edit */}
+            <EditEmailModal
+                isOpen={showEditEmailModal}
+                onClose={() => {
+                    setShowEditEmailModal(false);
+                    setShowEmailVerificationModal(true);
+                }}
+                currentEmail={pendingVerification?.email || ''}
+                onSave={async (newEmail) => {
+                    if (!pendingVerification) return false;
+                    try {
+                        const { updateUserProfile } = await import('../lib/api');
+                        const result = await updateUserProfile({
+                            currentEmail: pendingVerification.email,
+                            newEmail: newEmail,
+                            sendEmailOtp: true,
+                        });
+                        if (result.ok) {
+                            // Update pending verification with new email
+                            setPendingVerification({
+                                ...pendingVerification,
+                                email: newEmail,
+                            });
+                            // Close edit modal and return to email verification
+                            setShowEditEmailModal(false);
+                            setShowEmailVerificationModal(true);
+                            return true;
+                        }
+                        return false;
+                    } catch (error: any) {
+                        throw error;
+                    }
+                }}
+            />
+
+            {/* WhatsApp Verification Modal */}
+            <WhatsAppVerificationModal
+                isOpen={showWhatsAppVerificationModal}
+                onClose={() => {
+                    setShowWhatsAppVerificationModal(false);
+                    setPendingVerification(null);
+                }}
+                whatsappPhone={pendingVerification?.whatsappPhone || ''}
+                onVerificationSuccess={() => {
+                    setShowWhatsAppVerificationModal(false);
+                    setPendingVerification(null);
+                    setShowLoginModal(true);
+                }}
+                onVerifyCode={async (code) => {
+                    if (!pendingVerification) return false;
+                    try {
+                        const result = await verifyWhatsAppOtp({
+                            email: pendingVerification.email,
+                            token: code,
+                        });
+                        return result.ok;
+                    } catch (error) {
+                        throw error;
+                    }
+                }}
+                onResendCode={async () => {
+                    if (!pendingVerification) return false;
+                    try {
+                        const result = await sendWhatsAppOtp({
+                            email: pendingVerification.email,
+                        });
+                        return result.ok;
+                    } catch (error) {
+                        throw error;
+                    }
+                }}
+                onEditPhone={() => {
+                    // Close verification modal and open SignUp in edit mode at step 2 with all their data
+                    setShowWhatsAppVerificationModal(false);
+                    setIsEditMode(true);
+                    setEditStep(2);
+                    setEditData({
+                        email: pendingVerification?.email || '',
+                        fullName: pendingVerification?.fullName,
+                        dob: pendingVerification?.dob,
+                        countryOfResidence: pendingVerification?.countryOfResidence,
+                        referralCode: pendingVerification?.referralCode,
+                        phone: pendingVerification?.phone,
+                        phoneCode: pendingVerification?.phoneCode,
+                        phoneIso: pendingVerification?.phoneIso,
+                        whatsappPhone: pendingVerification?.whatsappPhone,
+                        whatsappCode: pendingVerification?.whatsappCode,
+                        whatsappIso: pendingVerification?.whatsappIso,
+                        useSameNumber: pendingVerification?.useSameNumber,
+                        agreeToWhatsappOtp: pendingVerification?.agreeToWhatsappOtp,
+                        agreeToTerms: pendingVerification?.agreeToTerms,
+                    });
+                    setShowSignUpModal(true);
+                }}
+            />
+
+            {/* Forgot Password Modal */}
+            <ForgotPasswordModal
+                isOpen={showForgotPasswordModal}
+                onClose={() => setShowForgotPasswordModal(false)}
+                onBackToLogin={handleBackToLoginFromForgot}
+                onSwitchToSignUp={() => {
+                    setShowForgotPasswordModal(false);
+                    setShowSignUpModal(true);
+                }}
+            />
+
+            {/* Reset Password Modal */}
+            <ResetPasswordModal
+                isOpen={showResetPasswordModal}
+                onClose={() => {
+                    setShowResetPasswordModal(false);
+                    clearPasswordRecovery();
+                    setShowLoginModal(true);
+                }}
+                onSuccess={handleResetPasswordSuccess}
+            />
         </>
     );
 };
