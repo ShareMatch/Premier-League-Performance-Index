@@ -1030,7 +1030,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         {/* Right Side - Form */}
         <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
           <div
-            className="rounded-xl p-3 md:p-4 flex flex-col border border-white/5 bg-[#004225]"
+            className="rounded-xl p-3 md:p-4 flex flex-col border-none bg-transparent"
             style={{
               minHeight: '460px',
             }}
