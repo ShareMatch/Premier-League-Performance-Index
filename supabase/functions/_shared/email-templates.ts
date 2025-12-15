@@ -61,7 +61,7 @@ export function generateForgotPasswordEmailSubject(): string {
  * Build password reset email HTML - simplified version with magic link
  */
 export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
+  const logoUrl = logoImageUrl || "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
   return PASSWORD_RESET_TEMPLATE
     .replace(/\${magicLink}/g, magicLink)
     .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
@@ -102,12 +102,9 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
             padding: 20px 0;
         }
         
-        /* Gradient Background */
+        /* Solid Background */
         .gradient-bg {
-            background-color: #019170;
-            background: 
-                linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%),
-                linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);
+            background-color: #005430;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
         
@@ -166,7 +163,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
             display: inline-block;
             font-size: 32px;
             font-weight: 800;
-            color: #16683f;
+            color: #064e3b;
             padding: 15px 30px;
             border-radius: 8px;
             letter-spacing: 4px;
@@ -279,10 +276,10 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%), linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <tr>
@@ -300,7 +297,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                                     display: inline-block;
                                     font-size: 28px;
                                     font-weight: 800;
-                                    color: #16683f;
+                                    color: #064e3b;
                                     padding: 15px 30px;
                                     border-radius: 8px;
                                     letter-spacing: 4px;
@@ -353,10 +350,7 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
             padding: 20px 0;
         }
         .gradient-bg {
-            background-color: #019170;
-            background: 
-                linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%),
-                linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);
+            background-color: #005430;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
         .container { max-width: 600px; width: 100%; border-radius: 12px; overflow: hidden; text-align: left; margin: 0 auto; }
@@ -364,12 +358,12 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         .text-light { color: #FFFFFF; }
         .text-highlight { color: #1acc79; }
         .logo-section { padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
-        .logo-image { max-width: 320px; width: 320px; height: auto; }
+        .logo-image { max-width: 280px; width: 100%; height: auto; max-height: 80px; }
         .content { padding: 25px 40px 25px 40px; }
         .content p { color: #FFFFFF !important; }
         .reset-button {
             display: inline-block;
-            background: linear-gradient(180deg, #019170 0%, #09FFC6 50%, #019170 100%);
+            background-color: #10b981;
             color: #FFFFFF !important;
             text-decoration: none;
             padding: 16px 40px;
@@ -401,10 +395,10 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         <tr><td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td></tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%), linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <tr>
@@ -421,7 +415,7 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
                             <div style="padding: 20px 0; margin: 10px 0; text-align: center;">
                                 <a href="##RESET_LINK##" class="reset-button" style="
                                     display: inline-block;
-                                    background: linear-gradient(180deg, #019170 0%, #09FFC6 50%, #019170 100%);
+                                    background-color: #10b981;
                                     color: #FFFFFF;
                                     text-decoration: none;
                                     padding: 16px 40px;
@@ -476,14 +470,14 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
             margin: 0;
             padding: 0;
         }
-        
+
         html, body {
             width: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: #FFFFFF;
@@ -492,13 +486,10 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
             line-height: 1.6;
             padding: 20px 0;
         }
-        
-        /* Gradient Background */
+
+        /* Solid Background */
         .gradient-bg {
-            background-color: #019170;
-            background: 
-                linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%),
-                linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);
+            background-color: #005430;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
         
@@ -560,7 +551,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
             display: inline-block;
             font-size: 18px;
             font-weight: 700;
-            color: #16683f;
+            color: #064e3b;
             padding: 15px 35px;
             border-radius: 8px;
             text-align: center;
@@ -868,11 +859,11 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 38%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.3) 62%, rgba(0, 0, 0, 0.8) 100%), linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%);">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="320" height="auto" style="display: block; margin: 0 auto; max-width: 320px; width: 320px; height: auto;">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <!-- Content Section -->
@@ -890,7 +881,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                                     display: inline-block;
                                     font-size: 24px;
                                     font-weight: 700;
-                                    color: #16683f;
+                                    color: #064e3b;
                                     padding: 15px 35px;
                                     border-radius: 8px;
                                     text-align: center;
