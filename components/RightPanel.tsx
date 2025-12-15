@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import TradeSlip from './TradeSlip';
 import Portfolio from './Portfolio';
 import { Wallet, Position, Order, Team, Transaction, League } from '../types';
-import { History, Activity } from 'lucide-react';
+import { History, Activity, X } from 'lucide-react';
 
 interface RightPanelProps {
     portfolio: Position[];
@@ -28,7 +28,10 @@ const RightPanel: React.FC<RightPanelProps> = ({
     allAssets,
     onNavigate,
     onSelectOrder,
-    leagueName
+    leagueName,
+    walletBalance,
+    onClose,
+    isMobile
 }) => {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'history'>('portfolio');
 
@@ -156,6 +159,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 )}
             </div>
 
+            </div>
         </div>
     );
 };

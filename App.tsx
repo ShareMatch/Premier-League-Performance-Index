@@ -18,9 +18,10 @@ import { useAuth } from './components/auth/AuthProvider';
 import KYCModal from './components/kyc/KYCModal';
 import AIAnalyticsBanner from './components/AIAnalyticsBanner';
 import AccessDeniedModal from './components/AccessDeniedModal';
+import MyDetailsPage from './components/mydetails/MyDetailsPage';
 
 const App: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [activeLeague, setActiveLeague] = useState<League>('HOME');
 
   // ... (skipping unchanged lines)
@@ -60,6 +61,12 @@ const App: React.FC = () => {
 
   // AI Analytics Access Control
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+
+  // Right Panel visibility (for mobile/tablet overlay)
+  const [showRightPanel, setShowRightPanel] = useState(false);
+
+  // My Details Page visibility
+  const [showMyDetails, setShowMyDetails] = useState(false);
 
   const handleAIAnalyticsClick = () => {
     // Check if user has any assets in portfolio
@@ -536,6 +543,7 @@ const App: React.FC = () => {
               phone: user.user_metadata?.phone || '',
               whatsapp: user.user_metadata?.whatsapp_phone || '',
               address: user.user_metadata?.address_line || '',
+              address2: user.user_metadata?.address_line_2 || '',
               city: user.user_metadata?.city || '',
               state: user.user_metadata?.region || '',
               country: user.user_metadata?.country || '',
