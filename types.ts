@@ -1,3 +1,5 @@
+export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS';
+
 export interface Team {
   id: number;
   name: string;
@@ -5,8 +7,8 @@ export interface Team {
   offer: number;
   lastChange: 'up' | 'down' | 'none';
   color?: string;
-  category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'other';
-  market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL, T20
+  category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'global_events' | 'other';
+  market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL, T20, Eurovision
   is_settled?: boolean;
   settled_date?: string;
 }

@@ -91,18 +91,56 @@ export const placeTrade = async (
 
 /**
  * Get the public user ID from auth user ID
+ * Uses maybeSingle() to handle cases where user might not exist yet
+ * Also tries querying by email as a fallback if auth_user_id query fails
  */
-export const getPublicUserId = async (authUserId: string): Promise<string | null> => {
-    const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', authUserId)
-        .single();
+export const getPublicUserId = async (authUserId: string, userEmail?: string): Promise<string | null> => {
+    try {
+        // Ensure we have a session before querying
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            console.warn('No session available when fetching public user ID');
+            return null;
+        }
 
-    if (error || !data) {
+        // Try querying by auth_user_id first
+        let { data, error } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_user_id', authUserId)
+            .maybeSingle(); // Use maybeSingle() instead of single() to handle missing rows gracefully
+
+        // If that fails and we have email, try querying by email as fallback
+        if ((error || !data) && userEmail) {
+            console.log('auth_user_id query failed, trying email fallback');
+            const emailResult = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', userEmail.toLowerCase())
+                .maybeSingle();
+            
+            if (!emailResult.error && emailResult.data) {
+                return emailResult.data.id;
+            }
+        }
+
+        if (error) {
+            console.error('Error fetching public user ID:', error);
+            // Log more details for debugging
+            if (error.code) {
+                console.error('Error code:', error.code);
+            }
+            if (error.message) {
+                console.error('Error message:', error.message);
+            }
+            return null;
+        }
+
+        return data?.id || null;
+    } catch (error) {
+        console.error('Exception in getPublicUserId:', error);
         return null;
     }
-    return data.id;
 };
 
 export const subscribeToWallet = (publicUserId: string, callback: (wallet: any) => void) => {

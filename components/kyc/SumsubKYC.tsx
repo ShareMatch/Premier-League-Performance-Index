@@ -23,7 +23,7 @@ const callEdgeFunction = async (functionName: string, body?: any) => {
 const SDKLoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
     <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3AA189] mx-auto mb-4"></div>
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#005430] mx-auto mb-4"></div>
       <p className="text-white text-xl">Loading verification SDK...</p>
     </div>
   </div>
@@ -47,13 +47,13 @@ export default function SumsubKYC({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Prevent double-fetch in React Strict Mode
   const fetchingRef = useRef(false);
-  
+
   // Track if we've already saved the applicant ID
   const applicantIdSavedRef = useRef(false);
-  
+
   // Track if user has submitted documents in THIS session
   const hasSubmittedInSessionRef = useRef(false);
 
@@ -71,11 +71,11 @@ export default function SumsubKYC({
       try {
         setLoading(true);
         console.log('🔵 Fetching Sumsub token via Edge Function for user:', userId);
-        
+
         // Call Supabase Edge Function
-        const { response, data } = await callEdgeFunction('sumsub-access-token', { 
-          user_id: userId, 
-          levelName 
+        const { response, data } = await callEdgeFunction('sumsub-access-token', {
+          user_id: userId,
+          levelName
         });
 
         console.log('🔵 Sumsub response:', { ok: response.ok, status: response.status, data });
@@ -107,9 +107,9 @@ export default function SumsubKYC({
   // Token expiration handler
   const accessTokenExpirationHandler = useCallback(async () => {
     console.log('🔄 Token expired, fetching new token via Edge Function...');
-    const { data } = await callEdgeFunction('sumsub-access-token', { 
-      user_id: userId, 
-      levelName 
+    const { data } = await callEdgeFunction('sumsub-access-token', {
+      user_id: userId,
+      levelName
     });
     return data.token;
   }, [userId, levelName]);
@@ -156,7 +156,7 @@ export default function SumsubKYC({
   useEffect(() => {
     applicantIdSavedRef.current = false;
     hasSubmittedInSessionRef.current = false;
-    
+
     return () => {
       console.log('🔄 SumsubKYC unmounting');
     };
@@ -165,7 +165,7 @@ export default function SumsubKYC({
   // Message handler
   const messageHandler = useCallback((type: string, payload: any) => {
     console.log('📨 Sumsub message:', type, payload);
-    
+
     if (type === 'idCheck.onApplicantLoaded') {
       // Save applicant ID when SDK loads applicant (only once)
       const applicantId = payload?.applicantId;
@@ -184,29 +184,29 @@ export default function SumsubKYC({
       const reviewStatus = payload?.reviewStatus;
       const reviewAnswer = payload?.reviewResult?.reviewAnswer;
       const isReprocessing = payload?.reprocessing === true;
-      
+
       // Check multiple possible locations for reviewRejectType
-      const reviewRejectType = payload?.reviewResult?.reviewRejectType 
-        || payload?.reviewRejectType 
+      const reviewRejectType = payload?.reviewResult?.reviewRejectType
+        || payload?.reviewRejectType
         || payload?.rejectType;
       const rejectLabels = payload?.reviewResult?.rejectLabels || payload?.rejectLabels || [];
       const moderationComment = payload?.reviewResult?.moderationComment || payload?.moderationComment || null;
       const buttonIds = payload?.reviewResult?.buttonIds || payload?.buttonIds || [];
-      
+
       // Log full payload to debug
       console.log('🔄 Applicant status changed - FULL PAYLOAD:', JSON.stringify(payload, null, 2));
       console.log('🔄 Extracted values:', { reviewStatus, reviewAnswer, reviewRejectType, rejectLabels, isReprocessing, hasSubmittedInSession: hasSubmittedInSessionRef.current });
-      
+
       // Always process status changes to update the database
       // The webhook is the authoritative source, but we also update from SDK events for faster UX
       console.log('✅ Processing status change...');
-      
+
       // Update database whenever we have a review answer (GREEN or RED)
       if (reviewAnswer === 'GREEN' || reviewAnswer === 'RED') {
         // Determine the final status based on reviewAnswer and reviewRejectType
         let kycStatus = 'pending';
         let shouldCloseSDK = false;
-        
+
         if (reviewAnswer === 'GREEN') {
           kycStatus = 'approved';
           shouldCloseSDK = true; // Close SDK for approved
@@ -218,15 +218,15 @@ export default function SumsubKYC({
           shouldCloseSDK = isFinalRejection;
           console.log('📋 Rejection type:', { reviewRejectType, isFinalRejection, kycStatus, shouldCloseSDK });
         }
-        
+
         // Update database with status and rejection type
         console.log('📤 Calling updateKycStatus with:', { reviewStatus, reviewAnswer, reviewRejectType, kycStatus });
         updateKycStatus(reviewStatus, reviewAnswer, reviewRejectType);
-        
+
         // DON'T auto-close SDK - let user see the result and close manually via X button
         // The SDK will show its own success/failure screen
         console.log('✅ KYC status updated - SDK stays open for user to see result');
-        
+
         // Note: User will close the modal manually by clicking X
         // The onComplete callback is no longer called automatically
       } else {
@@ -248,7 +248,7 @@ export default function SumsubKYC({
     return (
       <div className="flex items-center justify-center p-8 h-full">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#3AA189] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#005430] mx-auto mb-4"></div>
           <p className="text-white text-xl">Loading KYC verification...</p>
         </div>
       </div>
@@ -262,7 +262,7 @@ export default function SumsubKYC({
           <p className="text-red-400 text-xl mb-4">Error loading KYC: {error}</p>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors"
+            className="px-6 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
           >
             Close
           </button>

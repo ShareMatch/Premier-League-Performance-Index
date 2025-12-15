@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /**
  * Application Configuration
  * 
@@ -90,7 +89,6 @@ export const FEATURES = {
    */
   KYC_REQUIRED: true,
 };
-=======
 // Centralized configuration for external services
 // Update these values in one place when changing providers/keys.
 
@@ -101,5 +99,4 @@ export const SUPABASE_ANON_KEY =
 
 // SendGrid API config
 export const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
->>>>>>> 7f7a41a64011f46052dafcf0842969b55af1f5d2
 

@@ -11,7 +11,7 @@ const parsePhoneNumber = (phone: string): { countryCode: string; phoneNumber: st
 
   // Remove all spaces and non-digit characters except +
   const cleaned = phone.replace(/[^\d+]/g, '');
-  
+
   if (!cleaned.startsWith('+')) {
     // If no country code, return as-is
     return { countryCode: '+1', phoneNumber: cleaned, countryIso: 'US' };
@@ -22,7 +22,7 @@ const parsePhoneNumber = (phone: string): { countryCode: string; phoneNumber: st
   for (let codeLength = 4; codeLength >= 1; codeLength--) {
     const countryCode = cleaned.substring(0, codeLength + 1); // +1, +44, +971, etc.
     const phoneNumber = cleaned.substring(codeLength + 1);
-    
+
     // Find matching country
     const country = countries.find(c => c.dial_code === countryCode);
     if (country && phoneNumber.length > 0) {
@@ -185,13 +185,13 @@ const PasswordField = ({
   const [visible, setVisible] = useState(false);
 
   return (
-  <div className="flex flex-col w-full">
-    <label
-      htmlFor={name}
-      className="text-white text-xs font-medium mb-1 font-sans"
-    >
-      {label}
-    </label>
+    <div className="flex flex-col w-full">
+      <label
+        htmlFor={name}
+        className="text-white text-xs font-medium mb-1 font-sans"
+      >
+        {label}
+      </label>
       <div
         className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'
           } ${disabled ? 'cursor-not-allowed' : ''}`}
@@ -275,13 +275,13 @@ const PhoneInputField = ({
   );
 
   return (
-  <div className="flex flex-col w-full">
-    <label
-      htmlFor={name}
-      className="text-white text-xs font-medium mb-1 font-sans"
-    >
-      {label}
-    </label>
+    <div className="flex flex-col w-full">
+      <label
+        htmlFor={name}
+        className="text-white text-xs font-medium mb-1 font-sans"
+      >
+        {label}
+      </label>
       <div
         className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'
           } ${disabled ? 'cursor-not-allowed' : ''}`}
@@ -696,10 +696,10 @@ interface SignUpModalProps {
   onEditSuccess?: (email: string, whatsappPhone: string | undefined, formData: FormData) => void;
 }
 
-export const SignUpModal: React.FC<SignUpModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSwitchToLogin, 
+export const SignUpModal: React.FC<SignUpModalProps> = ({
+  isOpen,
+  onClose,
+  onSwitchToLogin,
   onSuccess,
   isEditMode = false,
   editData,
@@ -858,11 +858,11 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
     try {
       const emailStatus = await checkEmailVerificationStatus(formData.email.toLowerCase());
-      
+
       if (emailStatus.exists && emailStatus.fullyVerified) {
         // Email exists and both email and WhatsApp are verified
-        setErrors({ 
-          email: 'An account with this email already exists. Please log in to continue.' 
+        setErrors({
+          email: 'An account with this email already exists. Please log in to continue.'
         });
         setLoading(false);
         return;
@@ -897,7 +897,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
     try {
       const phone = `${formData.phoneCode}${formData.phone.replace(/\D/g, '')}`;
       const whatsappPhone = `${formData.whatsappCode}${formData.whatsapp.replace(/\D/g, '')}`;
-      
+
       const result = await updateUserProfile({
         currentEmail: editData?.email || '',
         phone,
@@ -973,13 +973,13 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve form state */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
       {/* Modal */}
       <div
-        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-modal-outer/60 backdrop-blur-[40px] rounded-modal"
+        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-[#005430] rounded-modal z-[101]"
         style={{
           maxWidth: 'min(90vw, 900px)',
           maxHeight: '95vh',
@@ -997,9 +997,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img 
-            src="/logos/white_wordmark_logo_on_black-removebg-preview.png" 
-            alt="ShareMatch" 
+          <img
+            src="/logos/mobile-header-logo-matched.svg"
+            alt="ShareMatch"
             className={`h-32 object-contain ${step === 2 ? 'mt-16 mb-0' : 'mb-3'}`}
           />
           {step === 1 && (
@@ -1011,7 +1011,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                 Create Your <br /> Account
               </h1>
               <p className="mt-8 text-gray-400 text-center font-medium text-lg leading-relaxed px-4">
-                Join our trading community.
+                Real Markets. Real Transparency.
               </p>
             </>
           )}
@@ -1024,17 +1024,14 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
             </button>
           )}
-          <img src="/logos/white_wordmark_logo_on_black-removebg-preview.png" alt="ShareMatch" className="h-16 object-contain" />
+          <img src="/logos/mobile-header-logo-matched.svg" alt="ShareMatch" className="h-16 object-contain" />
         </div>
 
         {/* Right Side - Form */}
         <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
           <div
-            className="bg-modal-inner rounded-xl p-3 md:p-4 flex flex-col border border-transparent"
+            className="rounded-xl p-3 md:p-4 flex flex-col border-none bg-transparent"
             style={{
-              backgroundImage: 'linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)',
-              backgroundOrigin: 'border-box',
-              backgroundClip: 'padding-box, border-box',
               minHeight: '460px',
             }}
           >
@@ -1051,7 +1048,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
             )}
 
             <form onSubmit={
-              isEditMode 
+              isEditMode
                 ? handleEditSaveStep2
                 : (step === 1 ? handleNext : handleSubmit)
             } className="flex flex-col gap-2 flex-1">
@@ -1211,22 +1208,20 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               {/* Submit Button */}
               <div className="flex justify-center mt-1">
                 <div
-                  className={`rounded-full transition-all duration-300 p-0.5 ${
-                    isButtonHovered 
-                      ? 'border border-white shadow-glow' 
-                      : 'border border-brand-emerald500'
-                  }`}
+                  className={`rounded-full transition-all duration-300 p-0.5 ${isButtonHovered
+                    ? 'border border-white shadow-glow'
+                    : 'border border-brand-emerald500'
+                    }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
                 >
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                      isButtonHovered
-                        ? 'bg-white text-brand-emerald500'
-                        : 'bg-gradient-primary text-white'
-                    }`}
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${isButtonHovered
+                      ? 'bg-white text-brand-emerald500'
+                      : 'bg-gradient-primary text-white'
+                      }`}
                   >
                     {loading ? 'Processing...' : isEditMode ? 'Save Changes' : step === 1 ? 'Continue' : 'Create Account'}
                     {!loading && (
