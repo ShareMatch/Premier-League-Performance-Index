@@ -15,19 +15,19 @@ interface TermsConditionsModalProps {
 const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
   const lines = content.split('\n').filter(line => line.trim() !== '');
   const elements: React.ReactNode[] = [];
-  
+
   // Main section heading pattern: number followed by period, space, and ALL CAPS text (like "1. THESE TERMS") or just "TAX"
   const sectionHeadingPattern = /^(\d+\.\s+[A-Z][A-Z\s&]+$|^TAX$)/;
-  
+
   // Sub-section pattern: starts with number.number (like 3.1, 6.2)
   const subSectionPattern = /^(\d+\.\d+)/;
-  
+
   let isFirstLines = true;
   let introCount = 0;
-  
+
   lines.forEach((line, index) => {
     const trimmedLine = line.trim();
-    
+
     // First line - Main title (Terms & Conditions or Risk & Performance Statement)
     if (index === 0) {
       elements.push(
@@ -37,7 +37,7 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       );
       return;
     }
-    
+
     // Second line - Company name (ShareMatch Ltd)
     if (index === 1 && trimmedLine === 'ShareMatch Ltd') {
       elements.push(
@@ -47,17 +47,17 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       );
       return;
     }
-    
+
     // Third line - Subtitle (TERMS OF USE or IMPORTANT RISK DISCLOSURE)
     if (index === 2 && (trimmedLine === 'TERMS OF USE' || trimmedLine === 'IMPORTANT RISK DISCLOSURE')) {
       elements.push(
-        <h3 key={index} className="text-lg sm:text-xl md:text-2xl font-semibold text-[#3AA189] text-center mb-6">
+        <h3 key={index} className="text-lg sm:text-xl md:text-2xl font-semibold text-[#005430] text-center mb-6">
           {trimmedLine}
         </h3>
       );
       return;
     }
-    
+
     // Intro/disclaimer paragraphs (ALL CAPS, before numbered sections)
     if (isFirstLines && trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length > 20 && !sectionHeadingPattern.test(trimmedLine)) {
       introCount++;
@@ -69,17 +69,17 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       if (introCount >= 2) isFirstLines = false;
       return;
     }
-    
+
     // Once we hit a numbered section, we're past the intro
     if (sectionHeadingPattern.test(trimmedLine)) {
       isFirstLines = false;
     }
-    
+
     // Section headings (1. THESE TERMS, 2. OUR PRIVACY POLICY, TAX, etc.)
     if (sectionHeadingPattern.test(trimmedLine)) {
       elements.push(
-        <h4 
-          key={index} 
+        <h4
+          key={index}
           className="text-base sm:text-lg font-semibold mt-6 mb-3"
           style={{
             background: 'linear-gradient(180deg, #019170 16.1%, #09FFC6 50.42%, #019170 84.75%)',
@@ -93,7 +93,7 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       );
       return;
     }
-    
+
     // Sub-sections (3.1, 6.2, etc.) - bold the number
     if (subSectionPattern.test(trimmedLine)) {
       const match = trimmedLine.match(subSectionPattern);
@@ -108,7 +108,7 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
         return;
       }
     }
-    
+
     // List items (a), (b), (c), etc.
     if (/^\([a-z]\)/.test(trimmedLine)) {
       elements.push(
@@ -118,7 +118,7 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       );
       return;
     }
-    
+
     // Regular paragraphs
     elements.push(
       <p key={index} className="text-xs sm:text-sm text-gray-200 leading-relaxed mb-2">
@@ -126,7 +126,7 @@ const renderFormattedContent = (content: string, type: 'terms' | 'risk') => {
       </p>
     );
   });
-  
+
   return elements;
 };
 
@@ -168,7 +168,7 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
           }}
         >
           <h3 className="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#3AA189] flex-shrink-0" />
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#005430] flex-shrink-0" />
             <span>{title}</span>
           </h3>
           <button
@@ -180,7 +180,7 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
         </div>
 
         {/* Scrollable Content */}
-        <div 
+        <div
           className="px-4 sm:px-6 py-6 sm:py-8 overflow-y-auto scrollbar-hide"
           style={{ maxHeight: 'calc(85vh - 60px)' }}
         >

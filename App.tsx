@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Team, Order, Wallet, Position, Transaction } from './types';
+import { Team, Order, Wallet, Position, Transaction, League } from './types';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
 import RightPanel from './components/RightPanel';
@@ -9,20 +9,25 @@ import NewsFeed from './components/NewsFeed';
 import HomeDashboard from './components/HomeDashboard';
 import OrderBookRow from './components/OrderBookRow';
 import Sidebar from './components/Sidebar';
-import AIAnalysis from './components/AIAnalysis';
-import AIAnalyticsPage from './components/AIAnalyticsPage';
 import Footer from './components/Footer';
+import AIAnalysis from './components/AIAnalysis';
+// Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
+const AIAnalyticsPage = React.lazy(() => import('./components/AIAnalyticsPage'));
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
-import { seedSportsAssets } from './lib/seedSports';
 import KYCModal from './components/kyc/KYCModal';
-import { MyDetailsPage } from './components/mydetails';
-import InactivityHandler from './components/auth/InactivityHandler';
-import { SESSION_CONFIG, FEATURES } from './lib/config';
+import AIAnalyticsBanner from './components/AIAnalyticsBanner';
+import AccessDeniedModal from './components/AccessDeniedModal';
 
 const App: React.FC = () => {
-  const { user, loading, signOut } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'HOME' | 'AI_ANALYTICS'>('HOME');
+  const { user, loading } = useAuth();
+  const [activeLeague, setActiveLeague] = useState<League>('HOME');
+
+  // ... (skipping unchanged lines)
+
+
+
+
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -52,12 +57,18 @@ const App: React.FC = () => {
   const [showKycModal, setShowKycModal] = useState(false);
   const [forceKycUpdateMode, setForceKycUpdateMode] = useState(false);
   const [kycChecked, setKycChecked] = useState(false);
-  
-  // My Details Page State
-  const [showMyDetails, setShowMyDetails] = useState(false);
-  
-  // Right Panel State (for mobile/responsive)
-  const [showRightPanel, setShowRightPanel] = useState(false);
+
+  // AI Analytics Access Control
+  const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+
+  const handleAIAnalyticsClick = () => {
+    // Check if user has any assets in portfolio
+    if (!portfolio || portfolio.length === 0) {
+      setShowAccessDeniedModal(true);
+      return;
+    }
+    setActiveLeague('AI_ANALYTICS');
+  };
 
   // Fetch User Data
   const loadUserData = useCallback(async () => {
@@ -100,7 +111,8 @@ const App: React.FC = () => {
   // Load public user ID when auth user changes
   useEffect(() => {
     if (user) {
-      getPublicUserId(user.id).then(setPublicUserId);
+      // Pass both auth_user_id and email for better fallback support
+      getPublicUserId(user.id, user.email).then(setPublicUserId);
     } else {
       setPublicUserId(null);
       setKycStatus(null);
@@ -179,7 +191,7 @@ const App: React.FC = () => {
   useEffect(() => {
     // Always load assets (they're public)
     loadAssets();
-    seedSportsAssets(); // Auto-seed if missing
+
 
     // Don't load user data or set up subscriptions if user is not logged in
     if (!user || !publicUserId) {
@@ -223,10 +235,10 @@ const App: React.FC = () => {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
       setTeams(filtered);
     }
-    setSelectedOrder(null);
+    // Trade slip persisted on navigation
   }, [activeLeague, allAssets]);
 
-  const handleNavigate = (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => {
+  const handleNavigate = (league: League) => {
     if (league === 'AI_ANALYTICS') {
       if (!user) {
         alert("Please login to access the AI Analytics Engine.");
@@ -320,6 +332,7 @@ const App: React.FC = () => {
       case 'NBA': return 'NBA';
       case 'NFL': return 'NFL';
       case 'T20': return 'T20 World Cup';
+      case 'Eurovision': return 'Eurovision Song Contest';
       case 'HOME': return 'Home Dashboard';
       case 'AI_ANALYTICS': return 'AI Analytics Engine';
       default: return 'ShareMatch Pro';
@@ -349,35 +362,33 @@ const App: React.FC = () => {
   }
 
   return (
-    <InactivityHandler
-      inactivityTimeout={SESSION_CONFIG.INACTIVITY_TIMEOUT_MS}
-      warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
-      enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
-    >
-      <div className="flex h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
-        {/* Mobile Menu Button - Visible below xl (1280px) */}
-        <button
-          className="xl:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-md text-white"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
-
-        {/* Sidebar */}
-        <Sidebar
-        isOpen={isMobileMenuOpen}
-        setIsOpen={setIsMobileMenuOpen}
+    <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      {/* Top Bar - Full Width */}
+      <TopBar
+        wallet={wallet}
+        portfolioValue={portfolioValue}
+        onMobileMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         activeLeague={activeLeague}
-        onLeagueChange={handleNavigate}
+        onNavigate={handleNavigate}
+        allAssets={allAssets}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top Bar */}
-        <TopBar 
-          wallet={wallet} 
-          onOpenSettings={() => setShowMyDetails(true)} 
-          onOpenPortfolio={() => setShowRightPanel(true)}
+      {/* AI Analytics Banner */}
+      <div className="w-full">
+        <AIAnalyticsBanner
+          onClick={handleAIAnalyticsClick}
+          isActive={activeLeague === 'AI_ANALYTICS'}
+        />
+      </div>
+
+      {/* Main Layout: Sidebar + Content */}
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar
+          isOpen={isMobileMenuOpen}
+          setIsOpen={setIsMobileMenuOpen}
+          activeLeague={activeLeague}
+          onLeagueChange={handleNavigate}
+          allAssets={allAssets}
         />
 
         {/* Content Container (Main + Right Panel) */}
@@ -394,7 +405,13 @@ const App: React.FC = () => {
                     teams={allAssets}
                   />
                 ) : activeLeague === 'AI_ANALYTICS' ? (
-                  <AIAnalyticsPage teams={allAssets} />
+                  <React.Suspense fallback={
+                    <div className="h-full flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                    </div>
+                  }>
+                    <AIAnalyticsPage teams={allAssets} />
+                  </React.Suspense>
                 ) : (
                   /* Mobile: Vertical stack (scrollable) | Desktop: Side by side (fixed height) */
                   <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:h-full xl:overflow-hidden">
@@ -428,9 +445,12 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-                    <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
-                      <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                    {/* Right Column: AI & News (1/3) */}
+                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                      {/* AI Analysis */}
+                      <div className="flex-shrink-0">
+                        <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                      </div>
 
                       {/* News Feed */}
                       <div className="flex-shrink-0 pb-4 xl:pb-0">
@@ -465,29 +485,8 @@ const App: React.FC = () => {
               onConfirmTrade={handleConfirmTrade}
               allAssets={allAssets}
               onNavigate={handleNavigate}
-              leagueName={getLeagueTitle(activeLeague)}
-              walletBalance={wallet?.balance || 0}
-            />
-          </div>
-          
-          {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
-          <div 
-            className={`2xl:hidden fixed inset-y-0 right-0 z-40 h-full transform transition-transform duration-300 ease-in-out ${
-              showRightPanel ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          >
-            <RightPanel
-              portfolio={portfolio}
-              transactions={transactions}
-              selectedOrder={selectedOrder}
-              onCloseTradeSlip={() => setSelectedOrder(null)}
-              onConfirmTrade={handleConfirmTrade}
-              allAssets={allAssets}
-              onNavigate={handleNavigate}
-              leagueName={getLeagueTitle(activeLeague)}
-              walletBalance={wallet?.balance || 0}
-              onClose={() => setShowRightPanel(false)}
-              isMobile={true}
+              onSelectOrder={handleSelectOrder}
+              leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
             />
           </div>
 
@@ -561,8 +560,17 @@ const App: React.FC = () => {
           />
         </div>
       )}
-      </div>
-    </InactivityHandler>
+
+      {/* Access Denied Modal (AI Analytics) */}
+      <AccessDeniedModal
+        isOpen={showAccessDeniedModal}
+        onClose={() => setShowAccessDeniedModal(false)}
+        onViewMarket={() => {
+          setActiveLeague('EPL'); // Navigate to a market (e.g. EPL) so they can buy tokens
+          setShowAccessDeniedModal(false);
+        }}
+      />
+    </div>
   );
 };
 

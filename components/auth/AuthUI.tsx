@@ -71,7 +71,7 @@ export const AuthUI: React.FC = () => {
                         if (data.whatsappData) {
                             sessionStorage.setItem('pendingVerificationPhone', data.whatsappData.raw);
                         }
-                        
+
                         // Show appropriate message based on verification type
                         if (data.verificationType === 'email') {
                             setError('Please verify your email address first. Check your inbox for the OTP.');
@@ -89,7 +89,7 @@ export const AuthUI: React.FC = () => {
                         access_token: data.session.access_token,
                         refresh_token: data.session.refresh_token,
                     });
-                    
+
                     if (sessionError) {
                         throw new Error('Failed to establish session');
                     }
@@ -107,7 +107,7 @@ export const AuthUI: React.FC = () => {
         <div className="w-full max-w-md p-8 space-y-6 bg-gray-800/50 rounded-xl border border-gray-700 backdrop-blur-sm">
             <div className="flex flex-col items-center justify-center mb-6">
                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-[#3AA189] rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-[#005430] rounded flex items-center justify-center">
                         <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>

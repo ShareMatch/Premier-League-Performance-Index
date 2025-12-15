@@ -5,7 +5,19 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.warn('Missing Supabase credentials. Please check your configuration.');
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Configure Supabase client with proper headers to avoid 406 errors
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+    },
+    global: {
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+    },
+});
 
 // Placeholder for future data fetching functions
 export const fetchTeams = async () => {
