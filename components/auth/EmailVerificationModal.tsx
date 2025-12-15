@@ -155,7 +155,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<VerificationStatus>('idle');
   const [message, setMessage] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes OTP validity
+  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds cooldown before resend
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
   // Reset state when modal opens
@@ -164,7 +164,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setCode(Array(CODE_LENGTH).fill(''));
       setStatus('idle');
       setMessage('');
-      setTimeLeft(300); // 5 minutes OTP validity
+      setTimeLeft(60); // 60 seconds cooldown before resend
       setIsButtonHovered(false);
     }
   }, [isOpen]);
@@ -241,7 +241,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
-          setTimeLeft(300); // 5 minutes OTP validity
+          setTimeLeft(60); // 60 seconds cooldown before resend
           setStatus('idle');
           setMessage(`A new code has been sent to ${email}`);
         } else {
@@ -250,7 +250,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       } else {
         // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setTimeLeft(300); // 5 minutes OTP validity
+        setTimeLeft(60); // 60 seconds cooldown before resend
         setStatus('idle');
         setMessage(`A new code has been sent to ${email}`);
       }
@@ -274,27 +274,19 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve verification state */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
-      {/* Modal Content - Vertical Layout */}
+      {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col items-center"
-        style={{
-          maxWidth: "min(90vw, 550px)",
-          borderRadius: "40px",
-          background: "rgba(4, 34, 34, 0.60)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-          padding: "clamp(2rem, 3vh, 3rem) clamp(2rem, 3vw, 3rem)",
-          gap: "clamp(1.5rem, 2vh, 2rem)",
-        }}
+        className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -302,41 +294,26 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         {/* Success Toast - Above Title */}
         {status === 'success' && (
           <div
-            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500"
+            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-white/10 text-white"
           >
-            <CheckCircle className="w-5 h-5 text-brand-emerald500" />
+            <CheckCircle className="w-5 h-5 text-white" />
             <p
-              className="font-medium text-brand-emerald500 font-sans text-sm"
+              className="font-medium text-white font-sans text-sm"
             >
               Email verified successfully!
             </p>
           </div>
         )}
 
-        {/* Title - Outside Inner Container */}
-        <h1
-          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap font-bold"
-          style={{ fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)" }}
-        >
+        {/* Title */}
+        <h1 className="text-white text-center leading-tight font-bold font-sans text-2xl md:text-3xl">
           Email Verification
         </h1>
 
-        {/* Inner Container - Form Content */}
-        <div
-          className="flex flex-col w-full"
-          style={{
-            background: "#021A1A",
-            border: "1px solid transparent",
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-            backgroundOrigin: "border-box",
-            backgroundClip: "padding-box, border-box",
-            borderRadius: "8px",
-            padding: "clamp(1.5rem, 2vh, 2rem)",
-            gap: "clamp(1rem, 1.5vh, 1.25rem)",
-          }}
-        >
+        {/* Form Content */}
+        <div className="flex flex-col w-full rounded-xl p-5 gap-4">
           {/* Verification Form - Always visible */}
-          <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
+          <div className="flex flex-col gap-4">
             {/* Description */}
             <p
               className="text-center text-white font-sans text-sm"
@@ -346,7 +323,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Email Display with Edit Link */}
             <div className="flex flex-col items-center gap-1">
-              <p className="text-center text-brand-emerald500 font-medium font-sans text-sm">
+              <p className="text-center text-white font-medium font-sans text-sm">
                 {email}
               </p>
               {onEditEmail && status !== 'success' && (
@@ -354,8 +331,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                   onClick={onEditEmail}
                   className="text-xs transition-colors font-sans"
                 >
-                  <span className="text-gray-500">Wrong Email?</span>{' '}
-                  <span className="text-brand-emerald500 hover:text-white">Edit</span>
+                  <span className="text-white/60">Wrong Email?</span>{' '}
+                  <span className="text-white hover:text-white/80 underline">Edit</span>
                 </button>
               )}
             </div>
@@ -363,7 +340,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             {/* Status Message */}
             {message && status !== 'success' && (
               <p
-                className={`text-center text-sm font-sans ${status === 'error' ? 'text-red-400' : 'text-gray-400'
+                className={`text-center text-sm font-sans ${status === 'error' ? 'text-red-400' : 'text-white/70'
                   }`}
               >
                 {message}
@@ -399,8 +376,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 onClick={handleResend}
                 disabled={isResendDisabled}
                 className={`text-sm font-semibold transition-colors ${isResendDisabled
-                  ? 'text-gray-500 cursor-not-allowed'
-                  : 'text-[#005430] hover:text-white'
+                  ? 'text-white/40 cursor-not-allowed'
+                  : 'text-white underline hover:text-white/80'
                   }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >

@@ -16,6 +16,8 @@ const AIAnalyticsPage = React.lazy(() => import('./components/AIAnalyticsPage'))
 import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
 import { useAuth } from './components/auth/AuthProvider';
 import KYCModal from './components/kyc/KYCModal';
+import InactivityHandler from './components/auth/InactivityHandler';
+import { SESSION_CONFIG, FEATURES } from './lib/config';
 import AIAnalyticsBanner from './components/AIAnalyticsBanner';
 import AccessDeniedModal from './components/AccessDeniedModal';
 import MyDetailsPage from './components/mydetails/MyDetailsPage';
@@ -23,12 +25,6 @@ import MyDetailsPage from './components/mydetails/MyDetailsPage';
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
   const [activeLeague, setActiveLeague] = useState<League>('HOME');
-
-  // ... (skipping unchanged lines)
-
-
-
-
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -369,16 +365,29 @@ const App: React.FC = () => {
   }
 
   return (
+    <InactivityHandler
+      inactivityTimeout={SESSION_CONFIG.INACTIVITY_TIMEOUT_MS}
+      warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
+      enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
+    >
     <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
       {/* Top Bar - Full Width */}
       <TopBar
         wallet={wallet}
         portfolioValue={portfolioValue}
-        onMobileMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onMobileMenuClick={() => {
+            setIsMobileMenuOpen(!isMobileMenuOpen);
+            setShowRightPanel(false); // Close right panel when opening left sidebar
+          }}
         activeLeague={activeLeague}
         onNavigate={handleNavigate}
         allAssets={allAssets}
-      />
+          onOpenSettings={() => setShowMyDetails(true)} 
+          onOpenPortfolio={() => {
+            setShowRightPanel(true);
+            setIsMobileMenuOpen(false); // Close left sidebar when opening right panel
+          }}
+        />
 
       {/* AI Analytics Banner */}
       <div className="w-full">
@@ -452,8 +461,8 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Right Column: AI & News (1/3) */}
-                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
+                    {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
+                    <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
                       {/* AI Analysis */}
                       <div className="flex-shrink-0">
                         <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
@@ -494,6 +503,31 @@ const App: React.FC = () => {
               onNavigate={handleNavigate}
               onSelectOrder={handleSelectOrder}
               leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
+              walletBalance={wallet?.balance || 0}
+            />
+          </div>
+          
+          {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+          {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
+          {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
+          <div 
+            className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out ${
+              showRightPanel ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          >
+            <RightPanel
+              portfolio={portfolio}
+              transactions={transactions}
+              selectedOrder={selectedOrder}
+              onCloseTradeSlip={() => setSelectedOrder(null)}
+              onConfirmTrade={handleConfirmTrade}
+              allAssets={allAssets}
+              onNavigate={handleNavigate}
+              onSelectOrder={handleSelectOrder}
+              leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
+              walletBalance={wallet?.balance || 0}
+              onClose={() => setShowRightPanel(false)}
+              isMobile={true}
             />
           </div>
 
@@ -503,7 +537,7 @@ const App: React.FC = () => {
       {/* Overlay for mobile menu */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 xl:hidden"
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -579,6 +613,7 @@ const App: React.FC = () => {
         }}
       />
     </div>
+    </InactivityHandler>
   );
 };
 

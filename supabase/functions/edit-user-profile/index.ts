@@ -1,8 +1,8 @@
+// ---------- edit-user-profile/index.ts ----------
+// Simple profile update function - NO OTP sending
+// Used after verification is complete to just update user data
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendSendgridEmail } from "../_shared/sendgrid.ts";
-import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
-import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,16 +10,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Configurable via environment variables
-const EMAIL_OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("OTP_EXPIRY_MINUTES") ?? "5");
-const WHATSAPP_OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("WHATSAPP_OTP_EXPIRY_MINUTES") ?? "5");
-const MAX_UPDATE_ATTEMPTS = parseInt(Deno.env.get("PROFILE_UPDATE_MAX_ATTEMPTS") ?? "5");
-
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-interface UpdatePayload {
+interface EditPayload {
   // Identify user by current email
   currentEmail: string;
   // Fields that can be updated
@@ -29,9 +20,6 @@ interface UpdatePayload {
   countryOfResidence?: string;
   phone?: string;
   whatsappPhone?: string;
-  // Whether to send verification OTP for changed email/phone
-  sendEmailOtp?: boolean;
-  sendWhatsAppOtp?: boolean;
   // Skip verification reset - use when the new email/whatsapp was already verified via OTP
   emailAlreadyVerified?: boolean;
   whatsappAlreadyVerified?: boolean;
@@ -47,10 +35,6 @@ serve(async (req: Request) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
-    const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
-    const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
-    const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
 
     // Validate required env vars
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -61,14 +45,18 @@ serve(async (req: Request) => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
     });
 
     // Parse request body
-    const body: UpdatePayload = await req.json();
+    const body: EditPayload = await req.json();
     const currentEmail = String(body.currentEmail ?? "").trim().toLowerCase();
+
+    console.log("=== edit-user-profile called ===");
+    console.log("currentEmail:", currentEmail);
+    console.log("payload:", JSON.stringify(body));
 
     if (!currentEmail) {
       return new Response(
@@ -80,30 +68,20 @@ serve(async (req: Request) => {
     // Get user by current email
     const { data: user, error: fetchErr } = await supabase
       .from("users")
-      .select("id, auth_user_id, full_name, email, whatsapp_phone_e164, profile_update_attempts")
+      .select("id, auth_user_id, full_name, email, whatsapp_phone_e164")
       .eq("email", currentEmail)
       .single();
 
     if (fetchErr || !user) {
+      console.error("User not found:", fetchErr);
       return new Response(
         JSON.stringify({ error: "User not found." }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check update attempts (rate limiting)
-    const updateAttempts = user.profile_update_attempts || 0;
-    if (updateAttempts >= MAX_UPDATE_ATTEMPTS) {
-      return new Response(
-        JSON.stringify({ error: "Maximum profile update attempts reached. Please contact support." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Build update object for public.users
-    const updateData: Record<string, unknown> = {
-      profile_update_attempts: updateAttempts + 1,
-    };
+    const updateData: Record<string, unknown> = {};
 
     // Track what changed
     let emailChanged = false;
@@ -122,7 +100,7 @@ serve(async (req: Request) => {
         );
       }
 
-      // Check if new email already exists
+      // Check if new email already exists (for a different user)
       const { data: existingUser } = await supabase
         .from("users")
         .select("id")
@@ -145,7 +123,6 @@ serve(async (req: Request) => {
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        // If existing user is not fully verified, allow overwriting (continue with update)
       }
 
       updateData.email = newEmail;
@@ -163,7 +140,7 @@ serve(async (req: Request) => {
         );
       }
 
-      // Check if new phone already exists
+      // Check if new phone already exists (for a different user)
       const { data: existingUserWithPhone } = await supabase
         .from("users")
         .select("id")
@@ -186,7 +163,6 @@ serve(async (req: Request) => {
             { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        // If existing user is not fully verified, allow overwriting (don't return error)
       }
 
       updateData.whatsapp_phone_e164 = newWhatsappPhone;
@@ -206,10 +182,27 @@ serve(async (req: Request) => {
     if (body.phone) {
       const phoneE164 = String(body.phone).trim();
       const phoneRegex = /^\+[1-9]\d{6,14}$/;
+      console.log("Phone update check:", { phone: phoneE164, matchesE164: phoneRegex.test(phoneE164) });
       if (phoneRegex.test(phoneE164)) {
         updateData.phone_e164 = phoneE164;
+      } else if (phoneE164.length > 0) {
+        // Only return error if user actually provided a phone number
+        return new Response(
+          JSON.stringify({ error: "Invalid phone format. Please include country code (e.g., +971561234567)" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
+
+    // Only update if there's something to update
+    if (Object.keys(updateData).length === 0) {
+      return new Response(
+        JSON.stringify({ ok: true, message: "No changes to update." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Updating user with:", JSON.stringify(updateData));
 
     // Update user in database
     const { error: updateErr } = await supabase
@@ -234,85 +227,12 @@ serve(async (req: Request) => {
 
       if (authUpdateErr) {
         console.error("Error updating auth email:", authUpdateErr);
-        // Since we've already validated the email change is allowed,
-        // we can proceed even if auth update fails
-        // The user record will have the correct email, auth might have old email
+        // Continue anyway - user record is updated
         console.log("Proceeding despite auth email update failure - user record updated successfully");
       }
     }
 
-    // Send OTPs if requested
-    let emailOtpSent = false;
-    let whatsappOtpSent = false;
-
-    // Send email OTP if email changed or explicitly requested
-    if ((emailChanged || body.sendEmailOtp) && sendgridApiKey && sendgridFromEmail) {
-      const otpCode = generateOtp();
-      const expiry = new Date(Date.now() + EMAIL_OTP_EXPIRY_MINUTES * 60000).toISOString();
-      const targetEmail = newEmail || currentEmail;
-
-      // Upsert OTP into user_otp_verification (channel = 'email')
-      await supabase
-        .from("user_otp_verification")
-        .upsert({
-          user_id: user.id,
-          channel: "email",
-          otp_code: otpCode,
-          otp_expires_at: expiry,
-          otp_attempts: 0,
-          update_attempts: 0,
-        }, { onConflict: 'user_id,channel' });
-
-      // Send email
-      const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
-      const emailHtml = generateOtpEmailHtml({
-        logoImageUrl,
-        userFullName: (updateData.full_name as string) || user.full_name || "",
-        otpCode,
-        expiryMinutes: EMAIL_OTP_EXPIRY_MINUTES,
-      });
-
-      const emailResult = await sendSendgridEmail({
-        apiKey: sendgridApiKey,
-        from: sendgridFromEmail,
-        to: targetEmail,
-        subject: generateOtpEmailSubject(otpCode),
-        html: emailHtml,
-      });
-
-      emailOtpSent = emailResult.ok;
-    }
-
-    // Send WhatsApp OTP only if explicitly requested
-    if (body.sendWhatsAppOtp && wabaProfileId && wabaApiKey) {
-      const otpCode = generateOtp();
-      const expiry = new Date(Date.now() + WHATSAPP_OTP_EXPIRY_MINUTES * 60000).toISOString();
-      const targetPhone = newWhatsappPhone || user.whatsapp_phone_e164;
-
-      if (targetPhone) {
-        // Upsert OTP into user_otp_verification (channel = 'whatsapp')
-        await supabase
-          .from("user_otp_verification")
-          .upsert({
-            user_id: user.id,
-            channel: "whatsapp",
-            otp_code: otpCode,
-            otp_expires_at: expiry,
-            otp_attempts: 0,
-            update_attempts: 0,
-          }, { onConflict: 'user_id,channel' });
-
-        // Send WhatsApp
-        // const sendResult = await sendWhatsAppOtp({
-        //   mobileNumber: formatPhoneForWhatsApp(targetPhone),
-        //   otpCode,
-        //   profileId: wabaProfileId,
-        //   apiKey: wabaApiKey,
-        // });
-
-        // whatsappOtpSent = sendResult.ok;
-      }
-    }
+    console.log("Profile updated successfully");
 
     return new Response(
       JSON.stringify({
@@ -320,8 +240,6 @@ serve(async (req: Request) => {
         message: "Profile updated successfully.",
         emailChanged,
         whatsappChanged,
-        emailOtpSent,
-        whatsappOtpSent,
         newEmail: emailChanged ? newEmail : undefined,
         newWhatsappPhone: whatsappChanged ? newWhatsappPhone : undefined,
       }),
@@ -329,7 +247,7 @@ serve(async (req: Request) => {
     );
 
   } catch (error: unknown) {
-    console.error("Error in update-user-profile:", error);
+    console.error("Error in edit-user-profile:", error);
     const message = error instanceof Error ? error.message : "Server error";
     return new Response(
       JSON.stringify({ error: message }),
@@ -337,4 +255,3 @@ serve(async (req: Request) => {
     );
   }
 });
-

@@ -124,26 +124,26 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
       </div>
 
       <div className="bg-gray-700/50 rounded-md p-3 flex flex-col gap-3">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="bg-[#005430] text-white text-xs font-bold px-2 py-0.5 rounded">LIVE</span>
-            <SoccerBallIcon className="w-4 h-4 text-gray-400" />
-            <span className="font-semibold text-gray-300">{leagueName} Performance Index</span>
+        <div className="flex justify-between items-start gap-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <span className="bg-[#005430] text-white text-[8px] font-bold px-1 py-0.5 rounded flex-shrink-0">LIVE</span>
+            <SoccerBallIcon className="w-3 h-3 text-gray-400 flex-shrink-0 hidden sm:block" />
+            <span className="font-semibold text-gray-300 truncate text-[10px]">{leagueName} Performance Index</span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close trade slip">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white flex-shrink-0 text-lg" aria-label="Close trade slip">&times;</button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gray-600 rounded-full p-2">
-              <SoccerBallIcon className="w-6 h-6 text-gray-300" />
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <div className="bg-gray-600 rounded-full p-1 flex-shrink-0">
+              <SoccerBallIcon className="w-4 h-4 text-gray-300" />
             </div>
-            <div>
-              <p className="text-xs text-gray-400">Asset - <span className={isBuy ? 'text-[#005430]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
-              <p className="font-bold text-gray-200 truncate">{order.team.name}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] text-gray-400">Asset - <span className={isBuy ? 'text-[#005430]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
+              <p className="font-bold text-gray-200 truncate text-xs">{order.team.name}</p>
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isBuy ? 'bg-[#005430] text-white px-2 py-1 rounded' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
+          <p className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${isBuy ? 'bg-[#005430] text-white px-1.5 py-0.5 rounded' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
         </div>
       </div>
 

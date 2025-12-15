@@ -50,9 +50,11 @@ serve(async (req: Request) => {
         });
 
         // Parse request body
-        const body = await req.json() as { phone?: string; email?: string };
+        const body = await req.json() as { phone?: string; email?: string; targetPhone?: string; forProfileChange?: boolean };
         const phone = body.phone ? String(body.phone).trim() : null;
         const email = body.email ? String(body.email).trim().toLowerCase() : null;
+        const targetPhone = body.targetPhone ? String(body.targetPhone).trim() : null;
+        const forProfileChange = body.forProfileChange === true;
 
         if (!phone && !email) {
             return new Response(
@@ -105,16 +107,17 @@ serve(async (req: Request) => {
             );
         }
 
-        // Check if WhatsApp already verified (uses new WhatsApp verified location)
-        if (whatsappOtpState.verified_at) {
+        // For profile changes, skip the "already verified" check and allow re-verification
+        // For initial signup, block if already verified
+        if (!forProfileChange && whatsappOtpState.verified_at) {
             return new Response(
                 JSON.stringify({ error: "WhatsApp number already verified." }),
                 { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Check max attempts
-        if (currentAttempts >= MAX_ATTEMPTS) {
+        // For profile changes, reset attempts; otherwise enforce max attempts
+        if (!forProfileChange && currentAttempts >= MAX_ATTEMPTS) {
             return new Response(
                 JSON.stringify({ error: "Maximum OTP attempts reached. Please contact support." }),
                 { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -126,6 +129,7 @@ serve(async (req: Request) => {
         const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000).toISOString();
 
         // --- NEW LOGIC: UPSERT OTP state into user_otp_verification ---
+        // For profile changes: reset verified_at and attempts
         const { error: updateErr } = await supabase
             .from("user_otp_verification")
             .upsert({
@@ -133,7 +137,8 @@ serve(async (req: Request) => {
                 channel: "whatsapp",
                 otp_code: otpCode,
                 otp_expires_at: expiry,
-                otp_attempts: currentAttempts + 1,
+                otp_attempts: forProfileChange ? 1 : currentAttempts + 1,
+                verified_at: forProfileChange ? null : undefined, // Reset for profile change
             }, { onConflict: 'user_id, channel' }); // Conflict keys match the UNIQUE constraint
 
         if (updateErr) {
@@ -144,8 +149,8 @@ serve(async (req: Request) => {
             );
         }
 
-        // Get WhatsApp phone number
-        const whatsappPhone = userData.whatsapp_phone_e164 || phone;
+        // Get WhatsApp phone number - use targetPhone for profile changes if provided
+        const whatsappPhone = (forProfileChange && targetPhone) ? targetPhone : (userData.whatsapp_phone_e164 || phone);
 
         if (!whatsappPhone) {
             return new Response(

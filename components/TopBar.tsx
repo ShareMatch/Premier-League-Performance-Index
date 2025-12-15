@@ -19,6 +19,8 @@ interface TopBarProps {
     activeLeague?: League;
     onNavigate?: (league: League) => void;
     allAssets?: Team[];
+    onOpenSettings?: () => void;
+    onOpenPortfolio?: () => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -53,7 +55,9 @@ const TopBar: React.FC<TopBarProps> = ({
     onMobileMenuClick,
     activeLeague,
     onNavigate,
-    allAssets = []
+    allAssets = [],
+    onOpenSettings,
+    onOpenPortfolio
 }) => {
     const { user, signOut, isPasswordRecovery, clearPasswordRecovery } = useAuth();
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -235,7 +239,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
     return (
         <>
-            <div className="h-14 md:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 md:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
+            <div className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
 
                 {/* Mobile Search Overlay */}
                 {isMobileSearchOpen ? (
@@ -296,7 +300,7 @@ const TopBar: React.FC<TopBarProps> = ({
                         {/* Left: Mobile Menu & Logo */}
                         <div className="flex items-center gap-3">
                             <button
-                                className="md:hidden text-white/80 hover:text-white transition-colors"
+                                className="lg:hidden text-white/80 hover:text-white transition-colors"
                                 onClick={onMobileMenuClick}
                             >
                                 <Menu className="h-6 w-6" />
@@ -306,20 +310,20 @@ const TopBar: React.FC<TopBarProps> = ({
                             <img
                                 src="/logos/mobile-header-logo-matched.svg"
                                 alt="ShareMatch"
-                                className="h-8 md:h-16 w-auto object-contain"
+                                className="h-8 lg:h-16 w-auto object-contain"
                             />
                         </div>
 
                         {/* Mobile Search Trigger Icon */}
                         <button
-                            className="md:hidden ml-auto mr-3 text-white/80 hover:text-white"
+                            className="lg:hidden ml-auto mr-3 text-white/80 hover:text-white"
                             onClick={() => setIsMobileSearchOpen(true)}
                         >
                             <Search className="h-5 w-5" />
                         </button>
 
                         {/* Center: Search Bar (Desktop) */}
-                        <div className="hidden md:flex flex-1 max-w-xl mx-6 relative z-50">
+                        <div className="hidden lg:flex flex-1 max-w-xl mx-6 relative z-50">
                             <div className="relative w-full group">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
                                 <input
@@ -373,9 +377,9 @@ const TopBar: React.FC<TopBarProps> = ({
                 )}
 
                 {/* Right: Date, Balance, Avatar */}
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-3 lg:gap-4">
                     {/* Date - Desktop Only */}
-                    <div className="hidden md:flex flex-col items-end mr-2 text-white/80">
+                    <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
                         <span className="text-xs font-medium">
                             {formatTime(currentTime)}
                         </span>
@@ -386,7 +390,7 @@ const TopBar: React.FC<TopBarProps> = ({
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setShowLoginModal(true)}
-                                className="hidden md:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                                className="hidden lg:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
                             >
                                 Log In
                             </button>
@@ -404,7 +408,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
                     {/* Desktop Balance - Only show if user is logged in */}
                     {user && !isPasswordRecovery && (
-                        <div className="hidden md:relative md:block">
+                        <div className="hidden lg:relative lg:block">
                             <button
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? 'bg-[#003820]' : ''}`}
                                 onClick={() => setIsBalanceOpen(!isBalanceOpen)}
@@ -438,7 +442,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
                     {/* Desktop Avatar Dropdown */}
                     {user && !isPasswordRecovery && (
-                        <div className="hidden md:relative md:block">
+                        <div className="hidden lg:relative lg:block">
                             <button
                                 className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? 'bg-[#004225] text-white' : ''}`}
                                 onClick={() => setIsAvatarOpen(!isAvatarOpen)}
@@ -488,11 +492,14 @@ const TopBar: React.FC<TopBarProps> = ({
 
                     {/* Mobile: Combined Quick Actions (Betfair style) */}
                     {user && !isPasswordRecovery && (
-                        <div className="md:hidden flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 overflow-hidden shadow-sm">
+                        <div className="lg:hidden relative flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 shadow-sm">
                             {/* Balance Part */}
                             <button
                                 className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                                onClick={() => setIsBalanceOpen(!isBalanceOpen)}
+                                onClick={() => {
+                                    setIsBalanceOpen(!isBalanceOpen);
+                                    setIsAvatarOpen(false);
+                                }}
                             >
                                 <span className="font-bold text-white text-sm">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 <ChevronDown className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? 'rotate-180' : ''}`} />
@@ -504,10 +511,72 @@ const TopBar: React.FC<TopBarProps> = ({
                             {/* User Icon Part */}
                             <button
                                 className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                                onClick={() => setIsAvatarOpen(!isAvatarOpen)}
+                                onClick={() => {
+                                    setIsAvatarOpen(!isAvatarOpen);
+                                    setIsBalanceOpen(false);
+                                }}
                             >
                                 <User className="h-4 w-4 text-white" />
                             </button>
+
+                            {/* Mobile Balance Dropdown */}
+                            {isBalanceOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-2 border-b border-gray-700">
+                                        <p className="text-xs text-gray-400 uppercase font-semibold">Total Balance</p>
+                                        <p className="text-xl font-bold text-white">{balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+                                    </div>
+                                    <div className="px-4 py-2">
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-400">Available</span>
+                                            <span className="font-medium text-gray-200">{available.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-400">Active Assets</span>
+                                            <span className="font-medium text-gray-200">{reserved.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mobile Avatar Dropdown */}
+                            {isAvatarOpen && (
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                                    <div className="px-4 py-3 border-b border-gray-700">
+                                        <p className="text-sm font-bold text-white truncate">{user?.email}</p>
+                                        <p className="text-xs text-gray-400">Last logged in: Today</p>
+                                    </div>
+                                    <div className="py-1">
+                                        <button 
+                                            onClick={() => {
+                                                setIsAvatarOpen(false);
+                                                onOpenSettings?.();
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                                        >
+                                            <Settings className="h-4 w-4" /> Settings
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                setIsAvatarOpen(false);
+                                                onOpenPortfolio?.();
+                                            }}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                                        >
+                                            <FileText className="h-4 w-4" /> Portfolio
+                                        </button>
+                                        <a href="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                            <Shield className="h-4 w-4" /> Rules & Regulations
+                                        </a>
+                                        <button
+                                            onClick={() => signOut()}
+                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                                        >
+                                            <LogOut className="h-4 w-4" /> Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

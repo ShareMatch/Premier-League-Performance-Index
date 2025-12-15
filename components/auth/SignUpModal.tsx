@@ -215,7 +215,7 @@ const PasswordField = ({
         </button>
       </div>
       {hint && !error && (
-        <p className="text-brand-emerald500 text-xs mt-0.5 font-sans">
+        <p className="text-white text-xs mt-0.5 font-sans">
           {hint}
         </p>
       )}
@@ -657,7 +657,7 @@ const Checkbox = ({
         <Check size={10} strokeWidth={4} />
       </span>
     </div>
-    <span className={`text-xs leading-normal font-sans ${error ? 'text-red-400' : 'text-gray-300'}`}>
+    <span className={`text-xs leading-normal font-sans ${error ? 'text-red-400' : 'text-white'}`}>
       {children}
     </span>
   </label>
@@ -986,7 +986,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         }}
       >
         {/* Close Button */}
-        <button onClick={onClose} className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-30">
+        <button onClick={onClose} className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-30">
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
@@ -1010,7 +1010,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               >
                 Create Your <br /> Account
               </h1>
-              <p className="mt-8 text-gray-400 text-center font-medium text-lg leading-relaxed px-4">
+              <p className="mt-8 text-white/80 text-center font-medium text-lg leading-relaxed px-4">
                 Real Markets. Real Transparency.
               </p>
             </>
@@ -1181,13 +1181,13 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     onChange={(checked) => setFormData((p) => ({ ...p, agreeToWhatsappOtp: checked }))}
                     error={!!errors.agreeToWhatsappOtp}
                   >
-                    I agree to receive WhatsApp messages for OTP
+                    I agree to receive communications via Email and WhatsApp
                   </Checkbox>
 
                   {/* Security Notice */}
-                  <div className="bg-modal-notice rounded-lg p-2 flex items-start gap-2 border border-white/5">
-                    <Lock className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-400 text-xs leading-tight font-sans">
+                  <div className="flex items-start gap-2">
+                    <Lock className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                    <p className="text-white text-xs leading-tight font-sans">
                       Your account is protected with encryption. Never share your password.
                     </p>
                   </div>

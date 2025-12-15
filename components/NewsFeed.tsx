@@ -207,12 +207,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
 
     return (
         <>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-80">
-                <div className="p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-2">
-                    <Newspaper className="w-4 h-4 text-white" />
-                    <h3 className="font-bold text-gray-200 text-sm truncate flex-1">{title}</h3>
-                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin" />}
-                    <span className="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded animate-pulse">LIVE</span>
+            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-48 sm:h-64 xl:h-80">
+                <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
+                    <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
+                    <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
+                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
+                    <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
                 </div>
 
                 <div className="flex-1 overflow-hidden relative group">
@@ -220,7 +220,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                         {loading && newsItems.length === 0 ? (
                             <div className="text-center text-gray-500 text-xs sm:text-sm py-4">Loading news...</div>
                         ) : newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-sm py-4 flex flex-col gap-2">
+                            <div className="text-center text-gray-500 text-xs sm:text-sm py-4 flex flex-col gap-2">
                                 <span>No news available.</span>
                                 {debugMessage && (
                                     <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
@@ -235,7 +235,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                                     className="border-b border-gray-700/50 last:border-0 pb-2 sm:pb-3 last:pb-0 cursor-pointer group/item"
                                     onClick={() => handleNewsClick(item)}
                                 >
-                                    <p className="text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
                                         {item.headline}
                                     </p>
                                     <div className="flex justify-between mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-500">
@@ -252,8 +252,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
             {/* AI Summary Modal - Responsive */}
             {selectedNews && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-                    <div
-                        className="max-w-[95vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                    <div 
+                        className="max-w-[92vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto scrollbar-hide"
                         style={{
                             borderRadius: '12px',
                             background: 'rgba(4, 34, 34, 0.60)',
@@ -261,15 +261,16 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                             WebkitBackdropFilter: 'blur(40px)',
                         }}
                     >
-                        <div
-                            className="px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10"
+                        {/* Header - Compact on mobile */}
+                        <div 
+                            className="px-2.5 sm:px-5 py-2 sm:py-4 flex justify-between items-center sticky top-0 z-10"
                             style={{
                                 background: '#021A1A',
                                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                             }}
                         >
-                            <h3 className="font-bold text-white flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base">
-                                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
+                            <h3 className="font-bold text-white flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base">
+                                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
                                 AI News Summary
                             </h3>
                             <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">

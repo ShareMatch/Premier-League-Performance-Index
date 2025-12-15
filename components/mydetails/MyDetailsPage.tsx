@@ -16,12 +16,16 @@ import { WhatsAppVerificationModal } from '../auth/WhatsAppVerificationModal';
 import { 
   getKycUserStatus, 
   fetchUserDetails, 
+  fetchUserBankingDetails,
   UserDetails,
+  UserBankingDetails,
   sendEmailOtp,
   verifyEmailOtp,
   sendWhatsAppOtp,
   verifyWhatsAppOtp,
   updateUserProfile,
+  editUserProfile,
+  updateMarketingPreferences,
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 
@@ -42,7 +46,6 @@ interface UserData {
   whatsapp: string;
   // Address
   address: string;
-  address2: string;
   city: string;
   state: string;
   country: string;
@@ -114,6 +117,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [kycStatus, setKycStatus] = useState<KYCStatus>('not_verified');
   const [loading, setLoading] = useState(true);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [userBankingDetails, setUserBankingDetails] = useState<UserBankingDetails | null>(null);
   const [activeModal, setActiveModal] = useState<EditModalType>(null);
   
   // Verification flow state
@@ -123,13 +127,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [verificationEmail, setVerificationEmail] = useState('');
   const [verificationWhatsApp, setVerificationWhatsApp] = useState('');
 
-  // Marketing preferences state
+  // Marketing preferences state - will be loaded from DB
   const [preferences, setPreferences] = useState([
-    { id: 'email', label: 'Email', enabled: true },
-    { id: 'whatsapp', label: 'WhatsApp', enabled: true },
+    { id: 'email', label: 'Email', enabled: false },
+    { id: 'whatsapp', label: 'WhatsApp', enabled: false },
     { id: 'sms', label: 'SMS', enabled: false },
   ]);
-  const [personalizedMarketing, setPersonalizedMarketing] = useState(true);
+  const [personalizedMarketing, setPersonalizedMarketing] = useState(false);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
   // Payment details state
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('none');
@@ -137,18 +142,46 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
 
-  // Build login history from user's source_ip (TODO: fetch from login_history table when available)
-  const loginHistory = userDetails?.source_ip ? [
+  // Sync bankDetails state with userBankingDetails from database
+  useEffect(() => {
+    if (userBankingDetails) {
+      setBankDetails({
+        accountName: userBankingDetails.account_name || '',
+        accountNumber: userBankingDetails.account_number || '',
+        iban: userBankingDetails.iban || '',
+        swiftBic: userBankingDetails.swift_bic || '',
+        bankName: userBankingDetails.bank_name || '',
+      });
+      setPaymentMethod('bank');
+    }
+  }, [userBankingDetails]);
+
+  // Format the last login timestamp
+  const formatLastLogin = (dateString: string | null) => {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Build login history from user's source_ip and updated_at
+  const loginHistory = userDetails ? [
     {
       id: '1',
-      timestamp: 'Last login',
+      timestamp: formatLastLogin(userDetails.updated_at),
       location: userDetails.country || 'Unknown',
-      ip: userDetails.source_ip,
+      countryCode: userDetails.country_code?.toLowerCase() || undefined,
+      ip: userDetails.source_ip || 'N/A',
       successful: true,
     },
   ] : [];
 
-  // Fetch user details and KYC status
+  // Fetch user details, KYC status, banking details, and marketing preferences
   useEffect(() => {
     const fetchData = async () => {
       if (!userId) {
@@ -157,23 +190,63 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       }
 
       try {
-        // Fetch user details and KYC status in parallel
-        const [details, kycStatusResponse] = await Promise.all([
+        // Fetch user details, KYC status, banking details, and preferences in parallel
+        const fetchPreferences = async () => {
+          try {
+            // Use maybeSingle() instead of single() to avoid 406 error when no row exists
+            const { data, error } = await supabase.from('user_preferences').select('*').eq('id', userId).maybeSingle();
+            if (error) {
+              console.error('Error fetching preferences:', error);
+              return null;
+            }
+            return { data };
+          } catch (err) {
+            console.error('Exception fetching preferences:', err);
+            return null;
+          }
+        };
+
+        const [details, kycStatusResponse, bankingDetails, userPrefs] = await Promise.all([
           fetchUserDetails(userId),
           getKycUserStatus(userId).catch(() => null),
+          fetchUserBankingDetails(userId).catch(() => null),
+          fetchPreferences(),
         ]);
 
         if (details) {
           setUserDetails(details);
-          // Use KYC status from user details if available
-          if (details.kyc_status) {
-            setKycStatus(mapKycStatus(details.kyc_status));
-          }
         }
 
-        // Override with dedicated KYC status if available
+        // Get KYC status from user_compliance table
         if (kycStatusResponse) {
           setKycStatus(mapKycStatus(kycStatusResponse.kyc_status));
+        }
+
+        // Set banking details
+        if (bankingDetails) {
+          setUserBankingDetails(bankingDetails);
+        }
+
+        // Set marketing preferences from database
+        if (userPrefs?.data) {
+          const prefs = userPrefs.data;
+          console.log('📧 User preferences from DB:', prefs);
+          setPreferences([
+            { id: 'email', label: 'Email', enabled: Boolean(prefs.email) },
+            { id: 'whatsapp', label: 'WhatsApp', enabled: Boolean(prefs.whatsapp) },
+            { id: 'sms', label: 'SMS', enabled: Boolean(prefs.sms) },
+          ]);
+          setPersonalizedMarketing(Boolean(prefs.personalized_marketing));
+          setPreferencesLoaded(true);
+        } else {
+          // No preferences found - use defaults (for users who signed up before this feature)
+          setPreferences([
+            { id: 'email', label: 'Email', enabled: true },
+            { id: 'whatsapp', label: 'WhatsApp', enabled: true },
+            { id: 'sms', label: 'SMS', enabled: false },
+          ]);
+          setPersonalizedMarketing(true);
+          setPreferencesLoaded(true);
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
@@ -188,22 +261,21 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
   // Build user object from fetched data or fallback to props/defaults
   const user = {
-    name: userDetails?.full_name || userData?.name || 'Nil',
-    email: userDetails?.email || userData?.email || 'Nil',
-    phone: userDetails?.phone_e164 || userData?.phone || 'Nil',
-    whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || 'Nil',
-    address: userDetails?.address_line || userData?.address || 'Nil',
-    address2: userDetails?.address_line2 || userData?.address2 || 'Nil',
-    city: userDetails?.city || userData?.city || 'Nil',
-    state: userDetails?.region || userData?.state || 'Nil',
-    country: userDetails?.country || userData?.country || 'Nil',
-    postCode: userDetails?.postal_code || userData?.postCode || 'Nil',
-    // Bank details not in users table yet - use props or defaults
-    accountName: userData?.accountName || 'Nil',
-    accountNumber: userData?.accountNumber || 'Nil',
-    iban: userData?.iban || 'Nil',
-    swiftBic: userData?.swiftBic || 'Nil',
-    bankName: userData?.bankName || 'Nil',
+    name: userDetails?.full_name || userData?.name || 'N/A',
+    email: userDetails?.email || userData?.email || 'N/A',
+    phone: userDetails?.phone_e164 || userData?.phone || 'N/A',
+    whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || 'N/A',
+    address: userDetails?.address_line || userData?.address || 'N/A',
+    city: userDetails?.city || userData?.city || 'N/A',
+    state: userDetails?.region || userData?.state || 'N/A',
+    country: userDetails?.country || userData?.country || 'N/A',
+    postCode: userDetails?.postal_code || userData?.postCode || 'N/A',
+    // Bank details from user_banking_details table
+    accountName: userBankingDetails?.account_name || 'N/A',
+    accountNumber: userBankingDetails?.account_number || 'N/A',
+    iban: userBankingDetails?.iban || 'N/A',
+    swiftBic: userBankingDetails?.swift_bic || 'N/A',
+    bankName: userBankingDetails?.bank_name || 'N/A',
   };
 
   // Get document statuses based on KYC status
@@ -284,8 +356,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     }
     
     // No verification needed - just update phone number via edge function
-    await updateUserProfile({
-      currentEmail: currentEmail, // Already declared above
+    await editUserProfile({
+      currentEmail: currentEmail,
       phone: updatedFields.phone,
     });
 
@@ -314,20 +386,19 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     const currentEmail = userDetails?.email || '';
     
     try {
-      // Use the edge function to update - it has service role access
+      // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.emailChanged && pendingChanges.email) {
-        console.log('✅ Email verified, updating via edge function to:', pendingChanges.email);
+        console.log('✅ Email verified, updating via editUserProfile to:', pendingChanges.email);
         
-        // updateUserProfile uses service role key and can update both public.users and auth.users
-        // Pass emailAlreadyVerified: true since we just verified the OTP
-        await updateUserProfile({
+        // editUserProfile just updates the DB - no OTP sending
+        await editUserProfile({
           currentEmail: currentEmail,
           newEmail: pendingChanges.email,
           phone: pendingChanges.phone || undefined,
-          emailAlreadyVerified: true, // Don't reset email_verified_at since we just verified
+          emailAlreadyVerified: true,
         });
         
-        console.log('✅ Email updated successfully via edge function');
+        console.log('✅ Email updated successfully via editUserProfile');
       }
       
       // Check if WhatsApp also needs verification
@@ -379,19 +450,19 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       : userDetails?.email || '';
     
     try {
-      // Use the edge function to update - it has service role access
+      // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.whatsappChanged && pendingChanges.whatsapp) {
-        console.log('✅ WhatsApp verified, updating via edge function to:', pendingChanges.whatsapp);
+        console.log('✅ WhatsApp verified, updating via editUserProfile to:', pendingChanges.whatsapp);
         
-        // Pass whatsappAlreadyVerified: true since we just verified the OTP
-        await updateUserProfile({
+        // editUserProfile just updates the DB - no OTP sending
+        await editUserProfile({
           currentEmail: currentEmail,
           whatsappPhone: pendingChanges.whatsapp,
           phone: pendingChanges.phone || undefined,
-          whatsappAlreadyVerified: true, // Don't reset whatsapp_phone_verified_at since we just verified
+          whatsappAlreadyVerified: true,
         });
         
-        console.log('✅ WhatsApp updated successfully via edge function');
+        console.log('✅ WhatsApp updated successfully via editUserProfile');
       }
       
       // Refresh user details
@@ -513,23 +584,33 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     // Future: handle 'card' and 'crypto' when available
   };
 
-  // Save Bank Details handler
-  const handleSaveBankDetails = async (details: BankDetails) => {
-    console.log('Save bank details:', details);
-    // TODO: Save to bank_details table when available
-    
-    // For now, just store in state
-    setBankDetails(details);
-    setPaymentMethod('bank');
-    setShowBankDetailsModal(false);
-  };
+  // Bank Details Modal just displays ShareMatch's company bank accounts
+  // No save handler needed - it's a read-only display
 
   // Save Marketing Preferences handler
   const handleSaveMarketingPreferences = async (
-    newPreferences: typeof preferences, 
+    newPreferences: typeof preferences,
     newPersonalized: boolean
   ) => {
-    // TODO: Save to database when columns are available
+    if (!userId || !userDetails?.email) return;
+
+    // Convert preferences array to payload format
+    const emailPref = newPreferences.find(p => p.id === 'email')?.enabled ?? false;
+    const whatsappPref = newPreferences.find(p => p.id === 'whatsapp')?.enabled ?? false;
+    const smsPref = newPreferences.find(p => p.id === 'sms')?.enabled ?? false;
+
+    // Call edge function to update preferences (bypasses RLS)
+    await updateMarketingPreferences({
+      email: userDetails.email,
+      preferences: {
+        email: emailPref,
+        whatsapp: whatsappPref,
+        sms: smsPref,
+        personalized_marketing: newPersonalized,
+      },
+    });
+
+    // Update local state
     setPreferences(newPreferences);
     setPersonalizedMarketing(newPersonalized);
   };
@@ -616,10 +697,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             <DetailsCard
               title="Address"
               fields={[
-                { label: 'Address Line 1:', value: user.address },
-                { label: 'Address Line 2:', value: user.address2 },
+                { label: 'Address:', value: user.address },
                 { label: 'Town/City:', value: user.city },
-                { label: 'State, Province or Region:', value: user.state },
+                { label: 'State/Region:', value: user.state },
                 { label: 'Country:', value: user.country },
                 { label: 'Post Code:', value: user.postCode },
               ]}
@@ -691,10 +771,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onClose={() => setActiveModal(null)}
         title="About You"
         fields={[
-          { key: 'name', label: 'Name', value: user.name === 'Nil' ? '' : user.name, editable: false },
-          { key: 'email', label: 'Email Address', value: user.email === 'Nil' ? '' : user.email, type: 'email', hint: 'OTP will be sent to the new email' },
-          { key: 'phone', label: 'Phone Number', value: user.phone === 'Nil' ? '' : user.phone, type: 'tel' },
-          { key: 'whatsapp', label: 'WhatsApp Number', value: user.whatsapp === 'Nil' ? '' : user.whatsapp, type: 'tel', hint: 'OTP will be sent to the new WhatsApp number' },
+          { key: 'name', label: 'Name', value: user.name === 'N/A' ? '' : user.name, editable: false },
+          { key: 'email', label: 'Email Address', value: user.email === 'N/A' ? '' : user.email, type: 'email', hint: 'OTP will be sent to the new email' },
+          { key: 'phone', label: 'Phone Number', value: user.phone === 'N/A' ? '' : user.phone, type: 'tel', hint: 'Include country code (e.g., +971561234567)' },
+          { key: 'whatsapp', label: 'WhatsApp Number', value: user.whatsapp === 'N/A' ? '' : user.whatsapp, type: 'tel', hint: 'OTP will be sent to the new WhatsApp number' },
         ]}
         onSave={handleSaveAboutYou}
       />
@@ -705,11 +785,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onClose={() => setActiveModal(null)}
         title="Address"
         fields={[
-          { key: 'address', label: 'Address', value: user.address === 'Nil' ? '' : user.address },
-          { key: 'city', label: 'Town/City', value: user.city === 'Nil' ? '' : user.city },
-          { key: 'state', label: 'State', value: user.state === 'Nil' ? '' : user.state },
-          { key: 'country', label: 'Country', value: user.country === 'Nil' ? '' : user.country },
-          { key: 'postCode', label: 'Post Code', value: user.postCode === 'Nil' ? '' : user.postCode },
+          { key: 'address', label: 'Address', value: user.address === 'N/A' ? '' : user.address },
+          { key: 'city', label: 'Town/City', value: user.city === 'N/A' ? '' : user.city },
+          { key: 'state', label: 'State/Region', value: user.state === 'N/A' ? '' : user.state },
+          { key: 'country', label: 'Country', value: user.country === 'N/A' ? '' : user.country },
+          { key: 'postCode', label: 'Post Code', value: user.postCode === 'N/A' ? '' : user.postCode },
         ]}
         onSave={handleSaveAddress}
       />
@@ -721,7 +801,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onSelectMethod={handleSelectPaymentMethod}
       />
 
-      {/* Bank Details Modal */}
+      {/* Bank Details Modal - Shows ShareMatch company bank accounts */}
       <BankDetailsModal
         isOpen={showBankDetailsModal}
         onClose={() => setShowBankDetailsModal(false)}
@@ -729,8 +809,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           setShowBankDetailsModal(false);
           setShowPaymentMethodModal(true);
         }}
-        onSave={handleSaveBankDetails}
-        initialData={bankDetails}
       />
 
       {/* Edit Marketing Preferences Modal */}
