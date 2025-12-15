@@ -1,10 +1,10 @@
 import React from 'react';
 import NewsFeed from './NewsFeed';
 import HotQuestions from './HotQuestions';
-import type { Team } from '../types';
+import type { Team, League } from '../types';
 
 interface HomeDashboardProps {
-    onNavigate: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1') => void;
+    onNavigate: (league: League) => void;
     teams: Team[];
 }
 

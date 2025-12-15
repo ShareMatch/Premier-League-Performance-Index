@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15] - 2025-12-14
+### Added
+- **Dynamic Trending Markets:** Overhauled "Trending Markets" with live updates every 3-5s, explosive animations, and strict filtering (Price > $5, Open Markets only).
+
+### Changed
+- **UI:** Standardized "Info" icon across pages to a consistent "White 'i' in Green Circle" design for better visibility.
+
+### Fixed
+- **Critical:** Resolved "Blank Screen" crash on startup caused by a reference to a missing `seedSportsAssets` function.
+- **Performance:** Implemented lazy loading for `AIAnalyticsPage` to improve initial load time.
+
+## [2.14] - 2025-12-13
+### Added
+- **Global Search:** Implemented fully functional sidebar search bar to find assets across all markets.
+- **Voice Search:** Integrated Voice-to-Text using Web Speech API for hands-free search capability.
+- **UX:** Search results now display market context (e.g., "Arsenal • EPL" vs "Arsenal • UCL") to handle duplicate team names.
+- **Mobile Header:** Fixed mobile header branding (Green background, Logo transparency matched).
+- **Desktop Header:** Refactored to full-width "Betfair-style" header, integrating Logo and Search Bar.
+- **Search:** Moved Search functionality from Sidebar to Top Header for better accessibility.
+- **Mobile Search:** Restored mobile search functionality with a dedicated search overlay and toggle button.
+- **Voice Search (Mobile):** Added microphone support to the mobile search overlay for consistent experience.
+- **AI Analytics:** Added high-impact "AI Analytics Engine" banner below the header.
+- **Access Control:** Restricted AI Analytics access to token holders only (Shariah compliant "Real Utility" check).
+- **Branding:** Significantly increased desktop logo size for better visibility.
+
+## [2.13] - 2025-12-13
+### Added
+- **AI Analytics:** Added missing markets: T20 Cricket and Eurovision to the analysis engine.
+
+### Changed
+- **Mobile UX:** Improved filter button layout on AI Analytics page to wrap correctly on mobile devices for better accessibility.
+
+## [2.12] - 2025-12-13
+### Changed
+- **Branding:** Rebranded entire application to use new corporate green (#005430) as primary color.
+- **UI Contrast:** Implemented high-contrast "white on green" styling for:
+    - Sidebar buttons (AI Analytics)
+    - Header badges (Market Status)
+    - Order Book (Buy/Sell prices)
+    - Portfolio (Asset values and active tabs)
+    - Trending Markets (Action buttons)
+- **News Feed:** Upgraded news fetching engine to use **Google Gemini Search Grounding** for real-time, accurate results, replacing deprecated NewsAPI.
+- **News Feed:** Updated feed titles to "ShareMatch [Topic] News Wire".
+- **News Feed:** Switched AI model to **Gemini 2.5 Flash** for improved performance and tool compatibility.
+- **UI:** Added `$` prefix to Ticker prices, Index Valuation text, and Portfolio unit prices for consistency.
+- **UI:** Removed blocky background from Market Headers for a cleaner, responsive design using high-contrast text.
+- **UI:** Fixed "Performance Index" title duplication in page headers.
+- **UI:** Added visual "Season Progress Bar" with start/end dates to all Market Information popups.
+- **UI:** Added helper text to Portfolio to clarify that values reflect "Realizable Value" (Sell Price).
+- **UX:** Enhanced Portfolio interaction: Clicking a holding now opens the Market Page AND the Transaction Slip (defaulting to Buy) for immediate trading.
+- **UX:** Trade Slip now persists during navigation, preventing accidental cancellation of trades.
+- **UI:** Updated Ticker to hide assets from closed markets (like F1).
+- **UI:** Updated Ticker to display Buy Price (Offer) instead of Sell Price, with explicit "Buy" label.
+- **UX:** Repositioned "AI Market Analysis" button to the right sidebar column to prevent overlapping with the main header on smaller screens.
+- **AI:** Updated AI Analysis prompt to strictly exclude specific prices and percentages, focusing solely on qualitative news and sentiment.
+- **Fix:** Corrected settled prices for F1 Drivers (Lando Norris settled at $100).
+- **UI:** Increased size and visibility of "Info" icons in market headers.
+- **Markets:** Opened **FIFA World Cup** market in preparation for upcoming events.
+
+### Fixed
+- **News Feed:** Resolved critical "400 Bad Request" error by removing conflicting JSON mode configuration.
+- **News Feed:** Resolved "404 Model Not Found" error by updating deprecated `v1beta` model alias.
+- **News Feed:** Fixed client-side bug where news list would not refresh despite successful backend update.
+- **News Feed:** Re-enabled 6-hour caching mechanism to optimize API usage.
+- **News Feed:** Added robust error handling to display specific API errors in the client debug panel.
+
+## [2.11] - 2025-12-13
+### Added
+- **Eurovision Market**: Added "Eurovision Song Contest Performance Index" to Global Events.
+- **Assets**: Added initial asset listings for Eurovision 2026.
+- **Frontend Refactor**: Introduced shared `League` type in `types.ts`.
+
+### Changed
+- **Asset Prices**: Updated prices for all markets.
+- **Sidebar**: Fixed issue where "Eurovision" link was not clickable.
+- **Global Events**: Enabled "Global Events" in sidebar.
+
 ## [2.10] - 2025-12-09
 ### Added
 - **Market Settlement:** Implemented full backend settlement logic for closed markets (e.g., F1 2025).

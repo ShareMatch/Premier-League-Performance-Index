@@ -303,14 +303,14 @@ serve(async (req: Request) => {
           }, { onConflict: 'user_id,channel' });
 
         // Send WhatsApp
-        const sendResult = await sendWhatsAppOtp({
-          mobileNumber: formatPhoneForWhatsApp(targetPhone),
-          otpCode,
-          profileId: wabaProfileId,
-          apiKey: wabaApiKey,
-        });
+        // const sendResult = await sendWhatsAppOtp({
+        //   mobileNumber: formatPhoneForWhatsApp(targetPhone),
+        //   otpCode,
+        //   profileId: wabaProfileId,
+        //   apiKey: wabaApiKey,
+        // });
 
-        whatsappOtpSent = sendResult.ok;
+        // whatsappOtpSent = sendResult.ok;
       }
     }
 

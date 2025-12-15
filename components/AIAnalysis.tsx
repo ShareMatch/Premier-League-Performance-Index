@@ -61,8 +61,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
             TASK:
             1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders in the ${leagueName}.
             2. Compare the real-world sentiment/news with these market prices.
-            3. Identify ONE "Best Buy" (undervalued team) and ONE "Sell" (overvalued team).
             4. Provide a concise, data-driven rationale for each trade based on the *latest* news you found.
+            
+            IMPORTANT: DO NOT mention specific percentage probabilities (%) or specific prices in your text. The user can already see these. Focus purely on the qualitative analysis (injuries, form, news, sentiment) that justifies why the market might be wrong.
             
             Keep the response concise (under 150 words) and focused on actionable trading advice.`;
 
@@ -92,7 +93,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
         <button
           onClick={getAnalysis}
           disabled={loading}
-          className="bg-brand-emerald500/80 hover:bg-[#3AA189] text-white font-bold py-2 px-4 sm:px-6 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed text-xs sm:text-sm"
+          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-4 sm:px-6 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed text-xs sm:text-sm"
         >
           <SparkleIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${loading ? "animate-spin" : ""}`} />
           <span>
@@ -134,7 +135,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
 
       {analysis && !loading && isVisible && (
         <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-xs sm:text-sm font-bold text-[#3AA189] flex items-center gap-1.5 sm:gap-2 mb-2">
+          <h3 className="text-xs sm:text-sm font-bold text-[#005430] flex items-center gap-1.5 sm:gap-2 mb-2">
             <SparkleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             AI Market Commentary
           </h3>

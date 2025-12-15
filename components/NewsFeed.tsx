@@ -38,7 +38,7 @@ const isHaram = (text: string): boolean => {
 };
 
 interface NewsFeedProps {
-    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Global';
+    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Eurovision' | 'Global';
 }
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
@@ -50,20 +50,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
     const [isUpdating, setIsUpdating] = useState(false);
 
     const getTitle = (topic: string) => {
-        switch (topic) {
-            case 'EPL': return 'England Premier League News Wire';
-            case 'UCL': return 'UEFA Champions League News Wire';
-            case 'SPL': return 'Saudi Pro League News Wire';
-            case 'WC': return 'FIFA World Cup News Wire';
-            case 'F1': return 'Formula 1 News Wire';
-            case 'NBA': return 'NBA News Wire';
-            case 'NFL': return 'NFL News Wire';
-            default: return 'Global Sports News Wire';
-        }
+        return `ShareMatch ${topic === 'Global' ? '' : topic + ' '}News Wire`;
     };
 
     const title = getTitle(topic);
-    const promptContext = topic === 'F1' ? 'Formula 1' : topic === 'NBA' ? 'Basketball' : topic === 'NFL' ? 'American Football' : 'Football';
+    const promptContext = topic === 'F1' ? 'Formula 1' :
+        topic === 'NBA' ? 'Basketball' :
+            topic === 'NFL' ? 'American Football' :
+                topic === 'Eurovision' ? 'Eurovision Song Contest' : 'Football';
 
     const fetchNews = async () => {
         setLoading(true);
@@ -114,12 +108,16 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
         setIsUpdating(true);
         try {
             const { data, error } = await supabase.functions.invoke('fetch-news', {
-                body: { topic }
+                body: {
+                    topic,
+                    apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+                    // force: true // Removed to re-enable caching
+                }
             });
 
             if (error) throw error;
 
-            if (data?.updated) {
+            if (data?.dbStatus === 'updated' || data?.updated) {
                 // Refetch to get new items
                 const { data: newData } = await supabase
                     .from('news_articles')
@@ -129,13 +127,23 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                     .limit(10);
 
                 if (newData) setNewsItems(newData);
+            } else {
+                setDebugMessage(JSON.stringify(data, null, 2));
             }
-        } catch (err) {
+
+            if (data?.error || data?.dbStatus === 'empty') {
+                setDebugMessage(JSON.stringify(data, null, 2));
+            }
+        } catch (err: any) {
             console.error('Error updating news:', err);
+            setDebugMessage(`Client Error: ${err.message || JSON.stringify(err)}`);
         } finally {
             setIsUpdating(false);
         }
     };
+
+    // DEBUG STATE
+    const [debugMessage, setDebugMessage] = useState<string>("");
 
     useEffect(() => {
         fetchNews();
@@ -201,7 +209,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
         <>
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-48 sm:h-64 xl:h-80">
                 <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
-                    <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#3AA189] flex-shrink-0" />
+                    <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
                     <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
                     {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
                     <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
@@ -212,7 +220,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                         {loading && newsItems.length === 0 ? (
                             <div className="text-center text-gray-500 text-xs sm:text-sm py-4">Loading news...</div>
                         ) : newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-xs sm:text-sm py-4">No news available.</div>
+                            <div className="text-center text-gray-500 text-xs sm:text-sm py-4 flex flex-col gap-2">
+                                <span>No news available.</span>
+                                {debugMessage && (
+                                    <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
+                                        DEBUG: {debugMessage}
+                                    </pre>
+                                )}
+                            </div>
                         ) : (
                             newsItems.map((item) => (
                                 <div
@@ -220,7 +235,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                                     className="border-b border-gray-700/50 last:border-0 pb-2 sm:pb-3 last:pb-0 cursor-pointer group/item"
                                     onClick={() => handleNewsClick(item)}
                                 >
-                                    <p className="text-xs sm:text-sm font-medium text-gray-300 group-hover/item:text-[#3AA189] transition-colors line-clamp-2">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
                                         {item.headline}
                                     </p>
                                     <div className="flex justify-between mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-500">
@@ -255,8 +270,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
                             }}
                         >
                             <h3 className="font-bold text-white flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base">
-                                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#3AA189] flex-shrink-0" />
-                                AI Summary
+                                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
+                                AI News Summary
                             </h3>
                             <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
                                 <X className="w-4 h-4 sm:w-5 sm:h-5" />

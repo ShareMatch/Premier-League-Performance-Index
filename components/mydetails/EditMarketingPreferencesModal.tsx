@@ -56,16 +56,16 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal Content - Responsive */}
+      {/* Modal Content */}
       <div
-        className="relative w-full max-w-md bg-modal-outer/60 backdrop-blur-[40px] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[90vh] overflow-y-auto scrollbar-hide"
+        className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
       >
         {/* Close Button */}
         <button
@@ -75,15 +75,8 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
-        {/* Inner Container - Responsive */}
-        <div
-          className="flex flex-col bg-modal-inner rounded-lg sm:rounded-xl p-3 sm:p-5 gap-3 sm:gap-4 border border-transparent"
-          style={{
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-            backgroundOrigin: "border-box",
-            backgroundClip: "padding-box, border-box",
-          }}
-        >
+        {/* Form Container */}
+        <div className="flex flex-col rounded-lg sm:rounded-xl p-3 sm:p-5 gap-3 sm:gap-4">
           <h2 className="text-white font-bold font-sans text-lg sm:text-2xl pr-6">
             Marketing Preferences
           </h2>
@@ -96,7 +89,7 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
                 setPreferences(prev => prev.map(p => ({ ...p, enabled: true })));
                 setPersonalizedMarketing(true);
               }}
-              className="text-brand-emerald500 hover:underline"
+              className="text-white font-semibold hover:underline"
             >
               click here
             </button>.
@@ -113,7 +106,7 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
                   className="flex items-center gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
                 >
                   {pref.enabled ? (
-                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-emerald500 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
                   ) : (
                     <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
                   )}
@@ -133,7 +126,7 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
               className="flex items-start gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
             >
               {personalizedMarketing ? (
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-emerald500 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0 mt-0.5" />
               ) : (
                 <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0 mt-0.5" />
               )}

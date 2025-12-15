@@ -51,7 +51,14 @@ serve(async (req: Request) => {
         const body = await req.json();
         const email = (body.email ?? "").trim().toLowerCase();
         const targetEmail = (body.targetEmail ?? "").trim().toLowerCase();
-        const forProfileChange = body.forProfileChange === true;
+        // Handle both boolean true and string "true" for robustness
+        const forProfileChange = body.forProfileChange === true || body.forProfileChange === "true";
+
+        // Debug logging - v3 with more detail
+        console.log("=== send-email-otp v3 ===");
+        console.log("Request body:", JSON.stringify(body));
+        console.log("Parsed values:", { email, targetEmail, forProfileChange });
+        console.log("forProfileChange raw value:", body.forProfileChange, "type:", typeof body.forProfileChange);
 
         if (!email) {
             return new Response(
@@ -90,9 +97,19 @@ serve(async (req: Request) => {
         const currentOtpState = userData.otp_state?.[0] || {};
         const currentAttempts = currentOtpState.otp_attempts ?? 0;
 
+        // Debug logging - detailed check
+        console.log("OTP state from DB:", JSON.stringify(currentOtpState));
+        console.log("Decision check:", { 
+            forProfileChange, 
+            verified_at: currentOtpState.verified_at,
+            willBlock: !forProfileChange && currentOtpState.verified_at,
+            reason: forProfileChange ? "BYPASS (profile change)" : (currentOtpState.verified_at ? "BLOCK (already verified)" : "ALLOW (not verified)")
+        });
+
         // For profile changes, skip the "already verified" check and allow re-verification
         // For initial signup, block if already verified
         if (!forProfileChange && currentOtpState.verified_at) {
+            console.log(">>> BLOCKING: Email already verified and forProfileChange is false");
             return new Response(
                 JSON.stringify({ error: "Email already verified." }),
                 { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }

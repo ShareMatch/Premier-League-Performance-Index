@@ -34,7 +34,7 @@ const OTPInput: React.FC<{
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const inputValue = e.target.value;
-    
+
     // Only allow digits
     if (!/^\d*$/.test(inputValue)) return;
 
@@ -82,14 +82,14 @@ const OTPInput: React.FC<{
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
-    
+
     if (pastedData.length > 0) {
       const newValue = [...value];
       for (let i = 0; i < CODE_LENGTH; i++) {
         newValue[i] = pastedData[i] || '';
       }
       onChange(newValue);
-      
+
       // Focus the last filled input or the next empty one
       const focusIndex = Math.min(pastedData.length, CODE_LENGTH - 1);
       focusInput(focusIndex);
@@ -110,7 +110,7 @@ const OTPInput: React.FC<{
       {Array.from({ length: CODE_LENGTH }).map((_, index) => (
         <input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
@@ -130,9 +130,9 @@ const OTPInput: React.FC<{
             outline-none
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${hasError 
-              ? 'ring-2 ring-red-500 focus:ring-red-500' 
-              : 'focus:ring-2 focus:ring-[#3AA189]'
+            ${hasError
+              ? 'ring-2 ring-red-500 focus:ring-red-500'
+              : 'focus:ring-2 focus:ring-[#005430]'
             }
           `}
           style={{ fontFamily: "'Inter', sans-serif" }}
@@ -155,7 +155,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
   const [status, setStatus] = useState<VerificationStatus>('idle');
   const [message, setMessage] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes OTP validity
+  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds cooldown before resend
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
   // Reset state when modal opens
@@ -164,7 +164,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setCode(Array(CODE_LENGTH).fill(''));
       setStatus('idle');
       setMessage('');
-      setTimeLeft(300); // 5 minutes OTP validity
+      setTimeLeft(60); // 60 seconds cooldown before resend
       setIsButtonHovered(false);
     }
   }, [isOpen]);
@@ -241,7 +241,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
-          setTimeLeft(300); // 5 minutes OTP validity
+          setTimeLeft(60); // 60 seconds cooldown before resend
           setStatus('idle');
           setMessage(`A new code has been sent to ${email}`);
         } else {
@@ -250,7 +250,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       } else {
         // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setTimeLeft(300); // 5 minutes OTP validity
+        setTimeLeft(60); // 60 seconds cooldown before resend
         setStatus('idle');
         setMessage(`A new code has been sent to ${email}`);
       }
@@ -274,71 +274,48 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve verification state */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
-      {/* Modal Content - Vertical Layout */}
+      {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col items-center"
-        style={{
-          maxWidth: "min(90vw, 550px)",
-          borderRadius: "40px",
-          background: "rgba(4, 34, 34, 0.60)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-          padding: "clamp(2rem, 3vh, 3rem) clamp(2rem, 3vw, 3rem)",
-          gap: "clamp(1.5rem, 2vh, 2rem)",
-        }}
+        className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors z-10"
+          className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
         {/* Success Toast - Above Title */}
         {status === 'success' && (
-          <div 
-            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-brand-emerald500/10 text-brand-emerald500"
+          <div
+            className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-white/10 text-white"
           >
-            <CheckCircle className="w-5 h-5 text-brand-emerald500" />
-            <p 
-              className="font-medium text-brand-emerald500 font-sans text-sm"
+            <CheckCircle className="w-5 h-5 text-white" />
+            <p
+              className="font-medium text-white font-sans text-sm"
             >
               Email verified successfully!
             </p>
           </div>
         )}
 
-        {/* Title - Outside Inner Container */}
-        <h1 
-          className="text-[#F1F7F7] text-center leading-tight whitespace-nowrap font-bold"
-          style={{ fontSize: "clamp(2rem, 2.5vw + 0.5rem, 3rem)" }}
-        >
+        {/* Title */}
+        <h1 className="text-white text-center leading-tight font-bold font-sans text-2xl md:text-3xl">
           Email Verification
         </h1>
 
-        {/* Inner Container - Form Content */}
-        <div
-          className="flex flex-col w-full"
-          style={{
-            background: "#021A1A",
-            border: "1px solid transparent",
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-            backgroundOrigin: "border-box",
-            backgroundClip: "padding-box, border-box",
-            borderRadius: "8px",
-            padding: "clamp(1.5rem, 2vh, 2rem)",
-            gap: "clamp(1rem, 1.5vh, 1.25rem)",
-          }}
-        >
+        {/* Form Content */}
+        <div className="flex flex-col w-full rounded-xl p-5 gap-4">
           {/* Verification Form - Always visible */}
-          <div className="flex flex-col" style={{ gap: 'clamp(1rem, 1.5vh, 1.5rem)' }}>
+          <div className="flex flex-col gap-4">
             {/* Description */}
-            <p 
+            <p
               className="text-center text-white font-sans text-sm"
             >
               We've sent a 6-digit verification code to your email address. Please enter the code below to continue.
@@ -346,7 +323,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Email Display with Edit Link */}
             <div className="flex flex-col items-center gap-1">
-              <p className="text-center text-brand-emerald500 font-medium font-sans text-sm">
+              <p className="text-center text-white font-medium font-sans text-sm">
                 {email}
               </p>
               {onEditEmail && status !== 'success' && (
@@ -354,18 +331,17 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                   onClick={onEditEmail}
                   className="text-xs transition-colors font-sans"
                 >
-                  <span className="text-gray-500">Wrong Email?</span>{' '}
-                  <span className="text-brand-emerald500 hover:text-white">Edit</span>
+                  <span className="text-white/60">Wrong Email?</span>{' '}
+                  <span className="text-white hover:text-white/80 underline">Edit</span>
                 </button>
               )}
             </div>
 
             {/* Status Message */}
             {message && status !== 'success' && (
-              <p 
-                className={`text-center text-sm font-sans ${
-                  status === 'error' ? 'text-red-400' : 'text-gray-400'
-                }`}
+              <p
+                className={`text-center text-sm font-sans ${status === 'error' ? 'text-red-400' : 'text-white/70'
+                  }`}
               >
                 {message}
               </p>
@@ -381,7 +357,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             />
 
             {/* Timer */}
-            <p 
+            <p
               className="text-center text-white font-semibold font-sans text-lg"
             >
               {formatTime(timeLeft)}
@@ -389,7 +365,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Resend */}
             <div className="text-center">
-              <span 
+              <span
                 className="text-white text-sm"
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
@@ -399,11 +375,10 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 type="button"
                 onClick={handleResend}
                 disabled={isResendDisabled}
-                className={`text-sm font-semibold transition-colors ${
-                  isResendDisabled 
-                    ? 'text-gray-500 cursor-not-allowed' 
-                    : 'text-[#3AA189] hover:text-white'
-                }`}
+                className={`text-sm font-semibold transition-colors ${isResendDisabled
+                  ? 'text-white/40 cursor-not-allowed'
+                  : 'text-white underline hover:text-white/80'
+                  }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 Resend
@@ -413,23 +388,21 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
             {/* Verify Button - Inside Container */}
             <div className="flex justify-center pt-2">
               <div
-                className={`rounded-full transition-all duration-300 p-0.5 ${
-                  isButtonHovered && isCodeComplete
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
-                }`}
+                className={`rounded-full transition-all duration-300 p-0.5 ${isButtonHovered && isCodeComplete
+                  ? 'border border-white shadow-glow'
+                  : 'border border-brand-emerald500'
+                  }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
                 <button
                   type="button"
-                  onClick={handleVerify}
+                  onClick={() => handleVerify()}
                   disabled={isVerifyDisabled}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                    isButtonHovered && isCodeComplete
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
-                  }`}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${isButtonHovered && isCodeComplete
+                    ? 'bg-white text-brand-emerald500'
+                    : 'bg-gradient-primary text-white'
+                    }`}
                 >
                   {status === 'verifying' ? 'Verifying...' : 'Verify'}
                   {status !== 'verifying' && (

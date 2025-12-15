@@ -24,6 +24,8 @@ import {
   sendWhatsAppOtp,
   verifyWhatsAppOtp,
   updateUserProfile,
+  editUserProfile,
+  updateMarketingPreferences,
 } from '../../lib/api';
 import { supabase } from '../../lib/supabase';
 
@@ -125,13 +127,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [verificationEmail, setVerificationEmail] = useState('');
   const [verificationWhatsApp, setVerificationWhatsApp] = useState('');
 
-  // Marketing preferences state
+  // Marketing preferences state - will be loaded from DB
   const [preferences, setPreferences] = useState([
-    { id: 'email', label: 'Email', enabled: true },
-    { id: 'whatsapp', label: 'WhatsApp', enabled: true },
+    { id: 'email', label: 'Email', enabled: false },
+    { id: 'whatsapp', label: 'WhatsApp', enabled: false },
     { id: 'sms', label: 'SMS', enabled: false },
   ]);
-  const [personalizedMarketing, setPersonalizedMarketing] = useState(true);
+  const [personalizedMarketing, setPersonalizedMarketing] = useState(false);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
   // Payment details state
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('none');
@@ -178,7 +181,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     },
   ] : [];
 
-  // Fetch user details, KYC status, and banking details
+  // Fetch user details, KYC status, banking details, and marketing preferences
   useEffect(() => {
     const fetchData = async () => {
       if (!userId) {
@@ -187,11 +190,27 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       }
 
       try {
-        // Fetch user details, KYC status, and banking details in parallel
-        const [details, kycStatusResponse, bankingDetails] = await Promise.all([
+        // Fetch user details, KYC status, banking details, and preferences in parallel
+        const fetchPreferences = async () => {
+          try {
+            // Use maybeSingle() instead of single() to avoid 406 error when no row exists
+            const { data, error } = await supabase.from('user_preferences').select('*').eq('id', userId).maybeSingle();
+            if (error) {
+              console.error('Error fetching preferences:', error);
+              return null;
+            }
+            return { data };
+          } catch (err) {
+            console.error('Exception fetching preferences:', err);
+            return null;
+          }
+        };
+
+        const [details, kycStatusResponse, bankingDetails, userPrefs] = await Promise.all([
           fetchUserDetails(userId),
           getKycUserStatus(userId).catch(() => null),
           fetchUserBankingDetails(userId).catch(() => null),
+          fetchPreferences(),
         ]);
 
         if (details) {
@@ -206,6 +225,28 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         // Set banking details
         if (bankingDetails) {
           setUserBankingDetails(bankingDetails);
+        }
+
+        // Set marketing preferences from database
+        if (userPrefs?.data) {
+          const prefs = userPrefs.data;
+          console.log('📧 User preferences from DB:', prefs);
+          setPreferences([
+            { id: 'email', label: 'Email', enabled: Boolean(prefs.email) },
+            { id: 'whatsapp', label: 'WhatsApp', enabled: Boolean(prefs.whatsapp) },
+            { id: 'sms', label: 'SMS', enabled: Boolean(prefs.sms) },
+          ]);
+          setPersonalizedMarketing(Boolean(prefs.personalized_marketing));
+          setPreferencesLoaded(true);
+        } else {
+          // No preferences found - use defaults (for users who signed up before this feature)
+          setPreferences([
+            { id: 'email', label: 'Email', enabled: true },
+            { id: 'whatsapp', label: 'WhatsApp', enabled: true },
+            { id: 'sms', label: 'SMS', enabled: false },
+          ]);
+          setPersonalizedMarketing(true);
+          setPreferencesLoaded(true);
         }
       } catch (error) {
         console.error('Failed to fetch user data:', error);
@@ -315,8 +356,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     }
     
     // No verification needed - just update phone number via edge function
-    await updateUserProfile({
-      currentEmail: currentEmail, // Already declared above
+    await editUserProfile({
+      currentEmail: currentEmail,
       phone: updatedFields.phone,
     });
 
@@ -345,20 +386,19 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     const currentEmail = userDetails?.email || '';
     
     try {
-      // Use the edge function to update - it has service role access
+      // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.emailChanged && pendingChanges.email) {
-        console.log('✅ Email verified, updating via edge function to:', pendingChanges.email);
+        console.log('✅ Email verified, updating via editUserProfile to:', pendingChanges.email);
         
-        // updateUserProfile uses service role key and can update both public.users and auth.users
-        // Pass emailAlreadyVerified: true since we just verified the OTP
-        await updateUserProfile({
+        // editUserProfile just updates the DB - no OTP sending
+        await editUserProfile({
           currentEmail: currentEmail,
           newEmail: pendingChanges.email,
           phone: pendingChanges.phone || undefined,
-          emailAlreadyVerified: true, // Don't reset email_verified_at since we just verified
+          emailAlreadyVerified: true,
         });
         
-        console.log('✅ Email updated successfully via edge function');
+        console.log('✅ Email updated successfully via editUserProfile');
       }
       
       // Check if WhatsApp also needs verification
@@ -410,19 +450,19 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       : userDetails?.email || '';
     
     try {
-      // Use the edge function to update - it has service role access
+      // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.whatsappChanged && pendingChanges.whatsapp) {
-        console.log('✅ WhatsApp verified, updating via edge function to:', pendingChanges.whatsapp);
+        console.log('✅ WhatsApp verified, updating via editUserProfile to:', pendingChanges.whatsapp);
         
-        // Pass whatsappAlreadyVerified: true since we just verified the OTP
-        await updateUserProfile({
+        // editUserProfile just updates the DB - no OTP sending
+        await editUserProfile({
           currentEmail: currentEmail,
           whatsappPhone: pendingChanges.whatsapp,
           phone: pendingChanges.phone || undefined,
-          whatsappAlreadyVerified: true, // Don't reset whatsapp_phone_verified_at since we just verified
+          whatsappAlreadyVerified: true,
         });
         
-        console.log('✅ WhatsApp updated successfully via edge function');
+        console.log('✅ WhatsApp updated successfully via editUserProfile');
       }
       
       // Refresh user details
@@ -549,10 +589,28 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
   // Save Marketing Preferences handler
   const handleSaveMarketingPreferences = async (
-    newPreferences: typeof preferences, 
+    newPreferences: typeof preferences,
     newPersonalized: boolean
   ) => {
-    // TODO: Save to database when columns are available
+    if (!userId || !userDetails?.email) return;
+
+    // Convert preferences array to payload format
+    const emailPref = newPreferences.find(p => p.id === 'email')?.enabled ?? false;
+    const whatsappPref = newPreferences.find(p => p.id === 'whatsapp')?.enabled ?? false;
+    const smsPref = newPreferences.find(p => p.id === 'sms')?.enabled ?? false;
+
+    // Call edge function to update preferences (bypasses RLS)
+    await updateMarketingPreferences({
+      email: userDetails.email,
+      preferences: {
+        email: emailPref,
+        whatsapp: whatsappPref,
+        sms: smsPref,
+        personalized_marketing: newPersonalized,
+      },
+    });
+
+    // Update local state
     setPreferences(newPreferences);
     setPersonalizedMarketing(newPersonalized);
   };
@@ -715,7 +773,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         fields={[
           { key: 'name', label: 'Name', value: user.name === 'N/A' ? '' : user.name, editable: false },
           { key: 'email', label: 'Email Address', value: user.email === 'N/A' ? '' : user.email, type: 'email', hint: 'OTP will be sent to the new email' },
-          { key: 'phone', label: 'Phone Number', value: user.phone === 'N/A' ? '' : user.phone, type: 'tel' },
+          { key: 'phone', label: 'Phone Number', value: user.phone === 'N/A' ? '' : user.phone, type: 'tel', hint: 'Include country code (e.g., +971561234567)' },
           { key: 'whatsapp', label: 'WhatsApp Number', value: user.whatsapp === 'N/A' ? '' : user.whatsapp, type: 'tel', hint: 'OTP will be sent to the new WhatsApp number' },
         ]}
         onSave={handleSaveAboutYou}

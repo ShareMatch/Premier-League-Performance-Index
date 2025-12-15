@@ -117,15 +117,15 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
   };
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-modal-outer/60 backdrop-blur-[40px] rounded-xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="relative w-full max-w-2xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -134,8 +134,8 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
-        {/* Inner Container */}
-        <div className="flex flex-col bg-modal-inner rounded-xl p-3 sm:p-5 gap-3 sm:gap-4 border border-white/10">
+        {/* Form Container */}
+        <div className="flex flex-col rounded-xl p-3 sm:p-5 gap-3 sm:gap-4">
           {/* Header */}
           <div className="flex items-center gap-2 sm:gap-3 pr-6">
             <button

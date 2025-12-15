@@ -91,18 +91,56 @@ export const placeTrade = async (
 
 /**
  * Get the public user ID from auth user ID
+ * Uses maybeSingle() to handle cases where user might not exist yet
+ * Also tries querying by email as a fallback if auth_user_id query fails
  */
-export const getPublicUserId = async (authUserId: string): Promise<string | null> => {
-    const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_user_id', authUserId)
-        .single();
+export const getPublicUserId = async (authUserId: string, userEmail?: string): Promise<string | null> => {
+    try {
+        // Ensure we have a session before querying
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            console.warn('No session available when fetching public user ID');
+            return null;
+        }
 
-    if (error || !data) {
+        // Try querying by auth_user_id first
+        let { data, error } = await supabase
+            .from('users')
+            .select('id')
+            .eq('auth_user_id', authUserId)
+            .maybeSingle(); // Use maybeSingle() instead of single() to handle missing rows gracefully
+
+        // If that fails and we have email, try querying by email as fallback
+        if ((error || !data) && userEmail) {
+            console.log('auth_user_id query failed, trying email fallback');
+            const emailResult = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', userEmail.toLowerCase())
+                .maybeSingle();
+            
+            if (!emailResult.error && emailResult.data) {
+                return emailResult.data.id;
+            }
+        }
+
+        if (error) {
+            console.error('Error fetching public user ID:', error);
+            // Log more details for debugging
+            if (error.code) {
+                console.error('Error code:', error.code);
+            }
+            if (error.message) {
+                console.error('Error message:', error.message);
+            }
+            return null;
+        }
+
+        return data?.id || null;
+    } catch (error) {
+        console.error('Exception in getPublicUserId:', error);
         return null;
     }
-    return data.id;
 };
 
 export const subscribeToWallet = (publicUserId: string, callback: (wallet: any) => void) => {
@@ -513,6 +551,102 @@ export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<
     }
 
     return result as UpdateProfileResponse;
+};
+
+// ============================================
+// EDIT USER PROFILE API (No OTP sending)
+// ============================================
+
+export interface EditProfilePayload {
+    currentEmail: string;
+    newEmail?: string;
+    fullName?: string;
+    dob?: string;
+    countryOfResidence?: string;
+    phone?: string;
+    whatsappPhone?: string;
+    emailAlreadyVerified?: boolean;
+    whatsappAlreadyVerified?: boolean;
+}
+
+export interface EditProfileResponse {
+    ok: boolean;
+    message: string;
+    emailChanged?: boolean;
+    whatsappChanged?: boolean;
+    newEmail?: string;
+    newWhatsappPhone?: string;
+}
+
+/**
+ * Edit user profile - simple update without sending OTPs
+ * Use this after verification is complete to just update the database
+ */
+export const editUserProfile = async (payload: EditProfilePayload): Promise<EditProfileResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/edit-user-profile`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update profile');
+    }
+
+    return result as EditProfileResponse;
+};
+
+// ============================================
+// MARKETING PREFERENCES API
+// ============================================
+
+export interface MarketingPreferencesPayload {
+    email: string; // User's email to identify them
+    preferences: {
+        email: boolean;
+        whatsapp: boolean;
+        sms: boolean;
+        personalized_marketing: boolean;
+    };
+}
+
+export interface MarketingPreferencesResponse {
+    ok: boolean;
+    message: string;
+    preferences?: {
+        id: string;
+        email: boolean;
+        whatsapp: boolean;
+        sms: boolean;
+        personalized_marketing: boolean;
+    };
+}
+
+/**
+ * Update user marketing preferences via edge function (bypasses RLS)
+ */
+export const updateMarketingPreferences = async (payload: MarketingPreferencesPayload): Promise<MarketingPreferencesResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-marketing-preferences`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update marketing preferences');
+    }
+
+    return result as MarketingPreferencesResponse;
 };
 
 // ============================================

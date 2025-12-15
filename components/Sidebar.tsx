@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Search, Sparkles } from 'lucide-react';
+import { League, Team } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  activeLeague: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS';
-  onLeagueChange: (league: 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'HOME' | 'AI_ANALYTICS') => void;
+  activeLeague: League;
+  onLeagueChange: (league: League) => void;
+  allAssets: Team[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange, allAssets }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Sports', 'Football']);
 
   const toggleExpand = (label: string) => {
@@ -18,6 +20,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         : [...prev, label]
     );
   };
+
+
 
   const menuItems = [
     { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
@@ -63,49 +67,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
     },
     { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
 
-    { icon: Globe, label: 'Global Events', badge: 'SOON' },
-    { icon: Sparkles, label: 'AI Analytics Engine', id: 'AI_ANALYTICS', active: activeLeague === 'AI_ANALYTICS' },
+    {
+      icon: Globe,
+      label: 'Global Events',
+      subItems: [
+        { label: 'Eurovision', id: 'Eurovision', active: activeLeague === 'Eurovision' }
+      ]
+    },
   ];
 
   return (
     <>
       {/* Mobile Overlay */}
-      {/* Overlay for mobile/tablet (below xl/1280px) */}
+      {/* Overlay for mobile/tablet (below lg/1024px) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 xl:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar - Hidden below xl (1280px), visible on desktop */}
+      {/* Sidebar - Hidden below lg (1024px), visible on desktop */}
       <div className={`
-        fixed xl:static inset-y-0 left-0 z-50
-        w-64 xl:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 lg:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-6 flex items-center gap-3">
-          <img
-            src="/logo-wordmark-green.png"
-            alt="ShareMatch"
-            className="w-full h-auto rounded-lg shadow-lg shadow-brand/10"
-          />
-        </div>
-
-        {/* Search Bar */}
-        <div className="px-4 mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full pl-9 pr-3 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs focus:outline-none focus:border-[#3AA189] text-gray-300 placeholder-gray-600 transition-colors"
-            />
-          </div>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 mt-4">
           {menuItems.map((item) => (
             <div key={item.label}>
               <button
@@ -114,8 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                   ${item.id === 'AI_ANALYTICS'
                     ? (item.active
-                      ? 'bg-brand-emerald500/10 text-brand-emerald500'
-                      : 'text-brand-emerald500 hover:bg-brand-emerald500/10 hover:text-brand-emerald500')
+                      ? 'bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold'
+                      : 'text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20')
                     : (item.active
                       ? 'bg-brand-emerald500/10 text-brand-emerald500'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200')
@@ -144,11 +133,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   {item.subItems.map((subItem) => (
                     <div key={subItem.label}>
                       <button
-                        onClick={() => subItem.subItems && toggleExpand(subItem.label)}
+                        onClick={() => subItem.subItems ? toggleExpand(subItem.label) : (subItem.id && onLeagueChange(subItem.id as any))}
                         className={`
                           w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                          ${(subItem as any).badge ? 'cursor-not-allowed opacity-60' : 'hover:text-gray-200'}
-                          text-gray-400
+                          ${(subItem as any).badge
+                            ? 'cursor-not-allowed opacity-60 text-gray-400'
+                            : subItem.active
+                              ? 'bg-brand-emerald500/10 text-brand-emerald500'
+                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
+                          }
                         `}
                       >
                         <div className="flex items-center gap-2">
@@ -177,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                               className={`
                                 w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
                                 ${deepItem.active
-                                  ? 'bg-[#3AA189] text-white font-medium shadow-lg shadow-[#3AA189]/20'
+                                  ? 'bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20'
                                   : (deepItem as any).badge
                                     ? 'text-gray-600 cursor-not-allowed'
                                     : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'

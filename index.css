@@ -6,21 +6,21 @@
 /* ShareMatch Brand Colors (CSS Variables for legacy support) */
 :root {
   /* Primary Colors */
-  --color-emerald-900: #064e3b;
-  --color-emerald-500: #10b981;
+  --color-emerald-900: #005430;
+  --color-emerald-500: #005430;
   --color-cream: #FDFBF7;
-  
+
   /* Accent Colors */
   --color-amber-500: #f59e0b;
   --color-amber-400: #fbbf24;
-  
+
   /* Neutral Colors */
   --color-gray-50: #F9FAFB;
   --color-gray-900: #111827;
-  
+
   /* Legacy colors (for compatibility) */
-  --color-brand: #10b981;
-  --color-brand-dark: #064e3b;
+  --color-brand: #005430;
+  --color-brand-dark: #005430;
 }
 
 /* Custom Scrollbar Styles */
@@ -53,6 +53,7 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar,
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -71,7 +72,7 @@
 /* Modal inner container gradient border */
 .modal-gradient-border {
   background-color: #021A1A;
-  background-image: linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+  background-image: linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0) 100%);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   border: 1px solid transparent;
@@ -87,4 +88,30 @@ iframe[src*="sumsub"] {
 /* Smooth container transitions for KYC modal */
 .kyc-sdk-container {
   transition: all 0.3s ease-in-out;
+}
+
+/* Explosive Pop Animation for Trending Markets */
+@keyframes pop {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow: 0 0 0 rgba(74, 222, 128, 0);
+  }
+
+  40% {
+    transform: scale(1.03);
+    filter: brightness(1.2);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+    border-color: rgba(74, 222, 128, 0.8);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+    box-shadow: 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+.animate-pop {
+  animation: pop 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
