@@ -181,7 +181,7 @@ serve(async (req: Request) => {
     }
 
     // Get optional config
-    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
+    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
 
     // Generate email content using template
     const emailHtml = generateOtpEmailHtml({
