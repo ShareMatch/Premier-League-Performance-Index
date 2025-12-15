@@ -79,20 +79,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
   return (
     <>
       {/* Mobile Overlay */}
-      {/* Overlay for mobile/tablet (below xl/1280px) */}
+      {/* Overlay for mobile/tablet (below lg/1024px) */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 xl:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar - Hidden below xl (1280px), visible on desktop */}
+      {/* Sidebar - Hidden below lg (1024px), visible on desktop */}
       <div className={`
-        fixed xl:static inset-y-0 left-0 z-50
-        w-64 xl:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 lg:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full xl:translate-x-0'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 mt-4">
           {menuItems.map((item) => (

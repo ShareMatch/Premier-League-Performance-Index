@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import TradeSlip from './TradeSlip';
 import Portfolio from './Portfolio';
-import { Wallet, Position, Order, Team, Transaction, League } from '../types';
+import type { Order, Position, Team, Transaction, League } from '../types';
 import { History, Activity, X } from 'lucide-react';
 
 interface RightPanelProps {
@@ -31,13 +31,13 @@ const RightPanel: React.FC<RightPanelProps> = ({
     leagueName,
     walletBalance,
     onClose,
-    isMobile
+    isMobile = false
 }) => {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'history'>('portfolio');
 
     return (
         <div className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 ${
-            isMobile ? 'w-80 h-screen max-h-screen' : 'h-full w-[clamp(8rem,30vw,20rem)]'
+            isMobile ? 'w-80 h-full' : 'h-full w-[clamp(8rem,30vw,20rem)]'
         }`}>
             {/* Mobile Header with Close Button - Fixed at top */}
             {isMobile && (
@@ -67,8 +67,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
                     </div>
                 )}
 
-            {/* Tabs */}
-            <div className="flex border-b border-gray-800">
+                {/* Tabs - Sticky within scroll */}
+                <div className="flex-shrink-0 flex border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
                 <button
                     onClick={() => setActiveTab('portfolio')}
                     className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'portfolio'
@@ -92,7 +92,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="flex-1 p-4">
                 {activeTab === 'portfolio' ? (
                     <>
                         <div className="flex flex-col gap-1 mb-4">
@@ -148,17 +148,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
                                         <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
                                             <span className="text-xs text-gray-500">Total</span>
                                             <span className="font-bold text-gray-300">
-                                                ${(tx.amount).toFixed(2)}
-                                            </span>
+                                                    ${(tx.amount).toFixed(2)}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -50,10 +50,10 @@ serve(async (req) => {
     // Create Supabase client with service role
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Get user from database
+    // Get user info from users table
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, sumsub_applicant_id, kyc_status')
+      .select('id, email')
       .eq('id', user_id)
       .single()
 
@@ -65,7 +65,22 @@ serve(async (req) => {
       )
     }
 
-    if (!user.sumsub_applicant_id) {
+    // Get compliance data from user_compliance table (where sumsub_applicant_id is stored)
+    const { data: compliance, error: complianceError } = await supabase
+      .from('user_compliance')
+      .select('sumsub_applicant_id, kyc_status')
+      .eq('user_id', user_id)
+      .single()
+
+    if (complianceError || !compliance) {
+      console.error('Compliance record not found:', complianceError)
+      return new Response(
+        JSON.stringify({ error: 'No KYC record found for this user' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!compliance.sumsub_applicant_id) {
       console.error('User has no Sumsub applicant ID')
       return new Response(
         JSON.stringify({ error: 'No KYC record found for this user' }),
@@ -73,12 +88,12 @@ serve(async (req) => {
       )
     }
 
-    console.log('Resetting Sumsub applicant for user:', user.email, 'applicantId:', user.sumsub_applicant_id)
+    console.log('Resetting Sumsub applicant for user:', user.email, 'applicantId:', compliance.sumsub_applicant_id)
 
     // Generate Sumsub API signature for reset endpoint
     const ts = Math.floor(Date.now() / 1000).toString()
     const method = 'POST'
-    const path = `/resources/applicants/${user.sumsub_applicant_id}/reset`
+    const path = `/resources/applicants/${compliance.sumsub_applicant_id}/reset`
     const body = ''
 
     const signatureString = ts + method + path + body
@@ -110,15 +125,15 @@ serve(async (req) => {
 
     console.log('Sumsub reset successful:', data)
 
-    // Update user's KYC status in database to 'not_started'
+    // Update user's KYC status in user_compliance table to 'not_started'
     const { error: updateError } = await supabase
-      .from('users')
+      .from('user_compliance')
       .update({ 
         kyc_status: 'not_started',
         kyc_started_at: null,
         kyc_reviewed_at: null,
       })
-      .eq('id', user_id)
+      .eq('user_id', user_id)
 
     if (updateError) {
       console.error('Failed to update KYC status in database:', updateError)
@@ -131,7 +146,7 @@ serve(async (req) => {
       JSON.stringify({ 
         ok: true, 
         message: 'KYC reset successful. You can now re-verify.',
-        applicantId: user.sumsub_applicant_id,
+        applicantId: compliance.sumsub_applicant_id,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -144,4 +159,3 @@ serve(async (req) => {
     )
   }
 })
-

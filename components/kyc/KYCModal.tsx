@@ -40,7 +40,16 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         setError(null);
         const status = await getKycUserStatus(userId);
         setKycData(status);
-
+        
+        // If forceUpdateMode is true and user is approved, show confirmation dialog
+        // Explain that updating documents requires re-verification
+        if (forceUpdateMode && status.kyc_status === 'approved') {
+          console.log('Force update mode - showing update confirmation');
+          setView('update_confirm');
+          setLoading(false);
+          return;
+        }
+        
         // Determine initial view based on status
         switch (status.kyc_status) {
           case 'approved':

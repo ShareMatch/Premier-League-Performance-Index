@@ -87,20 +87,21 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
   };
 
   return (
-    <div className="mb-4">
-      <div className="flex justify-center gap-4">
+    <div className="my-3 sm:my-6">
+      {/* Responsive button container */}
+      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
         <button
           onClick={getAnalysis}
           disabled={loading}
-          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-4 sm:px-6 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed text-xs sm:text-sm"
         >
           <SparkleIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${loading ? "animate-spin" : ""}`} />
           <span>
             {loading
               ? "Analyzing..."
               : analysis
-                ? "Regenerate Analysis"
-                : "Get AI Market Analysis"}
+              ? "Regenerate"
+              : "Get AI Market Analysis"}
           </span>
         </button>
 
@@ -133,9 +134,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
       )}
 
       {analysis && !loading && isVisible && (
-        <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-sm font-bold text-[#005430] flex items-center gap-2 mb-2">
-            <SparkleIcon className="w-4 h-4" />
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
+          <h3 className="text-xs sm:text-sm font-bold text-[#005430] flex items-center gap-1.5 sm:gap-2 mb-2">
+            <SparkleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             AI Market Commentary
           </h3>
           <ReactMarkdown

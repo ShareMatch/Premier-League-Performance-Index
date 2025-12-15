@@ -205,14 +205,14 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve password reset state */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       
-      {/* Modal Content - Vertical Layout */}
+      {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
-        style={{ maxWidth: "min(90vw, 550px)" }}
+        className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
       >
         {/* Close Button */}
         <button
@@ -229,14 +229,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
         {/* Loading State */}
         {state === 'loading' && (
-          <div
-            className="flex flex-col w-full bg-modal-inner rounded-xl p-6 border border-transparent"
-            style={{
-              backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-              backgroundOrigin: "border-box",
-              backgroundClip: "padding-box, border-box",
-            }}
-          >
+          <div className="flex flex-col w-full rounded-xl p-6">
             <div className="flex flex-col items-center text-center gap-4">
               <div className="w-12 h-12 border-4 border-brand-emerald500/30 border-t-brand-emerald500 rounded-full animate-spin"></div>
               <p className="text-gray-300 font-sans text-sm">
@@ -249,14 +242,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         {/* Invalid/Expired State */}
         {state === 'invalid' && (
           <>
-            <div
-              className="flex flex-col w-full bg-modal-inner rounded-xl p-5 border border-transparent"
-              style={{
-                backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-                backgroundOrigin: "border-box",
-                backgroundClip: "padding-box, border-box",
-              }}
-            >
+            <div className="flex flex-col w-full rounded-xl p-5">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                   <AlertCircle className="w-8 h-8 text-red-400" />
@@ -300,15 +286,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         {/* Ready State - Password Form */}
         {state === 'ready' && (
           <>
-            {/* Inner Container with Form Fields */}
-            <div
-              className="flex flex-col w-full bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
-              style={{
-                backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-                backgroundOrigin: "border-box",
-                backgroundClip: "padding-box, border-box",
-              }}
-            >
+            {/* Form Fields */}
+            <div className="flex flex-col w-full rounded-xl p-5 gap-4">
               <PasswordField
                 id="new-password"
                 label="New Password"
