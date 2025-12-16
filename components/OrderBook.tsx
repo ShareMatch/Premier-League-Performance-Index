@@ -11,12 +11,13 @@ interface OrderBookProps {
 const OrderBook: React.FC<OrderBookProps> = ({ teams, onSelectOrder }) => {
   return (
     <div className="bg-gray-800/50 rounded-lg shadow-2xl shadow-gray-950/50 overflow-hidden border border-gray-700 flex flex-col h-full">
-      <div className="grid grid-cols-3 gap-4 p-4 font-bold text-gray-400 border-b border-gray-700 text-sm sm:text-base flex-shrink-0 bg-gray-800/80 backdrop-blur-sm z-10">
+      {/* Responsive header - smaller on mobile */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 font-bold text-gray-400 border-b border-gray-700 text-xs sm:text-sm flex-shrink-0 bg-gray-800/80 backdrop-blur-sm z-10">
         <div className="text-left">Asset</div>
-        <div className="text-center">Sell Price (%)</div>
-        <div className="text-right">Buy Price (%)</div>
+        <div className="text-center">Sell</div>
+        <div className="text-center sm:text-right">Buy</div>
       </div>
-      <div className="divide-y divide-gray-700/50 overflow-y-auto flex-1 custom-scrollbar">
+      <div className="divide-y divide-gray-700/50 overflow-y-auto flex-1 scrollbar-hide">
         {teams.map(team => (
           <OrderBookRow key={team.id} team={team} onSelectOrder={onSelectOrder} />
         ))}

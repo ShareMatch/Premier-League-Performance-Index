@@ -209,63 +209,69 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal Content */}
+      {/* Modal Content - Matching SignUp theme */}
       <div
-        className="relative w-full flex flex-col md:flex-row md:items-stretch items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
-        style={{ maxWidth: "min(90vw, 850px)" }}
+        className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-[#005430] rounded-modal z-[101]"
+        style={{ 
+          maxWidth: 'min(90vw, 850px)',
+          maxHeight: '95vh',
+        }}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-10"
+          className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-30"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
-        {/* Left Side - Logo */}
-        <div className="hidden md:flex flex-col items-center justify-center w-5/12">
+        {/* Left Side - Branding */}
+        <div className="hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24">
           <img
-            src="/logos/white_wordmark_logo_on_black-removebg-preview.png"
+            src="/logos/mobile-header-logo-matched.svg"
             alt="ShareMatch"
-            className="h-28 object-contain"
+            className="h-32 object-contain mb-3"
           />
+          <h1
+            className="text-white text-center leading-tight mb-4 whitespace-pre-line font-bold"
+            style={{ fontSize: 'clamp(2rem, 2.5vw + 0.5rem, 3rem)' }}
+          >
+            Welcome <br /> Back
+          </h1>
+          <p className="mt-8 text-gray-400 text-center font-medium text-lg leading-relaxed px-4">
+            Real Markets. Real Transparency.
+          </p>
+        </div>
+
+        {/* Mobile Header */}
+        <div className="md:hidden p-5 flex items-center justify-center">
+          <img src="/logos/mobile-header-logo-matched.svg" alt="ShareMatch" className="h-16 object-contain" />
         </div>
 
         {/* Right Side - Login Form */}
-        <div
-          className="flex flex-col w-full md:w-auto gap-4 md:pr-2"
-          style={{
-            flex: "1 1 auto",
-            minWidth: "min(100%, 360px)",
-            maxWidth: "400px",
-          }}
-        >
+        <div className="flex-1 p-3 pt-10 md:p-4 md:pt-14 md:pr-8 overflow-y-auto flex flex-col" style={{ maxHeight: 'calc(95vh - 2rem)' }}>
           {successMessage && (
-            <p className="text-center justify-center items-center text-brand-emerald500 bg-brand-emerald500/10 text-brand-emerald500 rounded-full px-2 py-2 font-sans text-sm">
+            <p className="text-center justify-center items-center text-white bg-white/10 rounded-full px-2 py-2 font-sans text-sm mb-3">
               {successMessage}
             </p>
           )}
 
           <div
-            className="flex flex-col bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
-            style={{
-              backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-              backgroundOrigin: "border-box",
-              backgroundClip: "padding-box, border-box",
-            }}
+            className="rounded-xl p-3 md:p-4 flex flex-col border-none bg-transparent"
+            style={{ minHeight: '300px' }}
           >
-            <h2 className="text-white font-bold font-sans text-2xl md:text-3xl">
-              Login
+            <h2 className="text-white mb-3 font-bold text-xl md:text-2xl">
+              Login to Your Account
             </h2>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 flex-1">
               <InputField
                 id="login-email"
                 label="Email"
@@ -289,7 +295,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <button
                     type="button"
                     onClick={onSwitchToSignUp}
-                    className="underline transition-colors hover:text-brand-emerald500"
+                    className="underline transition-colors hover:text-gray-300"
                   >
                     Sign up
                   </button>
@@ -297,7 +303,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="button"
                   onClick={onForgotPassword}
-                  className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
+                  className="text-white underline transition-colors hover:text-gray-300 font-sans text-xs"
                 >
                   Forgot password?
                 </button>
@@ -309,7 +315,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </p>
               )}
 
-              <div className="flex justify-center pt-2">
+              <div className="flex justify-center pt-2 mt-auto">
                 <div
                   className={`rounded-full transition-all duration-300 p-0.5 ${
                     isButtonHovered && canSubmit

@@ -185,17 +185,17 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={handleClose}
       />
       
-      {/* Modal Content - Vertical Layout */}
+      {/* Modal Content */}
       <div
-        className="relative w-full flex flex-col items-center bg-modal-outer/60 backdrop-blur-[40px] rounded-modal p-6 md:p-8 gap-6"
-        style={{ maxWidth: "min(90vw, 650px)" }}
+        className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
       >
         {/* Close Button */}
         <button
@@ -212,14 +212,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
         {emailSent ? (
           // Success State
-          <div
-            className="flex flex-col w-full bg-modal-inner rounded-xl p-5 border border-transparent"
-            style={{
-              backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-              backgroundOrigin: "border-box",
-              backgroundClip: "padding-box, border-box",
-            }}
-          >
+          <div className="flex flex-col w-full rounded-xl p-5">
             <div className="flex flex-col items-center text-center gap-4">
               <p className="text-gray-300 font-sans text-sm leading-relaxed">
                 We've sent a password reset link to your email address{' '}
@@ -251,15 +244,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         ) : (
           // Form State
           <>
-            {/* Inner Container with Form */}
-            <div
-              className="flex flex-col w-full bg-modal-inner rounded-xl p-5 gap-4 border border-transparent"
-              style={{
-                backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
-                backgroundOrigin: "border-box",
-                backgroundClip: "padding-box, border-box",
-              }}
-            >
+            {/* Form Container */}
+            <div className="flex flex-col w-full rounded-xl p-5 gap-4">
               <p className="text-gray-300 text-center font-sans text-sm leading-relaxed">
                 We will send you a link to reset your password.
               </p>

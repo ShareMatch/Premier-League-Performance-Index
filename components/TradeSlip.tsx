@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import type { Order } from '../types';
 import TermsConditionsModal from './TermsConditionsModal';
+import { TRADING_CONFIG } from '../lib/config';
 
 interface TradeSlipProps {
   order: Order;
   onClose: () => void;
   onConfirm: (quantity: number) => Promise<void>;
   leagueName: string;
+  walletBalance?: number;
 }
+
+
+
+
+
+
+
 
 const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM8.625 7.5a.375.375 0 0 0-  .375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5Zm4.875 0a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5ZM8.25 12a.375.375 0 0 1 .375-.375h1.5a.375.375 0 0 1 .375.375v1.5a.375.375 0 0 1-.375.375h-1.5a.375.375 0 0 1-.375-.375v-1.5Zm3.375 3.375a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5Zm2.625-3.375a.375.375 0 0 1 .375-.375h1.5a.375.375 0 0 1 .375.375v1.5a.375.375 0 0 1-.375.375h-1.5a.375.375 0 0 1-.375-.375v-1.5Z" clipRule="evenodd" />
+    <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM8.625 7.5a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5Zm4.875 0a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5ZM8.25 12a.375.375 0 0 1 .375-.375h1.5a.375.375 0 0 1 .375.375v1.5a.375.375 0 0 1-.375.375h-1.5a.375.375 0 0 1-.375-.375v-1.5Zm3.375 3.375a.375.375 0 0 0-.375.375v1.5c0 .207.168.375.375.375h1.5a.375.375 0 0 0 .375-.375v-1.5a.375.375 0 0 0-.375-.375h-1.5Zm2.625-3.375a.375.375 0 0 1 .375-.375h1.5a.375.375 0 0 1 .375.375v1.5a.375.375 0 0 1-.375.375h-1.5a.375.375 0 0 1-.375-.375v-1.5Z" clipRule="evenodd" />
   </svg>
 );
 
@@ -21,17 +30,31 @@ const TimerIcon: React.FC<{ className?: string, style?: React.CSSProperties }> =
   </svg>
 );
 
-const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, leagueName }) => {
+const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, leagueName, walletBalance = 0 }) => {
   const [shares, setShares] = useState<number | ''>(order.holding || '');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [modalType, setModalType] = useState<'terms' | 'risk' | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const orderCost = shares !== '' ? (shares * order.price).toFixed(2) : '0.00';
   const isBuy = order.type === 'buy';
+  
+  // Fee percentage from config - ONLY applies to SELL orders
+  const FEE_RATE = TRADING_CONFIG.FEE_RATE;
+  
+  // Calculate costs
+  const subtotal = shares !== '' ? shares * order.price : 0;
+  // Fee only on sell - deducted from what user receives
+  const fee = isBuy ? 0 : subtotal * FEE_RATE;
+  // For buy: pay exact subtotal. For sell: receive subtotal minus fee
+  const totalAmount = isBuy ? subtotal : subtotal - fee;
+  
+  const orderCost = subtotal.toFixed(2);
+  const feeAmount = fee.toFixed(2);
+  const totalDisplay = totalAmount.toFixed(2);
 
-  // Calculate returns
+  // Calculate returns (based on subtotal, not including fees)
   const maxReturn = shares !== '' ? (shares * 100).toFixed(2) : '0.00';
   const minReturn = shares !== '' ? (shares * 0.1).toFixed(2) : '0.00';
 
@@ -84,6 +107,12 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
 
   const handleConfirm = () => {
     if (shares && shares > 0) {
+      // Check if user has enough funds for buy orders (no fee on buy)
+      if (isBuy && subtotal > walletBalance) {
+        setError(`Insufficient funds. You need $${subtotal.toFixed(2)} but only have $${walletBalance.toFixed(2)}`);
+        return;
+      }
+      setError(null);
       setCountdown(5);
     }
   };
@@ -95,26 +124,26 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
       </div>
 
       <div className="bg-gray-700/50 rounded-md p-3 flex flex-col gap-3">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="bg-[#005430] text-white text-xs font-bold px-2 py-0.5 rounded">LIVE</span>
-            <SoccerBallIcon className="w-4 h-4 text-gray-400" />
-            <span className="font-semibold text-gray-300">{leagueName} Performance Index</span>
+        <div className="flex justify-between items-start gap-1">
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <span className="bg-[#005430] text-white text-[8px] font-bold px-1 py-0.5 rounded flex-shrink-0">LIVE</span>
+            <SoccerBallIcon className="w-3 h-3 text-gray-400 flex-shrink-0 hidden sm:block" />
+            <span className="font-semibold text-gray-300 truncate text-[10px]">{leagueName} Performance Index</span>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white" aria-label="Close trade slip">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white flex-shrink-0 text-lg" aria-label="Close trade slip">&times;</button>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gray-600 rounded-full p-2">
-              <SoccerBallIcon className="w-6 h-6 text-gray-300" />
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <div className="bg-gray-600 rounded-full p-1 flex-shrink-0">
+              <SoccerBallIcon className="w-4 h-4 text-gray-300" />
             </div>
-            <div>
-              <p className="text-xs text-gray-400">Asset - <span className={isBuy ? 'text-[#005430]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
-              <p className="font-bold text-gray-200 truncate">{order.team.name}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] text-gray-400">Asset - <span className={isBuy ? 'text-[#005430]' : 'text-red-400'}>{isBuy ? 'Buy' : 'Sell'}</span></p>
+              <p className="font-bold text-gray-200 truncate text-xs">{order.team.name}</p>
             </div>
           </div>
-          <p className={`text-2xl font-bold ${isBuy ? 'bg-[#005430] text-white px-2 py-1 rounded' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
+          <p className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${isBuy ? 'bg-[#005430] text-white px-1.5 py-0.5 rounded' : 'text-red-400'}`}>${order.price.toFixed(1)}</p>
         </div>
       </div>
 
@@ -122,7 +151,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
         <div className="flex justify-between items-baseline">
           <label htmlFor="shares" className="text-sm font-medium text-gray-400">Number of Units</label>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Total Value: ${orderCost}</p>
+            <p className="text-xs text-gray-500">Subtotal: ${orderCost}</p>
             {!isBuy && order.holding && (
               <p className="text-xs text-gray-400">Max Sell: {order.holding}</p>
             )}
@@ -203,6 +232,47 @@ const TradeSlip: React.FC<TradeSlipProps> = ({ order, onClose, onConfirm, league
           </button>
         </span>
       </label>
+
+      {/* Fee Breakdown - Only show fee for sell orders */}
+      {shares !== '' && shares > 0 && (
+        <div className="text-xs text-gray-400 space-y-1 border-t border-gray-700 pt-2">
+          {isBuy ? (
+            // Buy: No fee, just show total
+            <div className="flex justify-between font-medium text-gray-200">
+              <span>Total Cost:</span>
+              <span>${orderCost}</span>
+            </div>
+          ) : (
+            // Sell: Show breakdown with fee deducted
+            <>
+              <div className="flex justify-between">
+                <span>Sale Amount:</span>
+                <span>${orderCost}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Processing Fee (5%):</span>
+                <span>-${feeAmount}</span>
+              </div>
+              <div className="flex justify-between font-medium text-gray-200">
+                <span>You Receive:</span>
+                <span>${totalDisplay}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      
+      {/* Fee Notice */}
+      {/* <p className="text-xs text-gray-500">
+        ShareMatch charges a 5% processing fee on all transactions.
+      </p> */}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-md p-2">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
 
       <div className="mt-2">
         <button

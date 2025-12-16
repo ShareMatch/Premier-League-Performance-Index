@@ -267,6 +267,24 @@ serve(async (req: Request) => {
             console.error("Wallet creation error (non-fatal):", walletErr);
         }
 
+        // --- 5. Create user_preferences with defaults (email, whatsapp, personalized_marketing = true) ---
+        const preferencesPayload = {
+            id: userId,
+            email: true,
+            whatsapp: true,
+            sms: false,
+            personalized_marketing: true,
+        };
+
+        const { error: prefsErr } = await supabase
+            .from("user_preferences")
+            .insert([preferencesPayload]);
+
+        if (prefsErr) {
+            console.error("User preferences creation error (non-fatal):", prefsErr);
+            // Non-fatal - user can still register, preferences will use defaults
+        }
+
         // --- Return success ---
         return new Response(
             JSON.stringify({

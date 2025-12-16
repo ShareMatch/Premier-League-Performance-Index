@@ -50,6 +50,15 @@ serve(async (req: Request) => {
 
         const body = await req.json();
         const email = (body.email ?? "").trim().toLowerCase();
+        const targetEmail = (body.targetEmail ?? "").trim().toLowerCase();
+        // Handle both boolean true and string "true" for robustness
+        const forProfileChange = body.forProfileChange === true || body.forProfileChange === "true";
+
+        // Debug logging - v3 with more detail
+        console.log("=== send-email-otp v3 ===");
+        console.log("Request body:", JSON.stringify(body));
+        console.log("Parsed values:", { email, targetEmail, forProfileChange });
+        console.log("forProfileChange raw value:", body.forProfileChange, "type:", typeof body.forProfileChange);
 
         if (!email) {
             return new Response(
@@ -57,6 +66,9 @@ serve(async (req: Request) => {
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
+
+        // Determine which email to send OTP to
+        const sendToEmail = forProfileChange && targetEmail ? targetEmail : email;
 
         // -- FETCH USER + OTP STATE IN ONE QUERY --
         const { data: userData, error: fetchErr } = await supabase
@@ -85,14 +97,28 @@ serve(async (req: Request) => {
         const currentOtpState = userData.otp_state?.[0] || {};
         const currentAttempts = currentOtpState.otp_attempts ?? 0;
 
-        if (currentOtpState.verified_at) {
+        // Debug logging - detailed check
+        console.log("OTP state from DB:", JSON.stringify(currentOtpState));
+        console.log("Decision check:", { 
+            forProfileChange, 
+            verified_at: currentOtpState.verified_at,
+            willBlock: !forProfileChange && currentOtpState.verified_at,
+            reason: forProfileChange ? "BYPASS (profile change)" : (currentOtpState.verified_at ? "BLOCK (already verified)" : "ALLOW (not verified)")
+        });
+
+        // For profile changes, skip the "already verified" check and allow re-verification
+        // For initial signup, block if already verified
+        if (!forProfileChange && currentOtpState.verified_at) {
+            console.log(">>> BLOCKING: Email already verified and forProfileChange is false");
             return new Response(
                 JSON.stringify({ error: "Email already verified." }),
                 { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        if (currentAttempts >= MAX_ATTEMPTS) {
+        // For profile changes, reset attempts; otherwise enforce max attempts
+        const attemptsToUse = forProfileChange ? 0 : currentAttempts;
+        if (!forProfileChange && currentAttempts >= MAX_ATTEMPTS) {
             return new Response(
                 JSON.stringify({ error: "Maximum OTP attempts reached." }),
                 { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -104,6 +130,7 @@ serve(async (req: Request) => {
         const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60000).toISOString();
 
         // -- UPSERT OTP STATE --
+        // For profile changes: reset verified_at and attempts
         const { error: updateErr } = await supabase
             .from("user_otp_verification")
             .upsert({
@@ -111,7 +138,8 @@ serve(async (req: Request) => {
                 channel: "email",
                 otp_code: otpCode,
                 otp_expires_at: expiry,
-                otp_attempts: currentAttempts + 1,
+                otp_attempts: forProfileChange ? 1 : currentAttempts + 1,
+                verified_at: forProfileChange ? null : undefined, // Reset for profile change
             }, { onConflict: "user_id, channel" });
 
         if (updateErr) {
@@ -135,10 +163,11 @@ serve(async (req: Request) => {
         const emailSubject = generateOtpEmailSubject(otpCode);
 
         // -- SEND VIA SENDGRID --
+        // Send to the target email (either the current email or new email for profile changes)
         const emailResult = await sendSendgridEmail({
             apiKey: sendgridApiKey,
             from: sendgridFromEmail,
-            to: email,
+            to: sendToEmail,
             subject: emailSubject,
             html: emailHtml,
         });

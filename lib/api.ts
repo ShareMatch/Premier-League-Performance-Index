@@ -58,6 +58,8 @@ export const fetchTransactions = async (userId: string) => {
     return data;
 };
 
+import { TRADING_CONFIG } from './config';
+
 export const placeTrade = async (
     userId: string,
     assetId: string,
@@ -66,7 +68,12 @@ export const placeTrade = async (
     price: number,
     quantity: number
 ) => {
-    const totalCost = price * quantity;
+    const subtotal = price * quantity;
+    // Fee ONLY on sell - deducted from what user receives
+    const fee = direction === 'sell' ? subtotal * TRADING_CONFIG.FEE_RATE : 0;
+    // For buys: user pays exact subtotal (no fee)
+    // For sells: user receives subtotal - fee
+    const totalCost = direction === 'buy' ? subtotal : subtotal - fee;
 
     const { data, error } = await supabase.rpc('place_trade', {
         p_user_id: userId,
@@ -301,15 +308,26 @@ export interface VerifyOtpResponse {
 
 /**
  * Send OTP verification code to email
+ * @param email - User's current email address (to identify the user)
+ * @param options - Optional settings
+ * @param options.targetEmail - Email to send OTP to (for email changes). Defaults to `email`
+ * @param options.forProfileChange - If true, allows sending OTP to already-verified emails
  */
-export const sendEmailOtp = async (email: string): Promise<SendOtpResponse> => {
+export const sendEmailOtp = async (
+    email: string, 
+    options?: { targetEmail?: string; forProfileChange?: boolean }
+): Promise<SendOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+            email, 
+            targetEmail: options?.targetEmail,
+            forProfileChange: options?.forProfileChange ?? false,
+        }),
     });
 
     const result = await response.json();
@@ -362,8 +380,17 @@ export interface VerifyWhatsAppOtpResponse {
 /**
  * Send OTP verification code to WhatsApp
  * Can identify user by either phone number or email
+ * @param params.phone - User's current phone (to identify user)
+ * @param params.email - User's email (alternative way to identify user)
+ * @param params.targetPhone - Phone to send OTP to (for phone changes). Defaults to current phone
+ * @param params.forProfileChange - If true, allows sending OTP to already-verified numbers
  */
-export const sendWhatsAppOtp = async (params: { phone?: string; email?: string }): Promise<SendWhatsAppOtpResponse> => {
+export const sendWhatsAppOtp = async (params: { 
+    phone?: string; 
+    email?: string; 
+    targetPhone?: string;
+    forProfileChange?: boolean;
+}): Promise<SendWhatsAppOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp-otp`, {
         method: 'POST',
         headers: {
@@ -385,8 +412,9 @@ export const sendWhatsAppOtp = async (params: { phone?: string; email?: string }
 /**
  * Verify OTP code for WhatsApp
  * Can identify user by either phone number or email
+ * forProfileChange: Skip "already verified" check when changing to a new WhatsApp number
  */
-export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string }): Promise<VerifyWhatsAppOtpResponse> => {
+export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string; forProfileChange?: boolean }): Promise<VerifyWhatsAppOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-whatsapp-otp`, {
         method: 'POST',
         headers: {
@@ -485,6 +513,9 @@ export interface UpdateProfilePayload {
     whatsappPhone?: string;
     sendEmailOtp?: boolean;
     sendWhatsAppOtp?: boolean;
+    // Skip verification reset - use when the new email/whatsapp was already verified via OTP
+    emailAlreadyVerified?: boolean;
+    whatsappAlreadyVerified?: boolean;
 }
 
 export interface UpdateProfileResponse {
@@ -520,6 +551,102 @@ export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<
     }
 
     return result as UpdateProfileResponse;
+};
+
+// ============================================
+// EDIT USER PROFILE API (No OTP sending)
+// ============================================
+
+export interface EditProfilePayload {
+    currentEmail: string;
+    newEmail?: string;
+    fullName?: string;
+    dob?: string;
+    countryOfResidence?: string;
+    phone?: string;
+    whatsappPhone?: string;
+    emailAlreadyVerified?: boolean;
+    whatsappAlreadyVerified?: boolean;
+}
+
+export interface EditProfileResponse {
+    ok: boolean;
+    message: string;
+    emailChanged?: boolean;
+    whatsappChanged?: boolean;
+    newEmail?: string;
+    newWhatsappPhone?: string;
+}
+
+/**
+ * Edit user profile - simple update without sending OTPs
+ * Use this after verification is complete to just update the database
+ */
+export const editUserProfile = async (payload: EditProfilePayload): Promise<EditProfileResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/edit-user-profile`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update profile');
+    }
+
+    return result as EditProfileResponse;
+};
+
+// ============================================
+// MARKETING PREFERENCES API
+// ============================================
+
+export interface MarketingPreferencesPayload {
+    email: string; // User's email to identify them
+    preferences: {
+        email: boolean;
+        whatsapp: boolean;
+        sms: boolean;
+        personalized_marketing: boolean;
+    };
+}
+
+export interface MarketingPreferencesResponse {
+    ok: boolean;
+    message: string;
+    preferences?: {
+        id: string;
+        email: boolean;
+        whatsapp: boolean;
+        sms: boolean;
+        personalized_marketing: boolean;
+    };
+}
+
+/**
+ * Update user marketing preferences via edge function (bypasses RLS)
+ */
+export const updateMarketingPreferences = async (payload: MarketingPreferencesPayload): Promise<MarketingPreferencesResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-marketing-preferences`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to update marketing preferences');
+    }
+
+    return result as MarketingPreferencesResponse;
 };
 
 // ============================================
@@ -698,6 +825,35 @@ export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResp
 };
 
 /**
+ * Reset KYC applicant - allows user to re-verify from scratch
+ * This resets the Sumsub applicant and sets user's status to 'not_started'
+ */
+export interface ResetKycResponse {
+    ok: boolean;
+    message: string;
+    applicantId?: string;
+}
+
+export const resetKycApplicant = async (userId: string): Promise<ResetKycResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-reset-applicant`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ user_id: userId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to reset KYC');
+    }
+
+    return result as ResetKycResponse;
+};
+
+/**
  * Determine if user needs to complete KYC before accessing the platform
  */
 export const needsKycVerification = (status: KycStatus): boolean => {
@@ -749,4 +905,80 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
     }
 
     return result as CheckEmailStatusResponse;
+};
+
+// ============================================
+// USER PROFILE / MY DETAILS
+// ============================================
+
+export interface UserDetails {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    phone_e164: string | null;
+    whatsapp_phone_e164: string | null;
+    dob: string | null;
+    country: string | null;
+    country_code: string | null;
+    address_line: string | null;
+    city: string | null;
+    region: string | null;
+    postal_code: string | null;
+    source_ip: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+}
+
+/**
+ * Fetch user details from the public.users table
+ */
+export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
+    const { data, error } = await supabase
+        .from('users')
+        .select('id, full_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
+        .eq('id', userId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching user details:', error);
+        return null;
+    }
+
+    return data as UserDetails;
+};
+
+// ============================================
+// USER BANKING DETAILS
+// ============================================
+
+export interface UserBankingDetails {
+    id: string;
+    user_id: string;
+    account_name: string | null;
+    bank_name: string | null;
+    account_number: string | null;
+    iban: string | null;
+    swift_bic: string | null;
+    currency: string | null;
+    is_verified: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Fetch user banking details from the user_banking_details table
+ */
+export const fetchUserBankingDetails = async (userId: string): Promise<UserBankingDetails | null> => {
+    const { data, error } = await supabase
+        .from('user_banking_details')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching user banking details:', error);
+        return null;
+    }
+
+    return data as UserBankingDetails | null;
 };
