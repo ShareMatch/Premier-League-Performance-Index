@@ -375,10 +375,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     console.log('🎉 handleEmailVerificationSuccess called');
     console.log('📋 pendingChanges:', pendingChanges);
     
-    setShowEmailVerification(false);
+    // Don't close email modal yet if WhatsApp also needs verification
+    // This keeps the overlay visible for a continuous experience
     
     if (!pendingChanges || !userId) {
       console.log('❌ No pending changes or userId - aborting');
+      setShowEmailVerification(false);
       setPendingChanges(null);
       return;
     }
@@ -413,11 +415,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           forProfileChange: true 
         });
         setVerificationWhatsApp(pendingChanges.whatsapp);
+        // Close email modal and immediately open WhatsApp modal for seamless transition
+        setShowEmailVerification(false);
         setShowWhatsAppVerification(true);
         return; // Don't clear pendingChanges yet
       }
       
-      // All done - refresh user details
+      // All done - close modal and refresh user details
+      setShowEmailVerification(false);
       console.log('🔄 Refreshing user details...');
       const details = await fetchUserDetails(userId);
       if (details) {
@@ -429,6 +434,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       
     } catch (error: any) {
       console.error('❌ Failed to update email:', error);
+      setShowEmailVerification(false);
       alert('Failed to update email: ' + error.message);
       setPendingChanges(null);
     }
@@ -550,26 +556,28 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     }
   };
 
-  // Save Address handler
+  // Save Address handler - uses edit-user-profile edge function
   const handleSaveAddress = async (updatedFields: Record<string, string>) => {
-    if (!userId) return;
+    if (!userDetails?.email) return;
     
-    const { error } = await supabase
-      .from('users')
-      .update({
-        address_line: updatedFields.address,
-        city: updatedFields.city,
-        region: updatedFields.state,
-        country: updatedFields.country,
-        postal_code: updatedFields.postCode,
-      })
-      .eq('id', userId);  // Use 'id' not 'auth_user_id'
+    const result = await editUserProfile({
+      currentEmail: userDetails.email,
+      addressLine: updatedFields.address,
+      city: updatedFields.city,
+      region: updatedFields.state,
+      addressCountry: updatedFields.country,
+      postalCode: updatedFields.postCode,
+    });
 
-    if (error) throw error;
+    if (!result.ok) {
+      throw new Error('Failed to update address');
+    }
 
     // Refresh user details
-    const details = await fetchUserDetails(userId);
-    if (details) setUserDetails(details);
+    if (userId) {
+      const details = await fetchUserDetails(userId);
+      if (details) setUserDetails(details);
+    }
     
     // Close the edit modal
     setActiveModal(null);
@@ -658,6 +666,34 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     console.log('Delete account requested');
     alert('Account deletion feature coming soon. Please contact support.');
   };
+
+  // Show loading spinner while fetching data OR while userId is not yet available
+  // This prevents flash of stale data on page refresh
+  if (loading || !userDetails) {
+    return (
+      <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
+        {/* Header - Sticky on scroll */}
+        <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
+          <div className="flex items-center gap-4 max-w-7xl mx-auto">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <h1 className="text-lg sm:text-xl font-bold font-sans">My Details</h1>
+          </div>
+        </div>
+        {/* Loading Spinner */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-400 text-sm font-sans">Loading your details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
@@ -757,9 +793,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           <div className="mt-4 sm:mt-6 pb-4 text-left">
             <p className="text-gray-500 text-[10px] sm:text-xs font-sans">
               Read our{' '}
-              <button className="text-brand-emerald500 hover:underline font-sans">Privacy Policy</button>,{' '}
-              <button className="text-brand-emerald500 hover:underline font-sans">Terms & Conditions</button> and{' '}
-              <button className="text-brand-emerald500 hover:underline font-sans">Legal & Regulatory</button> for more information.
+              <button className="text-brand-primary hover:underline font-sans">Privacy Policy</button>,{' '}
+              <button className="text-brand-primary hover:underline font-sans">Terms & Conditions</button> and{' '}
+              <button className="text-brand-primary hover:underline font-sans">Legal & Regulatory</button> for more information.
             </p>
           </div>
         </div>
@@ -773,10 +809,13 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         fields={[
           { key: 'name', label: 'Name', value: user.name === 'N/A' ? '' : user.name, editable: false },
           { key: 'email', label: 'Email Address', value: user.email === 'N/A' ? '' : user.email, type: 'email', hint: 'OTP will be sent to the new email' },
-          { key: 'phone', label: 'Phone Number', value: user.phone === 'N/A' ? '' : user.phone, type: 'tel', hint: 'Include country code (e.g., +971561234567)' },
+          { key: 'phone', label: 'Phone Number', value: user.phone === 'N/A' ? '' : user.phone, type: 'tel' },
           { key: 'whatsapp', label: 'WhatsApp Number', value: user.whatsapp === 'N/A' ? '' : user.whatsapp, type: 'tel', hint: 'OTP will be sent to the new WhatsApp number' },
         ]}
         onSave={handleSaveAboutYou}
+        currentEmail={userDetails?.email || (user.email !== 'N/A' ? user.email : undefined)}
+        currentWhatsApp={userDetails?.whatsapp_phone_e164 || (user.whatsapp !== 'N/A' ? user.whatsapp : undefined)}
+        currentUserId={userId}
       />
 
       {/* Edit Address Modal */}

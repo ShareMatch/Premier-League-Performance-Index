@@ -238,10 +238,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 p-0.5 ${
-                isButtonHovered && canSubmit
-                  ? 'border border-white shadow-glow'
-                  : 'border border-brand-emerald500'
+              className={`flex-1 rounded-full transition-all duration-300 ${
+                isButtonHovered && canSubmit ? 'shadow-glow' : ''
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
@@ -249,10 +247,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <button
                 onClick={handleSave}
                 disabled={!canSubmit || saving}
-                className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 ${
-                  isButtonHovered && canSubmit
-                    ? 'bg-white text-brand-emerald500'
-                    : 'bg-gradient-primary text-white'
+                className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 bg-white text-brand-primary ${
+                  isButtonHovered && canSubmit ? 'opacity-90' : ''
                 }`}
               >
                 {saving ? 'Updating...' : 'Update'}

@@ -19,7 +19,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, teams }) => {
             {/* Bottom Section: News Feed */}
             <div className="flex-shrink-0">
                 <div className="mb-4">
-                    <h2 className="text-xl font-bold text-gray-200">Global Sports Wire</h2>
+                    <h2 className="text-xl font-bold text-gray-200">Global Wire</h2>
                 </div>
                 <NewsFeed topic="Global" />
             </div>

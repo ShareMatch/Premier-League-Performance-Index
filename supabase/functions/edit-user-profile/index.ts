@@ -3,6 +3,7 @@
 // Used after verification is complete to just update user data
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,12 @@ interface EditPayload {
   countryOfResidence?: string;
   phone?: string;
   whatsappPhone?: string;
+  // Address fields
+  addressLine?: string;
+  city?: string;
+  region?: string;
+  postalCode?: string;
+  addressCountry?: string;
   // Skip verification reset - use when the new email/whatsapp was already verified via OTP
   emailAlreadyVerified?: boolean;
   whatsappAlreadyVerified?: boolean;
@@ -80,6 +87,29 @@ serve(async (req: Request) => {
       );
     }
 
+    // Normalize phone numbers to E.164 format using libphonenumber-js
+    // This properly handles all international formats
+    const normalizePhone = (phoneStr: string): string => {
+      const trimmed = String(phoneStr ?? "").trim();
+      if (!trimmed) return "";
+      
+      try {
+        const parsed = parsePhoneNumberFromString(trimmed);
+        if (parsed && parsed.isValid()) {
+          return parsed.format("E.164");
+        }
+      } catch (e) {
+        console.log("Phone parsing error:", e);
+      }
+      
+      // Fallback: strip leading zeros after country code
+      const match = trimmed.match(/^(\+\d+?)0*(\d+)$/);
+      if (match) {
+        return `${match[1]}${match[2]}`;
+      }
+      return trimmed;
+    };
+
     // Build update object for public.users
     const updateData: Record<string, unknown> = {};
 
@@ -87,7 +117,7 @@ serve(async (req: Request) => {
     let emailChanged = false;
     let whatsappChanged = false;
     const newEmail = body.newEmail ? String(body.newEmail).trim().toLowerCase() : null;
-    const newWhatsappPhone = body.whatsappPhone ? String(body.whatsappPhone).trim() : null;
+    const newWhatsappPhone = body.whatsappPhone ? normalizePhone(body.whatsappPhone) : null;
 
     // Handle email change
     if (newEmail && newEmail !== currentEmail) {
@@ -180,7 +210,7 @@ serve(async (req: Request) => {
       updateData.country = String(body.countryOfResidence).trim();
     }
     if (body.phone) {
-      const phoneE164 = String(body.phone).trim();
+      const phoneE164 = normalizePhone(body.phone);
       const phoneRegex = /^\+[1-9]\d{6,14}$/;
       console.log("Phone update check:", { phone: phoneE164, matchesE164: phoneRegex.test(phoneE164) });
       if (phoneRegex.test(phoneE164)) {
@@ -192,6 +222,23 @@ serve(async (req: Request) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+    }
+
+    // Handle address field updates
+    if (body.addressLine !== undefined) {
+      updateData.address_line = String(body.addressLine).trim();
+    }
+    if (body.city !== undefined) {
+      updateData.city = String(body.city).trim();
+    }
+    if (body.region !== undefined) {
+      updateData.region = String(body.region).trim();
+    }
+    if (body.postalCode !== undefined) {
+      updateData.postal_code = String(body.postalCode).trim();
+    }
+    if (body.addressCountry !== undefined) {
+      updateData.country = String(body.addressCountry).trim();
     }
 
     // Only update if there's something to update

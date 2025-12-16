@@ -317,10 +317,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
               <div className="flex justify-center pt-2 mt-auto">
                 <div
-                  className={`rounded-full transition-all duration-300 p-0.5 ${
-                    isButtonHovered && canSubmit
-                      ? 'border border-white shadow-glow'
-                      : 'border border-brand-emerald500'
+                  className={`rounded-full transition-all duration-300 ${
+                    isButtonHovered && canSubmit ? 'shadow-glow' : ''
                   }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
@@ -328,10 +326,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <button
                     type="submit"
                     disabled={!canSubmit || loading}
-                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                      isButtonHovered && canSubmit
-                        ? 'bg-white text-brand-emerald500'
-                        : 'bg-gradient-primary text-white'
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans bg-white text-brand-primary ${
+                      isButtonHovered && canSubmit ? 'opacity-90' : ''
                     }`}
                   >
                     {loading ? "Logging in..." : "Login"}
