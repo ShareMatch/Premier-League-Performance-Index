@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X, CheckCircle2, Circle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X, CheckCircle2, Circle } from "lucide-react";
+import Button from "../Button";
 
 interface MarketingPreference {
   id: string;
@@ -13,10 +14,15 @@ interface EditMarketingPreferencesModalProps {
   onClose: () => void;
   preferences: MarketingPreference[];
   personalizedMarketing: boolean;
-  onSave: (preferences: MarketingPreference[], personalizedMarketing: boolean) => Promise<void>;
+  onSave: (
+    preferences: MarketingPreference[],
+    personalizedMarketing: boolean
+  ) => Promise<void>;
 }
 
-const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps> = ({
+const EditMarketingPreferencesModal: React.FC<
+  EditMarketingPreferencesModalProps
+> = ({
   isOpen,
   onClose,
   preferences: initialPreferences,
@@ -38,8 +44,8 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
   if (!isOpen) return null;
 
   const handleTogglePreference = (id: string) => {
-    setPreferences(prev =>
-      prev.map(p => p.id === id ? { ...p, enabled: !p.enabled } : p)
+    setPreferences((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p))
     );
   };
 
@@ -49,7 +55,7 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
       await onSave(preferences, personalizedMarketing);
       onClose();
     } catch (error) {
-      console.error('Failed to save:', error);
+      console.error("Failed to save:", error);
     } finally {
       setSaving(false);
     }
@@ -64,9 +70,7 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
       />
 
       {/* Modal Content */}
-      <div
-        className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
-      >
+      <div className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -83,24 +87,29 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
 
           {/* Subscribe Link */}
           <p className="text-gray-400 font-sans text-[10px] sm:text-xs">
-            To subscribe to all offers and communications, please{' '}
-            <button 
+            To subscribe to all offers and communications, please{" "}
+            <button
               onClick={() => {
-                setPreferences(prev => prev.map(p => ({ ...p, enabled: true })));
+                setPreferences((prev) =>
+                  prev.map((p) => ({ ...p, enabled: true }))
+                );
                 setPersonalizedMarketing(true);
               }}
               className="text-white font-semibold hover:underline"
             >
               click here
-            </button>.
+            </button>
+            .
           </p>
 
           {/* Communication Preferences - Responsive */}
           <div className="space-y-1.5 sm:space-y-2">
-            <p className="text-white font-sans text-xs sm:text-sm font-medium">Keep me informed by:</p>
+            <p className="text-white font-sans text-xs sm:text-sm font-medium">
+              Keep me informed by:
+            </p>
             <div className="space-y-0.5 sm:space-y-1">
               {preferences.map((pref) => (
-                <button 
+                <button
                   key={pref.id}
                   onClick={() => handleTogglePreference(pref.id)}
                   className="flex items-center gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
@@ -110,7 +119,11 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
                   ) : (
                     <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
                   )}
-                  <span className={`font-sans text-xs sm:text-sm ${pref.enabled ? 'text-white' : 'text-gray-400'}`}>
+                  <span
+                    className={`font-sans text-xs sm:text-sm ${
+                      pref.enabled ? "text-white" : "text-gray-400"
+                    }`}
+                  >
                     {pref.label}
                   </span>
                 </button>
@@ -120,8 +133,10 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
 
           {/* Personalized Marketing - Responsive */}
           <div className="space-y-1.5 sm:space-y-2 pt-2 border-t border-white/10">
-            <p className="text-white font-sans text-xs sm:text-sm font-medium pt-1.5 sm:pt-2">Personalised marketing:</p>
-            <button 
+            <p className="text-white font-sans text-xs sm:text-sm font-medium pt-1.5 sm:pt-2">
+              Personalised marketing:
+            </p>
+            <button
               onClick={() => setPersonalizedMarketing(!personalizedMarketing)}
               className="flex items-start gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
             >
@@ -130,8 +145,13 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
               ) : (
                 <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0 mt-0.5" />
               )}
-              <span className={`font-sans text-[10px] sm:text-xs leading-relaxed ${personalizedMarketing ? 'text-white' : 'text-gray-400'}`}>
-                I allow my customer profile to be used to provide me with personalised offers and marketing
+              <span
+                className={`font-sans text-[10px] sm:text-xs leading-relaxed ${
+                  personalizedMarketing ? "text-white" : "text-gray-400"
+                }`}
+              >
+                I allow my customer profile to be used to provide me with
+                personalised offers and marketing
               </span>
             </button>
           </div>
@@ -146,20 +166,18 @@ const EditMarketingPreferencesModal: React.FC<EditMarketingPreferencesModalProps
             </button>
             <div
               className={`flex-1 rounded-full transition-all duration-300 ${
-                isButtonHovered ? 'shadow-glow' : ''
+                isButtonHovered ? "shadow-glow" : ""
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={saving}
-                className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 bg-white text-brand-primary ${
-                  isButtonHovered ? 'opacity-90' : ''
-                }`}
+                className={`${isButtonHovered ? "opacity-90" : ""}`}
               >
-                {saving ? 'Saving...' : 'Save'}
-              </button>
+                {saving ? "Saving..." : "Save"}
+              </Button>
             </div>
           </div>
         </div>

@@ -1,5 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback, ClipboardEvent } from 'react';
-import { X, CheckCircle } from 'lucide-react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  ClipboardEvent,
+} from "react";
+import { X, CheckCircle } from "lucide-react";
 
 // --- Types ---
 interface WhatsAppVerificationModalProps {
@@ -12,7 +18,13 @@ interface WhatsAppVerificationModalProps {
   onEditPhone?: () => void; // Navigate to edit modal
 }
 
-type VerificationStatus = 'idle' | 'sending' | 'verifying' | 'error' | 'success' | 'accountCreated';
+type VerificationStatus =
+  | "idle"
+  | "sending"
+  | "verifying"
+  | "error"
+  | "success"
+  | "accountCreated";
 
 const CODE_LENGTH = 6;
 
@@ -32,9 +44,12 @@ const OTPInput: React.FC<{
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const inputValue = e.target.value;
-    
+
     // Only allow digits
     if (!/^\d*$/.test(inputValue)) return;
 
@@ -49,7 +64,7 @@ const OTPInput: React.FC<{
 
     // Auto-submit when last digit is entered
     if (inputValue && index === CODE_LENGTH - 1) {
-      const fullCode = newValue.join('');
+      const fullCode = newValue.join("");
       if (fullCode.length === CODE_LENGTH && onComplete) {
         // Small delay to allow state to update and show the digit
         setTimeout(() => onComplete(fullCode), 50);
@@ -57,39 +72,45 @@ const OTPInput: React.FC<{
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Backspace') {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    if (e.key === "Backspace") {
       if (!value[index] && index > 0) {
         // If current input is empty, move to previous and clear it
         focusInput(index - 1);
         const newValue = [...value];
-        newValue[index - 1] = '';
+        newValue[index - 1] = "";
         onChange(newValue);
       } else if (value[index]) {
         // Clear current input
         const newValue = [...value];
-        newValue[index] = '';
+        newValue[index] = "";
         onChange(newValue);
       }
       e.preventDefault();
-    } else if (e.key === 'ArrowLeft' && index > 0) {
+    } else if (e.key === "ArrowLeft" && index > 0) {
       focusInput(index - 1);
-    } else if (e.key === 'ArrowRight' && index < CODE_LENGTH - 1) {
+    } else if (e.key === "ArrowRight" && index < CODE_LENGTH - 1) {
       focusInput(index + 1);
     }
   };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, CODE_LENGTH);
-    
+    const pastedData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, CODE_LENGTH);
+
     if (pastedData.length > 0) {
       const newValue = [...value];
       for (let i = 0; i < CODE_LENGTH; i++) {
-        newValue[i] = pastedData[i] || '';
+        newValue[i] = pastedData[i] || "";
       }
       onChange(newValue);
-      
+
       // Focus the last filled input or the next empty one
       const focusIndex = Math.min(pastedData.length, CODE_LENGTH - 1);
       focusInput(focusIndex);
@@ -131,9 +152,10 @@ const OTPInput: React.FC<{
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
             font-sans
-            ${hasError 
-              ? 'ring-2 ring-red-500 focus:ring-red-500' 
-              : 'focus:ring-2 focus:ring-brand-emerald500'
+            ${
+              hasError
+                ? "ring-2 ring-red-500 focus:ring-red-500"
+                : "focus:ring-2 focus:ring-brand-emerald500"
             }
           `}
         />
@@ -143,7 +165,9 @@ const OTPInput: React.FC<{
 };
 
 // --- Main Modal Component ---
-export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps> = ({
+export const WhatsAppVerificationModal: React.FC<
+  WhatsAppVerificationModalProps
+> = ({
   isOpen,
   onClose,
   whatsappPhone,
@@ -152,18 +176,18 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
   onVerifyCode,
   onEditPhone,
 }) => {
-  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''));
-  const [status, setStatus] = useState<VerificationStatus>('idle');
-  const [message, setMessage] = useState<string>('');
+  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
+  const [status, setStatus] = useState<VerificationStatus>("idle");
+  const [message, setMessage] = useState<string>("");
   const [timeLeft, setTimeLeft] = useState(60); // 60 seconds cooldown before resend
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setCode(Array(CODE_LENGTH).fill(''));
-      setStatus('idle');
-      setMessage('');
+      setCode(Array(CODE_LENGTH).fill(""));
+      setStatus("idle");
+      setMessage("");
       setTimeLeft(60); // 60 seconds cooldown before resend
       setIsButtonHovered(false);
     }
@@ -171,7 +195,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
 
   // Countdown timer
   useEffect(() => {
-    if (!isOpen || timeLeft <= 0 || status === 'sending') return;
+    if (!isOpen || timeLeft <= 0 || status === "sending") return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -186,85 +210,92 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
     return () => clearInterval(timer);
   }, [isOpen, timeLeft, status]);
 
-  const handleCodeChange = useCallback((newCode: string[]) => {
-    setCode(newCode);
-    if (status === 'error') {
-      setStatus('idle');
-      setMessage('');
-    }
-  }, [status]);
+  const handleCodeChange = useCallback(
+    (newCode: string[]) => {
+      setCode(newCode);
+      if (status === "error") {
+        setStatus("idle");
+        setMessage("");
+      }
+    },
+    [status]
+  );
 
   const handleVerify = async (directCode?: string) => {
     // Use directCode if provided (from onComplete), otherwise use state
-    const enteredCode = directCode || code.join('');
-    if (enteredCode.length !== CODE_LENGTH || status === 'verifying') return;
+    const enteredCode = directCode || code.join("");
+    if (enteredCode.length !== CODE_LENGTH || status === "verifying") return;
 
-    setStatus('verifying');
-    setMessage('Verifying code...');
+    setStatus("verifying");
+    setMessage("Verifying code...");
 
     try {
       if (onVerifyCode) {
         const success = await onVerifyCode(enteredCode);
         if (success) {
-          setStatus('success');
-          setMessage('WhatsApp verified successfully!');
+          setStatus("success");
+          setMessage("WhatsApp verified successfully!");
           // After showing success toast, transition to account created screen
           setTimeout(() => {
-            setStatus('accountCreated');
+            setStatus("accountCreated");
           }, 1500);
           // Then redirect to login after showing account created message
           setTimeout(() => {
             onVerificationSuccess?.();
           }, 3500);
         } else {
-          throw new Error('Invalid verification code');
+          throw new Error("Invalid verification code");
         }
       } else {
         // Default behavior: simulate verification
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setStatus('success');
-        setMessage('WhatsApp verified successfully!');
+        setStatus("success");
+        setMessage("WhatsApp verified successfully!");
         setTimeout(() => {
-          setStatus('accountCreated');
+          setStatus("accountCreated");
         }, 1500);
         setTimeout(() => {
           onVerificationSuccess?.();
         }, 3500);
       }
     } catch (error: any) {
-      setStatus('error');
-      setMessage(error.message || 'Invalid code. Please try again.');
-      setCode(Array(CODE_LENGTH).fill(''));
+      setStatus("error");
+      setMessage(error.message || "Invalid code. Please try again.");
+      setCode(Array(CODE_LENGTH).fill(""));
       setIsButtonHovered(false);
     }
   };
 
   const handleResend = async () => {
-    if (timeLeft > 0 || status === 'sending') return;
+    if (timeLeft > 0 || status === "sending") return;
 
-    setStatus('sending');
-    setMessage('Sending new code...');
+    setStatus("sending");
+    setMessage("Sending new code...");
 
     try {
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
           setTimeLeft(60); // 60 seconds cooldown before resend
-          setStatus('idle');
-          setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
+          setStatus("idle");
+          setMessage(
+            `A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`
+          );
         } else {
-          throw new Error('Failed to send code');
+          throw new Error("Failed to send code");
         }
       } else {
         // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setTimeLeft(60); // 60 seconds cooldown before resend
-        setStatus('idle');
-        setMessage(`A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`);
+        setStatus("idle");
+        setMessage(
+          `A new code has been sent to ${formatPhoneNumber(whatsappPhone)}`
+        );
       }
     } catch (error: any) {
-      setStatus('error');
-      setMessage(error.message || 'Failed to send code. Please try again.');
+      setStatus("error");
+      setMessage(error.message || "Failed to send code. Please try again.");
       setIsButtonHovered(false);
     }
   };
@@ -272,57 +303,77 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const formatPhoneNumber = (phone: string): string => {
     // Remove all spaces and non-digit characters except +
-    const cleaned = phone.replace(/[^\d+]/g, '');
-    
+    const cleaned = phone.replace(/[^\d+]/g, "");
+
     // If it starts with +, format it
-    if (cleaned.startsWith('+')) {
+    if (cleaned.startsWith("+")) {
       // Try to match country codes (1-4 digits after +)
       for (let codeLength = 4; codeLength >= 1; codeLength--) {
         const countryCode = cleaned.substring(0, codeLength + 1); // +1, +44, +971, etc.
         const phoneNumber = cleaned.substring(codeLength + 1);
-        
+
         if (phoneNumber.length > 0) {
           // Format based on common patterns
           let formatted = phoneNumber;
-          
+
           // UAE (+971): XX XXX XXXX
-          if (countryCode === '+971' && phoneNumber.length === 9) {
-            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 5)} ${phoneNumber.substring(5)}`;
+          if (countryCode === "+971" && phoneNumber.length === 9) {
+            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(
+              2,
+              5
+            )} ${phoneNumber.substring(5)}`;
           }
           // US/Canada (+1): XXX XXX XXXX
-          else if (countryCode === '+1' && phoneNumber.length === 10) {
-            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(3, 6)} ${phoneNumber.substring(6)}`;
+          else if (countryCode === "+1" && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(
+              3,
+              6
+            )} ${phoneNumber.substring(6)}`;
           }
           // UK (+44): XXXX XXXXXX
-          else if (countryCode === '+44' && phoneNumber.length === 10) {
-            formatted = `${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4)}`;
+          else if (countryCode === "+44" && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 4)} ${phoneNumber.substring(
+              4
+            )}`;
           }
           // Saudi Arabia (+966): XX XXX XXXX
-          else if (countryCode === '+966' && phoneNumber.length === 9) {
-            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 5)} ${phoneNumber.substring(5)}`;
+          else if (countryCode === "+966" && phoneNumber.length === 9) {
+            formatted = `${phoneNumber.substring(0, 2)} ${phoneNumber.substring(
+              2,
+              5
+            )} ${phoneNumber.substring(5)}`;
           }
           // India (+91): XXXXX XXXXX
-          else if (countryCode === '+91' && phoneNumber.length === 10) {
-            formatted = `${phoneNumber.substring(0, 5)} ${phoneNumber.substring(5)}`;
+          else if (countryCode === "+91" && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 5)} ${phoneNumber.substring(
+              5
+            )}`;
           }
           // Pakistan (+92): XXX XXXXXXX
-          else if (countryCode === '+92' && phoneNumber.length === 10) {
-            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(3)}`;
+          else if (countryCode === "+92" && phoneNumber.length === 10) {
+            formatted = `${phoneNumber.substring(0, 3)} ${phoneNumber.substring(
+              3
+            )}`;
           }
           // Default: group in chunks of 3-4 digits
           else if (phoneNumber.length > 4) {
-            formatted = `${phoneNumber.substring(0, phoneNumber.length - 4)} ${phoneNumber.substring(phoneNumber.length - 4)}`;
+            formatted = `${phoneNumber.substring(
+              0,
+              phoneNumber.length - 4
+            )} ${phoneNumber.substring(phoneNumber.length - 4)}`;
           }
-          
+
           return `${countryCode} ${formatted}`;
         }
       }
-      
+
       // Fallback: try simple pattern matching
       const match = cleaned.match(/^\+(\d{1,3})(\d+)$/);
       if (match) {
@@ -330,25 +381,32 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         // Simple formatting: add space after country code, then group digits
         let formatted = rest;
         if (rest.length > 4) {
-          formatted = `${rest.substring(0, rest.length - 4)} ${rest.substring(rest.length - 4)}`;
+          formatted = `${rest.substring(0, rest.length - 4)} ${rest.substring(
+            rest.length - 4
+          )}`;
         }
         return `+${countryCode} ${formatted}`;
       }
       return cleaned; // Return as-is if pattern doesn't match
     }
-    
+
     // If no +, assume it's a local number and return as-is
     return phone;
   };
 
-  const isCodeComplete = code.join('').length === CODE_LENGTH;
-  const isVerifyDisabled = !isCodeComplete || status === 'verifying' || status === 'sending' || status === 'success' || status === 'accountCreated';
-  const isResendDisabled = timeLeft > 0 || status === 'sending';
+  const isCodeComplete = code.join("").length === CODE_LENGTH;
+  const isVerifyDisabled =
+    !isCodeComplete ||
+    status === "verifying" ||
+    status === "sending" ||
+    status === "success" ||
+    status === "accountCreated";
+  const isResendDisabled = timeLeft > 0 || status === "sending";
 
   if (!isOpen) return null;
 
   // Account Created Success Screen - Vertical popup with just success message
-  if (status === 'accountCreated') {
+  if (status === "accountCreated") {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
         {/* Backdrop */}
@@ -357,7 +415,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         {/* Modal Content */}
         <div
           className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-8 gap-6 z-[101]"
-          style={{ maxWidth: "min(90vw, 450px)", maxHeight: '95vh' }}
+          style={{ maxWidth: "min(90vw, 450px)", maxHeight: "95vh" }}
         >
           {/* Success Icon */}
           <div className="flex items-center justify-center w-20 h-20 rounded-full bg-white/10 border-2 border-white/40">
@@ -386,12 +444,12 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve verification state */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       {/* Modal Content */}
       <div
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
-        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
         {/* Close Button */}
         <button
@@ -402,7 +460,7 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
         </button>
 
         {/* Success Toast - Above Title */}
-        {status === 'success' && (
+        {status === "success" && (
           <div className="flex items-center gap-2 px-4 py-3 rounded-full animate-in fade-in slide-in-from-top-2 bg-white/10 text-white">
             <CheckCircle className="w-5 h-5 text-white" />
             <p className="font-medium text-white font-sans text-sm">
@@ -422,7 +480,8 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
           <div className="flex flex-col gap-4">
             {/* Description */}
             <p className="text-center text-white font-sans text-sm leading-relaxed">
-              We've sent a 6-digit verification code to your WhatsApp. Please enter the code below to continue.
+              We've sent a 6-digit verification code to your WhatsApp. Please
+              enter the code below to continue.
             </p>
 
             {/* WhatsApp Phone Display with Edit Link */}
@@ -430,22 +489,26 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
               <p className="text-center text-white font-medium font-sans text-sm">
                 {formatPhoneNumber(whatsappPhone)}
               </p>
-              {onEditPhone && status !== 'success' && (
+              {onEditPhone && status !== "success" && (
                 <button
                   onClick={onEditPhone}
                   className="text-xs transition-colors font-sans"
                 >
-                  <span className="text-white/60">Wrong Number?</span>{' '}
-                  <span className="text-white hover:text-white/80 underline">Edit</span>
+                  <span className="text-white/60">Wrong Number?</span>{" "}
+                  <span className="text-white hover:text-white/80 underline">
+                    Edit
+                  </span>
                 </button>
               )}
             </div>
 
             {/* Status Message */}
-            {message && status !== 'success' && (
-              <p className={`text-center text-sm font-sans ${
-                status === 'error' ? 'text-red-400' : 'text-white/70'
-              }`}>
+            {message && status !== "success" && (
+              <p
+                className={`text-center text-sm font-sans ${
+                  status === "error" ? "text-red-400" : "text-white/70"
+                }`}
+              >
                 {message}
               </p>
             )}
@@ -455,8 +518,8 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
               value={code}
               onChange={handleCodeChange}
               onComplete={handleVerify}
-              disabled={status === 'verifying' || status === 'success'}
-              hasError={status === 'error'}
+              disabled={status === "verifying" || status === "success"}
+              hasError={status === "error"}
             />
 
             {/* Timer */}
@@ -467,16 +530,16 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
             {/* Resend */}
             <div className="text-center">
               <span className="text-white text-sm font-sans">
-                Didn't receive the code?{' '}
+                Didn't receive the code?{" "}
               </span>
               <button
                 type="button"
                 onClick={handleResend}
                 disabled={isResendDisabled}
                 className={`text-sm font-semibold transition-colors font-sans ${
-                  isResendDisabled 
-                    ? 'text-white/40 cursor-not-allowed' 
-                    : 'text-white underline hover:text-white/80'
+                  isResendDisabled
+                    ? "text-white/40 cursor-not-allowed"
+                    : "text-white underline hover:text-white/80"
                 }`}
               >
                 Resend
@@ -488,8 +551,8 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
               <div
                 className={`rounded-full transition-all duration-300 p-0.5 ${
                   isButtonHovered && isCodeComplete
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
+                    ? "border border-white shadow-glow"
+                    : "border border-brand-emerald500"
                 }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
@@ -500,15 +563,34 @@ export const WhatsAppVerificationModal: React.FC<WhatsAppVerificationModalProps>
                   disabled={isVerifyDisabled}
                   className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
                     isButtonHovered && isCodeComplete
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
+                      ? "bg-white text-brand-emerald500"
+                      : "bg-gradient-primary text-white"
                   }`}
                 >
-                  {status === 'verifying' ? 'Verifying...' : 'Verify'}
-                  {status !== 'verifying' && (
-                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {status === "verifying" ? "Verifying..." : "Verify"}
+                  {status !== "verifying" && (
+                    <svg
+                      width="18"
+                      height="7"
+                      viewBox="0 0 48 14"
+                      fill="none"
+                      className="transition-colors"
+                    >
+                      <line
+                        x1="0"
+                        y1="7"
+                        x2="40"
+                        y2="7"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="M40 1L47 7L40 13"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )}
                 </button>
