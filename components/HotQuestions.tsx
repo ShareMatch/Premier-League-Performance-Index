@@ -24,6 +24,7 @@ interface Question {
 const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   // Create a pool of ALL valid questions
   const questionPool = useMemo(() => {
@@ -92,9 +93,9 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     }
   }, [questionPool]);
 
-  // Dynamic Update Interval
+  // Dynamic Update Interval - only when collapsed
   useEffect(() => {
-    if (questionPool.length <= 3) return; // No accumulation to rotate
+    if (questionPool.length <= 3 || expanded) return; // No rotation when expanded or not enough items
 
     const scheduleNextUpdate = () => {
       // Random delay between 3s and 5s
@@ -132,16 +133,16 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
     let timerRef = { current: scheduleNextUpdate() };
 
     return () => clearTimeout(timerRef.current);
-  }, [questionPool, displayedQuestions]);
+  }, [questionPool, displayedQuestions, expanded]);
 
 
   if (displayedQuestions.length === 0) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-[#00A651]" />
+        <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A651]" />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
             Trending Markets
           </span>
@@ -149,8 +150,9 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
         </h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {displayedQuestions.map((q, index) => {
+      {/* Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
+        {(expanded ? questionPool : displayedQuestions).map((q, index) => {
           if (!q) return null; // Guard against race conditions (rare)
 
           return (
@@ -158,33 +160,34 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
               key={`${q.id}-${index}`} // Key change triggers React re-render, but we manage animation via class
               onClick={() => onNavigate(q.market as any)}
               className={`
-                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 cursor-pointer 
+                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-3 sm:p-5 cursor-pointer 
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${animatingCard === index ? 'animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800' : ''}
+                ${!expanded && animatingCard === index ? 'animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800' : ''}
               `}
             >
               {/* Gradient Background Effect */}
               <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
               <div className="relative z-10 flex flex-col h-full">
-                <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
+                {/* Header - horizontal layout on mobile */}
+                <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
                   <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-2 bg-gray-900/60 rounded-full px-3 py-1 border border-gray-700/50">
+                    <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900/60 rounded-full px-2 sm:px-3 py-1 border border-gray-700/50">
                       {q.icon}
-                      <span className="text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
                     </div>
-                    <span className="text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
+                    <span className="text-[10px] sm:text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
                   </div>
                   {(() => {
                     const info = getMarketInfo(q.market);
                     return (
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                          ? 'bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.2)]'
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                        <span className={`px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
+                          ? 'bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse'
                           : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
                           }`}>
-                          {info.isOpen ? 'LIVE' : 'CLOSED'}
+                          {info.isOpen ? 'Market Open' : 'Market Closed'}
                         </span>
                         <InfoPopup
                           title={info.title}
@@ -197,18 +200,18 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
                   })()}
                 </div>
 
-                <h3 className="text-base font-semibold text-gray-100 mb-6 group-hover:text-white transition-colors leading-snug">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-100 mb-3 sm:mb-6 group-hover:text-white transition-colors leading-snug line-clamp-2">
                   {q.question}
                 </h3>
 
-                <div className="mt-auto grid grid-cols-2 gap-3">
-                  <button className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-2 transition-all group/btn shadow-lg shadow-black/20">
-                    <span className="text-[10px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">Buy</span>
-                    <span className="text-lg font-bold text-white">${q.yesPrice.toFixed(2)}</span>
+                <div className="mt-auto grid grid-cols-2 gap-2 sm:gap-3">
+                  <button className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1.5 sm:p-2 transition-all group/btn shadow-lg shadow-black/20">
+                    <span className="text-[8px] sm:text-[10px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">Buy</span>
+                    <span className="text-base sm:text-lg font-bold text-white">${q.yesPrice.toFixed(2)}</span>
                   </button>
-                  <button className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-2 transition-all group/btn">
-                    <span className="text-[10px] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">Sell</span>
-                    <span className="text-lg font-bold text-red-400">${q.noPrice.toFixed(2)}</span>
+                  <button className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1.5 sm:p-2 transition-all group/btn">
+                    <span className="text-[8px] sm:text-[10px] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">Sell</span>
+                    <span className="text-base sm:text-lg font-bold text-red-400">${q.noPrice.toFixed(2)}</span>
                   </button>
                 </div>
               </div>
@@ -216,6 +219,26 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
           );
         })}
       </div>
+
+      {/* View More / View Less button */}
+      {questionPool.length > 3 && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
+          >
+            <span>{expanded ? 'View Less' : 'View More'}</span>
+            <svg 
+              className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
