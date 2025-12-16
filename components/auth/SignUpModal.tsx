@@ -1,7 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, ChevronDown, ChevronLeft, ChevronRight, Check, Lock, Search } from 'lucide-react';
+import { X, ChevronDown, ChevronLeft, ChevronRight, Check, Lock, Search, ArrowLeft } from 'lucide-react';
 import { countries, Country } from '../../data/countries';
 import { registerUser, RegistrationError, updateUserProfile, checkEmailVerificationStatus } from '../../lib/api';
+import { parsePhoneNumberFromString, CountryCode } from 'libphonenumber-js';
+
+// Validate phone number using libphonenumber-js
+// Returns true if valid, false otherwise
+const isValidPhoneNumber = (phoneNumber: string, countryCode: string, countryIso: string): boolean => {
+  try {
+    if (!phoneNumber.trim()) return false;
+    const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
+    const parsed = parsePhoneNumberFromString(fullNumber, countryIso.toUpperCase() as CountryCode);
+    return parsed ? parsed.isValid() : false;
+  } catch {
+    return false;
+  }
+};
+
+// Normalize phone number to E.164 format using libphonenumber-js
+// This properly handles all international formats and strips unnecessary leading zeros
+const normalizePhoneToE164 = (phoneNumber: string, countryCode: string, countryIso: string): string => {
+  try {
+    // Combine country code with phone number
+    const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
+    const parsed = parsePhoneNumberFromString(fullNumber, countryIso.toUpperCase() as CountryCode);
+    if (parsed && parsed.isValid()) {
+      return parsed.format('E.164');
+    }
+    // Fallback: just combine and strip leading zeros after country code
+    const digitsOnly = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
+    return `${countryCode}${digitsOnly}`;
+  } catch {
+    // Fallback: just combine and strip leading zeros
+    const digitsOnly = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
+    return `${countryCode}${digitsOnly}`;
+  }
+};
 
 // Utility function to parse E.164 phone number into country code and phone number
 const parsePhoneNumber = (phone: string): { countryCode: string; phoneNumber: string; countryIso: string } => {
@@ -117,9 +151,11 @@ const InputField = ({
   placeholder,
   value,
   onChange,
+  onBlur,
   error,
   icon,
   disabled = false,
+  isValidating = false,
 }: {
   label: string;
   name: string;
@@ -127,9 +163,11 @@ const InputField = ({
   placeholder: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   error?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
+  isValidating?: boolean;
 }) => (
   <div className="flex flex-col w-full">
     <label
@@ -149,10 +187,20 @@ const InputField = ({
         disabled={disabled}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         placeholder={placeholder}
         className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans"
       />
-      {icon && <span className="text-gray-900 ml-2 flex-shrink-0">{icon}</span>}
+      {isValidating ? (
+        <span className="ml-2 flex-shrink-0">
+          <svg className="animate-spin h-4 w-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </span>
+      ) : icon ? (
+        <span className="text-gray-900 ml-2 flex-shrink-0">{icon}</span>
+      ) : null}
     </div>
     {error && (
       <p className="text-red-400 text-xs mt-0.5 font-sans">
@@ -651,9 +699,9 @@ const Checkbox = ({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${error ? 'border-red-500' : 'border-white'
-          } bg-transparent transition-all checked:border-brand-emerald500 checked:bg-brand-emerald500`}
+          } bg-transparent transition-all checked:border-white checked:bg-white`}
       />
-      <span className="absolute inset-0 flex items-center justify-center opacity-0 peer-checked:opacity-100 text-black pointer-events-none">
+      <span className="absolute inset-0 flex items-center justify-center opacity-0 peer-checked:opacity-100 text-brand-primary pointer-events-none">
         <Check size={10} strokeWidth={4} />
       </span>
     </div>
@@ -710,6 +758,43 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | 'form', string>>>({});
   const [loading, setLoading] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [emailValidating, setEmailValidating] = useState(false);
+
+  // Email validation on blur
+  const handleEmailBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const email = e.target.value.trim().toLowerCase();
+    
+    // Skip if empty
+    if (!email) return;
+    
+    // Check format first
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrors(prev => ({ ...prev, email: 'Invalid email format' }));
+      return;
+    }
+    
+    // Check if email exists in database
+    setEmailValidating(true);
+    try {
+      const emailStatus = await checkEmailVerificationStatus(email);
+      if (emailStatus.exists && emailStatus.fullyVerified) {
+        setErrors(prev => ({ ...prev, email: 'An account with this email already exists' }));
+      } else {
+        // Clear error if valid
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.email;
+          return newErrors;
+        });
+      }
+    } catch (err) {
+      console.error('Error checking email:', err);
+      // Don't show error if check fails - will be caught on submit
+    } finally {
+      setEmailValidating(false);
+    }
+  };
 
   // Initialize form with edit data when in edit mode (step 2 only)
   // This restores the exact form state the user had before
@@ -777,17 +862,31 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
     }
   }, [isOpen]);
 
+  // Helper to strip leading zeros from phone numbers (e.g., 050 -> 50)
+  const stripLeadingZeros = (phoneNumber: string) => {
+    // Remove non-digits first, then strip leading zeros
+    const digitsOnly = phoneNumber.replace(/\D/g, '');
+    return digitsOnly.replace(/^0+/, '');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => {
-      const newData = { ...prev, [name]: type === 'checkbox' ? checked : value };
+      let processedValue = type === 'checkbox' ? checked : value;
+      
+      // Strip leading zeros from phone and whatsapp fields
+      if ((name === 'phone' || name === 'whatsapp') && typeof processedValue === 'string') {
+        processedValue = stripLeadingZeros(processedValue);
+      }
+      
+      const newData = { ...prev, [name]: processedValue };
       if (name === 'useSameNumber' && checked) {
         newData.whatsapp = prev.phone;
         newData.whatsappCode = prev.phoneCode;
         newData.whatsappIso = prev.phoneIso;
       }
       if (name === 'phone' && prev.useSameNumber) {
-        newData.whatsapp = value;
+        newData.whatsapp = typeof processedValue === 'string' ? processedValue : value;
       }
       return newData;
     });
@@ -838,8 +937,21 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
   const validateStep2 = (): boolean => {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.whatsapp.trim()) newErrors.whatsapp = 'WhatsApp number is required';
+    
+    // Phone validation
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!isValidPhoneNumber(formData.phone, formData.phoneCode, formData.phoneIso)) {
+      newErrors.phone = 'Invalid phone number';
+    }
+    
+    // WhatsApp validation
+    if (!formData.whatsapp.trim()) {
+      newErrors.whatsapp = 'WhatsApp number is required';
+    } else if (!isValidPhoneNumber(formData.whatsapp, formData.whatsappCode, formData.whatsappIso)) {
+      newErrors.whatsapp = 'Invalid WhatsApp number';
+    }
+    
     if (!formData.agreeToTerms) newErrors.agreeToTerms = 'Required';
     if (!formData.agreeToWhatsappOtp) newErrors.agreeToWhatsappOtp = 'Required';
     setErrors(newErrors);
@@ -886,8 +998,21 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
     e.preventDefault();
     // For edit mode step 2, validate both phone fields
     const newErrors: Partial<Record<keyof FormData, string>> = {};
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.whatsapp.trim()) newErrors.whatsapp = 'WhatsApp number is required';
+    
+    // Phone validation
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!isValidPhoneNumber(formData.phone, formData.phoneCode, formData.phoneIso)) {
+      newErrors.phone = 'Invalid phone number';
+    }
+    
+    // WhatsApp validation
+    if (!formData.whatsapp.trim()) {
+      newErrors.whatsapp = 'WhatsApp number is required';
+    } else if (!isValidPhoneNumber(formData.whatsapp, formData.whatsappCode, formData.whatsappIso)) {
+      newErrors.whatsapp = 'Invalid WhatsApp number';
+    }
+    
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
@@ -895,8 +1020,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
     setErrors({});
 
     try {
-      const phone = `${formData.phoneCode}${formData.phone.replace(/\D/g, '')}`;
-      const whatsappPhone = `${formData.whatsappCode}${formData.whatsapp.replace(/\D/g, '')}`;
+      // Normalize phone numbers to E.164 using libphonenumber-js
+      const phone = normalizePhoneToE164(formData.phone, formData.phoneCode, formData.phoneIso);
+      const whatsappPhone = normalizePhoneToE164(formData.whatsapp, formData.whatsappCode, formData.whatsappIso);
 
       const result = await updateUserProfile({
         currentEmail: editData?.email || '',
@@ -928,11 +1054,15 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
     setErrors({});
 
     try {
+      // Normalize phone numbers to E.164 using libphonenumber-js
+      const phone = normalizePhoneToE164(formData.phone, formData.phoneCode, formData.phoneIso);
+      const whatsappPhone = normalizePhoneToE164(formData.whatsapp, formData.whatsappCode, formData.whatsappIso);
+      
       const payload = {
         full_name: formData.fullName,
         email: formData.email.toLowerCase(),
-        phone: `${formData.phoneCode}${formData.phone.replace(/\D/g, '')}`,
-        whatsapp_phone: `${formData.whatsappCode}${formData.whatsapp.replace(/\D/g, '')}`,
+        phone: phone,
+        whatsapp_phone: whatsappPhone,
         dob: formData.dob,
         country_of_residence: formData.countryOfResidence,
         referral_code: formData.referralCode?.trim() || null,
@@ -990,13 +1120,19 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
+        {/* Back Button - Step 2 */}
+        {step === 2 && (
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="absolute top-6 left-6 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors z-30"
+          >
+            <ArrowLeft className="w-4 h-4 text-white" />
+          </button>
+        )}
+
         {/* Left Side - Branding */}
         <div className={`hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative ${step === 2 ? 'justify-center' : ''}`}>
-          {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute top-5 left-5 text-white hover:text-brand-emerald500 transition-colors">
-              <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
-            </button>
-          )}
           <img
             src="/logos/mobile-header-logo-matched.svg"
             alt="ShareMatch"
@@ -1019,11 +1155,6 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
         {/* Mobile Header */}
         <div className="md:hidden p-5 flex items-center justify-center relative">
-          {step === 2 && (
-            <button onClick={() => setStep(1)} className="absolute left-5 text-white hover:text-brand-emerald500 transition-colors">
-              <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
-            </button>
-          )}
           <img src="/logos/mobile-header-logo-matched.svg" alt="ShareMatch" className="h-16 object-contain" />
         </div>
 
@@ -1035,11 +1166,11 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               minHeight: '460px',
             }}
           >
-            <h2
-              className="text-white mb-3 font-bold text-xl"
-            >
-              {step === 2 && 'Security & Access'}
-            </h2>
+            {step === 2 ? (
+              <h2 className="text-white font-bold text-xl mb-3">
+                Security & Verification
+              </h2>
+            ) : null}
 
             {errors.form && (
               <div className="mb-3 p-2 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200 text-xs">
@@ -1094,7 +1225,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     placeholder="john@example.com"
                     value={formData.email}
                     onChange={handleChange}
+                    onBlur={handleEmailBlur}
                     error={errors.email}
+                    isValidating={emailValidating}
                     icon={
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
@@ -1185,9 +1318,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                   </Checkbox>
 
                   {/* Security Notice */}
-                  <div className="flex items-start gap-2">
-                    <Lock className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                    <p className="text-white text-xs leading-tight font-sans">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-white flex-shrink-0" />
+                    <p className="text-white text-xs leading-normal font-sans">
                       Your account is protected with encryption. Never share your password.
                     </p>
                   </div>
@@ -1208,20 +1341,18 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               {/* Submit Button */}
               <div className="flex justify-center mt-1">
                 <div
-                  className={`rounded-full transition-all duration-300 p-0.5 ${isButtonHovered
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
-                    }`}
+                  className={`rounded-full transition-all duration-300 ${
+                    isButtonHovered ? 'shadow-glow' : ''
+                  }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
                 >
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${isButtonHovered
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
-                      }`}
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans bg-white text-brand-primary ${
+                      isButtonHovered ? 'opacity-90' : ''
+                    }`}
                   >
                     {loading ? 'Processing...' : isEditMode ? 'Save Changes' : step === 1 ? 'Continue' : 'Create Account'}
                     {!loading && (

@@ -94,7 +94,7 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
               >
                 <div className="text-white text-[9px] sm:text-sm font-medium font-sans mb-0.5 sm:mb-1.5">{activity.timestamp}</div>
                 <div className="flex items-center justify-between gap-1">
-                  <div className={`text-[9px] sm:text-xs font-sans ${activity.successful ? 'text-brand-emerald500' : 'text-red-500'}`}>
+                  <div className={`text-[9px] sm:text-xs font-sans ${activity.successful ? 'text-brand-primary' : 'text-red-500'}`}>
                     {activity.successful ? 'Login successful' : 'Login failed'}
                   </div>
                   <div className="text-gray-400 text-[9px] sm:text-xs flex items-center gap-1 sm:gap-1.5 font-sans">
@@ -123,13 +123,13 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
           <div className="flex gap-1.5 sm:gap-2">
             <button
               onClick={onChangePassword}
-              className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[9px] sm:text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
+              className="flex-1 px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
             >
               Change Password
             </button>
             <button
               onClick={onSignOut}
-              className="flex-1 px-2 sm:px-4 py-1.5 sm:py-2.5 text-[9px] sm:text-sm font-sans font-medium text-brand-emerald500 border border-brand-emerald500 rounded-full hover:bg-brand-emerald500/10 transition-colors"
+              className="flex-1 px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
             >
               Sign Out
             </button>
