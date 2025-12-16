@@ -1,0 +1,7 @@
+# Sumsub Webhook Configuration
+# This function receives webhooks from Sumsub which uses its own authentication
+# (x-payload-digest HMAC signature) instead of Supabase JWT tokens.
+# We disable Supabase's built-in JWT verification and handle auth ourselves.
+
+verify_jwt = false
+

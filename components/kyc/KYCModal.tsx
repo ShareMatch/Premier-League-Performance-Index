@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, ShieldCheck, AlertTriangle, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { X, ShieldCheck, AlertTriangle, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import SumsubKYC from './SumsubKYC';
-import { KycStatus, getKycUserStatus, KycUserStatusResponse } from '../../lib/api';
+import { KycStatus, getKycUserStatus, KycUserStatusResponse, resetKycApplicant } from '../../lib/api';
 import { getRejectionMessage, getRejectionSummary, getButtonIdMessage, isResubmissionAllowed } from '../../lib/rejectionReasons';
 
 interface KYCModalProps {
@@ -10,9 +10,11 @@ interface KYCModalProps {
   userId: string;
   onKycComplete?: (status: KycStatus) => void;
   initialStatus?: KycStatus;
+  /** When true, skip status screens and go directly to SDK for document updates */
+  forceUpdateMode?: boolean;
 }
 
-type ModalView = 'intro' | 'kyc' | 'pending' | 'approved' | 'rejected' | 'resubmission' | 'cooling_off';
+type ModalView = 'intro' | 'kyc' | 'pending' | 'approved' | 'rejected' | 'resubmission' | 'cooling_off' | 'update_confirm';
 
 export const KYCModal: React.FC<KYCModalProps> = ({
   isOpen,
@@ -20,9 +22,11 @@ export const KYCModal: React.FC<KYCModalProps> = ({
   userId,
   onKycComplete,
   initialStatus,
+  forceUpdateMode = false,
 }) => {
   const [view, setView] = useState<ModalView>('intro');
   const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState(false);
   const [kycData, setKycData] = useState<KycUserStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +40,16 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         setError(null);
         const status = await getKycUserStatus(userId);
         setKycData(status);
-
+        
+        // If forceUpdateMode is true and user is approved, show confirmation dialog
+        // Explain that updating documents requires re-verification
+        if (forceUpdateMode && status.kyc_status === 'approved') {
+          console.log('Force update mode - showing update confirmation');
+          setView('update_confirm');
+          setLoading(false);
+          return;
+        }
+        
         // Determine initial view based on status
         switch (status.kyc_status) {
           case 'approved':
@@ -76,7 +89,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
     };
 
     fetchStatus();
-  }, [isOpen, userId]);
+  }, [isOpen, userId, forceUpdateMode]);
 
   // Handle KYC completion from Sumsub SDK
   // NOTE: This is only called when user manually triggers completion, NOT automatically
@@ -115,6 +128,25 @@ export const KYCModal: React.FC<KYCModalProps> = ({
 
   const handleRetryKyc = () => {
     setView('kyc');
+  };
+
+  // Handle reset and update for approved users
+  const handleResetAndUpdate = async () => {
+    try {
+      setResetting(true);
+      setError(null);
+      console.log('🔄 Resetting KYC for user:', userId);
+      
+      await resetKycApplicant(userId);
+      
+      console.log('✅ KYC reset successful, opening SDK');
+      setResetting(false);
+      setView('kyc');
+    } catch (err: any) {
+      console.error('❌ Failed to reset KYC:', err);
+      setError(err.message || 'Failed to reset verification. Please try again.');
+      setResetting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -185,6 +217,13 @@ export const KYCModal: React.FC<KYCModalProps> = ({
               kycData={kycData}
               onRetry={handleRetryKyc}
               onClose={onClose}
+            />
+          ) : view === 'update_confirm' ? (
+            <UpdateConfirmView 
+              onProceed={handleResetAndUpdate}
+              onClose={onClose}
+              isResetting={resetting}
+              error={error}
             />
           ) : null}
 
@@ -467,6 +506,79 @@ const ResubmissionView: React.FC<{
     </div>
   );
 };
+
+// Update Confirm View - for approved users who want to update documents
+const UpdateConfirmView: React.FC<{ 
+  onProceed: () => void;
+  onClose: () => void;
+  isResetting?: boolean;
+  error?: string | null;
+}> = ({ onProceed, onClose, isResetting = false, error }) => (
+  <div className="p-8 text-center">
+    <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+      {isResetting ? (
+        <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+      ) : (
+        <AlertTriangle className="w-10 h-10 text-blue-500" />
+      )}
+    </div>
+    
+    <h3 className="text-2xl font-bold text-white mb-4">
+      {isResetting ? 'Resetting Verification...' : 'Update Your Documents'}
+    </h3>
+    
+    {isResetting ? (
+      <p className="text-gray-400 mb-8 max-w-md mx-auto">
+        Please wait while we reset your verification status. 
+        This will only take a moment.
+      </p>
+    ) : (
+      <>
+        <p className="text-gray-400 mb-6 max-w-md mx-auto">
+          Your identity is currently verified. If you need to update your documents 
+          (e.g., expired ID, address change), your verification will be temporarily 
+          reset while we review the new documents.
+        </p>
+
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
+          <div className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Please Note:
+          </div>
+          <ul className="text-sm text-gray-300 space-y-1">
+            <li>• Your current verification will be reset</li>
+            <li>• You'll need to re-upload your documents</li>
+            <li>• Review typically takes a few minutes</li>
+            <li>• Trading may be limited during review</li>
+          </ul>
+        </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={onProceed}
+            disabled={isResetting}
+            className="px-8 py-3 bg-[#3AA189] text-white rounded-full font-semibold hover:bg-[#2d8a73] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Proceed to Update
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isResetting}
+            className="px-8 py-3 bg-gray-700 text-white rounded-full font-semibold hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+);
 
 export default KYCModal;
 

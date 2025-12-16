@@ -87,32 +87,33 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
   };
 
   return (
-    <div className="mb-4">
-      <div className="flex justify-center gap-4">
+    <div className="my-3 sm:my-6">
+      {/* Responsive button container */}
+      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
         <button
           onClick={getAnalysis}
           disabled={loading}
-          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-6 rounded-full inline-flex items-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed"
+          className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-4 sm:px-6 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed text-xs sm:text-sm"
         >
-          <SparkleIcon className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-          <span className="text-sm">
+          <SparkleIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${loading ? "animate-spin" : ""}`} />
+          <span>
             {loading
               ? "Analyzing..."
               : analysis
-                ? "Regenerate Analysis"
-                : "Get AI Market Analysis"}
+              ? "Regenerate"
+              : "Get AI Market Analysis"}
           </span>
         </button>
 
         {analysis && !loading && (
           <button
             onClick={() => setIsVisible(!isVisible)}
-            className="bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 px-4 rounded-full inline-flex items-center gap-2 transition-all duration-300"
+            className="bg-gray-700 hover:bg-gray-600 text-white text-xs sm:text-sm font-bold py-2 px-3 sm:px-4 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300"
           >
             {isVisible ? (
-              <EyeOff className="w-4 h-4" />
+              <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             ) : (
-              <Eye className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             )}
             <span>{isVisible ? "Hide" : "Show"}</span>
           </button>
@@ -122,9 +123,9 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
       {error && <p className="text-center text-red-400 mt-4">{error}</p>}
 
       {loading && (
-        <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 animate-pulse">
-          <div className="h-3 bg-gray-700 rounded w-1/3 mb-3"></div>
-          <div className="space-y-2">
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-800/50 rounded-lg border border-gray-700 animate-pulse">
+          <div className="h-2.5 sm:h-3 bg-gray-700 rounded w-1/3 mb-2 sm:mb-3"></div>
+          <div className="space-y-1.5 sm:space-y-2">
             <div className="h-2 bg-gray-700 rounded w-full"></div>
             <div className="h-2 bg-gray-700 rounded w-5/6"></div>
             <div className="h-2 bg-gray-700 rounded w-3/4"></div>
@@ -133,26 +134,26 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
       )}
 
       {analysis && !loading && isVisible && (
-        <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
-          <h3 className="text-sm font-bold text-[#005430] flex items-center gap-2 mb-2">
-            <SparkleIcon className="w-4 h-4" />
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-gray-800/50 rounded-lg border border-gray-700 text-left animate-in fade-in slide-in-from-top-2">
+          <h3 className="text-xs sm:text-sm font-bold text-[#005430] flex items-center gap-1.5 sm:gap-2 mb-2">
+            <SparkleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             AI Market Commentary
           </h3>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
               p: (props) => (
-                <p className="text-gray-300 text-sm mb-2" {...props} />
+                <p className="text-gray-300 text-xs sm:text-sm mb-2" {...props} />
               ),
               strong: (props) => (
                 <strong className="text-white font-bold" {...props} />
               ),
               ul: (props) => (
-                <ul className="list-disc ml-4 text-sm text-gray-300" {...props} />
+                <ul className="list-disc ml-4 text-xs sm:text-sm text-gray-300" {...props} />
               ),
               li: (props) => <li className="mb-1" {...props} />,
               h3: (props) => (
-                <h3 className="text-bg-brand-emerald500 text-sm font-bold mb-2" {...props} />
+                <h3 className="text-bg-brand-emerald500 text-xs sm:text-sm font-bold mb-2" {...props} />
               ),
             }}
           >
