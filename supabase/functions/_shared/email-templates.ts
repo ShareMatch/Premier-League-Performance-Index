@@ -428,7 +428,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                 margin: 20px 0 !important;
             }
             .single-otp-box {
-                font-size: 18px !important;
+                font-size: 30px !important;
                 padding: 15px 35px !important;
                 letter-spacing: 4px !important;
             }
