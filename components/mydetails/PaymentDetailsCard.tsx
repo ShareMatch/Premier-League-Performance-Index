@@ -38,7 +38,7 @@ const PaymentDetailsCard: React.FC<PaymentDetailsCardProps> = ({
         {/* Empty State Content - Compact on mobile */}
         <div className="p-2 sm:p-4 flex-1 flex flex-col items-center justify-center gap-2 sm:gap-4">
           <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-brand-emerald500/10 flex items-center justify-center">
-            <CreditCard className="w-5 h-5 sm:w-8 sm:h-8 text-brand-emerald500" />
+            <CreditCard className="w-5 h-5 sm:w-8 sm:h-8 text-brand-primary" />
           </div>
           <div className="text-center">
             <p className="text-white font-medium font-sans text-[9px] sm:text-sm mb-0.5">No payment method added</p>
@@ -46,10 +46,10 @@ const PaymentDetailsCard: React.FC<PaymentDetailsCardProps> = ({
           </div>
           <button
             onClick={onAddPayment}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-full text-brand-emerald500 border border-brand-emerald500 font-medium font-sans text-[9px] sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-lg font-medium font-sans text-[10px] sm:text-sm text-white bg-gradient-primary hover:opacity-90 transition-colors whitespace-nowrap"
           >
-            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-            Add Payment Information
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Add Payment Info
           </button>
         </div>
       </div>
@@ -80,7 +80,7 @@ const PaymentDetailsCard: React.FC<PaymentDetailsCardProps> = ({
           {onEdit && (
             <button
               onClick={onEdit}
-              className="text-brand-emerald500 hover:text-brand-emerald500/80 transition-colors text-[9px] sm:text-xs font-sans font-medium flex-shrink-0"
+              className="px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90 flex-shrink-0"
             >
               Edit
             </button>

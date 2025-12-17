@@ -61,8 +61,34 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
-  // My Details Page visibility
-  const [showMyDetails, setShowMyDetails] = useState(false);
+  // My Details Page visibility - check URL hash on initial load
+  const [showMyDetails, setShowMyDetails] = useState(() => {
+    return window.location.hash === '#my-details';
+  });
+
+  // Update URL hash when My Details visibility changes
+  const openMyDetails = useCallback(() => {
+    setShowMyDetails(true);
+    window.history.pushState(null, '', '#my-details');
+  }, []);
+
+  const closeMyDetails = useCallback(() => {
+    setShowMyDetails(false);
+    window.history.pushState(null, '', window.location.pathname);
+  }, []);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handleHashChange = () => {
+      setShowMyDetails(window.location.hash === '#my-details');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, []);
 
   const handleAIAnalyticsClick = () => {
     // Check if user has any assets in portfolio
@@ -577,7 +603,7 @@ const App: React.FC = () => {
                 phone: user.user_metadata?.phone || '',
                 whatsapp: user.user_metadata?.whatsapp_phone || '',
                 address: user.user_metadata?.address_line || '',
-                address2: user.user_metadata?.address_line_2 || '',
+                // address2: user.user_metadata?.address_line_2 || '',
                 city: user.user_metadata?.city || '',
                 state: user.user_metadata?.region || '',
                 country: user.user_metadata?.country || '',

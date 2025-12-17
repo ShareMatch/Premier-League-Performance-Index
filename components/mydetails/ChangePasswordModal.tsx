@@ -1,19 +1,55 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, CheckCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
+import { X, CheckCircle } from "lucide-react";
+import Button from "../Button";
 
 // Eye Icon for password visibility toggle
 const EyeIcon = ({ off = false }: { off?: boolean }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     {off ? (
       <>
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <line
+          x1="1"
+          y1="1"
+          x2="23"
+          y2="23"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </>
     ) : (
       <>
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </>
     )}
   </svg>
@@ -30,11 +66,11 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -44,26 +80,26 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   if (!isOpen) return null;
 
   const handleSave = async () => {
-    setError('');
+    setError("");
     setSuccess(false);
-    
+
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setError("New passwords do not match");
       return;
     }
-    
+
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError("Password must be at least 8 characters");
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError('New password must be different from current password');
+      setError("New password must be different from current password");
       return;
     }
 
@@ -71,31 +107,34 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     try {
       await onSave(currentPassword, newPassword);
       setSuccess(true);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
       // Auto close after showing success message
       setTimeout(() => {
         onClose();
         setSuccess(false);
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Failed to update password');
+      setError(err.message || "Failed to update password");
     } finally {
       setSaving(false);
     }
   };
 
   const handleClose = () => {
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setError('');
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setError("");
     setSuccess(false);
     onClose();
   };
 
-  const canSubmit = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0;
+  const canSubmit =
+    currentPassword.length > 0 &&
+    newPassword.length > 0 &&
+    confirmPassword.length > 0;
 
   const modalContent = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 overflow-y-auto w-full h-full">
@@ -106,9 +145,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div
-        className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
-      >
+      <div className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
         {/* Close Button */}
         <button
           onClick={handleClose}
@@ -149,10 +186,14 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               >
                 Current Password
               </label>
-              <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${success ? 'opacity-50' : ''}`}>
+              <div
+                className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${
+                  success ? "opacity-50" : ""
+                }`}
+              >
                 <input
                   id="current-password"
-                  type={showCurrent ? 'text' : 'password'}
+                  type={showCurrent ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   disabled={success || saving}
@@ -165,7 +206,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   className="text-gray-900 flex-shrink-0 ml-1.5 sm:ml-2 transition-colors hover:text-brand-emerald500 focus:outline-none"
                   aria-label={showCurrent ? "Hide password" : "Show password"}
                 >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6"><EyeIcon off={!showCurrent} /></div>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6">
+                    <EyeIcon off={!showCurrent} />
+                  </div>
                 </button>
               </div>
             </div>
@@ -178,10 +221,14 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               >
                 New Password
               </label>
-              <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${success ? 'opacity-50' : ''}`}>
+              <div
+                className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${
+                  success ? "opacity-50" : ""
+                }`}
+              >
                 <input
                   id="new-password"
-                  type={showNew ? 'text' : 'password'}
+                  type={showNew ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   disabled={success || saving}
@@ -194,7 +241,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   className="text-gray-900 flex-shrink-0 ml-1.5 sm:ml-2 transition-colors hover:text-brand-emerald500 focus:outline-none"
                   aria-label={showNew ? "Hide password" : "Show password"}
                 >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6"><EyeIcon off={!showNew} /></div>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6">
+                    <EyeIcon off={!showNew} />
+                  </div>
                 </button>
               </div>
             </div>
@@ -207,10 +256,14 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               >
                 Confirm New Password
               </label>
-              <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${success ? 'opacity-50' : ''}`}>
+              <div
+                className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 focus-within:ring-brand-emerald500 ${
+                  success ? "opacity-50" : ""
+                }`}
+              >
                 <input
                   id="confirm-password"
-                  type={showConfirm ? 'text' : 'password'}
+                  type={showConfirm ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={success || saving}
@@ -223,7 +276,9 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   className="text-gray-900 flex-shrink-0 ml-1.5 sm:ml-2 transition-colors hover:text-brand-emerald500 focus:outline-none"
                   aria-label={showConfirm ? "Hide password" : "Show password"}
                 >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6"><EyeIcon off={!showConfirm} /></div>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6">
+                    <EyeIcon off={!showConfirm} />
+                  </div>
                 </button>
               </div>
             </div>
@@ -238,25 +293,20 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 p-0.5 ${
-                isButtonHovered && canSubmit
-                  ? 'border border-white shadow-glow'
-                  : 'border border-brand-emerald500'
+              className={`flex-1 rounded-full transition-all duration-300 ${
+                isButtonHovered && canSubmit ? "shadow-glow" : ""
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={!canSubmit || saving}
-                className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 ${
-                  isButtonHovered && canSubmit
-                    ? 'bg-white text-brand-emerald500'
-                    : 'bg-gradient-primary text-white'
-                }`}
+                // keep Update fully opaque; show disabled cursor
+                className="!hover:opacity-100 !disabled:opacity-100 disabled:cursor-not-allowed"
               >
-                {saving ? 'Updating...' : 'Update'}
-              </button>
+                {saving ? "Updating..." : "Update"}
+              </Button>
             </div>
           </div>
         </div>

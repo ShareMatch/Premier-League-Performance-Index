@@ -1,3 +1,5 @@
+import plugin from 'tailwindcss/plugin';
+
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
@@ -14,6 +16,9 @@ export default {
                 brand: {
                     emerald900: '#005430',
                     emerald500: '#005430',
+                    // White button tokens (centralised so button color can be changed here)
+                    whiteButtonBg: '#2e3742',
+                    whiteButtonText: '#ffffffff',
                     cream: '#FDFBF7',
                     amber500: '#f59e0b',
                     amber400: '#fbbf24',
@@ -22,6 +27,8 @@ export default {
                     DEFAULT: '#005430',
                     accent: '#f59e0b',
                     gold: '#fbbf24',
+                    primary: '#078651',
+                
                 },
                 // Override Tailwind's default gray-200 for input backgrounds
                 gray: {
@@ -50,5 +57,16 @@ export default {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        plugin(function({ addUtilities }) {
+            addUtilities({
+                '.text-gradient-primary': {
+                    'background-image': 'linear-gradient(180deg, #00A060 0%, #007848 50%, #005430 100%)',
+                    '-webkit-background-clip': 'text',
+                    'background-clip': 'text',
+                    'color': 'transparent',
+                },
+            });
+        }),
+    ],
 }

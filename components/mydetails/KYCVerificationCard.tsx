@@ -22,7 +22,7 @@ const getStatusConfig = (status: KYCStatus) => {
       return {
         label: 'Verified',
         message: 'Your account has been successfully verified.',
-        className: 'bg-brand-emerald500/10 text-brand-emerald500',
+        className: 'bg-brand-primary/10 text-brand-primary',
         Icon: CheckCircle2,
       };
     case 'not_verified':
@@ -76,7 +76,7 @@ const getDocumentStatusConfig = (status: DocumentStatus) => {
     case 'verified':
       return {
         label: 'Verified',
-        className: 'bg-brand-emerald500/10 text-brand-emerald500',
+        className: 'bg-brand-primary/10 text-brand-primary',
       };
     case 'not_uploaded':
       return {

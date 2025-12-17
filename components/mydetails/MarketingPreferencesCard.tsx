@@ -26,7 +26,7 @@ const MarketingPreferencesCard: React.FC<MarketingPreferencesCardProps> = ({
         {onEdit && (
           <button
             onClick={onEdit}
-            className="text-brand-emerald500 hover:text-brand-emerald500/80 transition-colors text-[8px] sm:text-xs font-sans font-medium"
+            className="px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
           >
             Edit
           </button>
@@ -45,7 +45,7 @@ const MarketingPreferencesCard: React.FC<MarketingPreferencesCardProps> = ({
                 className="flex items-center gap-1 sm:gap-2"
               >
                 {pref.enabled ? (
-                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500 flex-shrink-0" />
+                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-primary flex-shrink-0" />
                 ) : (
                   <Circle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
                 )}
@@ -62,7 +62,7 @@ const MarketingPreferencesCard: React.FC<MarketingPreferencesCardProps> = ({
           <p className="text-gray-500 text-[9px] sm:text-xs mb-1 sm:mb-2 font-sans">Personalised marketing:</p>
           <div className="flex items-start gap-1 sm:gap-2">
             {personalizedMarketing ? (
-              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 text-brand-primary flex-shrink-0 mt-0.5" />
             ) : (
               <Circle className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0 mt-0.5" />
             )}
