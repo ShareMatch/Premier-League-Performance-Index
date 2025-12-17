@@ -20,7 +20,7 @@ const DetailsCard: React.FC<DetailsCardProps> = ({ title, fields, onEdit }) => {
         {onEdit && (
           <button
             onClick={onEdit}
-            className="text-brand-emerald500 hover:text-brand-emerald500/80 transition-colors text-[8px] sm:text-xs font-sans font-medium"
+            className="px-1.5 sm:px-4 py-0.5 sm:py-1.5 text-[8px] sm:text-xs font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
           >
             Edit
           </button>

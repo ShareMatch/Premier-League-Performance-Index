@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, CreditCard, Building2, Bitcoin, Check, Lock } from 'lucide-react';
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
+import { X, CreditCard, Building2, Bitcoin, Check, Lock } from "lucide-react";
+import Button from "../Button";
 
-export type PaymentOption = 'card' | 'bank' | 'crypto';
+export type PaymentOption = "card" | "bank" | "crypto";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -15,28 +16,34 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
   onClose,
   onSelectMethod,
 }) => {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentOption>('bank');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentOption>("bank");
   const [isButtonHovered, setIsButtonHovered] = useState(false);
 
   if (!isOpen) return null;
 
-  const paymentOptions: { id: PaymentOption; label: string; icon: React.ReactNode; available: boolean; comingSoon?: boolean }[] = [
+  const paymentOptions: {
+    id: PaymentOption;
+    label: string;
+    icon: React.ReactNode;
+    available: boolean;
+    comingSoon?: boolean;
+  }[] = [
     {
-      id: 'card',
-      label: 'Debit Card',
+      id: "card",
+      label: "Debit Card",
       icon: <CreditCard className="w-5 h-5" />,
       available: false,
       comingSoon: true,
     },
     {
-      id: 'bank',
-      label: 'Bank Transfer',
+      id: "bank",
+      label: "Bank Transfer",
       icon: <Building2 className="w-5 h-5" />,
       available: true,
     },
     {
-      id: 'crypto',
-      label: 'Crypto wallet',
+      id: "crypto",
+      label: "Crypto wallet",
       icon: <Bitcoin className="w-5 h-5" />,
       available: false,
       comingSoon: true,
@@ -44,7 +51,7 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
   ];
 
   const handleNext = () => {
-    if (selectedMethod === 'bank') {
+    if (selectedMethod === "bank") {
       onSelectMethod(selectedMethod);
     }
   };
@@ -88,32 +95,38 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
                 className={`relative flex items-center gap-2 sm:gap-4 p-2.5 sm:p-4 rounded-lg sm:rounded-xl transition-all ${
                   option.available
                     ? selectedMethod === option.id
-                      ? 'bg-gray-900 border-2 border-brand-emerald500'
-                      : 'bg-gray-900 border border-white/10 hover:border-white/20'
-                    : 'bg-gray-900/50 border border-white/5 cursor-not-allowed opacity-50'
+                      ? "bg-gray-900 border-2 border-brand-emerald500"
+                      : "bg-gray-900 border border-white/10 hover:border-white/20"
+                    : "bg-gray-900/50 border border-white/5 cursor-not-allowed opacity-50"
                 }`}
               >
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
-                  option.available
-                    ? selectedMethod === option.id
-                      ? 'bg-brand-emerald500 text-white'
-                      : 'bg-gray-800 text-gray-400'
-                    : 'bg-gray-800/50 text-gray-500'
-                }`}>
+                <div
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                    option.available
+                      ? selectedMethod === option.id
+                        ? "bg-brand-emerald500 text-white"
+                        : "bg-gray-800 text-gray-400"
+                      : "bg-gray-800/50 text-gray-500"
+                  }`}
+                >
                   <div className="w-4 h-4 sm:w-5 sm:h-5">{option.icon}</div>
                 </div>
-                <span className={`font-medium font-sans text-xs sm:text-sm ${
-                  option.available ? 'text-white' : 'text-gray-500'
-                }`}>
+                <span
+                  className={`font-medium font-sans text-xs sm:text-sm ${
+                    option.available ? "text-white" : "text-gray-500"
+                  }`}
+                >
                   {option.label}
                 </span>
-                
+
                 {/* Selection indicator or Coming Soon badge */}
                 <div className="ml-auto">
                   {option.comingSoon ? (
                     <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-gray-800 border border-white/10">
                       <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
-                      <span className="text-[10px] sm:text-xs font-medium text-gray-400 font-sans">Soon</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-400 font-sans">
+                        Soon
+                      </span>
                     </div>
                   ) : selectedMethod === option.id ? (
                     <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-emerald500 flex items-center justify-center">
@@ -136,25 +149,21 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 p-0.5 ${
-                isButtonHovered
-                  ? 'border border-white shadow-glow'
-                  : 'border border-brand-emerald500'
+              className={`flex-1 rounded-full transition-all duration-300 ${
+                isButtonHovered ? "shadow-glow" : ""
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
-              <button
+              <Button
                 onClick={handleNext}
-                disabled={!paymentOptions.find(o => o.id === selectedMethod)?.available}
-                className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 ${
-                  isButtonHovered
-                    ? 'bg-white text-brand-emerald500'
-                    : 'bg-gradient-primary text-white'
-                }`}
+                disabled={
+                  !paymentOptions.find((o) => o.id === selectedMethod)
+                    ?.available
+                }
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -166,4 +175,3 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
 };
 
 export default PaymentMethodModal;
-
