@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
             { label: 'Saudi Pro League', id: 'SPL', active: activeLeague === 'SPL' },
             { label: 'UEFA Champions League', id: 'UCL', active: activeLeague === 'UCL' },
             { label: 'FIFA World Cup', id: 'WC', active: activeLeague === 'WC' },
+            { label: 'Indonesia Super League', id: 'ISL', active: activeLeague === 'ISL' },
           ]
         },
         {
