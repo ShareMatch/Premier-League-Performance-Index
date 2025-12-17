@@ -603,7 +603,7 @@ const App: React.FC = () => {
                 phone: user.user_metadata?.phone || '',
                 whatsapp: user.user_metadata?.whatsapp_phone || '',
                 address: user.user_metadata?.address_line || '',
-                address2: user.user_metadata?.address_line_2 || '',
+                // address2: user.user_metadata?.address_line_2 || '',
                 city: user.user_metadata?.city || '',
                 state: user.user_metadata?.region || '',
                 country: user.user_metadata?.country || '',

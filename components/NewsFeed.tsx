@@ -39,9 +39,10 @@ const isHaram = (text: string): boolean => {
 
 interface NewsFeedProps {
     topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Eurovision' | 'Global';
+    showHeader?: boolean;
 }
 
-const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
+const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true }) => {
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
     const [summary, setSummary] = useState('');
@@ -208,13 +209,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global' }) => {
     return (
         <>
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-48 sm:h-64 xl:h-80">
-                <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
-                    <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
-                    <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
-                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
-                    <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
-                </div>
-
+                {showHeader && (
+                    <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
+                        <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
+                        <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
+                        {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
+                        <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
+                    </div>
+                )}
                 <div className="flex-1 overflow-hidden relative group">
                     <div className="absolute inset-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scrollbar-hide">
                         {loading && newsItems.length === 0 ? (
