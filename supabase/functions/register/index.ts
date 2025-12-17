@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -80,8 +81,32 @@ serve(async (req: Request) => {
         // --- Extract and normalize fields ---
         const fullName = String(body.full_name ?? "").trim();
         const email = String(body.email ?? "").trim().toLowerCase();
-        const phone = String(body.phone ?? "").trim();
-        const whatsappPhone = body.whatsapp_phone ? String(body.whatsapp_phone).trim() : phone;
+        
+        // Normalize phone numbers to E.164 format using libphonenumber-js
+        // This properly handles all international formats
+        const normalizePhone = (phoneStr: string): string => {
+            const trimmed = String(phoneStr ?? "").trim();
+            if (!trimmed) return "";
+            
+            try {
+                const parsed = parsePhoneNumberFromString(trimmed);
+                if (parsed && parsed.isValid()) {
+                    return parsed.format("E.164");
+                }
+            } catch (e) {
+                console.log("Phone parsing error:", e);
+            }
+            
+            // Fallback: strip leading zeros after country code
+            const match = trimmed.match(/^(\+\d+?)0*(\d+)$/);
+            if (match) {
+                return `${match[1]}${match[2]}`;
+            }
+            return trimmed;
+        };
+        
+        const phone = normalizePhone(body.phone);
+        const whatsappPhone = body.whatsapp_phone ? normalizePhone(body.whatsapp_phone) : phone;
         const dob = String(body.dob ?? "").trim();
         const country = String(body.country_of_residence ?? "").trim();
         const password = String(body.password ?? "").trim();
@@ -102,6 +127,7 @@ serve(async (req: Request) => {
                     JSON.stringify({
                         error: "Account already exists",
                         message: "An account with this email already exists. Please login instead.",
+                        duplicates: ["email"],
                     }),
                     { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
                 );
@@ -110,11 +136,34 @@ serve(async (req: Request) => {
             await cleanupUserRecords(supabase, existingUser.id, existingUser.auth_user_id);
         }
 
+        // --- Check for existing user (WhatsApp) and handle abandonment ---
+        const { data: existingWhatsAppUser } = await supabase
+            .from("users")
+            .select("id, auth_user_id")
+            .eq("whatsapp_phone_e164", whatsappPhone)
+            .single();
+
+        if (existingWhatsAppUser) {
+            const isVerified = await isUserFullyVerified(supabase, existingWhatsAppUser.id);
+            if (isVerified) {
+                return new Response(
+                    JSON.stringify({
+                        error: "WhatsApp number already exists",
+                        message: "An account with this WhatsApp number already exists.",
+                        duplicates: ["whatsapp_phone"],
+                    }),
+                    { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+            // Clean up incomplete user records (only if different from email user already cleaned)
+            if (!existingUser || existingWhatsAppUser.id !== existingUser.id) {
+                await cleanupUserRecords(supabase, existingWhatsAppUser.id, existingWhatsAppUser.auth_user_id);
+            }
+        }
+
         // Note: We don't proactively check for orphaned auth users here
         // because listUsers() is expensive. Instead, we handle auth creation
         // failures below by cleaning up conflicting auth users.
-
-        // ... (Phone and WhatsApp duplicate checks remain the same) ...
         
         // --- Get request metadata ---
         const sourceIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("cf-connecting-ip") || null;
