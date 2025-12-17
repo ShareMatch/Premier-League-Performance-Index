@@ -1,0 +1,20 @@
+-- Indonesia Super League Teams (IDs 506-523)
+INSERT INTO assets (id, name, market, bid, offer, last_change, color, category, updated_at) VALUES
+(506, 'Borneo', 'ISL', 51.4, 56.8, 'none', '#E03A3E', 'football', NOW()),
+(507, 'Persija Jakarta', 'ISL', 21.1, 23.3, 'none', '#F58426', 'football', NOW()),
+(508, 'Persib Bandung', 'ISL', 17.3, 19.1, 'none', '#003594', 'football', NOW()),
+(509, 'Malut United', 'ISL', 4.5, 5.0, 'none', '#D50A0A', 'football', NOW()),
+(510, 'PSIM Yogyakarta', 'ISL', 1.9, 2.1, 'none', '#004C54', 'football', NOW()),
+(511, 'Persita Tangerang', 'ISL', 0.1, 0.2, 'none', '#5A2D81', 'football', NOW()),
+(512, 'Bhayangkara United', 'ISL', 0.1, 0.2, 'none', '#FDB913', 'football', NOW()),
+(513, 'PSM Makassar', 'ISL', 0.1, 0.2, 'none', '#DA291C', 'football', NOW()),
+(514, 'Persebaya 1927', 'ISL', 0.1, 0.2, 'none', '#008348', 'football', NOW()),
+(515, 'Arema', 'ISL', 0.1, 0.2, 'none', '#00471B', 'football', NOW()),
+(516, 'Bali United Pusam', 'ISL', 0.1, 0.2, 'none', '#000000', 'football', NOW()),
+(517, 'Persik Kediri', 'ISL', 0.1, 0.2, 'none', '#5A1414', 'football', NOW()),
+(518, 'Madura United', 'ISL', 0.1, 0.2, 'none', '#CE1141', 'football', NOW()),
+(519, 'Dewa United', 'ISL', 0.1, 0.2, 'none', '#125740', 'football', NOW()),
+(520, 'PSBS Biak', 'ISL', 0.1, 0.2, 'none', '#00538C', 'football', NOW()),
+(521, 'Persijap Jepara', 'ISL', 0.1, 0.2, 'none', '#DA121A', 'football', NOW()),
+(522, 'Semen Padang', 'ISL', 0.1, 0.2, 'none', '#E31837', 'football', NOW()),
+(523, 'Persis Solo', 'ISL', 0.1, 0.2, 'none', '#DA291C', 'football', NOW());
