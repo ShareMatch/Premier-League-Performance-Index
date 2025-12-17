@@ -264,7 +264,7 @@ serve(async (req: Request) => {
         }, { onConflict: 'user_id,channel' });
 
       // Send email
-      const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black-removebg-preview.png";
+      const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
       const emailHtml = generateOtpEmailHtml({
         logoImageUrl,
         userFullName: (updateData.full_name as string) || user.full_name || "",
