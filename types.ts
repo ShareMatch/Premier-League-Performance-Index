@@ -1,4 +1,4 @@
-export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS';
+export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'ISL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS';
 
 export interface Team {
   id: number;
