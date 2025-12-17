@@ -75,8 +75,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
                 {/* Header */}
                 <div className="text-center space-y-4">
-                    <div className="inline-flex items-center justify-center p-3 bg-brand-emerald900/10 rounded-full mb-4 ring-1 ring-brand-emerald500/20">
-                        <Sparkles className="w-8 h-8 text-brand-emerald500" />
+                    <div className="inline-flex items-center justify-center p-3 bg-[#00A651]/10 rounded-full mb-4 ring-1 ring-[#00A651]/20">
+                        <Sparkles className="w-8 h-8 text-[#00A651]" />
                     </div>
                     <h1 className="text-4xl font-bold text-white font-sans">AI Analytics Engine</h1>
                     <p className="text-gray-400 max-w-2xl mx-auto">
