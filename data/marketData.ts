@@ -168,3 +168,24 @@ export const F1_TEAMS: Team[] = [
     createTeam(402, 'Oscar Piastri', 7, '#FF8000', 'f1'),
     createTeam(403, 'Max Verstappen', 15, '#0600EF', 'f1'),
 ];
+
+export const ISL_TEAMS: Team[] = [
+    createTeam(506, 'Borneo', 51.4, '#E03A3E'),
+    createTeam(507, 'Persija Jakarta', 21.1, '#F58426'),
+    createTeam(508, 'Persib Bandung', 17.3, '#003594'),
+    createTeam(509, 'Malut United', 4.5, '#D50A0A'),
+    createTeam(510, 'PSIM Yogyakarta', 1.9, '#004C54'),
+    createTeam(511, 'Persita Tangerang', 0.1, '#5A2D81'),
+    createTeam(512, 'Bhayangkara United', 0.1, '#FDB913'),
+    createTeam(513, 'PSM Makassar', 0.1, '#DA291C'),
+    createTeam(514, 'Persebaya 1927', 0.1, '#008348'),
+    createTeam(515, 'Arema', 0.1, '#00471B'),
+    createTeam(516, 'Bali United Pusam', 0.1, '#000000'),
+    createTeam(517, 'Persik Kediri', 0.1, '#5A1414'),
+    createTeam(518, 'Madura United', 0.1, '#CE1141'),
+    createTeam(519, 'Dewa United', 0.1, '#125740'),
+    createTeam(520, 'PSBS Biak', 0.1, '#00538C'),
+    createTeam(521, 'Persijap Jepara', 0.1, '#DA121A'),
+    createTeam(522, 'Semen Padang', 0.1, '#E31837'),
+    createTeam(523, 'Persis Solo', 0.1, '#DA291C'),
+];
