@@ -46,9 +46,9 @@ const PaymentDetailsCard: React.FC<PaymentDetailsCardProps> = ({
           </div>
           <button
             onClick={onAddPayment}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded-full shadow-lg font-medium font-sans text-[8px] sm:text-xs text-white bg-gradient-primary hover:opacity-90 transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-lg font-medium font-sans text-[10px] sm:text-sm text-white bg-gradient-primary hover:opacity-90 transition-colors whitespace-nowrap"
           >
-            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Add Payment Info
           </button>
         </div>

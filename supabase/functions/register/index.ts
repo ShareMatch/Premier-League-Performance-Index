@@ -18,6 +18,8 @@ interface RegistrationPayload {
     password: string;
     receive_otp_sms?: boolean;
     agree_to_terms?: boolean;
+    email_marketing?: boolean;
+    whatsapp_marketing?: boolean;
     company?: string; // Honeypot
 }
 
@@ -316,13 +318,13 @@ serve(async (req: Request) => {
             console.error("Wallet creation error (non-fatal):", walletErr);
         }
 
-        // --- 5. Create user_preferences with defaults (email, whatsapp, personalized_marketing = true) ---
+        // --- 5. Create user_preferences based on user's marketing consent ---
         const preferencesPayload = {
             id: userId,
-            email: true,
-            whatsapp: true,
+            email: body.email_marketing ?? false,
+            whatsapp: body.whatsapp_marketing ?? false,
             sms: false,
-            personalized_marketing: true,
+            personalized_marketing: (body.email_marketing || body.whatsapp_marketing) ?? false,
         };
 
         const { error: prefsErr } = await supabase
