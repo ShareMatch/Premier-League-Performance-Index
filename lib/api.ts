@@ -565,6 +565,13 @@ export interface EditProfilePayload {
     countryOfResidence?: string;
     phone?: string;
     whatsappPhone?: string;
+    // Address fields
+    addressLine?: string;
+    city?: string;
+    region?: string;
+    postalCode?: string;
+    addressCountry?: string;
+    // Verification flags
     emailAlreadyVerified?: boolean;
     whatsappAlreadyVerified?: boolean;
 }
@@ -905,6 +912,49 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
     }
 
     return result as CheckEmailStatusResponse;
+};
+
+// ============================================
+// CHECK WHATSAPP STATUS
+// ============================================
+
+export interface CheckWhatsAppStatusResponse {
+    exists: boolean;
+    whatsappVerified: boolean;
+    fullyVerified: boolean;
+}
+
+/**
+ * Check if a WhatsApp number exists and its verification status
+ * Used to prevent duplicate registrations for fully verified accounts
+ * @param whatsappPhone - The WhatsApp phone number in E.164 format
+ * @param excludeUserId - Optional user ID to exclude (for edit scenarios)
+ */
+export const checkWhatsAppVerificationStatus = async (
+    whatsappPhone: string,
+    excludeUserId?: string
+): Promise<CheckWhatsAppStatusResponse> => {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/check-whatsapp-status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ whatsappPhone, excludeUserId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        // If endpoint doesn't exist or returns error, assume doesn't exist
+        return {
+            exists: false,
+            whatsappVerified: false,
+            fullyVerified: false,
+        };
+    }
+
+    return result as CheckWhatsAppStatusResponse;
 };
 
 // ============================================

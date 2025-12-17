@@ -61,8 +61,34 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
-  // My Details Page visibility
-  const [showMyDetails, setShowMyDetails] = useState(false);
+  // My Details Page visibility - check URL hash on initial load
+  const [showMyDetails, setShowMyDetails] = useState(() => {
+    return window.location.hash === '#my-details';
+  });
+
+  // Update URL hash when My Details visibility changes
+  const openMyDetails = useCallback(() => {
+    setShowMyDetails(true);
+    window.history.pushState(null, '', '#my-details');
+  }, []);
+
+  const closeMyDetails = useCallback(() => {
+    setShowMyDetails(false);
+    window.history.pushState(null, '', window.location.pathname);
+  }, []);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handleHashChange = () => {
+      setShowMyDetails(window.location.hash === '#my-details');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, []);
 
   const handleAIAnalyticsClick = () => {
     // Check if user has any assets in portfolio
@@ -382,7 +408,7 @@ const App: React.FC = () => {
         activeLeague={activeLeague}
         onNavigate={handleNavigate}
         allAssets={allAssets}
-          onOpenSettings={() => setShowMyDetails(true)} 
+          onOpenSettings={() => openMyDetails()} 
           onOpenPortfolio={() => {
             setShowRightPanel(true);
             setIsMobileMenuOpen(false); // Close left sidebar when opening right panel
@@ -569,7 +595,7 @@ const App: React.FC = () => {
       {showMyDetails && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <MyDetailsPage
-            onBack={() => setShowMyDetails(false)}
+            onBack={() => closeMyDetails()}
             userId={publicUserId || undefined}
             userData={user ? {
               name: user.user_metadata?.full_name || '',
@@ -589,11 +615,11 @@ const App: React.FC = () => {
               bankName: '',
             } : undefined}
             onSignOut={async () => {
-              setShowMyDetails(false);
+              closeMyDetails();
               await signOut();
             }}
             onOpenKYCModal={() => {
-              setShowMyDetails(false);
+              closeMyDetails();
               // Set force update mode when coming from My Details page
               // This allows approved users to update their documents
               setForceKycUpdateMode(true);
