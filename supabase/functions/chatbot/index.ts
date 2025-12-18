@@ -26,186 +26,213 @@ serve(async (req) => {
       );
     }
 
-    // Get Groq API key
+    // Get ALL API keys INSIDE the request handler
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
-    if (!groqApiKey) {
-      console.error("GROQ_API_KEY not set");
-      return new Response(
-        JSON.stringify({ error: "GROQ_API_KEY not configured", details: "Please set GROQ_API_KEY secret" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Get other keys
     const hfToken = Deno.env.get("HF_TOKEN");
     const chromaApiKey = Deno.env.get("CHROMA_API_KEY");
-    const chromaTenant = Deno.env.get("CHROMA_TENANT") || "0c2c7310-6d65-40d7-8924-d9cced8221dc";
+    const chromaTenant = Deno.env.get("CHROMA_TENANT");
     const chromaDatabase = Deno.env.get("CHROMA_DATABASE") || "Prod";
     const chromaCollection = Deno.env.get("CHROMA_COLLECTION") || "sharematch_faq";
 
-    let context = "";
+    // Debug logging
+    console.log("=== CONFIG CHECK ===");
+    console.log("GROQ_API_KEY:", groqApiKey ? "✓ SET" : "✗ MISSING");
+    console.log("HF_TOKEN:", hfToken ? "✓ SET" : "✗ MISSING");
+    console.log("CHROMA_API_KEY:", chromaApiKey ? "✓ SET" : "✗ MISSING");
+    console.log("CHROMA_TENANT:", chromaTenant || "✗ MISSING");
+    console.log("CHROMA_DATABASE:", chromaDatabase);
+    console.log("CHROMA_COLLECTION:", chromaCollection);
+    console.log("====================");
 
-    // Try to get context from Chroma Cloud (but don't fail if it doesn't work)
-    if (hfToken && chromaApiKey) {
-      try {
-        console.log("Generating embedding...");
-        
-        // Step 1: Generate embedding
-        const embeddingResponse = await fetch(
-          "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${hfToken}`,
-            },
-            body: JSON.stringify({ 
-              inputs: message,
-              options: { wait_for_model: true }
-            }),
-          }
-        );
+    if (!groqApiKey) throw new Error("GROQ_API_KEY not configured");
+    if (!hfToken) throw new Error("HF_TOKEN not configured");
+    if (!chromaApiKey) throw new Error("CHROMA_API_KEY not configured");
+    if (!chromaTenant) throw new Error("CHROMA_TENANT not configured");
 
-        if (embeddingResponse.ok) {
-          const embeddingResult = await embeddingResponse.json();
-          
-          // Mean pooling for nested arrays
-          let queryEmbedding: number[];
-          if (Array.isArray(embeddingResult) && Array.isArray(embeddingResult[0])) {
-            const numTokens = embeddingResult.length;
-            const embeddingDim = embeddingResult[0].length;
-            queryEmbedding = new Array(embeddingDim).fill(0);
-            for (let i = 0; i < numTokens; i++) {
-              for (let j = 0; j < embeddingDim; j++) {
-                queryEmbedding[j] += embeddingResult[i][j];
-              }
-            }
-            queryEmbedding = queryEmbedding.map(v => v / numTokens);
-          } else {
-            queryEmbedding = embeddingResult;
-          }
-
-          console.log("Querying Chroma Cloud...");
-          
-          // Step 2: Get collection info first
-          const collectionsResponse = await fetch(
-            `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${chromaApiKey}`,
-              },
-            }
-          );
-
-          if (collectionsResponse.ok) {
-            const collectionData = await collectionsResponse.json();
-            console.log("Collection found:", collectionData.id);
-            
-            // Step 3: Query the collection
-            const chromaResponse = await fetch(
-              `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${chromaApiKey}`,
-                },
-                body: JSON.stringify({
-                  query_embeddings: [queryEmbedding],
-                  n_results: 4,
-                  include: ["documents"],
-                }),
-              }
-            );
-
-            if (chromaResponse.ok) {
-              const chromaData = await chromaResponse.json();
-              const documents = chromaData.documents?.[0] || [];
-              context = documents.join("\n\n");
-              console.log("Found", documents.length, "documents");
-            } else {
-              console.error("Chroma query failed:", await chromaResponse.text());
-            }
-          } else {
-            console.error("Collection not found:", await collectionsResponse.text());
-          }
-        } else {
-          console.error("Embedding failed:", await embeddingResponse.text());
-        }
-      } catch (ragError) {
-        console.error("RAG error (continuing without context):", ragError);
+    // Step 1: Generate embedding using HuggingFace
+    console.log("Step 1: Generating embedding...");
+    
+    const embeddingResponse = await fetch(
+      "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${hfToken}`,
+        },
+        body: JSON.stringify({ 
+          inputs: message,
+          options: { wait_for_model: true }
+        }),
       }
+    );
+
+    if (!embeddingResponse.ok) {
+      const errText = await embeddingResponse.text();
+      console.error("Embedding error:", errText);
+      throw new Error("Failed to generate embedding");
+    }
+
+    const embeddingResult = await embeddingResponse.json();
+    
+    // Mean pooling for nested arrays
+    let queryEmbedding: number[];
+    if (Array.isArray(embeddingResult) && Array.isArray(embeddingResult[0])) {
+      const numTokens = embeddingResult.length;
+      const embeddingDim = embeddingResult[0].length;
+      queryEmbedding = new Array(embeddingDim).fill(0);
+      for (let i = 0; i < numTokens; i++) {
+        for (let j = 0; j < embeddingDim; j++) {
+          queryEmbedding[j] += embeddingResult[i][j];
+        }
+      }
+      queryEmbedding = queryEmbedding.map(v => v / numTokens);
+    } else if (Array.isArray(embeddingResult)) {
+      queryEmbedding = embeddingResult;
     } else {
-      console.log("RAG disabled - missing HF_TOKEN or CHROMA_API_KEY");
+      throw new Error("Unexpected embedding format");
     }
+    
+    console.log("✓ Embedding generated, dimension:", queryEmbedding.length);
 
-    // Default context if RAG failed
+    // Step 2: Query Chroma Cloud via REST API
+    console.log("Step 2: Querying Chroma Cloud...");
+    
+    let context = "";
+    
+    // Chroma Cloud REST API headers
+    // Try multiple auth formats to find which one works
+    const chromaHeaders = {
+      "Content-Type": "application/json",
+      "X-Chroma-Token": chromaApiKey,  // Primary auth method
+    };
+    
+    console.log("Using API key (first 10 chars):", chromaApiKey?.substring(0, 10) + "...");
+    
+    try {
+      // Get collection ID first
+      const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
+      console.log("Fetching collection from:", collectionUrl);
+      
+      const collectionsResponse = await fetch(collectionUrl, {
+        method: "GET",
+        headers: chromaHeaders,
+      });
+
+      if (!collectionsResponse.ok) {
+        const errText = await collectionsResponse.text();
+        console.error("✗ Collection error:", collectionsResponse.status, errText);
+        throw new Error(`Collection not found: ${errText}`);
+      }
+      
+      const collectionData = await collectionsResponse.json();
+      console.log("✓ Collection found, ID:", collectionData.id);
+      
+      // Query the collection
+      const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
+      
+      const queryResponse = await fetch(queryUrl, {
+        method: "POST",
+        headers: chromaHeaders,
+        body: JSON.stringify({
+          query_embeddings: [queryEmbedding],
+          n_results: 4,
+          include: ["documents"],
+        }),
+      });
+
+      if (!queryResponse.ok) {
+        const errText = await queryResponse.text();
+        console.error("✗ Query error:", queryResponse.status, errText);
+        throw new Error(`Query failed: ${errText}`);
+      }
+      
+      const queryData = await queryResponse.json();
+      const documents = queryData.documents?.[0] || [];
+      context = documents.join("\n\n");
+      console.log("✓ Found", documents.length, "documents");
+      console.log("Context preview:", context.substring(0, 300));
+      
+    } catch (chromaError) {
+      console.error("Chroma error:", chromaError);
+      context = "";
+    }
+    
+    // Default context if no results
     if (!context) {
-      context = `ShareMatch is a sports trading platform. For specific questions, please contact support@sharematch.com.`;
+      console.log("⚠ No context found, using default");
+      context = "No specific information found in the knowledge base.";
     }
 
-    console.log("Calling Groq LLM...");
+    // Step 3: Call Groq LLM with context
+    console.log("Step 3: Calling Groq LLM...");
+    
+    const systemPrompt = `You are ShareMatch AI, the official assistant for the ShareMatch platform.
 
-    // Call Groq LLM
+STRICT RULES:
+1. Answer ONLY using the CONTEXT below. Do NOT make up information.
+2. If the answer is not in the context, say: "I don't have that specific information. Please contact support@sharematch.com"
+3. Be concise and accurate.
+4. Use exact terms from the context.
+
+CONTEXT:
+${context}`;
+
     const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${groqApiKey}`,
+        Authorization: `Bearer ${groqApiKey}`,
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages: [
           {
             role: "system",
-            content: `You are ShareMatch AI, a helpful assistant for the ShareMatch platform.
-Answer questions based on the context provided. Be friendly, professional, and concise.
-If you don't know the answer, suggest contacting support@sharematch.com.
-
-Context:
-${context}`,
+            content: systemPrompt,
           },
           {
             role: "user",
             content: message,
           },
         ],
-        temperature: 0.3,
-        max_tokens: 1024,
+        temperature: 0.1,
+        max_tokens: 512,
       }),
     });
 
     if (!groqResponse.ok) {
       const errorText = await groqResponse.text();
       console.error("Groq error:", errorText);
-      return new Response(
-        JSON.stringify({ error: "AI service error", details: errorText }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw new Error("Failed to get AI response");
     }
 
     const groqData = await groqResponse.json();
     const aiMessage = groqData.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
-    console.log("Success!");
+    // Generate conversation ID if not provided
+    const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
 
     return new Response(
       JSON.stringify({
         message: aiMessage,
-        conversation_id: conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`,
+        conversation_id: convId,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   } catch (error) {
     console.error("Chatbot error:", error);
     return new Response(
       JSON.stringify({ 
-        error: "An error occurred",
+        error: "An error occurred processing your message",
         details: error instanceof Error ? error.message : "Unknown error"
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      }
     );
   }
 });
