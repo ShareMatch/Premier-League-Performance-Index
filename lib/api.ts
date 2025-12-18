@@ -227,6 +227,8 @@ export interface RegistrationData {
     referral_code?: string | null;
     receive_otp_sms: boolean;
     agree_to_terms: boolean;
+    email_marketing?: boolean;
+    whatsapp_marketing?: boolean;
 }
 
 export interface RegistrationResponse {

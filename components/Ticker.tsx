@@ -59,6 +59,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
             else if (team.id >= 201 && team.id <= 300) onNavigate('WC');
             else if (team.id >= 301 && team.id <= 400) onNavigate('SPL');
             else if (team.id >= 401 && team.id <= 500) onNavigate('F1');
+            else if (team.id >= 501 && team.id <= 600) onNavigate('ISL');
         }
     };
 

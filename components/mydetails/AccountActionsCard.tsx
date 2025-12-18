@@ -12,7 +12,7 @@ interface LoginActivity {
 // Cache for IP to country code lookups
 const ipCountryCache: Record<string, string> = {};
 
-// Fetch country code from IP using free ip-api.com service
+// Fetch country code from IP using ipapi.co (HTTPS, free tier: 1000 requests/day)
 const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
   // Check cache first
   if (ipCountryCache[ip]) {
@@ -20,14 +20,14 @@ const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
   }
 
   try {
-    // ip-api.com is free for non-commercial use (limited to 45 requests/minute)
+    // ipapi.co supports HTTPS and works in production
     const response = await fetch(
-      `http://ip-api.com/json/${ip}?fields=countryCode`
+      `https://ipapi.co/${ip}/country_code/`
     );
     if (response.ok) {
-      const data = await response.json();
-      if (data.countryCode) {
-        const code = data.countryCode.toLowerCase();
+      const countryCode = await response.text();
+      if (countryCode && countryCode.length === 2) {
+        const code = countryCode.toLowerCase();
         ipCountryCache[ip] = code; // Cache the result
         return code;
       }
@@ -93,36 +93,29 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
           {loginHistory.length > 0 ? (
             loginHistory.map((activity) => (
               <div key={activity.id} className="py-1 sm:py-2">
-                <div className="text-white text-[9px] sm:text-sm font-medium font-sans mb-0.5 sm:mb-1.5">
-                  {activity.timestamp}
-                </div>
-                <div className="flex items-center justify-between gap-1">
-                  <div
-                    className={`text-[9px] sm:text-xs font-sans ${
-                      activity.successful
-                        ? "text-brand-primary"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {activity.successful ? "Login successful" : "Login failed"}
+                <div className="flex items-center justify-between font-sans">
+                  {/* Left side - Login status and time */}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className={`text-[9px] sm:text-sm font-medium ${activity.successful ? "text-white" : "text-red-500"}`}>
+                      {activity.successful ? "Last Login" : "Failed"}
+                    </span>
+                    <span className="text-gray-400 text-[9px] sm:text-xs">{activity.timestamp}</span>
                   </div>
-                  <div className="text-gray-400 text-[9px] sm:text-xs flex items-center gap-1 sm:gap-1.5 font-sans">
+                  {/* Right side - IP and flag */}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-gray-500 text-[8px] sm:text-xs">IP: {activity.ip}</span>
                     {countryFlags[activity.id] ? (
                       <img
                         src={`https://flagcdn.com/w40/${
                           countryFlags[activity.id]
                         }.png`}
                         alt={activity.location}
-                        className="w-4 sm:w-6 h-auto rounded-sm flex-shrink-0"
+                        className="w-4 sm:w-5 h-auto rounded-sm flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-4 sm:w-6 h-2.5 sm:h-4 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
+                      <div className="w-4 sm:w-5 h-2.5 sm:h-3 bg-gray-600 rounded-sm animate-pulse flex-shrink-0" />
                     )}
-                    <span className="truncate">{activity.location}</span>
                   </div>
-                </div>
-                <div className="text-gray-500 text-[8px] sm:text-xs font-sans mt-0.5 sm:mt-1.5 truncate">
-                  IP: {activity.ip}
                 </div>
               </div>
             ))
@@ -135,16 +128,16 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-1.5 sm:pt-3 mt-1.5 sm:mt-3 border-t border-gray-700">
-          <div className="flex flex-col gap-2 mt-3">
+          <div className="flex gap-2 mt-3">
             <button
               onClick={onChangePassword}
-              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-sm font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
             >
               Change Password
             </button>
             <button
               onClick={onSignOut}
-              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
+              className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-sm font-sans font-medium rounded-full shadow-lg transition-colors whitespace-nowrap text-white bg-gradient-primary hover:opacity-90"
             >
               Sign Out
             </button>

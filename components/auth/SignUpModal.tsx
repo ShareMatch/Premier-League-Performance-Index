@@ -140,6 +140,7 @@ export interface FormData {
   useSameNumber: boolean;
   agreeToWhatsappOtp: boolean;
   agreeToTerms: boolean;
+  agreeToMarketingComms: boolean;
 }
 
 const initialFormData: FormData = {
@@ -159,6 +160,7 @@ const initialFormData: FormData = {
   useSameNumber: false,
   agreeToWhatsappOtp: false,
   agreeToTerms: false,
+  agreeToMarketingComms: false,
 };
 
 // --- Eye Icon ---
@@ -935,6 +937,7 @@ export interface EditModeData {
   useSameNumber?: boolean;
   agreeToWhatsappOtp?: boolean;
   agreeToTerms?: boolean;
+  agreeToMarketingComms?: boolean;
 }
 
 // --- Main Modal Component ---
@@ -1064,6 +1067,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         useSameNumber: editData.useSameNumber || false,
         agreeToWhatsappOtp: editData.agreeToWhatsappOtp ?? true,
         agreeToTerms: editData.agreeToTerms ?? true,
+        agreeToMarketingComms: editData.agreeToMarketingComms ?? false,
       });
       setStep(2);
     }
@@ -1346,6 +1350,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         password: formData.password,
         receive_otp_sms: formData.agreeToWhatsappOtp,
         agree_to_terms: formData.agreeToTerms,
+        email_marketing: formData.agreeToMarketingComms,
+        whatsapp_marketing: formData.agreeToMarketingComms,
       };
 
       const result = await registerUser(payload);
@@ -1656,6 +1662,19 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                   </div>
 
                   <Checkbox
+                    id="agreeToMarketingComms"
+                    checked={formData.agreeToMarketingComms}
+                    onChange={(checked) =>
+                      setFormData((p) => ({ ...p, agreeToMarketingComms: checked }))
+                    }
+                    error={false}
+                  >
+                    <span className="text-gray-400">
+                      I agree to receive marketing communications via Email and WhatsApp (optional)
+                    </span>
+                  </Checkbox>
+
+                  <Checkbox
                     id="agreeToTerms"
                     checked={formData.agreeToTerms}
                     onChange={(checked) =>
@@ -1675,6 +1694,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                       </a>
                     </span>
                   </Checkbox>
+
+                  
                 </div>
               )}
 
