@@ -21,6 +21,7 @@ import { SESSION_CONFIG, FEATURES } from './lib/config';
 import AIAnalyticsBanner from './components/AIAnalyticsBanner';
 import AccessDeniedModal from './components/AccessDeniedModal';
 import MyDetailsPage from './components/mydetails/MyDetailsPage';
+import ChatBot from './components/chatbot/frontend/ChatBot';
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -638,6 +639,9 @@ const App: React.FC = () => {
             setShowAccessDeniedModal(false);
           }}
         />
+
+        {/* AI Chatbot - Fixed position bottom right */}
+        <ChatBot />
       </div>
     </InactivityHandler>
   );

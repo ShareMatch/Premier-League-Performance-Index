@@ -31,9 +31,9 @@ const AIAnalyticsBanner: React.FC<AIAnalyticsBannerProps> = ({ onClick, isActive
                         <span className="font-bold text-base md:text-lg tracking-wide uppercase text-gray-200 group-hover:text-white">
                             AI Analytics Engine
                         </span>
-                        <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold bg-[#00A651] text-white rounded shadow-sm animate-pulse">
-                            PREMIUM
-                        </span>
+                            <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold bg-[#00A651] text-white rounded shadow-sm animate-pulse">
+                                PREMIUM
+                            </span>
                         <Sparkles className="w-5 h-5 text-[#00A651] animate-pulse" />
                         
                     </div>
