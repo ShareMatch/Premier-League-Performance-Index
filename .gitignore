@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 .env
+/components/chatbot/backend/data/
+venv/
+__pycache__/
+/components/chatbot/backend/chroma_db/
+components/chatbot/backend/__pycache__/
+components/chatbot/backend/venv/
 
 # Editor directories and files
 .vscode/*

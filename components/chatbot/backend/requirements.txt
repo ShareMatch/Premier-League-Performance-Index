@@ -1,0 +1,33 @@
+# ShareMatch AI Chatbot - Python Dependencies
+
+# FastAPI server
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+
+# LangChain and RAG components
+langchain>=0.1.0
+langchain-community>=0.0.10
+langchain-huggingface>=0.0.1
+langchain-groq>=0.0.1
+langchain-text-splitters>=0.0.1
+
+# Vector store - Chroma (local and cloud)
+chromadb>=0.4.0
+
+# HTTP requests (for Chroma Cloud and HuggingFace API)
+requests>=2.31.0
+
+# PDF processing
+pypdf>=3.17.0
+
+# Numerical operations (for mean pooling embeddings)
+numpy>=1.24.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Pydantic for data validation
+pydantic>=2.0.0
+
+# Note: sentence-transformers NOT needed - using HuggingFace Inference API instead
