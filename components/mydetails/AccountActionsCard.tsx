@@ -12,7 +12,7 @@ interface LoginActivity {
 // Cache for IP to country code lookups
 const ipCountryCache: Record<string, string> = {};
 
-// Fetch country code from IP using free ip-api.com service
+// Fetch country code from IP using ipapi.co (HTTPS, free tier: 1000 requests/day)
 const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
   // Check cache first
   if (ipCountryCache[ip]) {
@@ -20,14 +20,14 @@ const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
   }
 
   try {
-    // ip-api.com is free for non-commercial use (limited to 45 requests/minute)
+    // ipapi.co supports HTTPS and works in production
     const response = await fetch(
-      `http://ip-api.com/json/${ip}?fields=countryCode`
+      `https://ipapi.co/${ip}/country_code/`
     );
     if (response.ok) {
-      const data = await response.json();
-      if (data.countryCode) {
-        const code = data.countryCode.toLowerCase();
+      const countryCode = await response.text();
+      if (countryCode && countryCode.length === 2) {
+        const code = countryCode.toLowerCase();
         ipCountryCache[ip] = code; // Cache the result
         return code;
       }
@@ -103,7 +103,7 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
                   </div>
                   {/* Right side - IP and flag */}
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="text-gray-500 text-[8px] sm:text-xs">{activity.ip}</span>
+                    <span className="text-gray-500 text-[8px] sm:text-xs">IP: {activity.ip}</span>
                     {countryFlags[activity.id] ? (
                       <img
                         src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}
