@@ -31,14 +31,14 @@ jobs:
       - name: Pull DEV DB schema
         run: |
           npx supabase link --project-ref $SUPABASE_DEV_PROJECT_REF
-          npx supabase db pull --schema public --file dev_schema.sql
+          npx supabase db pull dev_schema --schema public
         env:
           SUPABASE_DEV_PROJECT_REF: ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
 
       - name: Pull PROD DB schema
         run: |
           npx supabase link --project-ref $SUPABASE_PROD_PROJECT_REF
-          npx supabase db pull --schema public --file prod_schema.sql
+          npx supabase db pull prod_schema --schema public
         env:
           SUPABASE_PROD_PROJECT_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
 
