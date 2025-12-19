@@ -288,6 +288,8 @@ export const fetchSettledAssets = async () => {
             end_date,
             settlement_price,
             settled_at,
+            created_at,
+            updated_at,
             market_indexes!inner (
                 id,
                 name,
@@ -319,7 +321,7 @@ export const fetchSettledAssets = async () => {
     const settledAssets = [];
 
     for (const season of settledSeasons || []) {
-        const marketName = season.market_indexes.markets.name;
+        const marketName = season.market_indexes[0]?.markets?.[0]?.name || 'Unknown Market';
 
         // Get actual trading assets for this settled season
         const { data: tradingAssets, error: tradingError } = await supabase

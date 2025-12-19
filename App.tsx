@@ -424,8 +424,8 @@ const App: React.FC = () => {
       const result = await placeTrade(
         publicUserId,
         selectedOrder.team.market_trading_asset_id || selectedOrder.team.id,
-        selectedOrder.type,
-        selectedOrder.price,
+        side,
+        priceForSide,
         quantity
       );
 
