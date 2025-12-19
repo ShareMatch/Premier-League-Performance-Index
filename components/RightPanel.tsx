@@ -39,8 +39,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 ${
-        isMobile ? "w-80 h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
+      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${
+        isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
       }`}
     >
       {/* Mobile Header with Close Button - Fixed at top */}
