@@ -1,10 +1,9 @@
 // Centralized configuration for external services
-// Update these values in one place when changing providers/keys.
+// All configuration is read from environment variables only
 
-// Supabase client config
-export const SUPABASE_URL = 'https://lbmixnhxerrmecfxdfkx.supabase.co';
-export const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxibWl4bmh4ZXJybWVjZnhkZmt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NTk0NzQsImV4cCI6MjA4MTUzNTQ3NH0.59HGTgGRWCrAUfT4lqE0u04V9MvA6Nri1CDticywTC4';
+// Supabase client config - read from environment variables
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // SendGrid API config
 export const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
