@@ -495,10 +495,10 @@ const TopBar: React.FC<TopBarProps> = ({
 
           {/* Auth Buttons */}
           {!user && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="hidden lg:block px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                className="px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
               >
                 Log In
               </button>
@@ -507,7 +507,7 @@ const TopBar: React.FC<TopBarProps> = ({
                   setShowLoginModal(false);
                   setShowSignUpModal(true);
                 }}
-                className="px-4 py-1.5 text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                className="px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
               >
                 Join Now
               </button>

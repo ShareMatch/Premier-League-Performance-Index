@@ -69,6 +69,17 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   const [side, setSide] = useState<"buy" | "sell">(
     order.type === "buy" ? "buy" : "sell"
   );
+
+  // Sync side state when order changes (e.g., user clicks Buy/Sell on a different asset)
+  useEffect(() => {
+    setSide(order.type === "buy" ? "buy" : "sell");
+    // Reset form state when order changes
+    setShares("");
+    setError(null);
+    setCountdown(null);
+    setTermsAccepted(false);
+  }, [order.type, order.team.id]);
+
   const isBuy = side === "buy";
   const holding = Number(order.holding ?? 0);
   const canSell = holding > 0;

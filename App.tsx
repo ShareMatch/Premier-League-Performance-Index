@@ -598,7 +598,7 @@ const App: React.FC = () => {
             {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
             {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
             <div
-              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out ${
+              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
                 showRightPanel ? "translate-x-0" : "translate-x-full"
               }`}
             >
