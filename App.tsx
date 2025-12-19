@@ -1,31 +1,47 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Team, Order, Wallet, Position, Transaction, League } from './types';
-import Header from './components/Header';
-import TopBar from './components/TopBar';
-import RightPanel from './components/RightPanel';
-import Ticker from './components/Ticker';
-import { Menu, X, Loader2 } from 'lucide-react';
-import NewsFeed from './components/NewsFeed';
-import HomeDashboard from './components/HomeDashboard';
-import OrderBookRow from './components/OrderBookRow';
-import Sidebar from './components/Sidebar';
-import Footer from './components/Footer';
-import AIAnalysis from './components/AIAnalysis';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Team, Order, Wallet, Position, Transaction, League } from "./types";
+import Header from "./components/Header";
+import TopBar from "./components/TopBar";
+import RightPanel from "./components/RightPanel";
+import Ticker from "./components/Ticker";
+import { Menu, X, Loader2 } from "lucide-react";
+import NewsFeed from "./components/NewsFeed";
+import HomeDashboard from "./components/HomeDashboard";
+import OrderBookRow from "./components/OrderBookRow";
+import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
+import AIAnalysis from "./components/AIAnalysis";
 // Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
-const AIAnalyticsPage = React.lazy(() => import('./components/AIAnalyticsPage'));
-import { fetchWallet, fetchPortfolio, placeTrade, subscribeToWallet, subscribeToPortfolio, fetchAssets, subscribeToAssets, getPublicUserId, fetchTransactions, getKycUserStatus, KycStatus, needsKycVerification } from './lib/api';
-import { useAuth } from './components/auth/AuthProvider';
-import KYCModal from './components/kyc/KYCModal';
-import InactivityHandler from './components/auth/InactivityHandler';
-import { SESSION_CONFIG, FEATURES } from './lib/config';
-import AIAnalyticsBanner from './components/AIAnalyticsBanner';
-import AccessDeniedModal from './components/AccessDeniedModal';
-import MyDetailsPage from './components/mydetails/MyDetailsPage';
-import ChatBot from './components/chatbot/frontend/ChatBot';
+const AIAnalyticsPage = React.lazy(
+  () => import("./components/AIAnalyticsPage")
+);
+import {
+  fetchWallet,
+  fetchPortfolio,
+  placeTrade,
+  subscribeToWallet,
+  subscribeToPortfolio,
+  fetchAssets,
+  subscribeToAssets,
+  getPublicUserId,
+  fetchTransactions,
+  getKycUserStatus,
+  KycStatus,
+  needsKycVerification,
+} from "./lib/api";
+import { useAuth } from "./components/auth/AuthProvider";
+import KYCModal from "./components/kyc/KYCModal";
+import InactivityHandler from "./components/auth/InactivityHandler";
+import { SESSION_CONFIG, FEATURES } from "./lib/config";
+import AIAnalyticsBanner from "./components/AIAnalyticsBanner";
+import AccessDeniedModal from "./components/AccessDeniedModal";
+import MyDetailsPage from "./components/mydetails/MyDetailsPage";
+import ChatBot from "./components/chatbot/frontend/ChatBot";
+import AlertModal from "./components/AlertModal";
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
-  const [activeLeague, setActiveLeague] = useState<League>('HOME');
+  const [activeLeague, setActiveLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
 
@@ -58,36 +74,38 @@ const App: React.FC = () => {
 
   // AI Analytics Access Control
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
   // My Details Page visibility - check URL hash on initial load
   const [showMyDetails, setShowMyDetails] = useState(() => {
-    return window.location.hash === '#my-details';
+    return window.location.hash === "#my-details";
   });
 
   // Update URL hash when My Details visibility changes
   const openMyDetails = useCallback(() => {
     setShowMyDetails(true);
-    window.history.pushState(null, '', '#my-details');
+    window.history.pushState(null, "", "#my-details");
   }, []);
 
   const closeMyDetails = useCallback(() => {
     setShowMyDetails(false);
-    window.history.pushState(null, '', window.location.pathname);
+    window.history.pushState(null, "", window.location.pathname);
   }, []);
 
   // Handle browser back/forward buttons
   useEffect(() => {
     const handleHashChange = () => {
-      setShowMyDetails(window.location.hash === '#my-details');
+      setShowMyDetails(window.location.hash === "#my-details");
     };
-    window.addEventListener('hashchange', handleHashChange);
-    window.addEventListener('popstate', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange);
+    window.addEventListener("popstate", handleHashChange);
     return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('popstate', handleHashChange);
+      window.removeEventListener("hashchange", handleHashChange);
+      window.removeEventListener("popstate", handleHashChange);
     };
   }, []);
 
@@ -97,7 +115,7 @@ const App: React.FC = () => {
       setShowAccessDeniedModal(true);
       return;
     }
-    setActiveLeague('AI_ANALYTICS');
+    setActiveLeague("AI_ANALYTICS");
   };
 
   // Fetch User Data
@@ -111,7 +129,7 @@ const App: React.FC = () => {
       const transactionsData = await fetchTransactions(publicUserId);
       setTransactions(transactionsData);
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading user data:", error);
     }
   }, [publicUserId]);
 
@@ -125,16 +143,16 @@ const App: React.FC = () => {
         name: a.name,
         bid: Number(a.bid),
         offer: Number(a.offer),
-        lastChange: a.last_change as 'up' | 'down' | 'none',
+        lastChange: a.last_change as "up" | "down" | "none",
         color: a.color,
         category: a.category,
         market: a.market,
         is_settled: a.is_settled,
-        settled_date: a.settled_date
+        settled_date: a.settled_date,
       }));
       setAllAssets(mappedAssets);
     } catch (error) {
-      console.error('Error loading assets:', error);
+      console.error("Error loading assets:", error);
     }
   }, []);
 
@@ -182,9 +200,9 @@ const App: React.FC = () => {
           setShowKycModal(true);
         }
       } catch (error) {
-        console.error('Failed to check KYC status:', error);
+        console.error("Failed to check KYC status:", error);
         // Default to not_started if we can't fetch status
-        setKycStatus('not_started');
+        setKycStatus("not_started");
         setShowKycModal(true);
       } finally {
         setKycChecked(true);
@@ -197,7 +215,7 @@ const App: React.FC = () => {
   // Handle KYC completion - just update status, DON'T auto-close
   // User must click X to close the modal
   const handleKycComplete = (status: KycStatus) => {
-    console.log('KYC status update received:', status);
+    console.log("KYC status update received:", status);
     setKycStatus(status);
     // DON'T auto-close - user will click X when they're ready
     // The modal will be hidden next time they open the app if approved
@@ -213,7 +231,7 @@ const App: React.FC = () => {
         const status = await getKycUserStatus(publicUserId);
         setKycStatus(status.kyc_status);
       } catch (error) {
-        console.error('Failed to refresh KYC status:', error);
+        console.error("Failed to refresh KYC status:", error);
       }
     }
   };
@@ -221,7 +239,6 @@ const App: React.FC = () => {
   useEffect(() => {
     // Always load assets (they're public)
     loadAssets();
-
 
     // Don't load user data or set up subscriptions if user is not logged in
     if (!user || !publicUserId) {
@@ -232,12 +249,15 @@ const App: React.FC = () => {
     loadUserData();
 
     // Set up Real-Time Subscriptions - only when we have the public user ID
-    const walletSubscription = subscribeToWallet(publicUserId, (updatedWallet) => {
-      // Guard: only update if user is still logged in (check refs for current state)
-      if (userRef.current && publicUserIdRef.current) {
-        setWallet(updatedWallet);
+    const walletSubscription = subscribeToWallet(
+      publicUserId,
+      (updatedWallet) => {
+        // Guard: only update if user is still logged in (check refs for current state)
+        if (userRef.current && publicUserIdRef.current) {
+          setWallet(updatedWallet);
+        }
       }
-    });
+    );
 
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
       // Guard: only update if user is still logged in (check refs for current state)
@@ -259,7 +279,7 @@ const App: React.FC = () => {
 
   // Filter teams when league changes or assets update
   useEffect(() => {
-    if (activeLeague === 'HOME') {
+    if (activeLeague === "HOME") {
       setTeams([]);
     } else {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
@@ -269,23 +289,28 @@ const App: React.FC = () => {
   }, [activeLeague, allAssets]);
 
   const handleNavigate = (league: League) => {
-    if (league === 'AI_ANALYTICS') {
+    if (league === "AI_ANALYTICS") {
       if (!user) {
-        alert("Please login to access the AI Analytics Engine.");
+        setAlertMessage("Please login to access the AI Analytics Engine.");
+        setAlertOpen(true);
         return;
       }
       if (!portfolio || portfolio.length === 0) {
-        alert("Exclusive Access: The AI Analytics Engine is available only to token holders.");
+        setAlertMessage(
+          "Exclusive Access: The AI Analytics Engine is available only to token holders."
+        );
+        setAlertOpen(true);
         return;
       }
     }
     setActiveLeague(league);
   };
 
-  const handleSelectOrder = (team: Team, type: 'buy' | 'sell') => {
+  const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
     // Check if user is logged in
     if (!user) {
-      alert('Please login to trade.');
+      setAlertMessage("Please login to trade.");
+      setAlertOpen(true);
       return;
     }
 
@@ -298,15 +323,18 @@ const App: React.FC = () => {
     // Calculate max quantity based on available funds (for buy) or portfolio holdings (for sell)
     let maxQuantity = 0;
 
-    if (type === 'buy' && wallet) {
+    if (type === "buy" && wallet) {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
-    } else if (type === 'sell') {
-      const position = portfolio.find(p => p.asset_id === team.id.toString());
+    } else if (type === "sell") {
+      const position = portfolio.find((p) => p.asset_id === team.id.toString());
       maxQuantity = position ? Number(position.quantity) : 0;
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
-        alert(`You cannot sell ${team.name} because you do not own any shares.`);
+        setAlertMessage(
+          `You cannot sell ${team.name} because you do not own any shares.`
+        );
+        setAlertOpen(true);
         return;
       }
     }
@@ -314,25 +342,29 @@ const App: React.FC = () => {
     setSelectedOrder({
       team,
       type,
-      price: type === 'buy' ? team.offer : team.bid,
+      price: type === "buy" ? team.offer : team.bid,
       quantity: 0, // Default to 0, let user input
-      maxQuantity
+      maxQuantity,
     });
 
     // On mobile/tablet (below 2xl), show the RightPanel overlay
     setShowRightPanel(true);
   };
 
-  const handleConfirmTrade = async (quantity: number) => {
+  const handleConfirmTrade = async (quantity: number, side: "buy" | "sell") => {
     if (!selectedOrder || !wallet || !publicUserId) return;
 
     try {
+      // Recompute the correct price based on the final selected side
+      const team = selectedOrder.team;
+      const priceForSide = side === "buy" ? team.offer : team.bid;
+
       const result = await placeTrade(
         publicUserId,
-        selectedOrder.team.id.toString(),
-        selectedOrder.team.name,
-        selectedOrder.type,
-        selectedOrder.price,
+        team.id.toString(),
+        team.name,
+        side,
+        priceForSide,
         quantity
       );
 
@@ -340,7 +372,8 @@ const App: React.FC = () => {
       await loadUserData();
       setSelectedOrder(null);
     } catch (error) {
-      alert('Trade failed. Please try again.');
+      setAlertMessage("Trade failed. Please try again.");
+      setAlertOpen(true);
     }
   };
 
@@ -354,33 +387,45 @@ const App: React.FC = () => {
 
   const getLeagueTitle = (id: string = activeLeague) => {
     switch (id) {
-      case 'EPL': return 'Premier League';
-      case 'UCL': return 'Champions League';
-      case 'WC': return 'World Cup';
-      case 'SPL': return 'Saudi Pro League';
-      case 'ISL': return 'Indonesia Super League';
-      case 'F1': return 'Formula 1 Drivers Performance Index';
-      case 'NBA': return 'NBA';
-      case 'NFL': return 'NFL';
-      case 'T20': return 'T20 World Cup';
-      case 'Eurovision': return 'Eurovision Song Contest';
-      case 'HOME': return 'Home Dashboard';
-      case 'AI_ANALYTICS': return 'AI Analytics Engine';
-      default: return 'ShareMatch Pro';
+      case "EPL":
+        return "Premier League";
+      case "UCL":
+        return "Champions League";
+      case "WC":
+        return "World Cup";
+      case "SPL":
+        return "Saudi Pro League";
+      case "ISL":
+        return "Indonesia Super League";
+      case "F1":
+        return "Formula 1 Drivers Performance Index";
+      case "NBA":
+        return "NBA";
+      case "NFL":
+        return "NFL";
+      case "T20":
+        return "T20 World Cup";
+      case "Eurovision":
+        return "Eurovision Song Contest";
+      case "HOME":
+        return "Home Dashboard";
+      case "AI_ANALYTICS":
+        return "AI Analytics Engine";
+      default:
+        return "ShareMatch Pro";
     }
   };
-
-
-
 
   // Calculate total portfolio value
   const portfolioValue = React.useMemo(() => {
     return portfolio.reduce((total, position) => {
       // Find current asset data to get price
-      const asset = allAssets.find(a => a.id.toString() === position.asset_id);
+      const asset = allAssets.find(
+        (a) => a.id.toString() === position.asset_id
+      );
       // Value at bid price (like Portfolio component)
       const price = asset ? asset.bid : 0;
-      return total + (position.quantity * price);
+      return total + position.quantity * price;
     }, 0);
   }, [portfolio, allAssets]);
 
@@ -421,7 +466,7 @@ const App: React.FC = () => {
         <div className="w-full">
           <AIAnalyticsBanner
             onClick={handleAIAnalyticsClick}
-            isActive={activeLeague === 'AI_ANALYTICS'}
+            isActive={activeLeague === "AI_ANALYTICS"}
           />
         </div>
 
@@ -437,34 +482,42 @@ const App: React.FC = () => {
 
           {/* Content Container (Main + Right Panel) */}
           <div className="flex-1 flex overflow-hidden">
-
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 relative">
-              <div className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === 'HOME' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+              <div
+                className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${
+                  activeLeague === "HOME"
+                    ? "overflow-hidden"
+                    : "overflow-y-auto"
+                }`}
+              >
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
-
-                  {activeLeague === 'HOME' ? (
+                  {activeLeague === "HOME" ? (
                     <HomeDashboard
                       onNavigate={handleNavigate}
                       teams={allAssets}
                     />
-                  ) : activeLeague === 'AI_ANALYTICS' ? (
-                    <React.Suspense fallback={
-                      <div className="h-full flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
-                      </div>
-                    }>
+                  ) : activeLeague === "AI_ANALYTICS" ? (
+                    <React.Suspense
+                      fallback={
+                        <div className="h-full flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                        </div>
+                      }
+                    >
                       <AIAnalyticsPage teams={allAssets} />
                     </React.Suspense>
                   ) : (
                     /* Mobile: Vertical stack (scrollable) | Desktop: Side by side (fixed height) */
                     <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:h-full xl:overflow-hidden">
-
                       {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
                       <div className="w-full xl:flex-[2] flex flex-col xl:min-h-0">
                         {/* Header aligned with order book */}
                         <div className="flex-shrink-0">
-                          <Header title={getLeagueTitle(activeLeague)} market={activeLeague} />
+                          <Header
+                            title={getLeagueTitle(activeLeague)}
+                            market={activeLeague}
+                          />
                         </div>
 
                         {/* Order Book - Fixed height on mobile, flex on desktop */}
@@ -493,7 +546,10 @@ const App: React.FC = () => {
                       <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
                         {/* AI Analysis */}
                         <div className="flex-shrink-0">
-                          <AIAnalysis teams={teams} leagueName={getLeagueTitle(activeLeague)} />
+                          <AIAnalysis
+                            teams={teams}
+                            leagueName={getLeagueTitle(activeLeague)}
+                          />
                         </div>
 
                         {/* News Feed */}
@@ -501,11 +557,10 @@ const App: React.FC = () => {
                           <NewsFeed topic={activeLeague as any} />
                         </div>
                       </div>
-
                     </div>
                   )}
 
-                  {activeLeague !== 'HOME' && (
+                  {activeLeague !== "HOME" && (
                     <div className="mt-8">
                       <Footer />
                     </div>
@@ -530,7 +585,11 @@ const App: React.FC = () => {
                 allAssets={allAssets}
                 onNavigate={handleNavigate}
                 onSelectOrder={handleSelectOrder}
-                leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
+                leagueName={
+                  selectedOrder && selectedOrder.team.market
+                    ? getLeagueTitle(selectedOrder.team.market)
+                    : getLeagueTitle(activeLeague)
+                }
                 walletBalance={wallet?.balance || 0}
               />
             </div>
@@ -539,8 +598,9 @@ const App: React.FC = () => {
             {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
             {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
             <div
-              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out ${showRightPanel ? 'translate-x-0' : 'translate-x-full'
-                }`}
+              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out ${
+                showRightPanel ? "translate-x-0" : "translate-x-full"
+              }`}
             >
               <RightPanel
                 portfolio={portfolio}
@@ -551,13 +611,16 @@ const App: React.FC = () => {
                 allAssets={allAssets}
                 onNavigate={handleNavigate}
                 onSelectOrder={handleSelectOrder}
-                leagueName={selectedOrder && selectedOrder.team.market ? getLeagueTitle(selectedOrder.team.market) : getLeagueTitle(activeLeague)}
+                leagueName={
+                  selectedOrder && selectedOrder.team.market
+                    ? getLeagueTitle(selectedOrder.team.market)
+                    : getLeagueTitle(activeLeague)
+                }
                 walletBalance={wallet?.balance || 0}
                 onClose={() => setShowRightPanel(false)}
                 isMobile={true}
               />
             </div>
-
           </div>
         </div>
 
@@ -598,23 +661,27 @@ const App: React.FC = () => {
             <MyDetailsPage
               onBack={() => setShowMyDetails(false)}
               userId={publicUserId || undefined}
-              userData={user ? {
-                name: user.user_metadata?.full_name || '',
-                email: user.email || '',
-                phone: user.user_metadata?.phone || '',
-                whatsapp: user.user_metadata?.whatsapp_phone || '',
-                address: user.user_metadata?.address_line || '',
-                // address2: user.user_metadata?.address_line_2 || '',
-                city: user.user_metadata?.city || '',
-                state: user.user_metadata?.region || '',
-                country: user.user_metadata?.country || '',
-                postCode: user.user_metadata?.postal_code || '',
-                accountName: '',
-                accountNumber: '',
-                iban: '',
-                swiftBic: '',
-                bankName: '',
-              } : undefined}
+              userData={
+                user
+                  ? {
+                      name: user.user_metadata?.full_name || "",
+                      email: user.email || "",
+                      phone: user.user_metadata?.phone || "",
+                      whatsapp: user.user_metadata?.whatsapp_phone || "",
+                      address: user.user_metadata?.address_line || "",
+                      // address2: user.user_metadata?.address_line_2 || '',
+                      city: user.user_metadata?.city || "",
+                      state: user.user_metadata?.region || "",
+                      country: user.user_metadata?.country || "",
+                      postCode: user.user_metadata?.postal_code || "",
+                      accountName: "",
+                      accountNumber: "",
+                      iban: "",
+                      swiftBic: "",
+                      bankName: "",
+                    }
+                  : undefined
+              }
               onSignOut={async () => {
                 setShowMyDetails(false);
                 await signOut();
@@ -635,9 +702,15 @@ const App: React.FC = () => {
           isOpen={showAccessDeniedModal}
           onClose={() => setShowAccessDeniedModal(false)}
           onViewMarket={() => {
-            setActiveLeague('EPL'); // Navigate to a market (e.g. EPL) so they can buy tokens
+            setActiveLeague("EPL"); // Navigate to a market (e.g. EPL) so they can buy tokens
             setShowAccessDeniedModal(false);
           }}
+        />
+
+        <AlertModal
+          isOpen={alertOpen}
+          onClose={() => setAlertOpen(false)}
+          message={alertMessage}
         />
 
         {/* AI Chatbot - Fixed position bottom right */}

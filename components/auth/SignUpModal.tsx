@@ -1683,9 +1683,19 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     error={!!errors.agreeToTerms}
                   >
                     <span>
-                      I agree to the Terms of Service and{" "}
+                      I agree to the
+                      {" "}
                       <a
-                        href="https://sharematch.me/privacy-policy"
+                        href="/terms.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-white transition-colors"
+                      >
+                        Terms of Service
+                      </a>
+                      {" "}and{" "}
+                      <a
+                        href="/privacy.html"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-white transition-colors"
