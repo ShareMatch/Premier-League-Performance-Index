@@ -31,6 +31,7 @@ import {
   updateMarketingPreferences,
 } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
+import AlertModal from "../AlertModal";
 
 // Pending changes interface for verification flows
 interface PendingAboutYouChanges {
@@ -139,6 +140,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     useState<PendingAboutYouChanges | null>(null);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [verificationWhatsApp, setVerificationWhatsApp] = useState("");
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   // Marketing preferences state - will be loaded from DB
   const [preferences, setPreferences] = useState([
@@ -477,7 +480,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     } catch (error: any) {
       console.error("❌ Failed to update email:", error);
       setShowEmailVerification(false);
-      alert("Failed to update email: " + error.message);
+      setAlertMessage("Failed to update email: " + (error?.message || ""));
+      setAlertOpen(true);
       setPendingChanges(null);
     }
   };
@@ -522,7 +526,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       if (details) setUserDetails(details);
     } catch (error: any) {
       console.error("Failed to update WhatsApp:", error);
-      alert("Failed to update WhatsApp number: " + error.message);
+      setAlertMessage(
+        "Failed to update WhatsApp number: " + (error?.message || "")
+      );
+      setAlertOpen(true);
     }
 
     setPendingChanges(null);
@@ -733,7 +740,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     // TODO: Implement account deletion
     // This should call a backend function to properly delete the user
     console.log("Delete account requested");
-    alert("Account deletion feature coming soon. Please contact support.");
+    setAlertMessage(
+      "Account deletion feature coming soon. Please contact support."
+    );
+    setAlertOpen(true);
   };
 
   // Show loading spinner while fetching data OR while userId is not yet available
@@ -866,17 +876,32 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           <div className="mt-4 sm:mt-6 pb-4 text-left">
             <p className="text-gray-500 text-[10px] sm:text-xs font-sans">
               Read our{" "}
-              <button className="text-brand-primary hover:underline font-sans">
+              <a
+                href="/privacy.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-primary hover:underline font-sans"
+              >
                 Privacy Policy
-              </button>
+              </a>
               ,{" "}
-              <button className="text-brand-primary hover:underline font-sans">
+              <a
+                href="/terms.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-primary hover:underline font-sans"
+              >
                 Terms & Conditions
-              </button>{" "}
+              </a>{" "}
               and{" "}
-              <button className="text-brand-primary hover:underline font-sans">
+              <a
+                href="/legal.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-primary hover:underline font-sans"
+              >
                 Legal & Regulatory
-              </button>{" "}
+              </a>{" "}
               for more information.
             </p>
           </div>
@@ -926,6 +951,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         }
         currentUserId={userId}
       />
+
+
 
       {/* Edit Address Modal */}
       <EditDetailsModal
@@ -1026,6 +1053,13 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onVerificationSuccess={handleWhatsAppVerificationSuccess}
         onVerifyCode={handleVerifyWhatsAppOtp}
         onResendCode={handleResendWhatsAppOtp}
+      />
+
+      <AlertModal
+        isOpen={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        title="Notification"
+        message={alertMessage || ""}
       />
     </div>
   );
