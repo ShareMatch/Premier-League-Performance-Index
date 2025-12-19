@@ -617,7 +617,10 @@ const App: React.FC = () => {
                     : getLeagueTitle(activeLeague)
                 }
                 walletBalance={wallet?.balance || 0}
-                onClose={() => setShowRightPanel(false)}
+                onClose={() => {
+                  setShowRightPanel(false);
+                  setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+                }}
                 isMobile={true}
               />
             </div>
@@ -636,7 +639,10 @@ const App: React.FC = () => {
         {showRightPanel && (
           <div
             className="fixed inset-0 bg-black/50 z-30 2xl:hidden"
-            onClick={() => setShowRightPanel(false)}
+            onClick={() => {
+              setShowRightPanel(false);
+              setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+            }}
           />
         )}
 
