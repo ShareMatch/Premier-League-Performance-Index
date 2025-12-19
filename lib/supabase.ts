@@ -1,13 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
 
-// Validate required environment variables
-if (!SUPABASE_URL) {
-    throw new Error('VITE_SUPABASE_URL environment variable is required');
-}
-
-if (!SUPABASE_ANON_KEY) {
-    throw new Error('VITE_SUPABASE_ANON_KEY environment variable is required');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.warn('Missing Supabase credentials. Please check your configuration.');
 }
 
 // Configure Supabase client with proper headers to avoid 406 errors

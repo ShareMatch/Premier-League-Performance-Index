@@ -106,9 +106,7 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
                     <span className="text-gray-500 text-[8px] sm:text-xs">IP: {activity.ip}</span>
                     {countryFlags[activity.id] ? (
                       <img
-                        src={`https://flagcdn.com/w40/${
-                          countryFlags[activity.id]
-                        }.png`}
+                        src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}
                         alt={activity.location}
                         className="w-4 sm:w-5 h-auto rounded-sm flex-shrink-0"
                       />
