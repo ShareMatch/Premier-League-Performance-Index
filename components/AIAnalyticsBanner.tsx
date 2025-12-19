@@ -2,8 +2,8 @@ import React from 'react';
 import { Sparkles } from 'lucide-react';
 
 interface AIAnalyticsBannerProps {
-  onClick: () => void;
-  isActive: boolean;
+    onClick: () => void;
+    isActive: boolean;
 }
 
 const AIAnalyticsBanner: React.FC<AIAnalyticsBannerProps> = ({ onClick, isActive }) => {

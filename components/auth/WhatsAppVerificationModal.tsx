@@ -16,7 +16,6 @@ interface WhatsAppVerificationModalProps {
   onResendCode?: () => Promise<boolean>;
   onVerifyCode?: (code: string) => Promise<boolean>;
   onEditPhone?: () => void; // Navigate to edit modal
-  isProfileUpdate?: boolean; // Indicates if this is for profile update vs account creation
 }
 
 type VerificationStatus =
@@ -176,7 +175,6 @@ export const WhatsAppVerificationModal: React.FC<
   onResendCode,
   onVerifyCode,
   onEditPhone,
-  isProfileUpdate = false,
 }) => {
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [status, setStatus] = useState<VerificationStatus>("idle");
@@ -430,18 +428,14 @@ export const WhatsAppVerificationModal: React.FC<
           </h1>
 
           {/* Success Message */}
-          {!isProfileUpdate && (
-            <p className="text-center text-white/80 font-sans text-sm leading-relaxed">
-              Your account has been created successfully.
-            </p>
-          )}
+          <p className="text-center text-white/80 font-sans text-sm leading-relaxed">
+            Your account has been created successfully.
+          </p>
 
           {/* Redirecting indicator */}
-          {!isProfileUpdate && (
-            <p className="text-center text-white/50 font-sans text-xs">
-              Redirecting to login...
-            </p>
-          )}
+          <p className="text-center text-white/50 font-sans text-xs">
+            Redirecting to login...
+          </p>
         </div>
       </div>
     );
