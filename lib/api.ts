@@ -310,63 +310,64 @@ export const fetchSettledAssets = async () => {
         .eq('is_settled', true)
         .order('settled_at', { ascending: false });
 
-    if (seasonsError) throw seasonsError;
+    if (seasonsError) {
+        console.error('fetchSettledAssets seasons error:', seasonsError);
+        throw seasonsError;
+    }
 
-    // For each settled season, create mock trading assets from the assets table
-    // This assumes that for settled seasons, we show all relevant assets at settlement price
+    // For each settled season, get the actual trading assets with settlement prices
     const settledAssets = [];
 
     for (const season of settledSeasons || []) {
         const marketName = season.market_indexes.markets.name;
 
-        // Get assets that belong to this market (based on type and market association)
-        // For F1, get individual assets, for football get team assets, etc.
-        let assetType = 'team'; // default
-        if (marketName === 'Formula 1') assetType = 'individual';
+        // Get actual trading assets for this settled season
+        const { data: tradingAssets, error: tradingError } = await supabase
+            .from('market_index_trading_assets')
+            .select(`
+                id,
+                asset_id,
+                settlement_price,
+                assets!inner (
+                    id,
+                    name,
+                    team,
+                    logo_url,
+                    color,
+                    type,
+                    status
+                )
+            `)
+            .eq('market_index_season_id', season.id)
+            .eq('is_settled', true);
 
-        const { data: assets, error: assetsError } = await supabase
-            .from('assets')
-            .select('*')
-            .eq('type', assetType)
-            .order('name');
+        if (tradingError) {
+            console.error('fetchSettledAssets trading error:', tradingError);
+            continue;
+        }
 
-        if (assetsError) continue;
-
-        // Create mock trading assets for this settled season
-        for (let i = 0; i < (assets || []).length; i++) {
-            const asset = assets[i];
-            let settlementPrice = parseFloat(season.settlement_price || '0');
-
-            // Apply market-specific settlement price logic
-            if (marketName === 'Formula 1') {
-                // For F1, first driver gets full settlement price, others get minimal value
-                settlementPrice = i === 0 ? settlementPrice : 0.1;
-            }
-            // For other markets, all assets get the settlement price (or we could add more specific logic later)
+        // Create settled asset objects using real trading asset data
+        for (const tradingAsset of tradingAssets || []) {
+            const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
 
             settledAssets.push({
-                id: `settled-${season.id}-${asset.id}`, // Mock ID
-                asset_id: asset.id,
+                id: `settled-${season.id}-${tradingAsset.asset_id}`,
+                asset_id: tradingAsset.asset_id,
                 buy: settlementPrice,
                 sell: settlementPrice,
                 status: 'settled',
                 units: 0,
-                created_at: season.settled_at || season.created_at,
+                settled_at: season.settled_at,
+                created_at: season.created_at,
                 updated_at: season.settled_at || season.updated_at,
                 market_index_season_id: season.id,
-                assets: asset,
+                assets: tradingAsset.assets,
                 market_index_seasons: season
             });
         }
     }
 
-    // Normalize the structure to match active trading assets
-    const normalizedSettledAssets = settledAssets.map(asset => ({
-        ...asset,
-        market_index_seasons: asset.market_index_seasons // Already in correct structure
-    }));
-
-    return normalizedSettledAssets;
+    return settledAssets;
 };
 
 export const subscribeToAssets = (callback: () => void) => {
