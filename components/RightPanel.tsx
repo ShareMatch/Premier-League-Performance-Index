@@ -62,6 +62,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
         {selectedOrder && (
           <div className="flex-shrink-0 p-4 border-b border-gray-800 bg-gray-800/30">
             <TradeSlip
+              key={`${selectedOrder.team.id}-${selectedOrder.type}`}
               order={{
                 ...selectedOrder,
                 holding:

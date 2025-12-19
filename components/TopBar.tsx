@@ -184,37 +184,21 @@ const TopBar: React.FC<TopBarProps> = ({
 
   // Click-outside & Escape handler for dropdowns
   useEffect(() => {
-    const handleClickOutside = (e: Event) => {
+    if (!isBalanceOpen && !isAvatarOpen) return; // Only add listener when dropdown is open
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
 
-      const closeIfOutside = () => {
-        if (
-          isBalanceOpen &&
-          balanceRef.current &&
-          !balanceRef.current.contains(target)
-        ) {
-          setIsBalanceOpen(false);
-        }
-        if (
-          isAvatarOpen &&
-          avatarRef.current &&
-          !avatarRef.current.contains(target)
-        ) {
-          setIsAvatarOpen(false);
-        }
-        // mobile combined quick actions
-        if (
-          (isBalanceOpen || isAvatarOpen) &&
-          mobileQuickRef.current &&
-          !mobileQuickRef.current.contains(target)
-        ) {
-          setIsBalanceOpen(false);
-          setIsAvatarOpen(false);
-        }
-      };
+      // Check if click is inside any of our dropdown containers
+      const isInsideBalance = balanceRef.current?.contains(target);
+      const isInsideAvatar = avatarRef.current?.contains(target);
+      const isInsideMobileQuick = mobileQuickRef.current?.contains(target);
 
-      // Defer closing so inner onClick handlers run first
-      setTimeout(closeIfOutside, 0);
+      // Close dropdowns if click is outside all containers
+      if (!isInsideBalance && !isInsideAvatar && !isInsideMobileQuick) {
+        setIsBalanceOpen(false);
+        setIsAvatarOpen(false);
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -224,13 +208,16 @@ const TopBar: React.FC<TopBarProps> = ({
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
-    document.addEventListener("touchend", handleClickOutside);
+    // Use click only - it works for both mouse and touch (synthesized from touch)
+    // Adding a small delay to let button onClick handlers fire first
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 10);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("touchend", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isBalanceOpen, isAvatarOpen]);
