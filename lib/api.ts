@@ -62,8 +62,7 @@ import { TRADING_CONFIG } from './config';
 
 export const placeTrade = async (
     userId: string,
-    assetId: string,
-    assetName: string,
+    marketTradingAssetId: string,
     direction: 'buy' | 'sell',
     price: number,
     quantity: number
@@ -77,8 +76,7 @@ export const placeTrade = async (
 
     const { data, error } = await supabase.rpc('place_trade', {
         p_user_id: userId,
-        p_asset_id: assetId,
-        p_asset_name: assetName,
+        p_market_trading_asset_id: marketTradingAssetId,
         p_direction: direction,
         p_price: price,
         p_quantity: quantity,
@@ -195,6 +193,185 @@ export const fetchAssets = async () => {
     return data;
 };
 
+// New function to fetch active trading assets with all related data
+export const fetchTradingAssets = async () => {
+    const { data, error } = await supabase
+        .from('market_index_trading_assets')
+        .select(`
+            id,
+            asset_id,
+            buy,
+            sell,
+            status,
+            units,
+            created_at,
+            updated_at,
+            market_index_season_id,
+            assets!inner (
+                name,
+                team,
+                logo_url,
+                color,
+                type
+            ),
+            market_index_seasons!inner (
+                id,
+                status,
+                is_settled,
+                season_token,
+                start_date,
+                end_date,
+                settlement_price,
+                settled_at,
+                market_indexes!inner (
+                    id,
+                    name,
+                    token,
+                    description,
+                    markets!inner (
+                        id,
+                        name,
+                        market_token,
+                        status,
+                        market_sub_groups!inner (
+                            name,
+                            market_groups!inner (
+                                name
+                            )
+                        )
+                    )
+                )
+            )
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data;
+};
+
+// Function to fetch market hierarchy for navigation
+export const fetchMarketHierarchy = async () => {
+    const { data, error } = await supabase
+        .from('market_groups')
+        .select(`
+            id,
+            name,
+            market_sub_groups (
+                id,
+                name,
+                markets (
+                    id,
+                    name,
+                    market_token,
+                    status
+                )
+            )
+        `)
+        .order('name');
+
+    if (error) throw error;
+    return data;
+};
+
+// Function to fetch settled assets for historical display
+export const fetchSettledAssets = async () => {
+    // First get settled seasons
+    const { data: settledSeasons, error: seasonsError } = await supabase
+        .from('market_index_seasons')
+        .select(`
+            id,
+            status,
+            is_settled,
+            season_token,
+            start_date,
+            end_date,
+            settlement_price,
+            settled_at,
+            created_at,
+            updated_at,
+            market_indexes!inner (
+                id,
+                name,
+                token,
+                description,
+                markets!inner (
+                    id,
+                    name,
+                    market_token,
+                    status,
+                    market_sub_groups!inner (
+                        name,
+                        market_groups!inner (
+                            name
+                        )
+                    )
+                )
+            )
+        `)
+        .eq('is_settled', true)
+        .order('settled_at', { ascending: false });
+
+    if (seasonsError) {
+        console.error('fetchSettledAssets seasons error:', seasonsError);
+        throw seasonsError;
+    }
+
+    // For each settled season, get the actual trading assets with settlement prices
+    const settledAssets = [];
+
+    for (const season of settledSeasons || []) {
+        const marketName = season.market_indexes[0]?.markets?.[0]?.name || 'Unknown Market';
+
+        // Get actual trading assets for this settled season
+        const { data: tradingAssets, error: tradingError } = await supabase
+            .from('market_index_trading_assets')
+            .select(`
+                id,
+                asset_id,
+                settlement_price,
+                assets!inner (
+                    id,
+                    name,
+                    team,
+                    logo_url,
+                    color,
+                    type,
+                    status
+                )
+            `)
+            .eq('market_index_season_id', season.id)
+            .eq('is_settled', true);
+
+        if (tradingError) {
+            console.error('fetchSettledAssets trading error:', tradingError);
+            continue;
+        }
+
+        // Create settled asset objects using real trading asset data
+        for (const tradingAsset of tradingAssets || []) {
+            const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
+
+            settledAssets.push({
+                id: `settled-${season.id}-${tradingAsset.asset_id}`,
+                asset_id: tradingAsset.asset_id,
+                buy: settlementPrice,
+                sell: settlementPrice,
+                status: 'settled',
+                units: 0,
+                settled_at: season.settled_at,
+                created_at: season.created_at,
+                updated_at: season.settled_at || season.updated_at,
+                market_index_season_id: season.id,
+                assets: tradingAsset.assets,
+                market_index_seasons: season
+            });
+        }
+    }
+
+    return settledAssets;
+};
+
 export const subscribeToAssets = (callback: () => void) => {
     return supabase
         .channel('assets-changes')
@@ -204,6 +381,24 @@ export const subscribeToAssets = (callback: () => void) => {
                 event: '*',
                 schema: 'public',
                 table: 'assets'
+            },
+            () => {
+                callback();
+            }
+        )
+        .subscribe();
+};
+
+// Subscribe to trading assets changes for real-time price updates
+export const subscribeToTradingAssets = (callback: () => void) => {
+    return supabase
+        .channel('trading-assets-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'market_index_trading_assets'
             },
             () => {
                 callback();

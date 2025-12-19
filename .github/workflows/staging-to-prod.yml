@@ -1,0 +1,89 @@
+name: Staging → Promote DB & Edge Functions
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------
+      # 1. Checkout code
+      # -----------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -----------------------------
+      # 2. Install Supabase CLI
+      # -----------------------------
+      - name: Install Supabase CLI
+        run: |
+          curl -fsSL https://supabase.com/install/linux | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+
+      # -----------------------------
+      # 3. Authenticate Supabase
+      # -----------------------------
+      - name: Supabase login
+        run: supabase login --token $SUPABASE_ACCESS_TOKEN
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # =====================================================
+      # DB PROMOTION (DEV → PROD)
+      # =====================================================
+
+      - name: Pull DEV DB schema
+        run: |
+          supabase link --project-ref $SUPABASE_DEV_PROJECT_REF
+          supabase db pull --schema public --file dev_schema.sql
+        env:
+          SUPABASE_DEV_PROJECT_REF: ${{ secrets.SUPABASE_DEV_PROJECT_REF }}
+
+      - name: Pull PROD DB schema
+        run: |
+          supabase link --project-ref $SUPABASE_PROD_PROJECT_REF
+          supabase db pull --schema public --file prod_schema.sql
+        env:
+          SUPABASE_PROD_PROJECT_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+
+      - name: Generate DEV → PROD diff
+        run: |
+          supabase db diff \
+            --from prod_schema.sql \
+            --to dev_schema.sql \
+            > promote_dev_to_prod.sql
+
+      - name: Print DB diff
+        run: |
+          echo "===== DB PROMOTION SQL ====="
+          cat promote_dev_to_prod.sql
+          echo "============================"
+
+      - name: Block destructive changes
+        run: |
+          if grep -E "DROP TABLE|DROP COLUMN|DROP SCHEMA" promote_dev_to_prod.sql; then
+            echo "❌ Destructive DB change detected"
+            exit 1
+          fi
+
+      - name: Apply DB changes to PROD
+        run: |
+          supabase link --project-ref $SUPABASE_PROD_PROJECT_REF
+          supabase db execute promote_dev_to_prod.sql
+        env:
+          SUPABASE_PROD_PROJECT_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+
+      # =====================================================
+      # EDGE FUNCTIONS DEPLOYMENT
+      # =====================================================
+
+      - name: Deploy all Edge Functions to PROD
+        run: |
+          supabase link --project-ref $SUPABASE_PROD_PROJECT_REF
+          supabase functions deploy --all
+        env:
+          SUPABASE_PROD_PROJECT_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}

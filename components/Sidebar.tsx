@@ -1,6 +1,7 @@
 import { League, Team } from '../types';
 import React, { useState, useEffect, useRef } from 'react';
 import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Sparkles } from 'lucide-react';
+import { fetchMarketHierarchy } from '../lib/api';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange, allAssets }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Sports', 'Football']);
+  const [dynamicMenuItems, setDynamicMenuItems] = useState<any[]>([]);
 
   const toggleExpand = (label: string) => {
     setExpandedItems(prev =>
@@ -21,9 +23,134 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
     );
   };
 
+  // Fetch and transform market hierarchy on mount
+  useEffect(() => {
+    const loadMarketHierarchy = async () => {
+      try {
+        const hierarchy = await fetchMarketHierarchy();
+
+        // Define the exact order we want to maintain
+        const desiredOrder = {
+          groups: ['Sports', 'Global Events'],
+          subGroups: {
+            'Sports': ['Football', 'Motorsport', 'Basketball', 'American Football', 'Cricket'],
+            'Global Events': ['Eurovision']
+          },
+          // Custom order for Football markets (not alphabetical)
+          footballMarkets: [
+            'England Premier League',
+            'Saudi Pro League',
+            'UEFA Champions League',
+            'FIFA World Cup',
+            'Indonesia Super League'
+          ]
+        };
+
+        // Transform database hierarchy to menu structure while maintaining order
+        const transformedMenu = desiredOrder.groups.map(groupName => {
+          const groupData = hierarchy.find((g: any) => g.name === groupName);
+          if (!groupData) return null;
+
+          // Map group names to icons
+          const getGroupIcon = (groupName: string) => {
+            switch (groupName) {
+              case 'Sports': return Trophy;
+              case 'Global Events': return Globe;
+              default: return Trophy;
+            }
+          };
+
+          const groupIcon = getGroupIcon(groupName);
+
+          // Transform sub-groups in desired order
+          const subItems = desiredOrder.subGroups[groupName as keyof typeof desiredOrder.subGroups]
+            .map(subGroupName => {
+              const subGroupData = groupData.market_sub_groups.find((sg: any) => sg.name === subGroupName);
+              if (!subGroupData) {
+                // Add SOON items that don't exist in DB
+                if (subGroupName === 'American Football' && !subGroupData) {
+                  return {
+                    label: 'American Football',
+                    subItems: [
+                      { label: 'NFL', id: 'NFL', active: activeLeague === 'NFL' }
+                    ]
+                  };
+                }
+                return null;
+              }
+
+              // Sort markets according to desired order for Football
+              let sortedMarkets = subGroupData.markets;
+              if (subGroupData.name === 'Football') {
+                sortedMarkets = desiredOrder.footballMarkets.map(marketName =>
+                  subGroupData.markets.find((m: any) => m.name === marketName)
+                ).filter(Boolean);
+              }
+
+              return {
+                label: subGroupData.name,
+                subItems: sortedMarkets.map((market: any) => {
+                  // Map market names to IDs (same logic as before)
+                  let marketId: string;
+                  switch (market.name) {
+                    case 'England Premier League': marketId = 'EPL'; break;
+                    case 'Saudi Pro League': marketId = 'SPL'; break;
+                    case 'UEFA Champions League': marketId = 'UCL'; break;
+                    case 'FIFA World Cup': marketId = 'WC'; break;
+                    case 'Indonesia Super League': marketId = 'ISL'; break;
+                    case 'Formula 1': marketId = 'F1'; break;
+                    case 'NBA': marketId = 'NBA'; break;
+                    case 'NFL': marketId = 'NFL'; break;
+                    case 'T20 World Cup': marketId = 'T20'; break;
+                    case 'Eurovision': marketId = 'Eurovision'; break;
+                    default: marketId = market.name.replace(/\s+/g, '').toUpperCase();
+                  }
+
+                  return {
+                    label: market.name,
+                    id: marketId,
+                    active: activeLeague === marketId
+                  };
+                })
+              };
+            })
+            .filter(Boolean); // Remove null items
+
+          // Add SOON items that aren't in the database
+          if (groupName === 'Sports') {
+            // Add Golf as SOON
+            subItems.splice(4, 0, { label: 'Golf', badge: 'SOON' });
+          }
+
+          return {
+            icon: groupIcon,
+            label: groupName,
+            subItems: subItems
+          };
+        }).filter(Boolean);
+
+        // Add non-database items (Home, etc.) - AI Analytics is handled by TopBar
+        const fullMenu = [
+          { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
+          ...transformedMenu,
+          { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' }
+        ];
+
+        setDynamicMenuItems(fullMenu);
+      } catch (error) {
+        console.error('Failed to load market hierarchy:', error);
+        // Fallback to hardcoded menu if DB fails
+        setDynamicMenuItems(menuItems);
+      }
+    };
+
+    loadMarketHierarchy();
+  }, [activeLeague]);
 
 
-  const menuItems = [
+
+  // Fallback menu items in case DB fails (maintains exact original order)
+  const fallbackMenuItems = [
     { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
     {
       icon: Trophy,
@@ -66,8 +193,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         },
       ]
     },
-    { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
-
     {
       icon: Globe,
       label: 'Global Events',
@@ -75,7 +200,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         { label: 'Eurovision', id: 'Eurovision', active: activeLeague === 'Eurovision' }
       ]
     },
+    { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' }
   ];
+
+  // Use dynamic menu if loaded, otherwise fallback
+  const menuItems = dynamicMenuItems.length > 0 ? dynamicMenuItems : fallbackMenuItems;
 
   return (
     <>
