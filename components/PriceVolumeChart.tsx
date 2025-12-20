@@ -39,15 +39,27 @@ const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName, pe
                 <div className="bg-[#0B1221] border border-[#005430] p-3 rounded shadow-xl text-xs">
                     <p className="text-gray-400 mb-1">{label}</p>
                     <div className="flex flex-col gap-1">
-                        <p className="text-white font-bold flex justify-between gap-4">
-                            <span className="text-[#00A651]">${Number(payload[0].value).toFixed(1)}</span>
-                        </p>
-                        {payload[1] && (
-                            <p className="text-gray-300 flex justify-between gap-4">
-                                <span>Tokens Traded:</span>
-                                <span className="text-blue-400">{Math.floor(payload[1].value).toLocaleString()}</span>
-                            </p>
-                        )}
+                        {/* Find payload items by dataKey to ensure correct display */}
+                        {(() => {
+                            const priceItem = payload.find((p: any) => p.dataKey === 'price');
+                            const volumeItem = payload.find((p: any) => p.dataKey === 'volume');
+
+                            return (
+                                <>
+                                    {priceItem && (
+                                        <p className="text-white font-bold flex justify-between gap-4">
+                                            <span className="text-[#00A651]">${Number(priceItem.value).toFixed(1)}</span>
+                                        </p>
+                                    )}
+                                    {volumeItem && (
+                                        <p className="text-gray-300 flex justify-between gap-4">
+                                            <span>Tokens Traded:</span>
+                                            <span className="text-blue-400">{Math.floor(volumeItem.value).toLocaleString()}</span>
+                                        </p>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
             );
