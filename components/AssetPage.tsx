@@ -142,6 +142,12 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     </div>
                 </div>
 
+                import DidYouKnow from "./DidYouKnow";
+
+                // ... [existing imports]
+
+                // ... [rest of file until right column]
+
                 {/* Right Column: Trade History (1/3 width) */}
                 <div className="lg:col-span-1 space-y-6">
                     <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
@@ -168,6 +174,9 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                             </div>
                         </div>
                     </div>
+
+                    {/* Did You Know Module */}
+                    <DidYouKnow assetName={asset.name} />
                 </div>
 
             </div>
