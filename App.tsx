@@ -306,6 +306,10 @@ const App: React.FC = () => {
   const handleViewAsset = (asset: Team) => {
     setViewAsset(asset);
     setCurrentView('asset');
+    // Sync sidebar active league with the asset's market if available
+    if (asset.market) {
+      setActiveLeague(asset.market as League);
+    }
     setIsMobileMenuOpen(false); // Close menu if open
     // Scroll to top
     window.scrollTo(0, 0);
