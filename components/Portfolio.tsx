@@ -78,7 +78,7 @@ const Portfolio: React.FC<PortfolioProps> = ({
         >
           <div>
             <div className="font-medium text-gray-200 text-sm">
-              {holding.asset_name}
+              {holding.asset?.name || holding.asset_name || "Unknown Asset"}
             </div>
             <div className="text-xs text-gray-500">
               {holding.quantity} units
