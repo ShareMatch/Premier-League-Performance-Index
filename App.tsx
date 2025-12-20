@@ -22,7 +22,10 @@ import {
   subscribeToWallet,
   subscribeToPortfolio,
   fetchAssets,
+  fetchTradingAssets,
+  fetchSettledAssets,
   subscribeToAssets,
+  subscribeToTradingAssets,
   getPublicUserId,
   fetchTransactions,
   getKycUserStatus,
@@ -136,20 +139,91 @@ const App: React.FC = () => {
   // Fetch Assets
   const loadAssets = useCallback(async () => {
     try {
-      const assets = await fetchAssets();
-      // Map DB fields to Team interface
-      const mappedAssets: Team[] = assets.map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        bid: Number(a.bid),
-        offer: Number(a.offer),
-        lastChange: a.last_change as "up" | "down" | "none",
-        color: a.color,
-        category: a.category,
-        market: a.market,
-        is_settled: a.is_settled,
-        settled_date: a.settled_date,
-      }));
+      // Fetch static asset data, active trading data, and settled assets in parallel
+      const [staticAssets, tradingAssets, settledAssets] = await Promise.all([
+        fetchAssets(),
+        fetchTradingAssets(),
+        fetchSettledAssets()
+      ]);
+
+      // Create a map of static assets by ID for quick lookup
+      const assetMap = new Map(staticAssets.map(asset => [asset.id, asset]));
+
+      // Combine active and settled trading assets
+      const allTradingAssets = [...tradingAssets, ...settledAssets];
+
+      // Map trading assets to Team interface with merged data
+      const mappedAssets: Team[] = allTradingAssets.map((ta: any) => {
+        const staticAsset = assetMap.get(ta.asset_id);
+        if (!staticAsset) {
+          console.warn(`Missing static asset data for asset_id: ${ta.asset_id}`, ta);
+          return null;
+        }
+
+
+        // Determine market from the hierarchy
+        const marketGroup = ta.market_index_seasons.market_indexes.markets.market_sub_groups.market_groups.name;
+        const marketSubGroup = ta.market_index_seasons.market_indexes.markets.market_sub_groups.name;
+        const marketToken = ta.market_index_seasons.market_indexes.markets.market_token;
+
+        // Map to legacy market names used in the app
+        let market: string;
+        if (marketToken) {
+          market = marketToken;
+        } else {
+          // Fallback mapping based on names
+          const marketName = ta.market_index_seasons.market_indexes.markets.name;
+          switch (marketName) {
+            case 'England Premier League': market = 'EPL'; break;
+            case 'UEFA Champions League': market = 'UCL'; break;
+            case 'FIFA World Cup': market = 'WC'; break;
+            case 'Saudi Pro League': market = 'SPL'; break;
+            case 'Indonesia Super League': market = 'ISL'; break;
+            case 'Formula 1': market = 'F1'; break;
+            case 'NBA': market = 'NBA'; break;
+            case 'NFL': market = 'NFL'; break;
+            case 'T20 World Cup': market = 'T20'; break;
+            case 'Eurovision': market = 'Eurovision'; break;
+            default: market = 'HOME'; break;
+          }
+        }
+
+        // Map category based on market sub-group or market name
+        let category: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'global_events' | 'other';
+        switch (marketSubGroup) {
+          case 'Football': category = 'football'; break;
+          case 'Motorsport': category = 'f1'; break;
+          case 'Basketball': category = 'basketball'; break;
+          case 'American Football': category = 'american_football'; break;
+          case 'Cricket': category = 'cricket'; break;
+          case 'Eurovision': category = 'global_events'; break;
+          default: category = 'other'; break;
+        }
+
+        return {
+          id: ta.id, // Use trading asset ID as the primary ID
+          asset_id: ta.asset_id, // Keep reference to static asset
+          name: staticAsset.name,
+          team: staticAsset.team,
+          bid: Number(ta.sell), // Sell price is bid
+          offer: Number(ta.buy), // Buy price is offer
+          lastChange: 'none' as const, // TODO: Calculate from price history
+          color: staticAsset.color,
+          logo_url: staticAsset.logo_url,
+          category: category,
+          market: market,
+          market_trading_asset_id: ta.id,
+          is_settled: ta.market_index_seasons.is_settled,
+          settled_date: ta.market_index_seasons.settled_at ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined,
+          // Additional fields for richer data
+          market_group: marketGroup,
+          market_sub_group: marketSubGroup,
+          index_name: ta.market_index_seasons.market_indexes.name,
+          index_token: ta.market_index_seasons.market_indexes.token,
+          season_status: ta.market_index_seasons.status,
+          units: Number(ta.units)
+        };
+      }).filter(Boolean) as Team[];
       setAllAssets(mappedAssets);
     } catch (error) {
       console.error("Error loading assets:", error);
@@ -270,10 +344,15 @@ const App: React.FC = () => {
       loadAssets();
     });
 
+    const tradingAssetsSubscription = subscribeToTradingAssets(() => {
+      loadAssets();
+    });
+
     return () => {
       walletSubscription.unsubscribe();
       portfolioSubscription.unsubscribe();
       assetsSubscription.unsubscribe();
+      tradingAssetsSubscription.unsubscribe();
     };
   }, [loadUserData, loadAssets, user, publicUserId]);
 
@@ -326,7 +405,7 @@ const App: React.FC = () => {
     if (type === "buy" && wallet) {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
     } else if (type === "sell") {
-      const position = portfolio.find((p) => p.asset_id === team.id.toString());
+      const position = portfolio.find((p) => p.market_trading_asset_id === team.market_trading_asset_id);
       maxQuantity = position ? Number(position.quantity) : 0;
 
       // Validation: Cannot sell if not owned
@@ -361,8 +440,7 @@ const App: React.FC = () => {
 
       const result = await placeTrade(
         publicUserId,
-        team.id.toString(),
-        team.name,
+        team.market_trading_asset_id || team.id,
         side,
         priceForSide,
         quantity
@@ -421,7 +499,7 @@ const App: React.FC = () => {
     return portfolio.reduce((total, position) => {
       // Find current asset data to get price
       const asset = allAssets.find(
-        (a) => a.id.toString() === position.asset_id
+        (a) => a.market_trading_asset_id === position.market_trading_asset_id
       );
       // Value at bid price (like Portfolio component)
       const price = asset ? asset.bid : 0;
