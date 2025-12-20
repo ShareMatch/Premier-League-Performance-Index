@@ -38,6 +38,7 @@ import InactivityHandler from "./components/auth/InactivityHandler";
 import { SESSION_CONFIG, FEATURES } from "./lib/config";
 import AIAnalyticsBanner from "./components/AIAnalyticsBanner";
 import AccessDeniedModal from "./components/AccessDeniedModal";
+import SellErrorModal from "./components/SellErrorModal";
 import MyDetailsPage from "./components/mydetails/MyDetailsPage";
 import ChatBot from "./components/chatbot/frontend/ChatBot";
 import AlertModal from "./components/AlertModal";
@@ -77,6 +78,8 @@ const App: React.FC = () => {
 
   // AI Analytics Access Control
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+  const [showSellErrorModal, setShowSellErrorModal] = useState(false);
+  const [sellErrorAssetName, setSellErrorAssetName] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
@@ -424,10 +427,12 @@ const App: React.FC = () => {
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
-        setAlertMessage(
-          `You cannot sell ${team.name} because you do not own any shares.`
-        );
-        setAlertOpen(true);
+        // Validation: Cannot sell if not owned
+        if (maxQuantity <= 0) {
+          setSellErrorAssetName(team.name);
+          setShowSellErrorModal(true);
+          return;
+        }
         return;
       }
     }
@@ -586,8 +591,8 @@ const App: React.FC = () => {
             <div className="flex-1 flex flex-col min-w-0 relative">
               <div
                 className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === "HOME"
-                    ? "overflow-hidden"
-                    : "overflow-y-auto"
+                  ? "overflow-hidden"
+                  : "overflow-y-auto"
                   }`}
               >
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
@@ -809,6 +814,12 @@ const App: React.FC = () => {
             setActiveLeague("EPL"); // Navigate to a market (e.g. EPL) so they can buy tokens
             setShowAccessDeniedModal(false);
           }}
+        />
+
+        <SellErrorModal
+          isOpen={showSellErrorModal}
+          onClose={() => setShowSellErrorModal(false)}
+          assetName={sellErrorAssetName}
         />
 
         <AlertModal
