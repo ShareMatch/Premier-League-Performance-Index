@@ -67,7 +67,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 ...selectedOrder,
                 holding:
                   portfolio.find(
-                    (p) => p.asset_id === selectedOrder.team.id.toString()
+                    (p) => p.market_trading_asset_id === selectedOrder.team.market_trading_asset_id
                   )?.quantity || 0,
               }}
               onClose={onCloseTradeSlip}

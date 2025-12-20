@@ -51,10 +51,10 @@ const Portfolio: React.FC<PortfolioProps> = ({
       onNavigate(holding.market as any);
     }
 
-    // 2. Open the Transaction Slip (Default to Buy)
+    // 2. Open the Transaction Slip (Default to Sell)
     if (holding.asset) {
       // When clicking a holding in the portfolio, default to SELL since user owns the asset
-      onSelectAsset(holding.asset, "buy");
+      onSelectAsset(holding.asset, "sell");
     }
   };
 

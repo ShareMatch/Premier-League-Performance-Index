@@ -56,6 +56,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   leagueName,
   walletBalance = 0,
 }) => {
+  console.log('TradeSlip received order:', order);
   const [shares, setShares] = useState<number | "">("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +84,16 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   const isBuy = side === "buy";
   const holding = Number(order.holding ?? 0);
   const canSell = holding > 0;
+
+  // Debug logging
+  console.log('TradeSlip Debug:', {
+    side,
+    orderHolding: order.holding,
+    holding,
+    canSell,
+    orderType: order.type,
+    teamName: order.team.name
+  });
 
   // Fee percentage from config - ONLY applies to SELL orders
   const FEE_RATE = TRADING_CONFIG.FEE_RATE;
@@ -216,7 +227,9 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
             !isBuy
               ? "text-white bg-gray-800/20 border-b-2 border-red-600"
-              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              : canSell
+              ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              : "text-gray-600 cursor-not-allowed"
           } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
         >
           Sell

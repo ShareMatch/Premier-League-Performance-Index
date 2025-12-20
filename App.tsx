@@ -386,6 +386,18 @@ const App: React.FC = () => {
   };
 
   const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
+    console.log('handleSelectOrder Debug:', {
+      teamName: team.name,
+      teamMarketTradingAssetId: team.market_trading_asset_id,
+      type,
+      portfolioLength: portfolio.length,
+      portfolioItems: portfolio.map(p => ({
+        id: p.id,
+        market_trading_asset_id: p.market_trading_asset_id,
+        quantity: p.quantity
+      }))
+    });
+
     // Check if user is logged in
     if (!user) {
       setAlertMessage("Please login to trade.");
@@ -406,7 +418,9 @@ const App: React.FC = () => {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
     } else if (type === "sell") {
       const position = portfolio.find((p) => p.market_trading_asset_id === team.market_trading_asset_id);
+      console.log('Position lookup result:', position, 'team.market_trading_asset_id:', team.market_trading_asset_id, 'position.market_trading_asset_id:', position?.market_trading_asset_id);
       maxQuantity = position ? Number(position.quantity) : 0;
+      console.log('maxQuantity calculated:', maxQuantity);
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
@@ -418,13 +432,21 @@ const App: React.FC = () => {
       }
     }
 
-    setSelectedOrder({
+    const holdingValue = type === "sell" ? maxQuantity : 0;
+    console.log('Creating Order with holding:', holdingValue, 'maxQuantity:', maxQuantity, 'type:', type);
+
+    const orderObject = {
       team,
       type,
       price: type === "buy" ? team.offer : team.bid,
       quantity: 0, // Default to 0, let user input
       maxQuantity,
-    });
+      holding: holdingValue, // Current holdings for sell orders
+    };
+    console.log('Order object being created:', orderObject);
+
+    // Create a completely new object to prevent mutations
+    setSelectedOrder({ ...orderObject });
 
     // On mobile/tablet (below 2xl), show the RightPanel overlay
     setShowRightPanel(true);
