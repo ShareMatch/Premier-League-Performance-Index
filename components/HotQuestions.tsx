@@ -7,6 +7,7 @@ import { getMarketInfo } from '../lib/marketInfo';
 interface HotQuestionsProps {
   teams: Team[];
   onNavigate: (league: League) => void;
+  onViewAsset?: (asset: Team) => void;
 }
 
 interface Question {
@@ -19,9 +20,10 @@ interface Question {
   icon: React.ReactNode;
   color: string;
   borderColor: string;
+  team: Team;
 }
 
-const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
+const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAsset }) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -57,7 +59,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
 
       sorted.forEach((team, idx) => {
         // Calculate dynamic volume (mock) based on price
-        const volNum = (team.offer * (10000 + team.id * 100)) / 1000;
+        const validId = parseInt(team.id) || team.name.length;
+        const volNum = (team.offer * (10000 + validId * 100)) / 1000;
         const volStr = volNum > 1000 ? `£${(volNum / 1000).toFixed(1)}M` : `£${volNum.toFixed(0)}K`;
 
         generated.push({
@@ -69,7 +72,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
           volume: volStr,
           icon: icon,
           color: color,
-          borderColor: border
+          borderColor: border,
+          team: team
         });
       });
     };
@@ -158,7 +162,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
           return (
             <div
               key={`${q.id}-${index}`} // Key change triggers React re-render, but we manage animation via class
-              onClick={() => onNavigate(q.market as any)}
+              onClick={() => {
+                if (onViewAsset) {
+                  onViewAsset(q.team);
+                } else {
+                  onNavigate(q.market as any);
+                }
+              }}
               className={`
                 group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-3 sm:p-5 cursor-pointer 
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
@@ -228,10 +238,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate }) => {
             className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
           >
             <span>{expanded ? 'View Less' : 'View More'}</span>
-            <svg 
-              className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

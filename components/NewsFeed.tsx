@@ -40,9 +40,10 @@ const isHaram = (text: string): boolean => {
 interface NewsFeedProps {
     topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Eurovision' | 'Global';
     showHeader?: boolean;
+    className?: string;
 }
 
-const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true }) => {
+const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true, className = '' }) => {
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
     const [summary, setSummary] = useState('');
@@ -208,14 +209,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
     return (
         <>
-            <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col h-48 sm:h-64 xl:h-80">
+            <div className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-64 xl:h-80'}`}>
                 {showHeader && (
-                <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
-                    <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
-                    <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
-                    {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
-                    <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
-                </div>
+                    <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
+                        <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
+                        <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
+                        {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
+                        <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
+                    </div>
                 )}
                 <div className="flex-1 overflow-hidden relative group">
                     <div className="absolute inset-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scrollbar-hide">
@@ -254,7 +255,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
             {/* AI Summary Modal - Responsive */}
             {selectedNews && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
-                    <div 
+                    <div
                         className="max-w-[92vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto scrollbar-hide"
                         style={{
                             borderRadius: '12px',
@@ -264,7 +265,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
                         }}
                     >
                         {/* Header - Compact on mobile */}
-                        <div 
+                        <div
                             className="px-2.5 sm:px-5 py-2 sm:py-4 flex justify-between items-center sticky top-0 z-10"
                             style={{
                                 background: '#021A1A',

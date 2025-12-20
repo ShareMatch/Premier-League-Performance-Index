@@ -6,9 +6,10 @@ import type { Team, League } from '../types';
 interface HomeDashboardProps {
     onNavigate: (league: League) => void;
     teams: Team[];
+    onViewAsset?: (asset: Team) => void;
 }
 
-const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, teams }) => {
+const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, teams, onViewAsset }) => {
     return (
         <div className="flex flex-col gap-8 h-full overflow-y-auto pb-8 scrollbar-hide">
             {/* Top Section: Hot Questions */}
