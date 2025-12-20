@@ -585,11 +585,10 @@ const App: React.FC = () => {
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 relative">
               <div
-                className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${
-                  activeLeague === "HOME"
+                className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === "HOME"
                     ? "overflow-hidden"
                     : "overflow-y-auto"
-                }`}
+                  }`}
               >
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
                   {activeLeague === "HOME" ? (
@@ -674,8 +673,8 @@ const App: React.FC = () => {
             </div>
 
             {/* Right Panel - Hidden on smaller screens/150% zoom, visible on 2xl+ */}
-            {/* Desktop: Always visible at 1536px+ */}
-            <div className="hidden 2xl:block h-full">
+            {/* Desktop: Always visible at 1280px+ (xl) */}
+            <div className="hidden xl:block h-full">
               <RightPanel
                 portfolio={portfolio}
                 transactions={transactions}
@@ -694,13 +693,12 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+            {/* Mobile/Tablet: Slide-out panel (visible below xl/1280px) */}
             {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
             {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
             <div
-              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
-                showRightPanel ? "translate-x-0" : "translate-x-full"
-              }`}
+              className={`xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"
+                }`}
             >
               <RightPanel
                 portfolio={portfolio}
@@ -738,7 +736,7 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 2xl:hidden"
+            className="fixed inset-0 bg-black/50 z-30 xl:hidden"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
@@ -770,22 +768,22 @@ const App: React.FC = () => {
               userData={
                 user
                   ? {
-                      name: user.user_metadata?.full_name || "",
-                      email: user.email || "",
-                      phone: user.user_metadata?.phone || "",
-                      whatsapp: user.user_metadata?.whatsapp_phone || "",
-                      address: user.user_metadata?.address_line || "",
-                      // address2: user.user_metadata?.address_line_2 || '',
-                      city: user.user_metadata?.city || "",
-                      state: user.user_metadata?.region || "",
-                      country: user.user_metadata?.country || "",
-                      postCode: user.user_metadata?.postal_code || "",
-                      accountName: "",
-                      accountNumber: "",
-                      iban: "",
-                      swiftBic: "",
-                      bankName: "",
-                    }
+                    name: user.user_metadata?.full_name || "",
+                    email: user.email || "",
+                    phone: user.user_metadata?.phone || "",
+                    whatsapp: user.user_metadata?.whatsapp_phone || "",
+                    address: user.user_metadata?.address_line || "",
+                    // address2: user.user_metadata?.address_line_2 || '',
+                    city: user.user_metadata?.city || "",
+                    state: user.user_metadata?.region || "",
+                    country: user.user_metadata?.country || "",
+                    postCode: user.user_metadata?.postal_code || "",
+                    accountName: "",
+                    accountNumber: "",
+                    iban: "",
+                    swiftBic: "",
+                    bankName: "",
+                  }
                   : undefined
               }
               onSignOut={async () => {
