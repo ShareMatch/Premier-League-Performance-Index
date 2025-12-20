@@ -98,8 +98,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   // Fee percentage from config - ONLY applies to SELL orders
   const FEE_RATE = TRADING_CONFIG.FEE_RATE;
 
+  // Calculate price dynamically based on side
+  const currentPrice = isBuy ? order.team.offer : order.team.bid;
+
   // Calculate costs
-  const subtotal = shares !== "" ? shares * order.price : 0;
+  const subtotal = shares !== "" ? shares * currentPrice : 0;
   // Fee only on sell - deducted from what user receives
   const fee = isBuy ? 0 : subtotal * FEE_RATE;
   // For buy: pay exact subtotal. For sell: receive subtotal minus fee
@@ -212,11 +215,10 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
         <button
           type="button"
           onClick={() => handleSideToggle("buy")}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
-            isBuy
-              ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
-              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-          }`}
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${isBuy
+            ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
+            : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+            }`}
         >
           Buy
         </button>
@@ -224,13 +226,12 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           type="button"
           onClick={() => handleSideToggle("sell")}
           disabled={!canSell}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
-            !isBuy
-              ? "text-white bg-gray-800/20 border-b-2 border-red-600"
-              : canSell
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${!isBuy
+            ? "text-white bg-gray-800/20 border-b-2 border-red-600"
+            : canSell
               ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               : "text-gray-600 cursor-not-allowed"
-          } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
+            } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
         >
           Sell
         </button>
@@ -264,7 +265,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             <div className="min-w-0 flex-1">
               <p className="text-[9px] text-gray-400">
                 Asset -{" "}
-                <span className={isBuy ? "text-[#005430]" : "text-red-400"}>
+                <span className={isBuy ? "text-green-400" : "text-red-400"}>
                   {isBuy ? "Buy" : "Sell"}
                 </span>
               </p>
@@ -274,13 +275,12 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             </div>
           </div>
           <p
-            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${
-              isBuy
-                ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
-                : "text-red-400"
-            }`}
+            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${isBuy
+              ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
+              : "text-red-400"
+              }`}
           >
-            ${order.price.toFixed(1)}
+            ${currentPrice.toFixed(1)}
           </p>
         </div>
       </div>
@@ -448,16 +448,15 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
           }
-          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
-            sharesNum <= 0 ||
+          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${sharesNum <= 0 ||
             isSubmitting ||
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
-              ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-              : countdown !== null
+            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+            : countdown !== null
               ? "bg-[#1C7D83] text-gray-300 cursor-wait"
               : "bg-[#005430] hover:bg-[#005430]/90 text-white"
-          }`}
+            }`}
         >
           {countdown !== null ? (
             <>
