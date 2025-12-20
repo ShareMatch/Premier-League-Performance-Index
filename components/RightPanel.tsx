@@ -39,9 +39,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${
-        isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
-      }`}
+      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
+        }`}
     >
       {/* Mobile Header with Close Button - Fixed at top */}
       {isMobile && (
@@ -82,22 +81,20 @@ const RightPanel: React.FC<RightPanelProps> = ({
         <div className="flex-shrink-0 flex border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
           <button
             onClick={() => setActiveTab("portfolio")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === "portfolio"
-                ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
-                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "portfolio"
+              ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              }`}
           >
             <Activity className="w-4 h-4" />
             Portfolio
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === "history"
-                ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
-                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "history"
+              ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              }`}
           >
             <History className="w-4 h-4" />
             History
@@ -128,7 +125,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
           ) : (
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-brand-emerald500 rounded-sm"></span>
+                <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                 Transaction History
               </h2>
               {transactions.length === 0 ? (
@@ -137,43 +134,45 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {transactions.map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-gray-200 font-medium text-sm">
-                          {tx.asset_name}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${
-                            tx.type === "settlement"
+                  {transactions.map((tx) => {
+                    const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
+                    return (
+                      <div
+                        key={tx.id}
+                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="text-gray-200 font-medium text-sm">
+                            {asset?.name || tx.asset_name || "Unknown Asset"}
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === "settlement"
                               ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                               : tx.direction === "buy"
-                              ? "bg-brand/10 text-brand border border-brand/20"
-                              : "bg-red-500/10 text-red-500 border border-red-500/20"
-                          }`}
-                        >
-                          {tx.type === "settlement" ? "Settled" : tx.direction}
-                        </span>
+                                ? "bg-[#005430] text-white border border-transparent"
+                                : "bg-red-500/10 text-red-500 border border-red-500/20"
+                              }`}
+                          >
+                            {tx.type === "settlement" ? "Settled" : tx.direction}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
+                          <span>
+                            {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
+                          </span>
+                          <span className="text-gray-500">
+                            {new Date(tx.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
+                          <span className="text-xs text-gray-500">Total</span>
+                          <span className="font-bold text-gray-300">
+                            ${tx.amount.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
-                        <span>
-                          {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
-                        </span>
-                        <span className="text-gray-500">
-                          {new Date(tx.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
-                        <span className="text-xs text-gray-500">Total</span>
-                        <span className="font-bold text-gray-300">
-                          ${tx.amount.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
