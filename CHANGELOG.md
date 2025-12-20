@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Legal & Compliance:** Added dedicated `Privacy Policy`, `Terms & Conditions`, and `Legal & Regulatory` pages.
 - **UI:** Implemented `AlertModal` for system-wide notifications and popups.
 - **UI:** Added `TermsConditionsModal` for in-app document viewing.
+- **Asset Page:** Implemented comprehensive Asset Detail Page with interactive charts, trade history, news feed, and instant Buy/Sell trading access.
 
 ### Changed
 - **Trade Slip:** Refactored trade execution flow to map to the new database structure.
@@ -29,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Infrastructure:** Reorganized Supabase migration files (moved legacy migrations to archive).
 - **Mobile UX:** Improved login button responsiveness on smaller screens.
 - **Config:** Updated environment configurations for database connection handling.
+
+### Fixed
+- **Navigation:** Fixed issue where clicking an asset in the league table did not navigate to the Asset Page.
 
 ## [2.17] - 2025-12-19
 ### Added

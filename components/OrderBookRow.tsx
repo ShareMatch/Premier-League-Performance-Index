@@ -43,7 +43,10 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
   return (
     <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
       {/* Asset name with responsive logo */}
-      <div className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0">
+      <div
+        className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
+        onClick={() => onViewAsset?.(team)}
+      >
         {logoUrl && !logoError ? (
           <div
             className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5 sm:p-1"
