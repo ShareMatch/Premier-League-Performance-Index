@@ -1053,7 +1053,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         onVerificationSuccess={handleWhatsAppVerificationSuccess}
         onVerifyCode={handleVerifyWhatsAppOtp}
         onResendCode={handleResendWhatsAppOtp}
-        isProfileUpdate={true}
       />
 
       <AlertModal

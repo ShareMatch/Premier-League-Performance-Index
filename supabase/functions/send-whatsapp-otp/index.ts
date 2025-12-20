@@ -37,7 +37,7 @@ serve(async (req: Request) => {
         if (!wabaApiKey) missingVars.push("WABA_API_KEY");
 
         if (missingVars.length > 0) {
-            console.error(`[send-whatsapp-otp] Missing required environment variables:`, missingVars);
+            console.error("Missing env vars:", missingVars);
             return new Response(
                 JSON.stringify({ error: "Server configuration error" }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -57,7 +57,6 @@ serve(async (req: Request) => {
         const forProfileChange = body.forProfileChange === true;
 
         if (!phone && !email) {
-            console.error(`[send-whatsapp-otp] Validation failed: Neither phone nor email provided`);
             return new Response(
                 JSON.stringify({ error: "Phone number or email is required." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -69,9 +68,9 @@ serve(async (req: Request) => {
             .from("users")
             .select(`
                 id,
-                email_otp_state:user_otp_verification!left(verified_at),
+                email_otp_state:user_otp_verification!inner(verified_at),
                 whatsapp_phone_e164,
-                whatsapp_otp_state:user_otp_verification!left(verified_at, otp_attempts)
+                whatsapp_otp_state:user_otp_verification!inner (verified_at, otp_attempts)
             `);
 
         if (email) {
@@ -79,16 +78,16 @@ serve(async (req: Request) => {
         } else if (phone) {
             query = query.eq("whatsapp_phone_e164", phone);
         }
-
+        
         // Filter the joined OTP state to the correct channels
         query = query
             .eq("email_otp_state.channel", "email")
             .eq("whatsapp_otp_state.channel", "whatsapp");
-
+        
         const { data: userData, error: fetchErr } = await query.limit(1).single();
 
         if (fetchErr || !userData) {
-            console.error(`[send-whatsapp-otp] User lookup failed:`, fetchErr);
+            console.error("User or OTP record not found:", fetchErr);
             return new Response(
                 JSON.stringify({ error: "User not found or verification record missing." }),
                 { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -99,10 +98,9 @@ serve(async (req: Request) => {
         const emailVerifiedAt = userData.email_otp_state?.[0]?.verified_at;
         const whatsappOtpState = userData.whatsapp_otp_state?.[0] || { verified_at: null, otp_attempts: 0 };
         const currentAttempts = whatsappOtpState.otp_attempts || 0;
-
+        
         // Check if email is verified first (uses new email verified location)
         if (!emailVerifiedAt) {
-            console.error(`[send-whatsapp-otp] Email not verified for user ${userId}`);
             return new Response(
                 JSON.stringify({ error: "Please verify your email first." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -112,7 +110,6 @@ serve(async (req: Request) => {
         // For profile changes, skip the "already verified" check and allow re-verification
         // For initial signup, block if already verified
         if (!forProfileChange && whatsappOtpState.verified_at) {
-            console.error(`[send-whatsapp-otp] WhatsApp already verified for user ${userId}`);
             return new Response(
                 JSON.stringify({ error: "WhatsApp number already verified." }),
                 { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -121,7 +118,6 @@ serve(async (req: Request) => {
 
         // For profile changes, reset attempts; otherwise enforce max attempts
         if (!forProfileChange && currentAttempts >= MAX_ATTEMPTS) {
-            console.error(`[send-whatsapp-otp] Max OTP attempts reached for user ${userId}: ${currentAttempts}/${MAX_ATTEMPTS}`);
             return new Response(
                 JSON.stringify({ error: "Maximum OTP attempts reached. Please contact support." }),
                 { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -134,21 +130,19 @@ serve(async (req: Request) => {
 
         // --- NEW LOGIC: UPSERT OTP state into user_otp_verification ---
         // For profile changes: reset verified_at and attempts
-        const upsertData = {
-            user_id: userId,
-            channel: "whatsapp",
-            otp_code: otpCode,
-            otp_expires_at: expiry,
-            otp_attempts: forProfileChange ? 1 : currentAttempts + 1,
-            verified_at: forProfileChange ? null : undefined, // Reset for profile change
-        };
-
         const { error: updateErr } = await supabase
             .from("user_otp_verification")
-            .upsert(upsertData, { onConflict: 'user_id, channel' }); // Conflict keys match the UNIQUE constraint
+            .upsert({
+                user_id: userId,
+                channel: "whatsapp",
+                otp_code: otpCode,
+                otp_expires_at: expiry,
+                otp_attempts: forProfileChange ? 1 : currentAttempts + 1,
+                verified_at: forProfileChange ? null : undefined, // Reset for profile change
+            }, { onConflict: 'user_id, channel' }); // Conflict keys match the UNIQUE constraint
 
         if (updateErr) {
-            console.error(`[send-whatsapp-otp] Error storing OTP in database for user ${userId}:`, updateErr);
+            console.error("Error storing OTP:", updateErr);
             return new Response(
                 JSON.stringify({ error: "Failed to generate OTP." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -159,7 +153,6 @@ serve(async (req: Request) => {
         const whatsappPhone = (forProfileChange && targetPhone) ? targetPhone : (userData.whatsapp_phone_e164 || phone);
 
         if (!whatsappPhone) {
-            console.error(`[send-whatsapp-otp] No WhatsApp phone number available for user ${userId}`);
             return new Response(
                 JSON.stringify({ error: "No WhatsApp phone number found." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -175,7 +168,6 @@ serve(async (req: Request) => {
         });
 
         if (!sendResult.ok) {
-            console.error(`[send-whatsapp-otp] WhatsApp API call failed for user ${userId}:`, sendResult.error);
             return new Response(
                 JSON.stringify({ error: "Failed to send WhatsApp message. Please try again." }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -194,9 +186,10 @@ serve(async (req: Request) => {
         );
 
     } catch (error: unknown) {
-        console.error(`[send-whatsapp-otp] Unexpected error:`, error instanceof Error ? error.message : String(error));
+        console.error("Error in send-whatsapp-otp:", error);
+        const message = error instanceof Error ? error.message : "Server error";
         return new Response(
-            JSON.stringify({ error: "Server error" }),
+            JSON.stringify({ error: message }),
             { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }

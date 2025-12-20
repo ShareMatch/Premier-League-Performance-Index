@@ -27,40 +27,44 @@ const Portfolio: React.FC<PortfolioProps> = ({
     return marketNames[market] || market;
   };
 
-    const holdings = useMemo(() => {
-        return portfolio.map((position) => {
-            // Find the asset from allAssets to get current price and market info
-            const asset = allAssets.find(a => a.market_trading_asset_id === position.market_trading_asset_id);
-
-            return {
-                ...position,
-                asset: asset,
-                currentPrice: asset?.bid || 0,
-                market: asset?.market || 'Unknown'
-            };
-        }).filter(h => h.quantity > 0);
-    }, [portfolio, allAssets]);
-
-    const handleRowClick = (holding: any) => {
-        // 1. Navigate to the market
-        if (holding.market && holding.market !== 'Unknown') {
-            onNavigate(holding.market as any);
-        }
-
-        // 2. Open the Transaction Slip (Default to Buy)
-        if (holding.asset) {
-            // When clicking a holding in the portfolio, default to SELL since user owns the asset
-            onSelectAsset(holding.asset, 'sell');
-        }
-    };
-
-    if (holdings.length === 0) {
-        return (
-            <div className="text-center text-gray-500 py-8 text-sm">
-                No active positions
-            </div>
+  const holdings = useMemo(() => {
+    return portfolio
+      .map((position) => {
+        // Find the asset from allAssets to get current price and market info
+        const asset = allAssets.find(
+          (a) => a.id.toString() === position.asset_id
         );
+
+        return {
+          ...position,
+          asset: asset,
+          currentPrice: asset?.bid || 0,
+          market: asset?.market || "Unknown",
+        };
+      })
+      .filter((h) => h.quantity > 0);
+  }, [portfolio, allAssets]);
+
+  const handleRowClick = (holding: any) => {
+    // 1. Navigate to the market
+    if (holding.market && holding.market !== "Unknown") {
+      onNavigate(holding.market as any);
     }
+
+    // 2. Open the Transaction Slip (Default to Buy)
+    if (holding.asset) {
+      // When clicking a holding in the portfolio, default to SELL since user owns the asset
+      onSelectAsset(holding.asset, "buy");
+    }
+  };
+
+  if (holdings.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-8 text-sm">
+        No active positions
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

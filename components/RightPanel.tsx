@@ -61,15 +61,15 @@ const RightPanel: React.FC<RightPanelProps> = ({
         {/* Trade Slip Section - Only visible when order selected */}
         {selectedOrder && (
           <div className="flex-shrink-0 p-4 border-b border-gray-800 bg-gray-800/30">
-              <TradeSlip
-                key={`${selectedOrder.team.id}-${selectedOrder.type}`}
-                order={{
-                  ...selectedOrder,
-                  holding:
-                    portfolio.find(
-                      (p) => p.market_trading_asset_id === selectedOrder.team.market_trading_asset_id
-                    )?.quantity || 0,
-                }}
+            <TradeSlip
+              key={`${selectedOrder.team.id}-${selectedOrder.type}`}
+              order={{
+                ...selectedOrder,
+                holding:
+                  portfolio.find(
+                    (p) => p.asset_id === selectedOrder.team.id.toString()
+                  )?.quantity || 0,
+              }}
               onClose={onCloseTradeSlip}
               onConfirm={onConfirmTrade}
               leagueName={leagueName}
@@ -137,20 +137,15 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {transactions.map((tx) => {
-                    // Find asset name from allAssets using market_trading_asset_id
-                    const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
-                    const assetName = asset?.name || asset?.team || `Asset ${tx.market_trading_asset_id}`;
-
-                    return (
-                      <div
-                        key={tx.id}
-                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="text-gray-200 font-medium text-sm">
-                            {assetName}
-                          </span>
+                  {transactions.map((tx) => (
+                    <div
+                      key={tx.id}
+                      className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-gray-200 font-medium text-sm">
+                          {tx.asset_name}
+                        </span>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${
                             tx.type === "settlement"
@@ -171,15 +166,14 @@ const RightPanel: React.FC<RightPanelProps> = ({
                           {new Date(tx.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
-                          <span className="text-xs text-gray-500">Total</span>
-                          <span className="font-bold text-gray-300">
-                            ${tx.amount.toFixed(2)}
-                          </span>
-                        </div>
+                      <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
+                        <span className="text-xs text-gray-500">Total</span>
+                        <span className="font-bold text-gray-300">
+                          ${tx.amount.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
-                    );
-                  })}
+                  ))}
                 </div>
               )}
             </div>

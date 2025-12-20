@@ -236,7 +236,6 @@ serve(async (req: Request) => {
         // --- 1. Create user in public.users table (Core Profile) ---
         const userPayload = {
             full_name: fullName,
-            display_name: fullName, // Set display_name as replica of full_name
             email,
             phone_e164: phone,
             whatsapp_phone_e164: whatsappPhone,
@@ -244,7 +243,7 @@ serve(async (req: Request) => {
             country,
             source_ip: sourceIp,
             // user_agent: userAgent, // Assuming this is kept
-            auth_user_id: authUserId,
+            auth_user_id: authUserId, 
         };
 
         const { data: userRow, error: userErr } = await supabase
