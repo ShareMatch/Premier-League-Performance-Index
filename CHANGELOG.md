@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.18] - 2025-12-20
+### Added
+- **Database & Architecture:** Major schema refactor and optimization (SCRUM-211).
+    - Restructured `assets` table and introduced new helper tables for improved scalability.
+    - Updated RLS (Row Level Security) policies across new tables.
+    - Optimized API endpoints to support the new data structure.
+- **Legal & Compliance:** Added dedicated `Privacy Policy`, `Terms & Conditions`, and `Legal & Regulatory` pages.
+- **UI:** Implemented `AlertModal` for system-wide notifications and popups.
+- **UI:** Added `TermsConditionsModal` for in-app document viewing.
+
+### Changed
+- **Trade Slip:** Refactored trade execution flow to map to the new database structure.
+- **Trade Slip:** Fixed toggle button functionality and responsiveness.
+- **Trade Slip:** Now dynamically updates price based on "Buy" (Offer) vs "Sell" (Bid) selection.
+- **Trade Slip:** "Asset - Buy" label text is now lighter green for better visibility.
+- **Portfolio:** Clicking a portfolio asset now defaults to "Buy" action (add to position) instead of "Sell".
+- **Responsive Layout:** Lowered Right Panel visibility breakpoint to 'xl' (1280px) to ensure Portfolio and Chatbot are visible on standard laptop screens.
+- **Sidebar:** Fixed active state styling for 'Eurovision' (and other Level 1 items) to use consistent high-contrast green background.
+- **Infrastructure:** Reorganized Supabase migration files (moved legacy migrations to archive).
+- **Mobile UX:** Improved login button responsiveness on smaller screens.
+- **Config:** Updated environment configurations for database connection handling.
+
 ## [2.17] - 2025-12-19
 ### Added
 - **AI Chatbot:** Integrated "ShareMatch AI" assistant with RAG capabilities for instant user support.

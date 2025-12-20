@@ -140,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                           ${(subItem as any).badge
                             ? 'cursor-not-allowed opacity-60 text-gray-400'
                             : subItem.active
-                              ? 'bg-brand-emerald500/10 text-brand-emerald500'
+                              ? 'bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20'
                               : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                           }
                         `}
