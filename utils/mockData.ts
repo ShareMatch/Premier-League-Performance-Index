@@ -7,11 +7,11 @@ export interface HistoryPoint {
 
 export const generateAssetHistory = (
     basePrice: number,
-    period: '1h' | '24h' | '7d' | 'All' = '24h'
+    period: '1h' | '24h' | '7d' | 'All' = '24h',
+    assetName?: string
 ): HistoryPoint[] => {
     const data: HistoryPoint[] = [];
     const now = new Date();
-    let currentPrice = basePrice;
 
     let interval = 15 * 60 * 1000; // 15 min default
     let points = 100;
@@ -40,35 +40,89 @@ export const generateAssetHistory = (
             break;
     }
 
+    // Special logic for Arsenal 'All' time chart to show rise from ~$30
+    const isArsenalAll = assetName === 'Arsenal' && period === 'All';
+    const startPrice = isArsenalAll ? 30 : basePrice * 0.8; // Start lower generally, but specifically 30 for Arsenal
+    const endPrice = basePrice;
+
     // Generate data going backwards from now
-    for (let i = points; i >= 0; i--) {
-        const time = new Date(now.getTime() - i * interval);
+    // If Arsenal All, we generate forward from start to get the trend right
+    if (isArsenalAll) {
+        for (let i = 0; i <= points; i++) {
+            // Calculate time: Start date (points days ago) + i days
+            const time = new Date(now.getTime() - (points - i) * interval);
 
-        // Random walk for price
-        const change = (Math.random() - 0.5) * (basePrice * volatility);
-        currentPrice += change;
+            // Linear trend from 30 to current basePrice
+            const trend = startPrice + ((endPrice - startPrice) * (i / points));
 
-        // Ensure positive price
-        currentPrice = Math.max(0.01, currentPrice);
+            // Add noise
+            const noise = (Math.random() - 0.5) * (basePrice * 0.1); // 10% volatility noise
 
-        // Random volume (spikes occasionally)
-        const isSpike = Math.random() > 0.9;
-        const baseVolume = 1000 + Math.random() * 5000;
-        const volume = isSpike ? baseVolume * (2 + Math.random() * 3) : baseVolume;
+            let price = trend + noise;
+            price = Math.max(0.01, price);
 
-        let timeLabel = '';
-        if (period === '1h' || period === '24h') {
-            timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        } else {
-            timeLabel = time.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            // Ensure the last point is close to current price
+            if (i === points) price = basePrice;
+
+            const baseVolume = 1000 + Math.random() * 5000;
+            const isSpike = Math.random() > 0.9;
+            const volume = isSpike ? baseVolume * (2 + Math.random() * 3) : baseVolume;
+
+            data.push({
+                time: time.toLocaleDateString([], { day: 'numeric', month: 'short' }),
+                price: Number(price.toFixed(3)),
+                volume: Math.floor(volume),
+                timestamp: time.getTime()
+            });
+        }
+    } else {
+        // Standard random walk backwards (existing logic)
+        let currentPrice = basePrice;
+        for (let i = 0; i < points; i++) { // Generate points backwards, but push to array (reversed later or handled by unshift)
+            // ... wait, existing logic was: for loop backwards, pushing to array. 
+            // Time: now - i * interval.
+            // Price: currentPrice += change (random walk backwards from NOW).
+            // This ensures chart ends at current price on the right.
         }
 
-        data.push({
-            time: timeLabel,
-            price: Number(currentPrice.toFixed(3)),
-            volume: Math.floor(volume),
-            timestamp: time.getTime()
-        });
+        // Let's rewrite standard logic clearly to ensure 'end' is 'now' and correct
+        currentPrice = basePrice;
+        for (let i = 0; i <= points; i++) {
+            const time = new Date(now.getTime() - i * interval);
+
+            // Random walk logic backwards
+            const change = (Math.random() - 0.5) * (basePrice * volatility);
+            currentPrice += change; // This effectively walks 'away' from current price into the past
+
+            // Re-calc to ensure positivity
+            currentPrice = Math.max(0.01, currentPrice);
+
+            // Random volume 
+            const isSpike = Math.random() > 0.9;
+            const baseVolume = 1000 + Math.random() * 5000;
+            const volume = isSpike ? baseVolume * (2 + Math.random() * 3) : baseVolume;
+
+            let timeLabel = '';
+            if (period === '1h' || period === '24h') {
+                timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else {
+                timeLabel = time.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            }
+
+            // We are generating backwards, so unshift to put earlier dates first
+            data.unshift({
+                time: timeLabel,
+                price: Number(currentPrice.toFixed(3)),
+                volume: Math.floor(volume),
+                timestamp: time.getTime()
+            });
+        }
+        // Fix last point to be exactly basePrice for consistency?
+        // The backwards walk starts at basePrice (i=0), so the LAST item in the array (which corresponds to i=0, time=now) IS basePrice + first random change. 
+        // Actually, let's force the last point (now) to be exactly basePrice.
+        if (data.length > 0) {
+            data[data.length - 1].price = basePrice;
+        }
     }
 
     return data;

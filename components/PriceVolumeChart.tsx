@@ -44,8 +44,8 @@ const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName, pe
                         </p>
                         {payload[1] && (
                             <p className="text-gray-300 flex justify-between gap-4">
-                                <span>Volume:</span>
-                                <span className="text-blue-400">{payload[1].value.toLocaleString()}</span>
+                                <span>Tokens Traded:</span>
+                                <span className="text-blue-400">{Math.floor(payload[1].value).toLocaleString()}</span>
                             </p>
                         )}
                     </div>

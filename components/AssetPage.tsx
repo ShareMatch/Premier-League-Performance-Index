@@ -22,8 +22,8 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     const chartData = useMemo(() => {
         // Determine base price roughly from current asset price
         const basePrice = asset.offer || 1.0;
-        return generateAssetHistory(basePrice, period);
-    }, [asset.id, asset.offer, period]);
+        return generateAssetHistory(basePrice, period, asset.name);
+    }, [asset.id, asset.offer, period, asset.name]);
 
     const tradeHistory = useMemo(() => {
         const basePrice = asset.offer || 1.0;
