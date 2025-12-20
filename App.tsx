@@ -427,12 +427,8 @@ const App: React.FC = () => {
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
-        // Validation: Cannot sell if not owned
-        if (maxQuantity <= 0) {
-          setSellErrorAssetName(team.name);
-          setShowSellErrorModal(true);
-          return;
-        }
+        setSellErrorAssetName(team.name);
+        setShowSellErrorModal(true);
         return;
       }
     }

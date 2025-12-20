@@ -45,7 +45,7 @@ const SellErrorModal: React.FC<SellErrorModalProps> = ({ isOpen, onClose, assetN
                             Action Not Permitted
                         </h2>
                         <p className="text-gray-300 leading-relaxed text-sm">
-                            You cannot sell <span className="text-white font-semibold">{assetName}</span> because you do not own any tokenised assets for this team.
+                            You cannot sell <span className="text-white font-semibold">{assetName}</span> because you do not own this tokenised asset.
                         </p>
                     </div>
 
