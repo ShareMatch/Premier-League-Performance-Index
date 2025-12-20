@@ -89,7 +89,7 @@ const Portfolio: React.FC<PortfolioProps> = ({
           </div>
           <div className="text-right">
             <div className="text-sm bg-[#005430] text-white px-2 py-0.5 rounded font-bold inline-block">
-              ${(holding.quantity * holding.currentPrice).toFixed(2)}
+              ${(holding.quantity * holding.currentPrice).toFixed(1)}
             </div>
             <div className="text-[10px] text-gray-500">
               @ ${holding.currentPrice.toFixed(1)}

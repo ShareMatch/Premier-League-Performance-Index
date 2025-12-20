@@ -77,7 +77,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end mr-2">
-                        <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(2)}</span>
+                        <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
                         <span className="text-xs text-brand-emerald500 font-medium flex items-center gap-1">
                             +{(Math.random() * 5).toFixed(2)}% (24h)
                         </span>
@@ -160,7 +160,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-400">All Time High</span>
-                                <span className="text-white font-mono">$4.20</span>
+                                <span className="text-white font-mono">$4.2</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-400">Total Supply</span>

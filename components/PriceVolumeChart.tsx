@@ -40,8 +40,7 @@ const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName, pe
                     <p className="text-gray-400 mb-1">{label}</p>
                     <div className="flex flex-col gap-1">
                         <p className="text-white font-bold flex justify-between gap-4">
-                            <span>Price:</span>
-                            <span className="text-[#00A651]">${payload[0].value.toFixed(3)}</span>
+                            <span className="text-[#00A651]">${Number(payload[0].value).toFixed(1)}</span>
                         </p>
                         {payload[1] && (
                             <p className="text-gray-300 flex justify-between gap-4">
@@ -103,7 +102,7 @@ const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName, pe
                             tick={{ fill: '#9ca3af', fontSize: 11 }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(val) => val.toFixed(2)}
+                            tickFormatter={(val) => `$${Number(val).toFixed(1)}`}
                         />
                         {/* Volume Y Axis (Hidden or Right aligned, scaled down) */}
                         <YAxis
