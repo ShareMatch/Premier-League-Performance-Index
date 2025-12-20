@@ -42,6 +42,7 @@ interface TopBarProps {
   allAssets?: Team[];
   onOpenSettings?: () => void;
   onOpenPortfolio?: () => void;
+  onViewAsset?: (asset: Team) => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -78,6 +79,7 @@ const TopBar: React.FC<TopBarProps> = ({
   allAssets = [],
   onOpenSettings,
   onOpenPortfolio,
+  onViewAsset,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -132,7 +134,11 @@ const TopBar: React.FC<TopBarProps> = ({
   }, [searchQuery, allAssets]);
 
   const handleSearchResultClick = (asset: Team) => {
-    if (asset.market && onNavigate) {
+    if (onViewAsset) {
+      onViewAsset(asset);
+      setSearchQuery("");
+      setSearchResults([]);
+    } else if (asset.market && onNavigate) {
       onNavigate(asset.market as League);
       setSearchQuery("");
       setSearchResults([]);
@@ -435,8 +441,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   <button
                     onClick={startListening}
                     className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
-                        ? "text-[#005430]"
-                        : "text-gray-400 hover:text-gray-200"
+                      ? "text-[#005430]"
+                      : "text-gray-400 hover:text-gray-200"
                       }`}
                   >
                     <Mic className="h-4 w-4" />

@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Portfolio:** Clicking a portfolio asset now defaults to "Buy" action (add to position) instead of "Sell".
 - **Responsive Layout:** Lowered Right Panel visibility breakpoint to 'xl' (1280px) to ensure Portfolio and Chatbot are visible on standard laptop screens.
 - **Sidebar:** Fixed active state styling for 'Eurovision' (and other Level 1 items) to use consistent high-contrast green background.
+- **Portfolio/History:** Fixed missing asset names and updated green usage to be consistent (white text on green background).
+- **Search:** Updated search bar placeholder text to 'Find assets and indices...' to better reflect available data.
+- **Alerts:** Refined 'Sell Error' and 'AI Analytics' alerts to use consistent premium styling and updated terminology (removed "team", used "tokenised assets").
 - **Infrastructure:** Reorganized Supabase migration files (moved legacy migrations to archive).
 - **Mobile UX:** Improved login button responsiveness on smaller screens.
 - **Config:** Updated environment configurations for database connection handling.

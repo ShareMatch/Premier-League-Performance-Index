@@ -42,12 +42,15 @@ import SellErrorModal from "./components/SellErrorModal";
 import MyDetailsPage from "./components/mydetails/MyDetailsPage";
 import ChatBot from "./components/chatbot/frontend/ChatBot";
 import AlertModal from "./components/AlertModal";
+import AssetPage from "./components/AssetPage";
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
   const [activeLeague, setActiveLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'asset'>('dashboard');
+  const [viewAsset, setViewAsset] = useState<Team | null>(null);
 
   // Supabase State
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -298,6 +301,16 @@ const App: React.FC = () => {
     // The modal will be hidden next time they open the app if approved
   };
 
+
+
+  const handleViewAsset = (asset: Team) => {
+    setViewAsset(asset);
+    setCurrentView('asset');
+    setIsMobileMenuOpen(false); // Close menu if open
+    // Scroll to top
+    window.scrollTo(0, 0);
+  };
+
   // Handle KYC modal close - re-check status in case user completed KYC
   const handleKycModalClose = async () => {
     setShowKycModal(false);
@@ -371,6 +384,11 @@ const App: React.FC = () => {
   }, [activeLeague, allAssets]);
 
   const handleNavigate = (league: League) => {
+    // Reset view to dashboard when navigating
+    setCurrentView('dashboard');
+    setViewAsset(null);
+    setIsMobileMenuOpen(false);
+
     if (league === "AI_ANALYTICS") {
       if (!user) {
         setAlertMessage("Please login to access the AI Analytics Engine.");
@@ -561,6 +579,7 @@ const App: React.FC = () => {
             setShowRightPanel(true);
             setIsMobileMenuOpen(false); // Close left sidebar when opening right panel
           }}
+          onViewAsset={handleViewAsset}
         />
 
         {/* AI Analytics Banner */}
@@ -592,10 +611,20 @@ const App: React.FC = () => {
                   }`}
               >
                 <div className="max-w-5xl mx-auto h-full flex flex-col">
-                  {activeLeague === "HOME" ? (
+                  {currentView === 'asset' && viewAsset ? (
+                    <AssetPage
+                      asset={viewAsset}
+                      onBack={() => {
+                        setCurrentView('dashboard');
+                        setViewAsset(null);
+                      }}
+                      onSelectOrder={handleSelectOrder}
+                    />
+                  ) : activeLeague === "HOME" ? (
                     <HomeDashboard
                       onNavigate={handleNavigate}
                       teams={allAssets}
+                      onViewAsset={handleViewAsset}
                     />
                   ) : activeLeague === "AI_ANALYTICS" ? (
                     <React.Suspense
@@ -636,6 +665,7 @@ const App: React.FC = () => {
                                 key={team.id}
                                 team={team}
                                 onSelectOrder={handleSelectOrder}
+                                onViewAsset={handleViewAsset}
                               />
                             ))}
                           </div>

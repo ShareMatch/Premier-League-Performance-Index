@@ -7,9 +7,10 @@ import { getLogoUrl } from '../lib/logoHelper';
 interface OrderBookRowProps {
   team: Team;
   onSelectOrder: (team: Team, type: 'buy' | 'sell') => void;
+  onViewAsset?: (team: Team) => void;
 }
 
-const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
+const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onViewAsset }) => {
   const [flash, setFlash] = useState<'up' | 'down' | 'none'>('none');
   const [logoError, setLogoError] = useState(false);
 
@@ -44,7 +45,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder }) => {
       {/* Asset name with responsive logo */}
       <div className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0">
         {logoUrl && !logoError ? (
-          <div 
+          <div
             className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5 sm:p-1"
           >
             <img
