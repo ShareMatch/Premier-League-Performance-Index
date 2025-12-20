@@ -13,13 +13,16 @@ interface AssetPageProps {
 }
 
 const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) => {
+    const [period, setPeriod] = useState<'1h' | '24h' | '7d' | 'All'>('24h');
+    const [isFavorite, setIsFavorite] = useState(false);
+
     // Generate consistent mock data based on asset ID 
     // (In a real app this would be fetched)
     const chartData = useMemo(() => {
         // Determine base price roughly from current asset price
         const basePrice = asset.offer || 1.0;
-        return generateAssetHistory(basePrice);
-    }, [asset.id, asset.offer]);
+        return generateAssetHistory(basePrice, period);
+    }, [asset.id, asset.offer, period]);
 
     const tradeHistory = useMemo(() => {
         const basePrice = asset.offer || 1.0;
@@ -32,6 +35,13 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
         const index = asset.name.length % colors.length;
         return colors[index];
     }, [asset.name]);
+
+    const handleShare = () => {
+        // Mock share - just copy title to clipboard
+        navigator.clipboard.writeText(`Check out ${asset.name} on ShareMatch!`);
+        alert('Link copied to clipboard!');
+        // In a real app, use a proper toast notification
+    };
 
     return (
         <div className="flex flex-col h-full bg-[#040B11] animate-in fade-in duration-300 overflow-y-auto">
@@ -90,10 +100,16 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <div className="h-8 w-px bg-gray-700 mx-2"></div>
 
                     <div className="flex gap-1">
-                        <button className="p-2 text-gray-400 hover:text-brand-emerald500 hover:bg-gray-800 rounded-lg transition-colors">
-                            <Star className="w-5 h-5" />
+                        <button
+                            onClick={() => setIsFavorite(!isFavorite)}
+                            className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                        >
+                            <Star className={`w-5 h-5 ${isFavorite ? 'fill-yellow-400' : ''}`} />
                         </button>
-                        <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <button
+                            onClick={handleShare}
+                            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                        >
                             <Share2 className="w-5 h-5" />
                         </button>
                     </div>
@@ -105,7 +121,12 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                 {/* Left Column: Charts (2/3 width) */}
                 <div className="lg:col-span-2 space-y-6">
-                    <PriceVolumeChart data={chartData} assetName={asset.name} />
+                    <PriceVolumeChart
+                        data={chartData}
+                        assetName={asset.name}
+                        period={period}
+                        onPeriodChange={setPeriod}
+                    />
 
                     {/* News Section */}
                     <div className="mt-8">
@@ -116,7 +137,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     for now standard feed or if NewsFeed supports filtering we use it. 
                     Adding a wrapper to constrain height if needed. */}
                         <div className="bg-[#02060a] border border-gray-800 rounded-xl overflow-hidden">
-                            <NewsFeed className="min-h-[400px]" />
+                            <NewsFeed className="min-h-[400px]" topic={asset.name} />
                         </div>
                     </div>
                 </div>

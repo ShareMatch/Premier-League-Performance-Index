@@ -16,9 +16,11 @@ import { HistoryPoint } from '../utils/mockData';
 interface PriceVolumeChartProps {
     data: HistoryPoint[];
     assetName: string;
+    period: '1h' | '24h' | '7d' | 'All';
+    onPeriodChange: (p: '1h' | '24h' | '7d' | 'All') => void;
 }
 
-const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName }) => {
+const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName, period, onPeriodChange }) => {
 
     const minPrice = useMemo(() => Math.min(...data.map(d => d.price)) * 0.95, [data]);
     const maxPrice = useMemo(() => Math.max(...data.map(d => d.price)) * 1.05, [data]);
@@ -62,10 +64,11 @@ const PriceVolumeChart: React.FC<PriceVolumeChartProps> = ({ data, assetName }) 
                     Price/Volume over time
                 </h3>
                 <div className="flex gap-2">
-                    {['1h', '24h', '7d', 'All'].map((p) => (
+                    {(['1h', '24h', '7d', 'All'] as const).map((p) => (
                         <button
                             key={p}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${p === '24h'
+                            onClick={() => onPeriodChange(p)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${period === p
                                 ? 'bg-[#005430] text-white'
                                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
                         >

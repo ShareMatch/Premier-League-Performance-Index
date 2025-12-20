@@ -38,7 +38,7 @@ const isHaram = (text: string): boolean => {
 };
 
 interface NewsFeedProps {
-    topic?: 'EPL' | 'UCL' | 'SPL' | 'WC' | 'F1' | 'NBA' | 'NFL' | 'Eurovision' | 'Global';
+    topic?: string;
     showHeader?: boolean;
     className?: string;
 }
