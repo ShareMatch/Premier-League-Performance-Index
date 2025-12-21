@@ -694,37 +694,37 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
-            {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
-            {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
-            <div
-              className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
-                showRightPanel ? "translate-x-0" : "translate-x-full"
-              }`}
-            >
-              <RightPanel
-                portfolio={portfolio}
-                transactions={transactions}
-                selectedOrder={selectedOrder}
-                onCloseTradeSlip={() => setSelectedOrder(null)}
-                onConfirmTrade={handleConfirmTrade}
-                allAssets={allAssets}
-                onNavigate={handleNavigate}
-                onSelectOrder={handleSelectOrder}
-                leagueName={
-                  selectedOrder && selectedOrder.team.market
-                    ? getLeagueTitle(selectedOrder.team.market)
-                    : getLeagueTitle(activeLeague)
-                }
-                walletBalance={wallet?.balance || 0}
-                onClose={() => {
-                  setShowRightPanel(false);
-                  setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
-                }}
-                isMobile={true}
-              />
-            </div>
           </div>
+        </div>
+
+        {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+        {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
+        <div
+          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
+            showRightPanel ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <RightPanel
+            portfolio={portfolio}
+            transactions={transactions}
+            selectedOrder={selectedOrder}
+            onCloseTradeSlip={() => setSelectedOrder(null)}
+            onConfirmTrade={handleConfirmTrade}
+            allAssets={allAssets}
+            onNavigate={handleNavigate}
+            onSelectOrder={handleSelectOrder}
+            leagueName={
+              selectedOrder && selectedOrder.team.market
+                ? getLeagueTitle(selectedOrder.team.market)
+                : getLeagueTitle(activeLeague)
+            }
+            walletBalance={wallet?.balance || 0}
+            onClose={() => {
+              setShowRightPanel(false);
+              setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+            }}
+            isMobile={true}
+          />
         </div>
 
         {/* Overlay for mobile menu */}
