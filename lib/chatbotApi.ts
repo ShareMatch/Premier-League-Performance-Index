@@ -28,7 +28,7 @@ export interface ChatResponse {
  */
 export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
   try {
-    return await sendViaSupabase(request);
+      return await sendViaSupabase(request);
   } catch (error) {
     console.error('Chatbot API error:', error);
     
@@ -78,7 +78,7 @@ async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
  */
 export const checkChatbotHealth = async (): Promise<boolean> => {
   // Supabase Edge Functions are always "available"
-  return true;
+      return true;
 };
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, User, Play } from 'lucide-react';
+import { Sparkles, User } from 'lucide-react';
 
 export interface VideoInfo {
   id: string;
@@ -19,6 +19,84 @@ interface ChatMessageProps {
   message: Message;
 }
 
+/**
+ * Parse inline markdown (bold, italic) and render as React elements
+ */
+const parseInlineMarkdown = (text: string): React.ReactNode => {
+  // Pattern to match **bold** and *italic*
+  const parts: React.ReactNode[] = [];
+  let remaining = text;
+  let keyIndex = 0;
+  
+  while (remaining.length > 0) {
+    // Check for bold: **text**
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+    
+    if (boldMatch && boldMatch.index !== undefined) {
+      // Add text before the match
+      if (boldMatch.index > 0) {
+        parts.push(<span key={keyIndex++}>{remaining.substring(0, boldMatch.index)}</span>);
+      }
+      // Add the bold text
+      parts.push(<strong key={keyIndex++} className="font-semibold text-white">{boldMatch[1]}</strong>);
+      // Continue with the rest
+      remaining = remaining.substring(boldMatch.index + boldMatch[0].length);
+    } else {
+      // No more matches, add remaining text
+      parts.push(<span key={keyIndex++}>{remaining}</span>);
+      break;
+    }
+  }
+  
+  return parts.length > 0 ? <>{parts}</> : text;
+};
+
+/**
+ * Render message content with proper formatting
+ * Handles: newlines, bullet points (- or •), numbered lists (1. 2. etc.), bold text
+ */
+const renderFormattedContent = (content: string): React.ReactNode => {
+  // Split by newlines
+  const lines = content.split('\n');
+  
+  return (
+    <div className="leading-relaxed space-y-1">
+      {lines.map((line, index) => {
+        const trimmedLine = line.trim();
+        
+        // Skip empty lines but add spacing
+        if (!trimmedLine) {
+          return <div key={index} className="h-1" />;
+        }
+        
+        // Check for bullet points (- or •)
+        if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('• ')) {
+          return (
+            <div key={index} className="flex gap-2 pl-2">
+              <span className="text-[#00A651] flex-shrink-0">•</span>
+              <span>{parseInlineMarkdown(trimmedLine.substring(2))}</span>
+            </div>
+          );
+        }
+        
+        // Check for numbered lists (1. 2. 3. etc.)
+        const numberedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
+        if (numberedMatch) {
+          return (
+            <div key={index} className="flex gap-2 pl-2">
+              <span className="text-[#00A651] flex-shrink-0 min-w-[1.2em]">{numberedMatch[1]}.</span>
+              <span>{parseInlineMarkdown(numberedMatch[2])}</span>
+            </div>
+          );
+        }
+        
+        // Regular paragraph
+        return <p key={index}>{parseInlineMarkdown(trimmedLine)}</p>;
+      })}
+    </div>
+  );
+};
+
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isBot = message.sender === 'bot';
 
@@ -37,15 +115,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             : 'bg-[#00A651] text-white rounded-tr-sm'
         }`}
       >
-        <p className="leading-relaxed">{message.content}</p>
+        {isBot ? renderFormattedContent(message.content) : <p className="leading-relaxed">{message.content}</p>}
         
         {/* Video Embed */}
         {isBot && message.video && (
           <div className="mt-2 sm:mt-3">
-            <div className="flex items-center gap-1.5 mb-1.5 text-[#00A651]">
-              <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs font-medium">{message.video.title}</span>
-            </div>
             <div className="rounded-lg overflow-hidden border border-gray-600/50">
               <iframe
                 src={message.video.url}
