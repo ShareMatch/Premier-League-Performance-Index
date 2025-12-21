@@ -89,6 +89,35 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
+  // Lock body scroll when mobile panel is open (prevents iOS Safari scroll issues)
+  useEffect(() => {
+    if (showRightPanel) {
+      // Lock scroll on body
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      // Restore scroll
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, [showRightPanel]);
+
   // My Details Page visibility - check URL hash on initial load
   const [showMyDetails, setShowMyDetails] = useState(() => {
     return window.location.hash === "#my-details";
@@ -566,7 +595,7 @@ const App: React.FC = () => {
       warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
       enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
-      <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      <div className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
         {/* Top Bar - Full Width */}
         <TopBar
           wallet={wallet}
@@ -728,6 +757,37 @@ const App: React.FC = () => {
               />
             </div>
 
+          </div>
+        </div>
+
+        {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+        {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
+        <div
+          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
+            showRightPanel ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <RightPanel
+            portfolio={portfolio}
+            transactions={transactions}
+            selectedOrder={selectedOrder}
+            onCloseTradeSlip={() => setSelectedOrder(null)}
+            onConfirmTrade={handleConfirmTrade}
+            allAssets={allAssets}
+            onNavigate={handleNavigate}
+            onSelectOrder={handleSelectOrder}
+            leagueName={
+              selectedOrder && selectedOrder.team.market
+                ? getLeagueTitle(selectedOrder.team.market)
+                : getLeagueTitle(activeLeague)
+            }
+            walletBalance={wallet?.balance || 0}
+            onClose={() => {
+              setShowRightPanel(false);
+              setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+            }}
+            isMobile={true}
+          />
             {/* Mobile/Tablet: Slide-out panel (visible below xl/1280px) */}
             {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
             {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
@@ -771,11 +831,13 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
+            className="fixed inset-0 bg-black/50 z-30 2xl:hidden touch-none"
             className="fixed inset-0 bg-black/50 z-30 xl:hidden"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
             }}
+            onTouchMove={(e) => e.preventDefault()}
           />
         )}
 

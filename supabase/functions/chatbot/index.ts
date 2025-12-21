@@ -10,6 +10,98 @@ interface ChatRequest {
   conversation_id?: string;
 }
 
+// Video metadata mapping
+const VIDEO_METADATA: {
+  [key: string]: {
+    url: string;
+    title: string;
+    intro: string;
+  };
+} = {
+  login: {
+    url: "https://embed.app.guidde.com/playbooks/cSwQxFSnf4efCA6UrQyoDt?mode=videoOnly",
+    title: "How to Login to ShareMatch",
+    intro: "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
+  },
+  signup: {
+    url: "https://embed.app.guidde.com/playbooks/cx22MbGZG6VH96ndhsZpWs?mode=videoOnly",
+    title: "How to Sign Up for ShareMatch",
+    intro: "I've got a helpful video that will guide you through the signup process step by step.",
+  },
+  kyc: {
+    url: "https://embed.app.guidde.com/playbooks/9d9K7U5U5jVdTuUZgw5S95?mode=videoOnly",
+    title: "How to Complete KYC Verification on ShareMatch",
+    intro: "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
+  },
+};
+
+/**
+ * Classify user intent using LLM
+ * Returns: { wantsVideo: boolean, videoTopic: "login" | "signup" | "kyc" | null }
+ */
+async function classifyIntent(
+  query: string,
+  groqApiKey: string
+): Promise<{ wantsVideo: boolean; videoTopic: string | null }> {
+  const classificationPrompt = `You are an intent classifier. Analyze the user's question and determine:
+1. Does the user want a step-by-step tutorial/guide (visual walkthrough)?
+2. If yes, which topic: login, signup, or kyc (identity verification)?
+
+TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for"
+INFORMATION indicators: "what is", "explain", "tell me about", "describe", "why", "when"
+
+Respond with ONLY valid JSON (no markdown, no explanation):
+{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|null}
+
+Examples:
+- "how do I sign up?" → {"wantsVideo": true, "videoTopic": "signup"}
+- "what is the signup flow?" → {"wantsVideo": false, "videoTopic": null}
+- "show me how to login" → {"wantsVideo": true, "videoTopic": "login"}
+- "what is ShareMatch?" → {"wantsVideo": false, "videoTopic": null}
+- "how to verify my identity" → {"wantsVideo": true, "videoTopic": "kyc"}
+- "explain the KYC process" → {"wantsVideo": false, "videoTopic": null}
+
+User question: "${query}"`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${groqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "user", content: classificationPrompt }
+        ],
+        temperature: 0,
+        max_tokens: 50,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Intent classification failed, defaulting to no video");
+      return { wantsVideo: false, videoTopic: null };
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content?.trim() || "";
+    
+    console.log(`🧠 Intent classification raw response: ${content}`);
+    
+    // Parse JSON response
+    const parsed = JSON.parse(content);
+    return {
+      wantsVideo: parsed.wantsVideo === true,
+      videoTopic: parsed.videoTopic || null,
+    };
+  } catch (error) {
+    console.error("Intent classification error:", error);
+    return { wantsVideo: false, videoTopic: null };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -26,7 +118,7 @@ serve(async (req) => {
       );
     }
 
-    // Get ALL API keys INSIDE the request handler
+    // Get API keys
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
     const hfToken = Deno.env.get("HF_TOKEN");
     const chromaApiKey = Deno.env.get("CHROMA_API_KEY");
@@ -34,7 +126,6 @@ serve(async (req) => {
     const chromaDatabase = Deno.env.get("CHROMA_DATABASE") || "Prod";
     const chromaCollection = Deno.env.get("CHROMA_COLLECTION") || "sharematch_faq";
 
-    // Debug logging
     console.log("=== CONFIG CHECK ===");
     console.log("GROQ_API_KEY:", groqApiKey ? "✓ SET" : "✗ MISSING");
     console.log("HF_TOKEN:", hfToken ? "✓ SET" : "✗ MISSING");
@@ -49,7 +140,39 @@ serve(async (req) => {
     if (!chromaApiKey) throw new Error("CHROMA_API_KEY not configured");
     if (!chromaTenant) throw new Error("CHROMA_TENANT not configured");
 
-    // Step 1: Generate embedding using HuggingFace
+    // Step 0: Intent Classification using LLM
+    // Determine if user wants a video tutorial or information
+    console.log("Step 0: Classifying user intent...");
+    const intent = await classifyIntent(message, groqApiKey);
+    console.log(`🧠 Intent: wantsVideo=${intent.wantsVideo}, topic=${intent.videoTopic}`);
+    
+    // If user wants a video tutorial, return it immediately
+    if (intent.wantsVideo && intent.videoTopic) {
+      const videoInfo = VIDEO_METADATA[intent.videoTopic];
+      if (videoInfo) {
+        console.log(`🎬 Returning video tutorial: ${intent.videoTopic}`);
+        const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+        
+        return new Response(
+          JSON.stringify({
+            message: videoInfo.intro,
+            conversation_id: convId,
+            video: {
+              id: intent.videoTopic,
+              url: videoInfo.url,
+              title: videoInfo.title,
+            },
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+    
+    console.log("📝 User wants information, proceeding with RAG...");
+
+    // Step 1: Generate embedding
     console.log("Step 1: Generating embedding...");
     
     const embeddingResponse = await fetch(
@@ -95,24 +218,16 @@ serve(async (req) => {
     
     console.log("✓ Embedding generated, dimension:", queryEmbedding.length);
 
-    // Step 2: Query Chroma Cloud via REST API
+    // Step 2: Query Chroma Cloud
     console.log("Step 2: Querying Chroma Cloud...");
     
-    let context = "";
-    
-    // Chroma Cloud REST API headers
-    // Try multiple auth formats to find which one works
     const chromaHeaders = {
       "Content-Type": "application/json",
-      "X-Chroma-Token": chromaApiKey,  // Primary auth method
+      "X-Chroma-Token": chromaApiKey,
     };
     
-    console.log("Using API key (first 10 chars):", chromaApiKey?.substring(0, 10) + "...");
-    
-    try {
-      // Get collection ID first
+    // Get collection ID
       const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
-      console.log("Fetching collection from:", collectionUrl);
       
       const collectionsResponse = await fetch(collectionUrl, {
         method: "GET",
@@ -137,7 +252,7 @@ serve(async (req) => {
         body: JSON.stringify({
           query_embeddings: [queryEmbedding],
           n_results: 4,
-          include: ["documents"],
+        include: ["documents"], // Only need documents for RAG context
         }),
       });
 
@@ -149,31 +264,43 @@ serve(async (req) => {
       
       const queryData = await queryResponse.json();
       const documents = queryData.documents?.[0] || [];
-      context = documents.join("\n\n");
+    
       console.log("✓ Found", documents.length, "documents");
-      console.log("Context preview:", context.substring(0, 300));
-      
-    } catch (chromaError) {
-      console.error("Chroma error:", chromaError);
-      context = "";
-    }
-    
-    // Default context if no results
-    if (!context) {
-      console.log("⚠ No context found, using default");
-      context = "No specific information found in the knowledge base.";
-    }
 
-    // Step 3: Call Groq LLM with context
-    console.log("Step 3: Calling Groq LLM...");
+    // Step 3: Generate response using RAG (intent classification already handled video requests)
+    console.log("Step 3: Generating RAG response...");
     
+    const context = documents.join("\n\n") || "No specific information found in the knowledge base.";
+    
+    // Call Groq LLM
     const systemPrompt = `You are ShareMatch AI, the official assistant for the ShareMatch platform.
+
+COMMUNICATION STYLE:
+- Speak naturally and directly, as if you inherently know this information
+- Answer confidently as the authoritative source on ShareMatch
+- Be conversational but professional
+
+HANDLING UNCLEAR QUESTIONS (CRITICAL):
+- If the user sends a vague message like "huh?", "what?", "again?", "??", or similar:
+  → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
+- If the user asks you to repeat something:
+  → Politely ask what specific part they'd like explained: "Which part would you like me to explain further?"
+- NEVER dump raw text or repeat the same long response
+- NEVER output raw context chunks or document text
 
 STRICT RULES:
 1. Answer ONLY using the CONTEXT below. Do NOT make up information.
-2. If the answer is not in the context, say: "I don't have that specific information. Please contact support@sharematch.com"
-3. Be concise and accurate.
-4. Use exact terms from the context.
+2. Keep responses concise and focused on what the user asked.
+3. If the answer is not in the context, say: "I don't have that specific information. Please contact hello@sharematch.me"
+4. Use exact terms and definitions from the context.
+5. NEVER use phrases like "according to the context", "based on the provided information", "from the documents", or "the context states"
+6. NEVER output raw document text, chunks, or unformatted context data.
+
+FORMATTING RULES:
+When presenting lists or multiple features:
+- Put EACH item on its OWN LINE
+- Use bullet points with dashes (-)
+- Keep each bullet point concise
 
 CONTEXT:
 ${context}`;
@@ -210,7 +337,6 @@ ${context}`;
     const groqData = await groqResponse.json();
     const aiMessage = groqData.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
-    // Generate conversation ID if not provided
     const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
 
     return new Response(
