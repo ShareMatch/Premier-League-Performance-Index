@@ -1,25 +1,26 @@
 /**
  * Chatbot API - Frontend client for the RAG chatbot
  * 
- * Supports two modes:
- * 1. Production: Supabase Edge Function (default)
- * 2. Development: Local Python backend
+ * Uses Supabase Edge Function for all environments
  */
 
 import { supabase } from './supabase';
-
-// Use Supabase Edge Function in production, local backend in development
-const USE_SUPABASE_FUNCTION = import.meta.env.PROD || import.meta.env.VITE_USE_SUPABASE_CHATBOT === 'true';
-const LOCAL_BACKEND_URL = import.meta.env.VITE_CHATBOT_API_URL || 'http://localhost:8000';
 
 export interface ChatRequest {
   message: string;
   conversationId?: string;
 }
 
+export interface VideoInfo {
+  id: string;
+  url: string;
+  title: string;
+}
+
 export interface ChatResponse {
   message: string;
   conversationId: string;
+  video?: VideoInfo;
 }
 
 /**
@@ -27,13 +28,7 @@ export interface ChatResponse {
  */
 export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
   try {
-    if (USE_SUPABASE_FUNCTION) {
-      // Production: Use Supabase Edge Function
-      return await sendViaSupabase(request);
-    } else {
-      // Development: Use local Python backend
-      return await sendViaLocalBackend(request);
-    }
+    return await sendViaSupabase(request);
   } catch (error) {
     console.error('Chatbot API error:', error);
     
@@ -50,7 +45,7 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
 };
 
 /**
- * Send message via Supabase Edge Function (Production)
+ * Send message via Supabase Edge Function
  */
 async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
   const { data, error } = await supabase.functions.invoke('chatbot', {
@@ -65,59 +60,25 @@ async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
     throw new Error(error.message || 'Failed to get response from AI');
   }
 
-  return {
+  const response: ChatResponse = {
     message: data.message,
     conversationId: data.conversation_id,
   };
-}
 
-/**
- * Send message via local Python backend (Development)
- */
-async function sendViaLocalBackend(request: ChatRequest): Promise<ChatResponse> {
-  const response = await fetch(`${LOCAL_BACKEND_URL}/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: request.message,
-      conversation_id: request.conversationId,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+  // Include video if present
+  if (data.video) {
+    response.video = data.video;
   }
 
-  const data = await response.json();
-  
-  return {
-    message: data.message,
-    conversationId: data.conversation_id,
-  };
+  return response;
 }
 
 /**
  * Check if the chatbot backend is healthy
  */
 export const checkChatbotHealth = async (): Promise<boolean> => {
-  try {
-    if (USE_SUPABASE_FUNCTION) {
-      // For Supabase, just return true (functions are always "available")
-      return true;
-    }
-    
-    const response = await fetch(`${LOCAL_BACKEND_URL}/health`);
-    if (response.ok) {
-      const data = await response.json();
-      return data.status === 'ok' && data.rag_initialized;
-    }
-    return false;
-  } catch {
-    return false;
-  }
+  // Supabase Edge Functions are always "available"
+  return true;
 };
 
 /**
@@ -125,13 +86,4 @@ export const checkChatbotHealth = async (): Promise<boolean> => {
  */
 export const clearConversation = async (): Promise<void> => {
   // Currently conversations are stateless, but this is here for future use
-  if (!USE_SUPABASE_FUNCTION) {
-    try {
-      await fetch(`${LOCAL_BACKEND_URL}/clear`, {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Failed to clear conversation:', error);
-    }
-  }
 };

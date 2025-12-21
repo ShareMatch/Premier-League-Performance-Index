@@ -45,6 +45,7 @@ const ChatBot: React.FC = () => {
         content: response.message,
         sender: 'bot',
         timestamp: new Date(),
+        video: response.video,
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
@@ -116,7 +117,7 @@ const ChatBot: React.FC = () => {
                 <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#00A651]" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-xs sm:text-sm">ShareMatch AI</h3>
+                <h3 className="text-white font-semibold text-xs sm:text-sm">ShareMatch AI Assistant</h3>
                 <span className="text-[9px] sm:text-[10px] text-green-400 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                   Online
