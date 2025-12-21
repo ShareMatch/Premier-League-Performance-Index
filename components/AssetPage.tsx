@@ -170,9 +170,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                         </div>
                     </div>
 
-                    import OnThisDay from "./OnThisDay"; // Add import at top (assumed separate step or handle logic)
 
-                    // ...
 
                     {/* Did You Know Module */}
                     <DidYouKnow assetName={asset.name} market={asset.market} />
