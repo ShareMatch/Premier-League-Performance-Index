@@ -109,7 +109,7 @@ export const getPublicUserId = async (authUserId: string, userEmail?: string): P
                 .select('id')
                 .eq('email', userEmail.toLowerCase())
                 .maybeSingle();
-            
+
             if (!emailResult.error && emailResult.data) {
                 return emailResult.data.id;
             }
@@ -184,6 +184,22 @@ export const fetchAssets = async () => {
 
     if (error) throw error;
     return data;
+};
+
+export const saveAssetFact = async (assetName: string, market: string, fact: string) => {
+    try {
+        const { error } = await supabase
+            .from('asset_facts')
+            .insert({
+                asset_name: assetName,
+                market: market,
+                fact: fact
+            });
+
+        if (error) throw error;
+    } catch (err) {
+        console.error('Error saving asset fact:', err);
+    }
 };
 
 // NEW: Fetch active trading assets with full market hierarchy
@@ -504,7 +520,7 @@ export interface VerifyOtpResponse {
  * @param options.forProfileChange - If true, allows sending OTP to already-verified emails
  */
 export const sendEmailOtp = async (
-    email: string, 
+    email: string,
     options?: { targetEmail?: string; forProfileChange?: boolean }
 ): Promise<SendOtpResponse> => {
     const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
@@ -513,8 +529,8 @@ export const sendEmailOtp = async (
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({ 
-            email, 
+        body: JSON.stringify({
+            email,
             targetEmail: options?.targetEmail,
             forProfileChange: options?.forProfileChange ?? false,
         }),
@@ -575,9 +591,9 @@ export interface VerifyWhatsAppOtpResponse {
  * @param params.targetPhone - Phone to send OTP to (for phone changes). Defaults to current phone
  * @param params.forProfileChange - If true, allows sending OTP to already-verified numbers
  */
-export const sendWhatsAppOtp = async (params: { 
-    phone?: string; 
-    email?: string; 
+export const sendWhatsAppOtp = async (params: {
+    phone?: string;
+    email?: string;
     targetPhone?: string;
     forProfileChange?: boolean;
 }): Promise<SendWhatsAppOtpResponse> => {
@@ -938,12 +954,12 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
 // KYC API - Sumsub Integration
 // ============================================
 
-export type KycStatus = 
-    | 'not_started' 
-    | 'started' 
-    | 'pending' 
-    | 'approved' 
-    | 'rejected' 
+export type KycStatus =
+    | 'not_started'
+    | 'started'
+    | 'pending'
+    | 'approved'
+    | 'rejected'
     | 'resubmission_requested'
     | 'on_hold';
 
