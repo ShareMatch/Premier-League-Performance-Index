@@ -686,6 +686,22 @@ const App: React.FC = () => {
                           />
                         </div>
 
+                        {/* Did You Know (Index/League Context) */}
+                        <div className="flex-shrink-0">
+                          <DidYouKnow
+                            assetName={getLeagueTitle(activeLeague)}
+                            market={activeLeague}
+                          />
+                        </div>
+
+                        {/* On This Day (Index/League Context) */}
+                        <div className="flex-shrink-0">
+                          <OnThisDay
+                            assetName={getLeagueTitle(activeLeague)}
+                            market={activeLeague}
+                          />
+                        </div>
+
                         {/* News Feed */}
                         <div className="flex-shrink-0 pb-4 xl:pb-0">
                           <NewsFeed topic={activeLeague as any} />
