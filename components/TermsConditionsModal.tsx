@@ -5,6 +5,7 @@ import { FileText, X } from "lucide-react";
 import termsContent from "../resources/TermandConditions.txt?raw";
 import legalContent from "../resources/LegalandRegulatory.txt?raw";
 import privacyContent from "../resources/PrivacyPolicy.txt?raw";
+import riskContent from "../resources/RiskandPerformance.txt?raw";
 
 interface TermsConditionsModalProps {
   isOpen: boolean;
@@ -235,9 +236,36 @@ const renderFormattedContent = (
       return;
     }
 
+    // Helper function to render text with email links
+    const renderTextWithEmailLinks = (text: string): React.ReactNode[] => {
+      const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+      const parts = text.split(emailRegex);
+      
+      return parts.map((part, i) => {
+        if (emailRegex.test(part)) {
+          // Reset regex lastIndex since we're reusing it
+          emailRegex.lastIndex = 0;
+          return (
+            <a
+              key={i}
+              href={`mailto:${part}`}
+              className="text-[#00A651] hover:underline"
+            >
+              {part}
+            </a>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      });
+    };
+
     // Regular paragraphs - detect inline references to Terms or Privacy and
     // render them as clickable links that call onOpenOther(type).
     const linkRegex = /(terms of use|privacy policy)/i;
+    const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+    const hasEmail = emailRegex.test(trimmedLine);
+    emailRegex.lastIndex = 0; // Reset after test
+    
     if (onOpenOther && linkRegex.test(trimmedLine)) {
       const parts = trimmedLine.split(linkRegex);
       const matches = trimmedLine.match(linkRegex);
@@ -273,8 +301,19 @@ const renderFormattedContent = (
                 );
               }
             }
-            return <span key={i}>{part}</span>;
+            // Check for emails in this part
+            return <span key={i}>{renderTextWithEmailLinks(part)}</span>;
           })}
+        </p>
+      );
+    } else if (hasEmail) {
+      // Line has email but no Terms/Privacy links
+      elements.push(
+        <p
+          key={index}
+          className="text-xs sm:text-sm text-gray-200 leading-relaxed mb-2"
+        >
+          {renderTextWithEmailLinks(trimmedLine)}
         </p>
       );
     } else {
@@ -303,8 +342,8 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
   let content = termsContent;
   let title = "Terms & Conditions";
   if (type === "risk") {
-    content = legalContent;
-    title = "Legal & Regulatory Framework";
+    content = riskContent;
+    title = "Risk & Performance Statement";
   } else if (type === "privacy") {
     content = privacyContent;
     title = "Privacy Policy";

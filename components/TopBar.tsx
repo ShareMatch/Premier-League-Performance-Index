@@ -419,7 +419,7 @@ const TopBar: React.FC<TopBarProps> = ({
                   placeholder={
                     isListening
                       ? "Listening..."
-                      : "Find teams, competitions, and markets..."
+                      : "Find assets and indices..."
                   }
                   className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
                 />
