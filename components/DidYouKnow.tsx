@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Lightbulb, Sparkles } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { saveAssetFact } from '../lib/api';
 
 interface DidYouKnowProps {
     assetName: string;
+    market?: string;
     className?: string;
 }
 
-const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, className = '' }) => {
+const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, market, className = '' }) => {
     const [fact, setFact] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -23,14 +22,31 @@ const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, className = '' }) =>
                 }
 
                 const ai = new GoogleGenAI({ apiKey });
-                const prompt = `Write a single, short, fascinating "Did You Know?" fact about ${assetName}. It should be one sentence, obscure or interesting, and related to their history, records, or performance. Start directly with the fact.`;
+
+                // Tightened prompt for relevance and safety
+                const contextClause = market ? `specifically within the context of ${market} (Sport/League)` : 'in the context of sports and performance';
+                const prompt = `Write a single, short, fascinating "Did You Know?" fact about ${assetName} ${contextClause}.
+Rules:
+1. It must be ONE sentence.
+2. It must be interesting or obscure.
+3. Focus on records, history, stats, or unique traits in their sport.
+4. STRICTLY AVOID: politics, war, religion, or sensitive geopolitical topics.
+5. If the asset is a country/team in a specific competition (e.g. Eurovision), focus ONLY on that competition.
+Start directly with the fact.`;
 
                 const response = await ai.models.generateContent({
                     model: 'gemini-2.0-flash',
                     contents: prompt,
                 });
 
-                setFact(response.text || `Did you know? ${assetName} is a key asset in the Performance Index.`);
+                const generatedFact = response.text || `Did you know? ${assetName} is a key asset in the Performance Index.`;
+                setFact(generatedFact);
+
+                // Save to Supabase (fire and forget)
+                if (generatedFact && generatedFact.length > 10) {
+                    saveAssetFact(assetName, market || 'General', generatedFact);
+                }
+
             } catch (error) {
                 console.error("Error generating fact:", error);
                 setFact(`Did you know? ${assetName} is a key asset in the Performance Index.`);
@@ -42,7 +58,7 @@ const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, className = '' }) =>
         if (assetName) {
             fetchFact();
         }
-    }, [assetName]);
+    }, [assetName, market]);
 
     return (
         <div className={`bg-gradient-to-br from-[#0B1221] to-[#0f192b] border border-gray-800 rounded-xl p-5 relative overflow-hidden group ${className}`}>

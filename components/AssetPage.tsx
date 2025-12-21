@@ -170,7 +170,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     </div>
 
                     {/* Did You Know Module */}
-                    <DidYouKnow assetName={asset.name} />
+                    <DidYouKnow assetName={asset.name} market={asset.market} />
                 </div>
 
             </div>
