@@ -74,11 +74,38 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
             if (error) throw error;
 
+            const isRelevant = (text: string, topic: string): boolean => {
+                // If Global, everything is relevant
+                if (topic === 'Global') return true;
+
+                // Check if the topic appears in the text
+                // Handle multi-word topics (e.g. "Manchester United" -> matches "Manchester" AND "United" is too strict? 
+                // No, usually headlines use full name or major part. Let's start with strict full string inclusion or fuzzy match)
+                const lowerText = text.toLowerCase();
+                const lowerTopic = topic.toLowerCase();
+
+                // Direct match
+                if (lowerText.includes(lowerTopic)) return true;
+
+                // Split topic for partial match (e.g. "Orlando Magic" matches "Magic")
+                const topicParts = lowerTopic.split(' ').filter(part => part.length > 2); // Ignore "FC", "The" etc
+                if (topicParts.some(part => lowerText.includes(part))) return true;
+
+                return false;
+            };
+
+            // ... inside fetchNews ...
+
             if (data && data.length > 0) {
-                // Filter for Sharia compliance (remove gambling/betting/haram keywords)
+                // Filter for Sharia compliance AND Relevance
                 const filteredData = data.filter(item => {
                     const text = (item.headline + ' ' + (item.source || '')).toLowerCase();
-                    return !isHaram(text);
+                    // 1. Must NOT be Haram
+                    if (isHaram(text)) return false;
+                    // 2. Must be Relevant to the topic
+                    if (!isRelevant(item.headline, topic)) return false;
+
+                    return true;
                 });
                 setNewsItems(filteredData);
             }
