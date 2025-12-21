@@ -83,6 +83,35 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
+  // Lock body scroll when mobile panel is open (prevents iOS Safari scroll issues)
+  useEffect(() => {
+    if (showRightPanel) {
+      // Lock scroll on body
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      // Restore scroll
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, [showRightPanel]);
+
   // My Details Page visibility - check URL hash on initial load
   const [showMyDetails, setShowMyDetails] = useState(() => {
     return window.location.hash === "#my-details";
@@ -543,7 +572,7 @@ const App: React.FC = () => {
       warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
       enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
-      <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      <div className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
         {/* Top Bar - Full Width */}
         <TopBar
           wallet={wallet}
@@ -738,11 +767,12 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 2xl:hidden"
+            className="fixed inset-0 bg-black/50 z-30 2xl:hidden touch-none"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
             }}
+            onTouchMove={(e) => e.preventDefault()}
           />
         )}
 
