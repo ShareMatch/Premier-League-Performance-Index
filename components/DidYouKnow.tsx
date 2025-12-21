@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, Sparkles } from 'lucide-react';
+import { GoogleGenAI } from "@google/genai";
 import { saveAssetFact } from '../lib/api';
 
 interface DidYouKnowProps {
