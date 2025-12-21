@@ -36,26 +36,70 @@ const VIDEO_METADATA: {
 };
 
 /**
- * Convert Chroma L2 distance to similarity score
- * For normalized embeddings: similarity ≈ 1 - (distance²/4)
+ * Classify user intent using LLM
+ * Returns: { wantsVideo: boolean, videoTopic: "login" | "signup" | "kyc" | null }
  */
-function distanceToSimilarity(distance: number): number {
-  return Math.max(0, 1 - (distance * distance / 4));
-}
+async function classifyIntent(
+  query: string,
+  groqApiKey: string
+): Promise<{ wantsVideo: boolean; videoTopic: string | null }> {
+  const classificationPrompt = `You are an intent classifier. Analyze the user's question and determine:
+1. Does the user want a step-by-step tutorial/guide (visual walkthrough)?
+2. If yes, which topic: login, signup, or kyc (identity verification)?
 
-/**
- * Check if a document is a video tutorial based on metadata
- */
-function extractVideoType(metadata: any): string | null {
-  if (!metadata) return null;
-  
-  // Check if metadata has 'type' field indicating it's a video
-  // The seed script stores the video ID as 'video_id'
-  if (metadata.type === "video" && metadata.video_id) {
-    return metadata.video_id; // Returns "login", "signup", or "kyc"
+TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for"
+INFORMATION indicators: "what is", "explain", "tell me about", "describe", "why", "when"
+
+Respond with ONLY valid JSON (no markdown, no explanation):
+{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|null}
+
+Examples:
+- "how do I sign up?" → {"wantsVideo": true, "videoTopic": "signup"}
+- "what is the signup flow?" → {"wantsVideo": false, "videoTopic": null}
+- "show me how to login" → {"wantsVideo": true, "videoTopic": "login"}
+- "what is ShareMatch?" → {"wantsVideo": false, "videoTopic": null}
+- "how to verify my identity" → {"wantsVideo": true, "videoTopic": "kyc"}
+- "explain the KYC process" → {"wantsVideo": false, "videoTopic": null}
+
+User question: "${query}"`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${groqApiKey}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "user", content: classificationPrompt }
+        ],
+        temperature: 0,
+        max_tokens: 50,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Intent classification failed, defaulting to no video");
+      return { wantsVideo: false, videoTopic: null };
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content?.trim() || "";
+    
+    console.log(`🧠 Intent classification raw response: ${content}`);
+    
+    // Parse JSON response
+    const parsed = JSON.parse(content);
+    return {
+      wantsVideo: parsed.wantsVideo === true,
+      videoTopic: parsed.videoTopic || null,
+    };
+  } catch (error) {
+    console.error("Intent classification error:", error);
+    return { wantsVideo: false, videoTopic: null };
   }
-  
-  return null;
 }
 
 serve(async (req) => {
@@ -95,6 +139,38 @@ serve(async (req) => {
     if (!hfToken) throw new Error("HF_TOKEN not configured");
     if (!chromaApiKey) throw new Error("CHROMA_API_KEY not configured");
     if (!chromaTenant) throw new Error("CHROMA_TENANT not configured");
+
+    // Step 0: Intent Classification using LLM
+    // Determine if user wants a video tutorial or information
+    console.log("Step 0: Classifying user intent...");
+    const intent = await classifyIntent(message, groqApiKey);
+    console.log(`🧠 Intent: wantsVideo=${intent.wantsVideo}, topic=${intent.videoTopic}`);
+    
+    // If user wants a video tutorial, return it immediately
+    if (intent.wantsVideo && intent.videoTopic) {
+      const videoInfo = VIDEO_METADATA[intent.videoTopic];
+      if (videoInfo) {
+        console.log(`🎬 Returning video tutorial: ${intent.videoTopic}`);
+        const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+        
+        return new Response(
+          JSON.stringify({
+            message: videoInfo.intro,
+            conversation_id: convId,
+            video: {
+              id: intent.videoTopic,
+              url: videoInfo.url,
+              title: videoInfo.title,
+            },
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+    }
+    
+    console.log("📝 User wants information, proceeding with RAG...");
 
     // Step 1: Generate embedding
     console.log("Step 1: Generating embedding...");
@@ -151,87 +227,48 @@ serve(async (req) => {
     };
     
     // Get collection ID
-    const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
-    
-    const collectionsResponse = await fetch(collectionUrl, {
-      method: "GET",
-      headers: chromaHeaders,
-    });
-
-    if (!collectionsResponse.ok) {
-      const errText = await collectionsResponse.text();
-      console.error("✗ Collection error:", collectionsResponse.status, errText);
-      throw new Error(`Collection not found: ${errText}`);
-    }
-    
-    const collectionData = await collectionsResponse.json();
-    console.log("✓ Collection found, ID:", collectionData.id);
-    
-    // Query the collection
-    const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
-    
-    const queryResponse = await fetch(queryUrl, {
-      method: "POST",
-      headers: chromaHeaders,
-      body: JSON.stringify({
-        query_embeddings: [queryEmbedding],
-        n_results: 4,
-        include: ["documents", "metadatas", "distances"], // IMPORTANT: Include distances and metadatas
-      }),
-    });
-
-    if (!queryResponse.ok) {
-      const errText = await queryResponse.text();
-      console.error("✗ Query error:", queryResponse.status, errText);
-      throw new Error(`Query failed: ${errText}`);
-    }
-    
-    const queryData = await queryResponse.json();
-    const documents = queryData.documents?.[0] || [];
-    const metadatas = queryData.metadatas?.[0] || [];
-    const distances = queryData.distances?.[0] || [];
-    
-    console.log("✓ Found", documents.length, "documents");
-
-    // Step 3: Check ONLY the TOP result - if it's a video, return it
-    // This ensures we only return a video when it's the BEST match
-    if (metadatas.length > 0 && distances.length > 0) {
-      const topMeta = metadatas[0];
-      const topDistance = distances[0];
-      const topSimilarity = distanceToSimilarity(topDistance);
+      const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
       
-      console.log(`📊 Top result: type=${topMeta?.type}, video_id=${topMeta?.video_id}, similarity=${(topSimilarity * 100).toFixed(1)}%`);
-      
-      const videoType = extractVideoType(topMeta);
-      
-      // Only return video if it's the TOP result AND has good similarity (60%+)
-      if (videoType && topSimilarity >= 0.60) {
-        console.log(`🎬 Top result is a video: ${videoType} (${(topSimilarity * 100).toFixed(1)}%)`);
-        
-        const videoInfo = VIDEO_METADATA[videoType];
-        const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
-        
-        return new Response(
-          JSON.stringify({
-            message: videoInfo.intro,
-            conversation_id: convId,
-            video: {
-              id: videoType,
-              url: videoInfo.url,
-              title: videoInfo.title,
-            },
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      } else {
-        console.log("📝 Top result is not a video or similarity too low, proceeding with text response");
+      const collectionsResponse = await fetch(collectionUrl, {
+        method: "GET",
+        headers: chromaHeaders,
+      });
+
+      if (!collectionsResponse.ok) {
+        const errText = await collectionsResponse.text();
+        console.error("✗ Collection error:", collectionsResponse.status, errText);
+        throw new Error(`Collection not found: ${errText}`);
       }
-    }
+      
+      const collectionData = await collectionsResponse.json();
+      console.log("✓ Collection found, ID:", collectionData.id);
+      
+      // Query the collection
+      const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
+      
+      const queryResponse = await fetch(queryUrl, {
+        method: "POST",
+        headers: chromaHeaders,
+        body: JSON.stringify({
+          query_embeddings: [queryEmbedding],
+          n_results: 4,
+        include: ["documents"], // Only need documents for RAG context
+        }),
+      });
 
-    // Step 4: Normal RAG flow (not a video query or low similarity)
-    console.log("Step 4: Processing as regular RAG query...");
+      if (!queryResponse.ok) {
+        const errText = await queryResponse.text();
+        console.error("✗ Query error:", queryResponse.status, errText);
+        throw new Error(`Query failed: ${errText}`);
+      }
+      
+      const queryData = await queryResponse.json();
+      const documents = queryData.documents?.[0] || [];
+    
+      console.log("✓ Found", documents.length, "documents");
+
+    // Step 3: Generate response using RAG (intent classification already handled video requests)
+    console.log("Step 3: Generating RAG response...");
     
     const context = documents.join("\n\n") || "No specific information found in the knowledge base.";
     
@@ -243,28 +280,27 @@ COMMUNICATION STYLE:
 - Answer confidently as the authoritative source on ShareMatch
 - Be conversational but professional
 
+HANDLING UNCLEAR QUESTIONS (CRITICAL):
+- If the user sends a vague message like "huh?", "what?", "again?", "??", or similar:
+  → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
+- If the user asks you to repeat something:
+  → Politely ask what specific part they'd like explained: "Which part would you like me to explain further?"
+- NEVER dump raw text or repeat the same long response
+- NEVER output raw context chunks or document text
+
 STRICT RULES:
 1. Answer ONLY using the CONTEXT below. Do NOT make up information.
-2. When the context contains structured information (lists, bullet points, specific features):
-   - Include ALL relevant details from the context
-   - Maintain the structure (use bullet points/lists when source does)
-   - Don't omit important specifics unless the user asks for a brief summary
+2. Keep responses concise and focused on what the user asked.
 3. If the answer is not in the context, say: "I don't have that specific information. Please contact hello@sharematch.me"
-4. Be thorough but concise - include all key points without unnecessary elaboration.
-5. Use exact terms and definitions from the context.
-6. NEVER use phrases like "according to the context", "based on the provided information", "from the documents", or "the context states"
+4. Use exact terms and definitions from the context.
+5. NEVER use phrases like "according to the context", "based on the provided information", "from the documents", or "the context states"
+6. NEVER output raw document text, chunks, or unformatted context data.
 
-FORMATTING RULES (CRITICAL):
+FORMATTING RULES:
 When presenting lists or multiple features:
 - Put EACH item on its OWN LINE
-- Use this exact format:
-
-The token grants:
-- First feature: description here
-- Second feature: description here
-
-NOT this format:
-The token grants: • First feature: description • Second feature: description
+- Use bullet points with dashes (-)
+- Keep each bullet point concise
 
 CONTEXT:
 ${context}`;
