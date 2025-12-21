@@ -6,6 +6,7 @@ import { generateAssetHistory, generateTradeHistory } from "../utils/mockData";
 import { Team } from "../types";
 import NewsFeed from "./NewsFeed";
 import DidYouKnow from "./DidYouKnow";
+import OnThisDay from "./OnThisDay";
 
 interface AssetPageProps {
     asset: Team;
@@ -169,8 +170,15 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                         </div>
                     </div>
 
+                    import OnThisDay from "./OnThisDay"; // Add import at top (assumed separate step or handle logic)
+
+                    // ...
+
                     {/* Did You Know Module */}
                     <DidYouKnow assetName={asset.name} market={asset.market} />
+
+                    {/* On This Day Module */}
+                    <OnThisDay assetName={asset.name} market={asset.market} />
                 </div>
 
             </div>
