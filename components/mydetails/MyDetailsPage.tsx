@@ -203,17 +203,15 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         // Fetch user details, KYC status, banking details, and preferences in parallel
         const fetchPreferences = async () => {
           try {
-            // Use maybeSingle() instead of single() to avoid 406 error when no row exists
-            const { data, error } = await supabase
-              .from("user_preferences")
-              .select("*")
-              .eq("id", userId)
-              .maybeSingle();
+            // Use RPC function to get preferences as a single object
+            const { data, error } = await supabase.rpc("get_user_preferences", {
+              p_user_id: userId,
+            });
             if (error) {
               console.error("Error fetching preferences:", error);
               return null;
             }
-            return { data };
+            return { data: data || {} };
           } catch (err) {
             console.error("Exception fetching preferences:", err);
             return null;
@@ -276,13 +274,13 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           setPersonalizedMarketing(Boolean(prefs.personalized_marketing));
           setPreferencesLoaded(true);
         } else {
-          // No preferences found - use defaults (for users who signed up before this feature)
+          // No preferences found - use defaults (all disabled for safety)
           setPreferences([
-            { id: "email", label: "Email", enabled: true },
-            { id: "whatsapp", label: "WhatsApp", enabled: true },
+            { id: "email", label: "Email", enabled: false },
+            { id: "whatsapp", label: "WhatsApp", enabled: false },
             { id: "sms", label: "SMS", enabled: false },
           ]);
-          setPersonalizedMarketing(true);
+          setPersonalizedMarketing(false);
           setPreferencesLoaded(true);
         }
       } catch (error) {

@@ -832,11 +832,12 @@ export interface MarketingPreferencesResponse {
     ok: boolean;
     message: string;
     preferences?: {
-        id: string;
-        email: boolean;
-        whatsapp: boolean;
-        sms: boolean;
-        personalized_marketing: boolean;
+        email?: boolean;
+        whatsapp?: boolean;
+        sms?: boolean;
+        personalized_marketing?: boolean;
+        email_otp?: boolean;
+        whatsapp_otp?: boolean;
     };
 }
 
