@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, Sparkles } from 'lucide-react';
+import { Calendar, CalendarDays } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { saveAssetFact } from '../lib/api';
 
-interface DidYouKnowProps {
+interface OnThisDayProps {
     assetName: string;
     market?: string;
     className?: string;
 }
 
-const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, market, className = '' }) => {
+const OnThisDay: React.FC<OnThisDayProps> = ({ assetName, market, className = '' }) => {
     const [fact, setFact] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -19,22 +19,23 @@ const DidYouKnow: React.FC<DidYouKnowProps> = ({ assetName, market, className = 
             try {
                 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
                 if (!apiKey) {
-                    setFact("Did you know? ShareMatch provides real-time tokenised trading for sports assets.");
+                    setFact(`On this day, ${assetName} fans are engaging with the Performance Index.`);
                     setLoading(false);
                     return;
                 }
 
                 const ai = new GoogleGenAI({ apiKey });
+                const today = new Date();
+                const dateString = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
-                // Tightened prompt for relevance and safety
-                const contextClause = market ? `specifically within the context of ${market} (Sport/League)` : 'in the context of sports and performance';
-                const prompt = `Write a single, short, fascinating "Did You Know?" fact about ${assetName} ${contextClause}.
+                const contextClause = market ? `specifically for ${market}` : 'in sports history';
+                const prompt = `Write a short "On This Day" (${dateString}) historical fact about ${assetName} ${contextClause}.
 Rules:
-1. It must be ONE sentence.
-2. It must be interesting or obscure.
-3. Focus on records, history, stats, or unique traits in their sport.
-4. STRICTLY AVOID: politics, war, religion, or sensitive geopolitical topics.
-5. If the asset is a country/team in a specific competition (e.g. Eurovision), focus ONLY on that competition.
+1. It MUST be historically accurate for TODAY'S DATE (${dateString}).
+2. If no specific event happened on this exact date for ${assetName}, find a significant event from this WEEK in history.
+3. Keep it to one interesting sentence.
+4. STRICTLY AVOID: politics, war, religion.
+5. Focus on wins, records, signings, or legendary moments.
 Start directly with the fact.`;
 
                 const response = await ai.models.generateContent({
@@ -42,17 +43,17 @@ Start directly with the fact.`;
                     contents: prompt,
                 });
 
-                const generatedFact = response.text || `Did you know? ${assetName} is a key asset in the Performance Index.`;
+                const generatedFact = response.text || `On this day, ${assetName} continues to make history.`;
                 setFact(generatedFact);
 
-                // Save to Supabase (fire and forget)
+                // We can treat this as a fact to save, maybe prefix with "On This Day:"
                 if (generatedFact && generatedFact.length > 10) {
-                    saveAssetFact(assetName, market || 'General', generatedFact);
+                    saveAssetFact(assetName, market || 'General', `On This Day: ${generatedFact}`);
                 }
 
             } catch (error) {
-                console.error("Error generating fact:", error);
-                setFact(`Did you know? ${assetName} is a key asset in the Performance Index.`);
+                console.error("Error generating On This Day fact:", error);
+                setFact(`On this day, ${assetName} continues to build its legacy.`);
             } finally {
                 setLoading(false);
             }
@@ -66,16 +67,18 @@ Start directly with the fact.`;
     return (
         <div className={`bg-gradient-to-br from-[#0B1221] to-[#0f192b] border border-gray-800 rounded-xl p-5 relative overflow-hidden group ${className}`}>
             {/* Background decorative elements */}
-            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/10 transition-colors duration-500"></div>
+            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
 
             <div className="flex items-start gap-3 relative z-10">
-                <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500 flex-shrink-0">
-                    <Lightbulb className="w-5 h-5" />
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 flex-shrink-0">
+                    <Calendar className="w-5 h-5" />
                 </div>
                 <div>
                     <h3 className="text-white font-bold text-sm mb-2 flex items-center gap-2">
-                        Did You Know?
-                        <Sparkles className="w-3 h-3 text-yellow-500/50" />
+                        On This Day
+                        <span className="text-xs font-normal text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                     </h3>
 
                     {loading ? (
@@ -91,8 +94,8 @@ Start directly with the fact.`;
 
                     <div className="mt-3 flex justify-end">
                         <span className="text-[10px] text-gray-600 flex items-center gap-1">
-                            <Sparkles className="w-2 h-2" />
-                            AI Generated Fact
+                            <CalendarDays className="w-2 h-2" />
+                            AI Historical Event
                         </span>
                     </div>
                 </div>
@@ -101,4 +104,4 @@ Start directly with the fact.`;
     );
 };
 
-export default DidYouKnow;
+export default OnThisDay;

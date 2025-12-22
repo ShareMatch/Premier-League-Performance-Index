@@ -74,11 +74,49 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
             if (error) throw error;
 
+            const isRelevant = (text: string, topic: string): boolean => {
+                // If Global, everything is relevant
+                if (topic === 'Global') return true;
+
+                // Check if the topic appears in the text
+                const lowerText = text.toLowerCase();
+                const lowerTopic = topic.toLowerCase();
+
+                // Direct match
+                if (lowerText.includes(lowerTopic)) return true;
+
+                // SPECIAL LOGIC FOR INDEXES/LEAGUES
+                // If topic is a league (e.g. "Premier League", "NBA"), allow team names or generic terms
+                // For now, we simple check if the text contains common terms if the topic is a known league
+                if (lowerTopic.includes('premier league') || lowerTopic.includes('epl')) {
+                    const eplKeywords = ['liverpool', 'arsenal', 'man city', 'manchester', 'chelsea', 'tottenham', 'spurs', 'aston villa', 'newcastle', 'west ham', 'brighton', 'fulham', 'brentford', 'palace', 'everton', 'forest', 'wolves', 'leicester', 'southampton', 'ipswich', 'football', 'soccer'];
+                    if (eplKeywords.some(k => lowerText.includes(k))) return true;
+                }
+
+                if (lowerTopic.includes('nba')) {
+                    // Basic check for "basketball" or common teams if needed, but NBA usually appears in headline
+                    if (lowerText.includes('basketball') || lowerText.includes('lakers') || lowerText.includes('celtics')) return true;
+                }
+
+                // Split topic for partial match (e.g. "Orlando Magic" matches "Magic")
+                const topicParts = lowerTopic.split(' ').filter(part => part.length > 2); // Ignore "FC", "The" etc
+                if (topicParts.some(part => lowerText.includes(part))) return true;
+
+                return false;
+            };
+
+            // ... inside fetchNews ...
+
             if (data && data.length > 0) {
-                // Filter for Sharia compliance (remove gambling/betting/haram keywords)
+                // Filter for Sharia compliance AND Relevance
                 const filteredData = data.filter(item => {
                     const text = (item.headline + ' ' + (item.source || '')).toLowerCase();
-                    return !isHaram(text);
+                    // 1. Must NOT be Haram
+                    if (isHaram(text)) return false;
+                    // 2. Must be Relevant to the topic
+                    if (!isRelevant(item.headline, topic)) return false;
+
+                    return true;
                 });
                 setNewsItems(filteredData);
             }
