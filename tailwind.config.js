@@ -18,7 +18,7 @@ export default {
                     emerald500: '#005430',
                     // White button tokens (centralised so button color can be changed here)
                     whiteButtonBg: '#2e3742',
-                    whiteButtonText: '#ffffffff',
+                    whiteButtonText: '#FFFFFF',
                     cream: '#FDFBF7',
                     amber500: '#f59e0b',
                     amber400: '#fbbf24',
