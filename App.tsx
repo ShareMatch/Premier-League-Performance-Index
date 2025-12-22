@@ -685,7 +685,7 @@ const App: React.FC = () => {
                         </div>
 
                         {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[280px] sm:h-[350px] md:h-[450px] lg:flex-1 lg:min-h-[400px] xl:min-h-[500px]">
+                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
                           {/* Fixed Header - Responsive padding and text */}
                           <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
                             <div className="text-left">Asset</div>
@@ -708,7 +708,7 @@ const App: React.FC = () => {
                       </div>
 
                       {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-                      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-0">
+                      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
                         {/* AI Analysis */}
                         <div className="flex-shrink-0">
                           <AIAnalysis
