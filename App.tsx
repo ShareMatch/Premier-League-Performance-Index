@@ -42,7 +42,6 @@ import SellErrorModal from "./components/SellErrorModal";
 import MyDetailsPage from "./components/mydetails/MyDetailsPage";
 import ChatBot from "./components/chatbot/frontend/ChatBot";
 import AlertModal from "./components/AlertModal";
-import AlertModal from "./components/AlertModal";
 import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
