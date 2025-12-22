@@ -20,6 +20,8 @@ import {
   getKycUserStatus,
   fetchUserDetails,
   fetchUserBankingDetails,
+  fetchAuthUserData,
+  fetchLoginHistory,
   UserDetails,
   UserBankingDetails,
   sendEmailOtp,
@@ -130,6 +132,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [userBankingDetails, setUserBankingDetails] =
     useState<UserBankingDetails | null>(null);
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
   const [activeModal, setActiveModal] = useState<EditModalType>(null);
 
   // Verification flow state
@@ -187,20 +191,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     });
   };
 
-  // Build login history from user's source_ip and updated_at
-  const loginHistory = userDetails
-    ? [
-        {
-          id: "1",
-          timestamp: formatLastLogin(userDetails.updated_at),
-          location: userDetails.country || "Unknown",
-          countryCode: userDetails.country_code?.toLowerCase() || undefined,
-          ip: userDetails.source_ip || "N/A",
-          successful: true,
-        },
-      ]
-    : [];
-
   // Fetch user details, KYC status, banking details, and marketing preferences
   useEffect(() => {
     const fetchData = async () => {
@@ -230,16 +220,34 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           }
         };
 
-        const [details, kycStatusResponse, bankingDetails, userPrefs] =
+        const [details, kycStatusResponse, bankingDetails, userPrefs, user, logins] =
           await Promise.all([
             fetchUserDetails(userId),
             getKycUserStatus(userId).catch(() => null),
             fetchUserBankingDetails(userId).catch(() => null),
             fetchPreferences(),
+            fetchAuthUserData().catch(() => null),
+            fetchLoginHistory(userId, 5).catch(() => []),
           ]);
 
         if (details) {
           setUserDetails(details);
+        }
+
+        // Get auth user data with last_sign_in_at
+        if (user) {
+          setAuthUser(user);
+        }
+
+        // Set login history from auth logs
+        if (logins && logins.length > 0) {
+          console.log("📋 Login history fetched:", logins);
+          // Format timestamps for display
+          const formattedLogins = logins.map((login) => ({
+            ...login,
+            timestamp: formatLastLogin(login.timestamp),
+          }));
+          setLoginHistory(formattedLogins);
         }
 
         // Get KYC status from user_compliance table
