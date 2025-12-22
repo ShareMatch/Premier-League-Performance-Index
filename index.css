@@ -30,11 +30,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-emerald-900);
+  background: #1a1a1a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-emerald-500);
+  background: #888888;
   border-radius: 4px;
 }
 
@@ -45,7 +45,7 @@
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-emerald-500) var(--color-emerald-900);
+  scrollbar-color: #888888 #1a1a1a;
 }
 
 /* Custom utility for hiding scrollbar but keeping functionality if needed */
@@ -88,6 +88,35 @@ iframe[src*="sumsub"] {
 /* Smooth container transitions for KYC modal */
 .kyc-sdk-container {
   transition: all 0.3s ease-in-out;
+}
+
+/* Ensure Sumsub iframe has visible scrollbar */
+iframe[src*="sumsub"] {
+  scrollbar-width: thin;
+  scrollbar-color: #888888 #1a1a1a;
+}
+
+/* Sumsub container scrollbar */
+#sumsub-websdk-container::-webkit-scrollbar,
+[id^="sumsub"]::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#sumsub-websdk-container::-webkit-scrollbar-track,
+[id^="sumsub"]::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+#sumsub-websdk-container::-webkit-scrollbar-thumb,
+[id^="sumsub"]::-webkit-scrollbar-thumb {
+  background: #888888;
+  border-radius: 4px;
+}
+
+#sumsub-websdk-container::-webkit-scrollbar-thumb:hover,
+[id^="sumsub"]::-webkit-scrollbar-thumb:hover {
+  background: var(--color-amber-500);
 }
 
 /* Explosive Pop Animation for Trending Markets */
