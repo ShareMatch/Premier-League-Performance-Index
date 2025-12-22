@@ -645,7 +645,7 @@ const App: React.FC = () => {
                   : "overflow-y-auto"
                   }`}
               >
-                <div className="max-w-5xl mx-auto h-full flex flex-col">
+                <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                   {currentView === 'asset' && viewAsset ? (
                     <AssetPage
                       asset={viewAsset}
@@ -672,10 +672,10 @@ const App: React.FC = () => {
                       <AIAnalyticsPage teams={allAssets} />
                     </React.Suspense>
                   ) : (
-                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side (fixed height) */
-                    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:h-full xl:overflow-hidden">
+                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side */
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1">
                       {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
-                      <div className="w-full xl:flex-[2] flex flex-col xl:min-h-0">
+                      <div className="w-full lg:flex-[2] flex flex-col">
                         {/* Header aligned with order book */}
                         <div className="flex-shrink-0">
                           <Header
@@ -684,8 +684,8 @@ const App: React.FC = () => {
                           />
                         </div>
 
-                        {/* Order Book - Fixed height on mobile, flex on desktop */}
-                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[280px] sm:h-[350px] xl:h-auto xl:flex-1">
+                        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[280px] sm:h-[350px] md:h-[450px] lg:flex-1 lg:min-h-[400px] xl:min-h-[500px]">
                           {/* Fixed Header - Responsive padding and text */}
                           <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
                             <div className="text-left">Asset</div>
@@ -708,7 +708,7 @@ const App: React.FC = () => {
                       </div>
 
                       {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-                      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+                      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-0">
                         {/* AI Analysis */}
                         <div className="flex-shrink-0">
                           <AIAnalysis
@@ -742,7 +742,7 @@ const App: React.FC = () => {
                   )}
 
                   {activeLeague !== "HOME" && (
-                    <div className="mt-8">
+                    <div className="mt-8 flex-shrink-0">
                       <Footer />
                     </div>
                   )}

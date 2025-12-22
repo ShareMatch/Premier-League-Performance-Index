@@ -1,6 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, Info, CheckCircle, XCircle } from "lucide-react";
+
+type AlertType = "warning" | "info" | "success" | "error";
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -8,56 +10,109 @@ interface AlertModalProps {
   title?: string;
   message: string;
   confirmLabel?: string;
+  type?: AlertType;
 }
 
 const AlertModal: React.FC<AlertModalProps> = ({
   isOpen,
   onClose,
-  title = "Alert",
+  title = "Action Not Permitted",
   message,
   confirmLabel = "OK",
+  type = "warning",
 }) => {
   if (!isOpen) return null;
 
+  // Icon and color based on type
+  const getIcon = () => {
+    switch (type) {
+      case "info":
+        return <Info className="w-10 h-10 text-blue-400 relative z-20" />;
+      case "success":
+        return <CheckCircle className="w-10 h-10 text-emerald-400 relative z-20" />;
+      case "error":
+        return <XCircle className="w-10 h-10 text-red-400 relative z-20" />;
+      case "warning":
+      default:
+        return <AlertTriangle className="w-10 h-10 text-amber-500 relative z-20" />;
+    }
+  };
+
+  const getIconBgColor = () => {
+    switch (type) {
+      case "info":
+        return "bg-blue-500/20";
+      case "success":
+        return "bg-emerald-500/20";
+      case "error":
+        return "bg-red-500/20";
+      case "warning":
+      default:
+        return "bg-[#005430]/20";
+    }
+  };
+
+  const getIconInnerBgColor = () => {
+    switch (type) {
+      case "info":
+        return "bg-blue-500/40";
+      case "success":
+        return "bg-emerald-500/40";
+      case "error":
+        return "bg-red-500/40";
+      case "warning":
+      default:
+        return "bg-[#005430]/40";
+    }
+  };
+
   const modal = (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3"
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={(e) => {
         e.stopPropagation();
         onClose();
       }}
     >
-      <div
-        className="max-w-[90vw] sm:max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-150 rounded-lg"
-        style={{
-          background: "rgba(4, 34, 34, 0.92)",
-          backdropFilter: "blur(40px)",
-          WebkitBackdropFilter: "blur(40px)",
-        }}
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+
+      {/* Modal Content */}
+      <div 
+        className="relative bg-[#0B1221] border border-[#005430] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="px-4 py-3 flex items-center justify-between border-b border-white/10 bg-[#021A1A]"
+        {/* Header Enhancement */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005430] via-[#00A651] to-[#005430]" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+          aria-label="Close"
         >
-          <div className="flex items-center gap-2 text-white">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <h3 className="font-bold text-sm">{title}</h3>
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="p-8 text-center space-y-6">
+          {/* Icon Area */}
+          <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+            <div className={`absolute inset-0 ${getIconBgColor()} rounded-full animate-pulse z-0`} />
+            <div className={`absolute inset-2 ${getIconInnerBgColor()} rounded-full z-10`} />
+            {getIcon()}
           </div>
+
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              {title}
+            </h2>
+            <p className="text-gray-300 leading-relaxed text-sm whitespace-pre-line">
+              {message}
+            </p>
+          </div>
+
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="px-4 py-4 text-gray-200 text-sm whitespace-pre-line">
-          {message}
-        </div>
-        <div className="px-4 py-3 border-t border-white/10 flex justify-end bg-[#021A1A]">
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded bg-[#005430] text-white font-semibold text-sm hover:bg-[#005430]/90"
+            className="w-full py-3.5 px-6 bg-[#005430] hover:bg-[#006838] active:bg-[#004225] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-[#005430]/50 transform hover:-translate-y-0.5"
           >
             {confirmLabel}
           </button>
