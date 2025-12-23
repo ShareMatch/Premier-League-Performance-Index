@@ -674,8 +674,6 @@ const App: React.FC = () => {
                   ) : (
                     /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
                     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
-                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
-                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
                       {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
                       <div className="w-full lg:flex-[2] flex flex-col">
                         {/* Header aligned with order book */}
