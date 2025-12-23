@@ -5,6 +5,7 @@ export interface VideoInfo {
   id: string;
   url: string;
   title: string;
+  isR2Video?: boolean; // If true, use <video> tag instead of <iframe>
 }
 
 export interface Message {
@@ -118,20 +119,37 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         {isBot ? renderFormattedContent(message.content) : <p className="leading-relaxed">{message.content}</p>}
         
         {/* Video Embed */}
-        {isBot && message.video && (
+        {isBot && message.video && message.video.url && (
           <div className="mt-2 sm:mt-3">
-            <div className="rounded-lg overflow-hidden border border-gray-600/50">
-              <iframe
-                src={message.video.url}
-                title={message.video.title}
-                className="w-full aspect-video"
-                style={{ minHeight: '180px' }}
-                frameBorder="0"
-                referrerPolicy="unsafe-url"
-                allowFullScreen
-                allow="clipboard-write"
-                sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
-              />
+            <div className="rounded-lg overflow-hidden border border-gray-600/50 bg-gray-900">
+              {message.video.isR2Video ? (
+                // R2 Video - use native video player
+                <video
+                  src={message.video.url}
+                  title={message.video.title}
+                  className="w-full aspect-video"
+                  style={{ minHeight: '180px' }}
+                  controls
+                  controlsList="nodownload"
+                  playsInline
+                  preload="metadata"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                // Embedded video (Guidde, YouTube, etc.) - use iframe
+                <iframe
+                  src={message.video.url}
+                  title={message.video.title}
+                  className="w-full aspect-video"
+                  style={{ minHeight: '180px' }}
+                  frameBorder="0"
+                  referrerPolicy="unsafe-url"
+                  allowFullScreen
+                  allow="clipboard-write"
+                  sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
+                />
+              )}
             </div>
           </div>
         )}

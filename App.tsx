@@ -45,6 +45,7 @@ import AlertModal from "./components/AlertModal";
 import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
+import HelpCenterModal from "./components/HelpCenterModal";
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -135,6 +136,13 @@ const App: React.FC = () => {
     setShowMyDetails(false);
     window.history.pushState(null, "", window.location.pathname);
   }, []);
+
+  // Help Center Modal visibility
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
+
+  // Triggers for opening auth modals from HelpCenterModal (passed to TopBar)
+  const [triggerLoginModal, setTriggerLoginModal] = useState(false);
+  const [triggerSignUpModal, setTriggerSignUpModal] = useState(false);
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -615,6 +623,10 @@ const App: React.FC = () => {
             setIsMobileMenuOpen(false); // Close left sidebar when opening right panel
           }}
           onViewAsset={handleViewAsset}
+          triggerLoginModal={triggerLoginModal}
+          onTriggerLoginHandled={() => setTriggerLoginModal(false)}
+          triggerSignUpModal={triggerSignUpModal}
+          onTriggerSignUpHandled={() => setTriggerSignUpModal(false)}
         />
 
         {/* AI Analytics Banner */}
@@ -633,19 +645,18 @@ const App: React.FC = () => {
             activeLeague={activeLeague}
             onLeagueChange={handleNavigate}
             allAssets={allAssets}
+            onHelpCenterClick={() => setShowHelpCenter(true)}
           />
 
           {/* Content Container (Main + Right Panel) */}
           <div className="flex-1 flex overflow-hidden">
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 relative">
-              <div
-                className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === "HOME"
-                  ? "overflow-hidden"
-                  : "overflow-y-auto"
-                  }`}
-              >
+              <div className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto">
+                
                 <div className="max-w-5xl mx-auto flex flex-col min-h-full">
+                  {/* Main content wrapper - grows to fill space */}
+                  <div className="flex-1">
                   {currentView === 'asset' && viewAsset ? (
                     <AssetPage
                       asset={viewAsset}
@@ -672,8 +683,8 @@ const App: React.FC = () => {
                       <AIAnalyticsPage teams={allAssets} />
                     </React.Suspense>
                   ) : (
-                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side */
-                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-1">
+                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
                       {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
                       <div className="w-full lg:flex-[2] flex flex-col">
                         {/* Header aligned with order book */}
@@ -746,12 +757,15 @@ const App: React.FC = () => {
                       <Footer />
                     </div>
                   )}
+                  </div>
+                  {/* End of main content wrapper */}
+
+                  {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
+                  <div className="mt-auto pt-6 flex-shrink-0">
+                    <Ticker onNavigate={handleNavigate} teams={allAssets} />
+                  </div>
                 </div>
               </div>
-
-              {/* Ticker at the bottom of the center content */}
-              {/* Ticker at the bottom of the center content */}
-              <Ticker onNavigate={handleNavigate} teams={allAssets} />
             </div>
 
             {/* Right Panel - Hidden on smaller screens/150% zoom, visible on 2xl+ */}
@@ -909,6 +923,25 @@ const App: React.FC = () => {
 
         {/* AI Chatbot - Fixed position bottom right */}
         <ChatBot />
+
+        {/* Help Center Modal */}
+        <HelpCenterModal
+          isOpen={showHelpCenter}
+          onClose={() => setShowHelpCenter(false)}
+          isLoggedIn={!!user}
+          onOpenLogin={() => {
+            setShowHelpCenter(false);
+            setTriggerLoginModal(true);
+          }}
+          onOpenSignUp={() => {
+            setShowHelpCenter(false);
+            setTriggerSignUpModal(true);
+          }}
+          onOpenKYC={() => {
+            setShowHelpCenter(false);
+            setShowKycModal(true);
+          }}
+        />
       </div>
     </InactivityHandler>
   );
