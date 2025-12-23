@@ -1,6 +1,6 @@
 import { League, Team } from '../types';
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Sparkles } from 'lucide-react';
+import { Home, Cloud, Globe, Trophy, Gamepad2, ChevronDown, ChevronRight, Menu, Sparkles, HelpCircle } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -8,9 +8,10 @@ interface SidebarProps {
   activeLeague: League;
   onLeagueChange: (league: League) => void;
   allAssets: Team[];
+  onHelpCenterClick?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange, allAssets }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLeagueChange, allAssets, onHelpCenterClick }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['Sports', 'Football']);
 
   const toggleExpand = (label: string) => {
@@ -95,7 +96,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 mt-4">
+        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 mt-4 flex flex-col">
+          <div className="flex-1 space-y-1">
           {menuItems.map((item) => (
             <div key={item.label}>
               <button
@@ -196,6 +198,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
               )}
             </div>
           ))}
+          </div>
+
+          {/* Help Center Button - Always at bottom */}
+          {onHelpCenterClick && (
+            <div className="pt-4 mt-auto border-t border-gray-800">
+              <button
+                onClick={onHelpCenterClick}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
+              >
+                <HelpCircle className="w-5 h-5" />
+                <span>Help Center</span>
+              </button>
+            </div>
+          )}
         </nav>
       </div>
     </>

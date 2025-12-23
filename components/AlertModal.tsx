@@ -34,7 +34,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
         return <XCircle className="w-10 h-10 text-red-400 relative z-20" />;
       case "warning":
       default:
-        return <AlertTriangle className="w-10 h-10 text-amber-500 relative z-20" />;
+        return <AlertTriangle className="w-10 h-10 text-white relative z-20" />;
     }
   };
 

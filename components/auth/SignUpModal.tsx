@@ -8,8 +8,10 @@ import {
   Lock,
   Search,
   ArrowLeft,
+  HelpCircle,
 } from "lucide-react";
 import Button from "../Button";
+import HelpCenterModal from "../HelpCenterModal";
 import { countries, Country } from "../../data/countries";
 import {
   registerUser,
@@ -973,6 +975,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [emailValidating, setEmailValidating] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Email validation on blur
   const handleEmailBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
@@ -1775,10 +1778,33 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                   </button>
                 </p>
               )}
+
+              {/* Need Help Link */}
+              <button
+                type="button"
+                onClick={() => setShowHelp(true)}
+                className="flex items-center justify-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs mt-1"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Need help?</span>
+              </button>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Help Center Modal */}
+      <HelpCenterModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        isLoggedIn={false}
+        defaultExpandedTopic="signup"
+        onOpenLogin={() => {
+          setShowHelp(false);
+          onSwitchToLogin?.();
+        }}
+        onOpenSignUp={() => setShowHelp(false)}
+      />
     </div>
   );
 };
