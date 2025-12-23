@@ -10,30 +10,136 @@ interface ChatRequest {
   conversation_id?: string;
 }
 
-// Video metadata mapping
+// R2 Configuration
+const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID") || "";
+const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
+const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
+const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "sharematch-assets";
+
+// Map topic IDs to R2 video file names
+const VIDEO_FILE_NAMES: Record<string, string> = {
+  login: "Streamline Login Process With Sharematch.mp4",
+  signup: "Streamline Signup Process With Sharematch Product Demo.mp4",
+  kyc: "Streamline KYC Verification With Sharematch Demo.mp4",
+};
+
+// Video metadata mapping (without URLs - URLs are generated dynamically)
 const VIDEO_METADATA: {
   [key: string]: {
-    url: string;
     title: string;
     intro: string;
   };
 } = {
   login: {
-    url: "https://embed.app.guidde.com/playbooks/cSwQxFSnf4efCA6UrQyoDt?mode=videoOnly",
     title: "How to Login to ShareMatch",
     intro: "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
   },
   signup: {
-    url: "https://embed.app.guidde.com/playbooks/cx22MbGZG6VH96ndhsZpWs?mode=videoOnly",
     title: "How to Sign Up for ShareMatch",
     intro: "I've got a helpful video that will guide you through the signup process step by step.",
   },
   kyc: {
-    url: "https://embed.app.guidde.com/playbooks/9d9K7U5U5jVdTuUZgw5S95?mode=videoOnly",
     title: "How to Complete KYC Verification on ShareMatch",
     intro: "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
   },
 };
+
+// ============== R2 Signed URL Generation ==============
+
+async function hmacSha256(key: ArrayBuffer | Uint8Array, message: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    key instanceof Uint8Array ? key : new Uint8Array(key),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  return await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(message));
+}
+
+async function sha256Hex(message: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function getSignatureKey(
+  secretKey: string,
+  dateStamp: string,
+  region: string,
+  service: string
+): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const kDate = await hmacSha256(encoder.encode("AWS4" + secretKey), dateStamp);
+  const kRegion = await hmacSha256(kDate, region);
+  const kService = await hmacSha256(kRegion, service);
+  const kSigning = await hmacSha256(kService, "aws4_request");
+  return kSigning;
+}
+
+async function generateSignedUrl(
+  objectKey: string,
+  expiresInSeconds: number = 604800 // 7 days
+): Promise<string> {
+  const region = "auto";
+  const service = "s3";
+  const host = `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  const endpoint = `https://${host}`;
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const dateStamp = amzDate.slice(0, 8);
+
+  const method = "GET";
+  const canonicalUri = `/${R2_BUCKET_NAME}/${encodeURIComponent(objectKey).replace(/%2F/g, "/")}`;
+  const signedHeaders = "host";
+  const payloadHash = "UNSIGNED-PAYLOAD";
+
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const credential = `${R2_ACCESS_KEY_ID}/${credentialScope}`;
+
+  const queryParams = new URLSearchParams({
+    "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+    "X-Amz-Credential": credential,
+    "X-Amz-Date": amzDate,
+    "X-Amz-Expires": expiresInSeconds.toString(),
+    "X-Amz-SignedHeaders": signedHeaders,
+  });
+
+  const canonicalRequest = [
+    method,
+    canonicalUri,
+    queryParams.toString(),
+    `host:${host}\n`,
+    signedHeaders,
+    payloadHash,
+  ].join("\n");
+
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join("\n");
+
+  const signingKey = await getSignatureKey(R2_SECRET_ACCESS_KEY, dateStamp, region, service);
+  const signature = toHex(await hmacSha256(signingKey, stringToSign));
+
+  queryParams.set("X-Amz-Signature", signature);
+  return `${endpoint}${canonicalUri}?${queryParams.toString()}`;
+}
+
+// ============== End R2 Signed URL Generation ==============
 
 /**
  * Classify user intent using LLM
@@ -149,9 +255,24 @@ serve(async (req) => {
     // If user wants a video tutorial, return it immediately
     if (intent.wantsVideo && intent.videoTopic) {
       const videoInfo = VIDEO_METADATA[intent.videoTopic];
-      if (videoInfo) {
+      const videoFileName = VIDEO_FILE_NAMES[intent.videoTopic];
+      
+      if (videoInfo && videoFileName) {
         console.log(`🎬 Returning video tutorial: ${intent.videoTopic}`);
         const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+        
+        // Generate signed URL for R2 video
+        let videoUrl = "";
+        try {
+          if (R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY) {
+            videoUrl = await generateSignedUrl(videoFileName, 604800); // 7 days
+            console.log(`✅ Generated signed URL for ${videoFileName}`);
+          } else {
+            console.warn("⚠️ R2 credentials not configured, video URL will be empty");
+          }
+        } catch (error) {
+          console.error("❌ Failed to generate signed URL:", error);
+        }
         
         return new Response(
           JSON.stringify({
@@ -159,8 +280,9 @@ serve(async (req) => {
             conversation_id: convId,
             video: {
               id: intent.videoTopic,
-              url: videoInfo.url,
+              url: videoUrl,
               title: videoInfo.title,
+              isR2Video: true, // Flag to tell frontend this is an R2 video (use <video> tag)
             },
           }),
           {

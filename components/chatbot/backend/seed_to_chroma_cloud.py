@@ -189,7 +189,7 @@ def main():
                 "source": "videos.json",
                 "type": "video",
                 "video_id": video["id"],
-                "video_url": video["video_url"],
+                "r2_file_name": video.get("r2_file_name", ""),
                 "video_title": video["title"]
             })
             ids.append(f"video_{video['id']}")
