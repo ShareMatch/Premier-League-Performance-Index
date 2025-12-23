@@ -32,24 +32,24 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
 
   const getIcon = () => {
     switch (team.category) {
-      case 'f1': return <Car className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: team.color }} />;
-      case 'football': return <Shield className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: team.color }} />;
-      default: return <Trophy className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: team.color || '#6B7280' }} />;
+      case 'f1': return <Car className="w-5 h-5" style={{ color: team.color }} />;
+      case 'football': return <Shield className="w-5 h-5" style={{ color: team.color }} />;
+      default: return <Trophy className="w-5 h-5" style={{ color: team.color || '#6B7280' }} />;
     }
   };
 
   const logoUrl = team.market ? getLogoUrl(team.name, team.market) : null;
 
   return (
-    <div className={`grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 items-center p-1.5 sm:p-2 md:p-3 text-[10px] xs:text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
-      {/* Asset name with responsive logo */}
+    <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
+      {/* Asset name with logo */}
       <div
-        className="font-medium text-gray-200 text-left flex items-center gap-1 sm:gap-1.5 md:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
+        className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
         onClick={() => onViewAsset?.(team)}
       >
         {logoUrl && !logoError ? (
           <div
-            className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5"
+            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5 sm:p-1"
           >
             <img
               src={logoUrl}
@@ -60,23 +60,23 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
           </div>
         ) : (
           <div
-            className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
+            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
             style={{ backgroundColor: team.color || '#6B7280' }}
           >
-            <span className="text-white text-[8px] sm:text-[10px] md:text-xs font-bold">
+            <span className="text-white text-[10px] sm:text-xs font-bold">
               {team.name.charAt(0)}
             </span>
           </div>
         )}
-        <span className="truncate text-[10px] xs:text-xs sm:text-sm">{team.name}</span>
+        <span className="truncate text-xs sm:text-sm">{team.name}</span>
       </div>
 
       {team.is_settled ? (
-        <div className="col-span-2 flex flex-col items-end pr-0.5 sm:pr-1 md:pr-2">
-          <span className="text-gray-400 text-[8px] sm:text-[10px] md:text-xs font-medium uppercase tracking-wider">Settled</span>
-          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2">
-            <span className="text-gray-500 text-[8px] sm:text-[10px] md:text-xs hidden md:inline">{team.settled_date || 'Dec 8, 2025'}</span>
-            <span className={`text-xs sm:text-sm md:text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
+        <div className="col-span-2 flex flex-col items-end pr-1 sm:pr-2">
+          <span className="text-gray-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Settled</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-gray-500 text-[10px] sm:text-xs hidden sm:inline">{team.settled_date || 'Dec 8, 2025'}</span>
+            <span className={`text-sm sm:text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
               ${team.bid.toFixed(1)}
             </span>
           </div>
@@ -84,22 +84,22 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
       ) : (
         <>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1 sm:py-1.5 md:py-2 -my-1 sm:-my-1.5 md:-my-2"
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
             onClick={() => onSelectOrder(team, 'sell')}
             role="button"
             tabIndex={0}
             aria-label={`Sell ${team.name} Performance Index at $${team.bid.toFixed(1)}`}
           >
-            <span className="font-semibold text-red-400 text-[10px] xs:text-xs sm:text-sm">${team.bid.toFixed(1)}</span>
+            <span className="font-semibold text-red-400 text-xs sm:text-sm">${team.bid.toFixed(1)}</span>
           </div>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1 sm:py-1.5 md:py-2 -my-1 sm:-my-1.5 md:-my-2"
+            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
             onClick={() => onSelectOrder(team, 'buy')}
             role="button"
             tabIndex={0}
             aria-label={`Buy ${team.name} Performance Index at $${team.offer.toFixed(1)}`}
           >
-            <span className="font-semibold bg-[#005430] text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] xs:text-xs sm:text-sm">${team.offer.toFixed(1)}</span>
+            <span className="font-semibold bg-[#005430] text-white px-2 py-1 rounded text-xs sm:text-sm">${team.offer.toFixed(1)}</span>
           </div>
         </>
       )}
