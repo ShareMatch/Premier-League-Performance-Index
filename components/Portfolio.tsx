@@ -53,7 +53,6 @@ const Portfolio: React.FC<PortfolioProps> = ({
 
     // 2. Open the Transaction Slip (Default to Buy)
     if (holding.asset) {
-      // When clicking a holding in the portfolio, default to BUY to allow user to add to position
       onSelectAsset(holding.asset, "buy");
     }
   };

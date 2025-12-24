@@ -226,12 +226,15 @@ serve(async (req) => {
       }
 
       // Set cooling off period for approved users (24 hours)
+      // Store verified name separately (not in complianceUpdate since user_compliance doesn't have full_name column)
+      let verifiedName: string | null = null
+      
       if (kycStatus === 'approved') {
         complianceUpdate.cooling_off_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         
-        // Fetch the verified name from Sumsub and update it
+        // Fetch the verified name from Sumsub
         if (SUMSUB_APP_TOKEN && SUMSUB_SECRET_KEY && applicantId) {
-          const verifiedName = await fetchApplicantVerifiedName(
+          verifiedName = await fetchApplicantVerifiedName(
             applicantId,
             SUMSUB_APP_TOKEN,
             SUMSUB_SECRET_KEY,
@@ -239,8 +242,7 @@ serve(async (req) => {
           )
           
           if (verifiedName) {
-            complianceUpdate.full_name = verifiedName
-            console.log(`Updating full_name to verified name: ${verifiedName}`)
+            console.log(`Fetched verified name from Sumsub: ${verifiedName}`)
           }
         }
       }
@@ -275,25 +277,27 @@ serve(async (req) => {
       }
 
       // Also update users.full_name if we have verified name
-      if (complianceUpdate.full_name) {
+      if (verifiedName) {
         const { error: fullNameUpdateError } = await supabase
           .from('users')
-          .update({ full_name: complianceUpdate.full_name })
+          .update({ full_name: verifiedName })
           .eq('id', externalUserId)
         if (fullNameUpdateError) {
           console.error('Failed to update users.full_name:', fullNameUpdateError)
+        } else {
+          console.log(`Updated users.full_name to: ${verifiedName}`)
         }
       }
 
       // Also update the auth.users display name if we have a verified name and auth_user_id
-      if (complianceUpdate.full_name && authUserId) {
-        console.log(`Updating auth.users display name for ${authUserId} to: ${complianceUpdate.full_name}`)
+      if (verifiedName && authUserId) {
+        console.log(`Updating auth.users display name for ${authUserId} to: ${verifiedName}`)
         
         const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
           authUserId,
           { 
             user_metadata: { 
-              full_name: complianceUpdate.full_name 
+              full_name: verifiedName 
             } 
           }
         )

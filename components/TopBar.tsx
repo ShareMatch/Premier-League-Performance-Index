@@ -43,6 +43,11 @@ interface TopBarProps {
   onOpenSettings?: () => void;
   onOpenPortfolio?: () => void;
   onViewAsset?: (asset: Team) => void;
+  // External triggers for opening auth modals (from HelpCenterModal)
+  triggerLoginModal?: boolean;
+  onTriggerLoginHandled?: () => void;
+  triggerSignUpModal?: boolean;
+  onTriggerSignUpHandled?: () => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -80,6 +85,10 @@ const TopBar: React.FC<TopBarProps> = ({
   onOpenSettings,
   onOpenPortfolio,
   onViewAsset,
+  triggerLoginModal,
+  onTriggerLoginHandled,
+  triggerSignUpModal,
+  onTriggerSignUpHandled,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -235,6 +244,21 @@ const TopBar: React.FC<TopBarProps> = ({
       setShowSignUpModal(false);
     }
   }, [user]);
+
+  // Handle external triggers for opening auth modals (from HelpCenterModal via App.tsx)
+  useEffect(() => {
+    if (triggerLoginModal) {
+      setShowLoginModal(true);
+      onTriggerLoginHandled?.();
+    }
+  }, [triggerLoginModal, onTriggerLoginHandled]);
+
+  useEffect(() => {
+    if (triggerSignUpModal) {
+      setShowSignUpModal(true);
+      onTriggerSignUpHandled?.();
+    }
+  }, [triggerSignUpModal, onTriggerSignUpHandled]);
 
   const switchToSignUp = () => {
     setShowLoginModal(false);

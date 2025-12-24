@@ -33,7 +33,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
         onKeyDown={handleKeyDown}
         placeholder="Type a message..."
         disabled={disabled}
-        className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-700/50 border border-gray-600 rounded-full text-xs sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A651]/50 focus:border-[#00A651] disabled:opacity-50"
+        className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-700/50 border border-gray-600 rounded-full text-base sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A651]/50 focus:border-[#00A651] disabled:opacity-50"
       />
       <button
         type="submit"
