@@ -31,18 +31,18 @@ interface HelpTopic {
 
 const ALL_HELP_TOPICS: HelpTopic[] = [
   {
-    id: "login",
-    title: "How to Login",
-    description: "Step-by-step guide to logging into your ShareMatch account",
-    icon: <LogIn className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Login",
-  },
-  {
     id: "signup",
     title: "How to Sign Up",
     description: "Create your ShareMatch account in a few easy steps",
     icon: <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     actionLabel: "Sign Up",
+  },
+  {
+    id: "login",
+    title: "How to Login",
+    description: "Step-by-step guide to logging into your ShareMatch account",
+    icon: <LogIn className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Login",
   },
   {
     id: "kyc",
