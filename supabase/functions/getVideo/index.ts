@@ -53,7 +53,7 @@ async function getSigningKey(
 
 async function generateSignedUrl(
   objectKey: string,
-  expiresInSeconds: number = 604800 // Default: 7 days
+  expiresInSeconds: number = 300 // Default: 7 days
 ): Promise<string> {
   const region = "auto"; // R2 uses "auto" for region
   const service = "s3";
@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
     const sanitizedName = videoName.replace(/\.\./g, "").replace(/^\/+/, "");
 
     // Generate signed URL (valid for 7 days)
-    const signedUrl = await generateSignedUrl(sanitizedName, 604800);
+    const signedUrl = await generateSignedUrl(sanitizedName, 300);
 
     console.log(`Generated signed URL for: ${sanitizedName}`);
 
