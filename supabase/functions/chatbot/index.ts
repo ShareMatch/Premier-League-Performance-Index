@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,10 @@ interface ChatRequest {
   message: string;
   conversation_id?: string;
 }
+
+// Supabase configuration
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 // R2 Configuration
 const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID") || "";
@@ -24,23 +29,28 @@ const VIDEO_FILE_NAMES: Record<string, string> = {
 };
 
 // Video metadata mapping (without URLs - URLs are generated dynamically)
+// accessLevel: "public" = available to all, "authenticated" = requires login
 const VIDEO_METADATA: {
   [key: string]: {
     title: string;
     intro: string;
+    accessLevel: "public" | "authenticated";
   };
 } = {
   login: {
     title: "How to Login to ShareMatch",
     intro: "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
+    accessLevel: "public",
   },
   signup: {
     title: "How to Sign Up for ShareMatch",
     intro: "I've got a helpful video that will guide you through the signup process step by step.",
+    accessLevel: "public",
   },
   kyc: {
     title: "How to Complete KYC Verification on ShareMatch",
     intro: "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
+    accessLevel: "public",
   },
 };
 
@@ -224,6 +234,35 @@ serve(async (req) => {
       );
     }
 
+    // ============== Session Validation ==============
+    // Check if user is authenticated by validating the auth token
+    let isAuthenticated = false;
+    let userId: string | null = null;
+
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ") && SUPABASE_URL && SUPABASE_ANON_KEY) {
+      try {
+        const token = authHeader.substring(7);
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        });
+        
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (!error && user) {
+          isAuthenticated = true;
+          userId = user.id;
+          console.log(`🔐 User authenticated: ${userId}`);
+        }
+      } catch (authError) {
+        console.log("🔓 Auth validation failed, using public mode:", authError);
+      }
+    } else {
+      console.log("🔓 No auth token provided, using public mode");
+    }
+    // ============== End Session Validation ==============
+
     // Get API keys
     const groqApiKey = Deno.env.get("GROQ_API_KEY");
     const hfToken = Deno.env.get("HF_TOKEN");
@@ -258,6 +297,21 @@ serve(async (req) => {
       const videoFileName = VIDEO_FILE_NAMES[intent.videoTopic];
       
       if (videoInfo && videoFileName) {
+        // Check access level for authenticated-only videos
+        if (videoInfo.accessLevel === "authenticated" && !isAuthenticated) {
+          console.log(`🚫 Video ${intent.videoTopic} requires authentication`);
+          const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+          return new Response(
+            JSON.stringify({
+              message: "To access this tutorial, please log in to your ShareMatch account first. I can help you with login or signup if you need!",
+              conversation_id: convId,
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+
         console.log(`🎬 Returning video tutorial: ${intent.videoTopic}`);
         const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
         
@@ -365,17 +419,33 @@ serve(async (req) => {
       const collectionData = await collectionsResponse.json();
       console.log("✓ Collection found, ID:", collectionData.id);
       
-      // Query the collection
+      // Query the collection with access level filtering
       const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
+      
+      // Build query body with optional access_level filter for unauthenticated users
+      const queryBody: {
+        query_embeddings: number[][];
+        n_results: number;
+        include: string[];
+        where?: { access_level: { $eq: string } };
+      } = {
+        query_embeddings: [queryEmbedding],
+        n_results: 4,
+        include: ["documents"],
+      };
+      
+      // Filter to only public documents for unauthenticated users
+      if (!isAuthenticated) {
+        queryBody.where = { access_level: { $eq: "public" } };
+        console.log("🔓 Filtering RAG to public documents only");
+      } else {
+        console.log("🔐 RAG has access to all documents");
+      }
       
       const queryResponse = await fetch(queryUrl, {
         method: "POST",
         headers: chromaHeaders,
-        body: JSON.stringify({
-          query_embeddings: [queryEmbedding],
-          n_results: 4,
-        include: ["documents"], // Only need documents for RAG context
-        }),
+        body: JSON.stringify(queryBody),
       });
 
       if (!queryResponse.ok) {
@@ -394,19 +464,78 @@ serve(async (req) => {
     
     const context = documents.join("\n\n") || "No specific information found in the knowledge base.";
     
-    // Call Groq LLM
-    const systemPrompt = `You are ShareMatch AI, the official assistant for the ShareMatch platform.
+    // ============== Dual System Prompts ==============
+    // Different prompts for authenticated vs public users
+    
+    const publicSystemPrompt = `You are ShareMatch AI, helping visitors learn about ShareMatch.
+
+COMMUNICATION STYLE:
+- Be friendly, welcoming, and helpful
+- Speak naturally and directly
+- Encourage users to sign up or log in when appropriate
+
+GREETINGS (CRITICAL):
+When the user says greetings like "hi", "hey", "hello", "good morning", "what's up", etc.:
+→ Respond warmly: "Hey there! Welcome to ShareMatch! I'm here to help you get started. You can ask me about signing up, logging in, or how ShareMatch works. What would you like to know?"
+→ Do NOT ask them to rephrase - greetings are NOT unclear questions!
+
+TOPICS YOU CAN HELP WITH:
+- What is ShareMatch and how it works
+- How to create an account (signup process)
+- How to login to your account
+- KYC verification process
+- General platform overview
+
+TOPICS THAT REQUIRE LOGIN:
+- Trading and buying/selling tokens
+- Deposits and withdrawals
+- Account settings and profile management
+- Portfolio and transaction history
+- Specific account questions
+
+HANDLING LOGIN-REQUIRED TOPICS:
+If asked about trading, deposits, withdrawals, or account-specific features, respond:
+"To get help with that, please log in to your ShareMatch account first. I can help you with login or signup if you need!"
+
+HANDLING UNCLEAR QUESTIONS:
+- ONLY if the user sends truly vague follow-ups like "huh?", "what?", "again?", "??":
+  → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
+- NEVER treat greetings as unclear questions
+- NEVER dump raw text or repeat the same long response
+
+STRICT RULES:
+1. Answer ONLY using the CONTEXT below. Do NOT make up information.
+2. Keep responses concise and focused.
+3. If the answer is not in the context, say: "I don't have that specific information. Please contact hello@sharematch.me"
+4. NEVER use phrases like "according to the context" or similar.
+
+FORMATTING RULES:
+When presenting lists or multiple features:
+- Put EACH item on its OWN LINE
+- Use bullet points with dashes (-)
+- Keep each bullet point concise
+
+CONTEXT:
+${context}`;
+
+    const authenticatedSystemPrompt = `You are ShareMatch AI, the official assistant for the ShareMatch platform.
 
 COMMUNICATION STYLE:
 - Speak naturally and directly, as if you inherently know this information
 - Answer confidently as the authoritative source on ShareMatch
 - Be conversational but professional
 
-HANDLING UNCLEAR QUESTIONS (CRITICAL):
-- If the user sends a vague message like "huh?", "what?", "again?", "??", or similar:
+GREETINGS (CRITICAL):
+When the user says greetings like "hi", "hey", "hello", "good morning", "what's up", etc.:
+→ Respond warmly: "Hey! Great to see you! How can I help you today? I can assist with trading, deposits, account settings, or anything else about ShareMatch."
+→ Do NOT ask them to rephrase - greetings are NOT unclear questions!
+
+HANDLING UNCLEAR QUESTIONS:
+- ONLY if the user sends truly vague follow-ups like "huh?", "what?", "again?", "??":
   → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
 - If the user asks you to repeat something:
   → Politely ask what specific part they'd like explained: "Which part would you like me to explain further?"
+- NEVER treat greetings as unclear questions
 - NEVER dump raw text or repeat the same long response
 - NEVER output raw context chunks or document text
 
@@ -426,6 +555,11 @@ When presenting lists or multiple features:
 
 CONTEXT:
 ${context}`;
+
+    // Select prompt based on authentication status
+    const systemPrompt = isAuthenticated ? authenticatedSystemPrompt : publicSystemPrompt;
+    console.log(`📝 Using ${isAuthenticated ? "authenticated" : "public"} system prompt`);
+    // ============== End Dual System Prompts ==============
 
     const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
