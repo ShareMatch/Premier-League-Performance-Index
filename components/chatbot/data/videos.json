@@ -4,6 +4,7 @@
     "type": "video",
     "title": "How to Login to ShareMatch",
     "r2_file_name": "Streamline Login Process With Sharematch.mp4",
+    "access_level": "public",
     "keywords": ["login", "sign in", "access account", "enter credentials", "authentication"],
     "content": "How to login to ShareMatch: Click the login option to begin accessing your ShareMatch account. Click here to open the login form where you can enter your credentials. Enter your email address to identify your ShareMatch account securely. Click the password field to input your secure password. Enter your password to authenticate your identity and gain access. Click the login button to submit your credentials and access your ShareMatch dashboard."
   },
@@ -12,6 +13,7 @@
     "type": "video",
     "title": "How to Sign Up for ShareMatch",
     "r2_file_name": "Streamline Signup Process With Sharematch Product Demo.mp4",
+    "access_level": "public",
     "keywords": ["signup", "sign up", "register", "create account", "join", "registration"],
     "content": "How to sign up for ShareMatch: Click the Join Now button to begin the signup process on ShareMatch. Enter your full name. Enter your date of birth for age verification. Select your country of residence. Enter your email address. Enter your password. Enter your password again to confirm it matches. Enter your referral code if you have any to receive any applicable benefits. Click the continue button to proceed to the next sign up step. Enter your phone number. Enter your WhatsApp number. Click I agree to receive OTP via Email and WhatsApp to consent. Confirm your acceptance of terms of service and privacy policies. Click the create account button to finalize your registration. Enter OTP received via Email. Enter OTP received via WhatsApp. Account Created Successfully and Login to Continue."
   },
@@ -20,6 +22,7 @@
     "type": "video",
     "title": "How to Complete KYC Verification on ShareMatch",
     "r2_file_name": "Streamline KYC Verification With Sharematch Demo.mp4",
+    "access_level": "public",
     "keywords": ["kyc", "verification", "identity", "verify", "document", "id verification", "passport", "driving license"],
     "content": "How to complete KYC verification on ShareMatch: Click Start Verification to initiate the identity verification process within ShareMatch. Click continue in the SumSub interface to move forward with the verification steps. Click Start verification to launch the identity verification procedure in SumSub. Click agree and continue to accept the terms and proceed with the verification process. Select the identity document issuing country. Choose the type of identification document to be submitted for verification. Upload front side of the document. Upload backside of the document and click on continue. Your profile is verified successfully and you can start trading with ShareMatch."
   }
