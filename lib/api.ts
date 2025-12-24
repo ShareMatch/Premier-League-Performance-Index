@@ -832,11 +832,12 @@ export interface MarketingPreferencesResponse {
     ok: boolean;
     message: string;
     preferences?: {
-        id: string;
-        email: boolean;
-        whatsapp: boolean;
-        sms: boolean;
-        personalized_marketing: boolean;
+        email?: boolean;
+        whatsapp?: boolean;
+        sms?: boolean;
+        personalized_marketing?: boolean;
+        email_otp?: boolean;
+        whatsapp_otp?: boolean;
     };
 }
 
@@ -1237,4 +1238,61 @@ export const fetchUserBankingDetails = async (userId: string): Promise<UserBanki
     }
 
     return data as UserBankingDetails | null;
+};
+
+// ============================================
+// AUTH USER DATA (Last Sign In)
+// ============================================
+
+/**
+ * Fetch auth user data to get last_sign_in_at from Supabase Auth
+ */
+export const fetchAuthUserData = async () => {
+    try {
+        const { data, error } = await supabase.auth.getUser();
+        
+        if (error) {
+            console.error('Error fetching auth user:', error);
+            return null;
+        }
+
+        return data.user;
+    } catch (err) {
+        console.error('Exception fetching auth user:', err);
+        return null;
+    }
+};
+
+/**
+ * Fetch last N login events from Supabase Logs API via Edge Function
+ */
+export const fetchLoginHistory = async (userId: string, limit: number = 5) => {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/get-login-history`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                limit: limit,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error fetching login history:', errorData);
+            return [];
+        }
+
+        const data = await response.json();
+        const loginHistory = data.logins || [];
+
+        console.log('✅ Login history fetched:', loginHistory);
+        return loginHistory.slice(0, limit);
+    } catch (err) {
+        console.error('Exception fetching login history:', err);
+        return [];
+    }
 };

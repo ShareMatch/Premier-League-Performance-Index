@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 DATA_PATH = BASE_DIR / "data" / "faq.pdf"
+VIDEOS_PATH = BASE_DIR / "data" / "videos.json"
 CHROMA_DIR = BASE_DIR / "chroma_db"
 
 CHUNK_SIZE = 1000
