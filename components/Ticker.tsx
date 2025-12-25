@@ -64,7 +64,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
     };
 
     return (
-        <div className="bg-gray-900 border-t border-gray-800 h-10 flex items-center overflow-x-auto overflow-y-hidden whitespace-nowrap relative z-50 scrollbar-hide">
+        <div className="bg-gray-900 border-t border-gray-800 h-10 flex items-center overflow-x-auto overflow-y-hidden whitespace-nowrap relative z-10 scrollbar-hide">
             <div className="animate-ticker flex items-center gap-8 px-4">
                 {[...tickerItems, ...tickerItems].map((team, index) => ( // Duplicate for seamless loop
                     <div

@@ -45,6 +45,7 @@ import AlertModal from "./components/AlertModal";
 import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
+import HelpCenterModal from "./components/HelpCenterModal";
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -91,6 +92,35 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
+  // Lock body scroll when mobile panel is open (prevents iOS Safari scroll issues)
+  useEffect(() => {
+    if (showRightPanel) {
+      // Lock scroll on body
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+    } else {
+      // Restore scroll
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, [showRightPanel]);
+
   // My Details Page visibility - check URL hash on initial load
   const [showMyDetails, setShowMyDetails] = useState(() => {
     return window.location.hash === "#my-details";
@@ -106,6 +136,13 @@ const App: React.FC = () => {
     setShowMyDetails(false);
     window.history.pushState(null, "", window.location.pathname);
   }, []);
+
+  // Help Center Modal visibility
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
+
+  // Triggers for opening auth modals from HelpCenterModal (passed to TopBar)
+  const [triggerLoginModal, setTriggerLoginModal] = useState(false);
+  const [triggerSignUpModal, setTriggerSignUpModal] = useState(false);
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -568,7 +605,7 @@ const App: React.FC = () => {
       warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
       enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
-      <div className="flex flex-col h-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
+      <div className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
         {/* Top Bar - Full Width */}
         <TopBar
           wallet={wallet}
@@ -586,6 +623,10 @@ const App: React.FC = () => {
             setIsMobileMenuOpen(false); // Close left sidebar when opening right panel
           }}
           onViewAsset={handleViewAsset}
+          triggerLoginModal={triggerLoginModal}
+          onTriggerLoginHandled={() => setTriggerLoginModal(false)}
+          triggerSignUpModal={triggerSignUpModal}
+          onTriggerSignUpHandled={() => setTriggerSignUpModal(false)}
         />
 
         {/* AI Analytics Banner */}
@@ -604,19 +645,18 @@ const App: React.FC = () => {
             activeLeague={activeLeague}
             onLeagueChange={handleNavigate}
             allAssets={allAssets}
+            onHelpCenterClick={() => setShowHelpCenter(true)}
           />
 
           {/* Content Container (Main + Right Panel) */}
           <div className="flex-1 flex overflow-hidden">
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 relative">
-              <div
-                className={`flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide ${activeLeague === "HOME"
-                  ? "overflow-hidden"
-                  : "overflow-y-auto"
-                  }`}
-              >
-                <div className="max-w-5xl mx-auto h-full flex flex-col">
+              <div className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto">
+                
+                <div className="max-w-5xl mx-auto flex flex-col min-h-full">
+                  {/* Main content wrapper - grows to fill space */}
+                  <div className="flex-1">
                   {currentView === 'asset' && viewAsset ? (
                     <AssetPage
                       asset={viewAsset}
@@ -643,10 +683,10 @@ const App: React.FC = () => {
                       <AIAnalyticsPage teams={allAssets} />
                     </React.Suspense>
                   ) : (
-                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side (fixed height) */
-                    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:h-full xl:overflow-hidden">
+                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
                       {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
-                      <div className="w-full xl:flex-[2] flex flex-col xl:min-h-0">
+                      <div className="w-full lg:flex-[2] flex flex-col">
                         {/* Header aligned with order book */}
                         <div className="flex-shrink-0">
                           <Header
@@ -655,8 +695,8 @@ const App: React.FC = () => {
                           />
                         </div>
 
-                        {/* Order Book - Fixed height on mobile, flex on desktop */}
-                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-[280px] sm:h-[350px] xl:h-auto xl:flex-1">
+                        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
                           {/* Fixed Header - Responsive padding and text */}
                           <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
                             <div className="text-left">Asset</div>
@@ -679,7 +719,7 @@ const App: React.FC = () => {
                       </div>
 
                       {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-                      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+                      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
                         {/* AI Analysis */}
                         <div className="flex-shrink-0">
                           <AIAnalysis
@@ -713,16 +753,19 @@ const App: React.FC = () => {
                   )}
 
                   {activeLeague !== "HOME" && (
-                    <div className="mt-8">
+                    <div className="mt-8 flex-shrink-0">
                       <Footer />
                     </div>
                   )}
+                  </div>
+                  {/* End of main content wrapper */}
+
+                  {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
+                  <div className="mt-auto pt-6 flex-shrink-0">
+                    <Ticker onNavigate={handleNavigate} teams={allAssets} />
+                  </div>
                 </div>
               </div>
-
-              {/* Ticker at the bottom of the center content */}
-              {/* Ticker at the bottom of the center content */}
-              <Ticker onNavigate={handleNavigate} teams={allAssets} />
             </div>
 
             {/* Right Panel - Hidden on smaller screens/150% zoom, visible on 2xl+ */}
@@ -746,36 +789,37 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Mobile/Tablet: Slide-out panel (visible below xl/1280px) */}
-            {/* Mobile (<lg): top-14 for h-14 TopBar only (Banner scrolls with content) */}
-            {/* Larger (>=lg): top-20 for h-20 TopBar (works on tablet horizontal) */}
-            <div
-              className={`xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"
-                }`}
-            >
-              <RightPanel
-                portfolio={portfolio}
-                transactions={transactions}
-                selectedOrder={selectedOrder}
-                onCloseTradeSlip={() => setSelectedOrder(null)}
-                onConfirmTrade={handleConfirmTrade}
-                allAssets={allAssets}
-                onNavigate={handleNavigate}
-                onSelectOrder={handleSelectOrder}
-                leagueName={
-                  selectedOrder && selectedOrder.team.market
-                    ? getLeagueTitle(selectedOrder.team.market)
-                    : getLeagueTitle(activeLeague)
-                }
-                walletBalance={wallet?.balance || 0}
-                onClose={() => {
-                  setShowRightPanel(false);
-                  setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
-                }}
-                isMobile={true}
-              />
-            </div>
           </div>
+        </div>
+
+        {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
+        {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
+        <div
+          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
+            showRightPanel ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <RightPanel
+            portfolio={portfolio}
+            transactions={transactions}
+            selectedOrder={selectedOrder}
+            onCloseTradeSlip={() => setSelectedOrder(null)}
+            onConfirmTrade={handleConfirmTrade}
+            allAssets={allAssets}
+            onNavigate={handleNavigate}
+            onSelectOrder={handleSelectOrder}
+            leagueName={
+              selectedOrder && selectedOrder.team.market
+                ? getLeagueTitle(selectedOrder.team.market)
+                : getLeagueTitle(activeLeague)
+            }
+            walletBalance={wallet?.balance || 0}
+            onClose={() => {
+              setShowRightPanel(false);
+              setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+            }}
+            isMobile={true}
+          />
         </div>
 
         {/* Overlay for mobile menu */}
@@ -789,11 +833,12 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 xl:hidden"
+            className="fixed inset-0 bg-black/50 z-30 2xl:hidden touch-none"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
             }}
+            onTouchMove={(e) => e.preventDefault()}
           />
         )}
 
@@ -878,6 +923,25 @@ const App: React.FC = () => {
 
         {/* AI Chatbot - Fixed position bottom right */}
         <ChatBot />
+
+        {/* Help Center Modal */}
+        <HelpCenterModal
+          isOpen={showHelpCenter}
+          onClose={() => setShowHelpCenter(false)}
+          isLoggedIn={!!user}
+          onOpenLogin={() => {
+            setShowHelpCenter(false);
+            setTriggerLoginModal(true);
+          }}
+          onOpenSignUp={() => {
+            setShowHelpCenter(false);
+            setTriggerSignUpModal(true);
+          }}
+          onOpenKYC={() => {
+            setShowHelpCenter(false);
+            setShowKycModal(true);
+          }}
+        />
       </div>
     </InactivityHandler>
   );

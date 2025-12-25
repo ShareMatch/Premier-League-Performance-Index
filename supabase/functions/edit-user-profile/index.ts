@@ -17,6 +17,7 @@ interface EditPayload {
   // Fields that can be updated
   newEmail?: string;
   fullName?: string;
+  displayName?: string;
   dob?: string;
   countryOfResidence?: string;
   phone?: string;
@@ -200,8 +201,8 @@ serve(async (req: Request) => {
     }
 
     // Handle other field updates
-    if (body.fullName) {
-      updateData.full_name = String(body.fullName).trim();
+    if (body.displayName !== undefined) {
+      updateData.display_name = String(body.displayName).trim();
     }
     if (body.dob) {
       updateData.dob = String(body.dob).trim();

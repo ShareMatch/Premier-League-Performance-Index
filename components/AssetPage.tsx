@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { ArrowLeft, Share2, Star } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { ArrowLeft, Share2, Star, TrendingUp, BarChart3, DollarSign } from "lucide-react";
 import PriceVolumeChart from "./PriceVolumeChart";
 import TradeHistoryList from "./TradeHistoryList";
 import { generateAssetHistory, generateTradeHistory } from "../utils/mockData";
@@ -22,7 +22,6 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     // Generate consistent mock data based on asset ID 
     // (In a real app this would be fetched)
     const chartData = useMemo(() => {
-        // Determine base price roughly from current asset price
         const basePrice = asset.offer || 1.0;
         return generateAssetHistory(basePrice, period, asset.name);
     }, [asset.id, asset.offer, period, asset.name]);
@@ -45,16 +44,79 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     }, [asset.name]);
 
     const handleShare = () => {
-        // Mock share - just copy title to clipboard
         navigator.clipboard.writeText(`Check out ${asset.name} on ShareMatch!`);
         alert('Link copied to clipboard!');
-        // In a real app, use a proper toast notification
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#040B11] animate-in fade-in duration-300 overflow-y-auto">
-            {/* Header / Nav */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-800 bg-[#0B1221] sticky top-0 z-20">
+        <div className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
+            {/* Mobile Header - Compact */}
+            <div className="lg:hidden sticky top-0 z-30 bg-[#0B1221] border-b border-gray-800">
+                <div className="flex items-center justify-between p-3">
+                    <button
+                        onClick={onBack}
+                        className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="flex items-center gap-2 flex-1 mx-3">
+                        <div className={`w-8 h-8 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10`}>
+                            <span className="text-sm font-bold text-white">
+                                {asset.name.substring(0, 2).toUpperCase()}
+                            </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-sm font-bold text-white truncate">{asset.name}</h1>
+                            <span className="text-xs text-gray-400">{asset.market || 'Asset'}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => setIsFavorite(!isFavorite)}
+                            className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:bg-gray-800'}`}
+                        >
+                            <Star className={`w-4 h-4 ${isFavorite ? 'fill-yellow-400' : ''}`} />
+                        </button>
+                        <button
+                            onClick={handleShare}
+                            className="p-2 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
+                        >
+                            <Share2 className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile Price & Actions */}
+                <div className="p-3 border-t border-gray-800 bg-[#0B1221]/50">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
+                            <span className="ml-2 text-xs text-brand-emerald500 font-medium">
+                                +{(Math.random() * 5).toFixed(2)}%
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onSelectOrder?.(asset, 'sell')}
+                            className="flex-1 px-4 py-2.5 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-sm"
+                        >
+                            Sell
+                        </button>
+                        <button
+                            onClick={() => onSelectOrder?.(asset, 'buy')}
+                            className="flex-1 px-4 py-2.5 bg-[#005430] text-white font-bold rounded-lg transition-colors text-sm"
+                        >
+                            Buy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden lg:flex items-center justify-between p-6 border-b border-gray-800 bg-[#0B1221] sticky top-0 z-30">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
@@ -134,67 +196,119 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                 </div>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Content */}
+            <div>
+                <div className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
+                    {/* Responsive Grid: Mobile stacked, Tablet 2-col option, Desktop 3-col */}
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
+                        
+                        {/* Left Column - Main Chart & News (Mobile: Full Width, Desktop: 2/3) */}
+                        <div className="xl:col-span-2 space-y-4 md:space-y-6">
+                            
+                            {/* Price Chart */}
+                            <PriceVolumeChart
+                                data={chartData}
+                                assetName={asset.name}
+                                period={period}
+                                onPeriodChange={setPeriod}
+                            />
 
-                {/* Left Column: Charts (2/3 width) */}
-                <div className="lg:col-span-2 space-y-6">
-                    <PriceVolumeChart
-                        data={chartData}
-                        assetName={asset.name}
-                        period={period}
-                        onPeriodChange={setPeriod}
-                    />
+                            {/* Market Stats - Mobile/Tablet: Show early, Desktop: Show in right column */}
+                            <div className="xl:hidden bg-[#0B1221] border border-gray-800 rounded-xl p-3 sm:p-4">
+                                <h3 className="text-white font-bold text-sm mb-3">Market Stats</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-[#040B11]/50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <DollarSign className="w-3 h-3 text-gray-400" />
+                                            <span className="text-xs text-gray-400">Market Cap</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white font-mono">$240.5M</span>
+                                    </div>
+                                    <div className="bg-[#040B11]/50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <BarChart3 className="w-3 h-3 text-gray-400" />
+                                            <span className="text-xs text-gray-400">24h Volume</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white font-mono">$1.2M</span>
+                                    </div>
+                                    <div className="bg-[#040B11]/50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <TrendingUp className="w-3 h-3 text-gray-400" />
+                                            <span className="text-xs text-gray-400">All Time High</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white font-mono">$4.2</span>
+                                    </div>
+                                    <div className="bg-[#040B11]/50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <BarChart3 className="w-3 h-3 text-gray-400" />
+                                            <span className="text-xs text-gray-400">Total Supply</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-white font-mono">100M</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* News Section */}
-                    <div className="mt-8">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-bold text-white">Latest News for {asset.name}</h2>
+                            {/* Trade History - Mobile/Tablet: Show inline */}
+                            <div className="xl:hidden">
+                                <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
+                            </div>
+
+                            {/* Did You Know - Mobile/Tablet */}
+                            <div className="xl:hidden">
+                                <DidYouKnow assetName={asset.name} market={asset.market} />
+                            </div>
+
+                            {/* On This Day - Mobile/Tablet */}
+                            <div className="xl:hidden">
+                                <OnThisDay assetName={asset.name} market={asset.market} />
+                            </div>
+
+                            {/* News Section */}
+                            <div className="mt-4 md:mt-8">
+                                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                                    <h2 className="text-base sm:text-lg md:text-xl font-bold text-white">Latest News for {asset.name}</h2>
+                                </div>
+                                <div className="bg-[#02060a] border border-gray-800 rounded-xl overflow-hidden">
+                                    <NewsFeed className="min-h-[300px] sm:min-h-[350px] md:min-h-[400px]" topic={asset.name} />
+                                </div>
+                            </div>
                         </div>
-                        {/* We reuse NewsFeed but filter it or pass specific query if supported, 
-                    for now standard feed or if NewsFeed supports filtering we use it. 
-                    Adding a wrapper to constrain height if needed. */}
-                        <div className="bg-[#02060a] border border-gray-800 rounded-xl overflow-hidden">
-                            <NewsFeed className="min-h-[400px]" topic={asset.name} />
+
+                        {/* Right Column - Stats & Info (Desktop Only) */}
+                        <div className="hidden xl:block xl:col-span-1 space-y-6">
+                            <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
+
+                            {/* Key Stats Card */}
+                            <div className="bg-[#0B1221] border border-gray-800 rounded-xl p-5 space-y-4">
+                                <h3 className="text-white font-bold text-sm">Market Stats</h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Market Cap</span>
+                                        <span className="text-white font-mono">$240.5M</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">24h Volume</span>
+                                        <span className="text-white font-mono">$1.2M</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">All Time High</span>
+                                        <span className="text-white font-mono">$4.2</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Total Supply</span>
+                                        <span className="text-white font-mono">100M</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Did You Know Module */}
+                            <DidYouKnow assetName={asset.name} market={asset.market} />
+
+                            {/* On This Day Module */}
+                            <OnThisDay assetName={asset.name} market={asset.market} />
                         </div>
                     </div>
                 </div>
-
-                <div className="lg:col-span-1 space-y-6">
-                    <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
-
-                    {/* Key Stats Card */}
-                    <div className="bg-[#0B1221] border border-gray-800 rounded-xl p-5 space-y-4">
-                        <h3 className="text-white font-bold text-sm">Market Stats</h3>
-                        <div className="space-y-3">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-400">Market Cap</span>
-                                <span className="text-white font-mono">$240.5M</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-400">24h Volume</span>
-                                <span className="text-white font-mono">$1.2M</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-400">All Time High</span>
-                                <span className="text-white font-mono">$4.2</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-400">Total Supply</span>
-                                <span className="text-white font-mono">100M</span>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    {/* Did You Know Module */}
-                    <DidYouKnow assetName={asset.name} market={asset.market} />
-
-                    {/* On This Day Module */}
-                    <OnThisDay assetName={asset.name} market={asset.market} />
-                </div>
-
             </div>
         </div>
     );

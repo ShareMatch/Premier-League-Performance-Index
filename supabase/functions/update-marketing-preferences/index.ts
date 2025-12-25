@@ -7,13 +7,17 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Channels that users can update (excludes OTP channels)
+const ALLOWED_CHANNELS = ["email", "whatsapp", "sms", "personalized_marketing"] as const;
+type AllowedChannel = typeof ALLOWED_CHANNELS[number];
+
 interface UpdatePreferencesPayload {
     email: string; // User's email to identify them
     preferences: {
-        email: boolean;
-        whatsapp: boolean;
-        sms: boolean;
-        personalized_marketing: boolean;
+        email?: boolean;
+        whatsapp?: boolean;
+        sms?: boolean;
+        personalized_marketing?: boolean;
     };
 }
 
@@ -64,31 +68,37 @@ serve(async (req: Request) => {
 
         const userId = user.id;
 
-        // Upsert user preferences
-        const { error: upsertError } = await supabase
-            .from("user_preferences")
-            .upsert({
-                id: userId,
-                email: preferences.email ?? false,
-                whatsapp: preferences.whatsapp ?? false,
-                sms: preferences.sms ?? false,
-                personalized_marketing: preferences.personalized_marketing ?? false,
-            }, { onConflict: "id" });
+        // Upsert each preference that was provided
+        const upsertPromises: Promise<any>[] = [];
+        
+        for (const channel of ALLOWED_CHANNELS) {
+            if (preferences[channel] !== undefined) {
+                upsertPromises.push(
+                    supabase.rpc("upsert_user_preference", {
+                        p_user_id: userId,
+                        p_channel: channel,
+                        p_permission: preferences[channel],
+                    })
+                );
+            }
+        }
 
-        if (upsertError) {
-            console.error("Upsert error:", upsertError);
+        // Wait for all upserts
+        const results = await Promise.all(upsertPromises);
+        
+        // Check for errors
+        const errors = results.filter(r => r.error);
+        if (errors.length > 0) {
+            console.error("Upsert errors:", errors.map(e => e.error));
             return new Response(
-                JSON.stringify({ error: "Failed to update preferences", details: upsertError.message }),
+                JSON.stringify({ error: "Failed to update some preferences" }),
                 { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Fetch updated preferences
+        // Fetch updated preferences using helper function
         const { data: updatedPrefs, error: fetchError } = await supabase
-            .from("user_preferences")
-            .select("*")
-            .eq("id", userId)
-            .single();
+            .rpc("get_user_preferences", { p_user_id: userId });
 
         if (fetchError) {
             console.error("Fetch error:", fetchError);
@@ -98,7 +108,7 @@ serve(async (req: Request) => {
             JSON.stringify({
                 ok: true,
                 message: "Marketing preferences updated successfully",
-                preferences: updatedPrefs,
+                preferences: updatedPrefs || {},
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

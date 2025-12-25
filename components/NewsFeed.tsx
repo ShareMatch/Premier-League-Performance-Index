@@ -247,7 +247,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
     return (
         <>
-            <div className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-64 xl:h-80'}`}>
+            <div className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-50 md:h-48 lg:h-60 xl:h-60'}`}>
                 {showHeader && (
                     <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
                         <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />

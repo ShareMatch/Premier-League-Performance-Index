@@ -1,5 +1,5 @@
 """
-Seed embeddings from FAQ PDF to Chroma Cloud
+Seed embeddings from FAQ PDF and Video tutorials to Chroma Cloud
 
 Run this ONCE to populate your Chroma Cloud database with embeddings.
 Uses HuggingFace Inference API (cloud-based, no local model needed).
@@ -11,11 +11,13 @@ Requirements:
     - CHROMA_API_KEY in .env
     - HF_TOKEN in .env (get from https://huggingface.co/settings/tokens)
     - FAQ PDF in ../data/faq.pdf
+    - Videos JSON in ../data/videos.json
 """
 
 import os
 import sys
 import time
+import json
 import requests
 from typing import List
 
@@ -23,7 +25,7 @@ from typing import List
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from loader import load_and_split_documents
-from config import EMBEDDING_MODEL
+from config import EMBEDDING_MODEL, VIDEOS_PATH
 from chroma_cloud import add_documents, clear_collection, get_collection_count
 from dotenv import load_dotenv
 from pathlib import Path
@@ -100,15 +102,35 @@ def generate_embedding(text: str) -> List[float]:
     return embedding
 
 
+def load_video_documents():
+    """
+    Load video tutorial documents from videos.json
+    Returns list of dicts with content and metadata
+    """
+    if not VIDEOS_PATH.exists():
+        print(f"   ⚠️ Videos file not found: {VIDEOS_PATH}")
+        return []
+    
+    with open(VIDEOS_PATH, 'r', encoding='utf-8') as f:
+        videos = json.load(f)
+    
+    return videos
+
+
 def main():
-    print("🚀 Seeding FAQ embeddings to Chroma Cloud...")
+    print("🚀 Seeding FAQ + Video embeddings to Chroma Cloud...")
     print(f"   Using model: {EMBEDDING_MODEL}")
     print(f"   Using HuggingFace Inference API (cloud)")
     
-    # Load and split documents
+    # Load and split PDF documents
     print("\n📄 Loading FAQ PDF...")
     chunks = load_and_split_documents()
-    print(f"   Found {len(chunks)} chunks")
+    print(f"   Found {len(chunks)} PDF chunks")
+    
+    # Load video documents
+    print("\n🎬 Loading Video tutorials...")
+    videos = load_video_documents()
+    print(f"   Found {len(videos)} video documents")
     
     # Clear existing embeddings
     print("\n🗑️ Clearing existing embeddings...")
@@ -121,10 +143,15 @@ def main():
     metadatas = []
     ids = []
     
+    total_items = len(chunks) + len(videos)
+    current_item = 0
+    
+    # Process PDF chunks
     for i, chunk in enumerate(chunks):
+        current_item += 1
         try:
             content = chunk.page_content
-            print(f"   [{i+1}/{len(chunks)}] Processing: {content[:50]}...")
+            print(f"   [{current_item}/{total_items}] PDF: {content[:50]}...")
             
             # Generate embedding using HF Inference API
             embedding = generate_embedding(content)
@@ -133,10 +160,41 @@ def main():
             embeddings.append(embedding)
             metadatas.append({
                 "source": "faq.pdf",
+                "type": "text",
                 "page": chunk.metadata.get("page", 0),
-                "chunk_index": i
+                "chunk_index": i,
+                "access_level": "public"  # FAQ is public product info (prompt handles topic restrictions)
             })
             ids.append(f"faq_chunk_{i}")
+            
+            # Rate limiting for HuggingFace free tier (avoid 429 errors)
+            time.sleep(0.5)
+            
+        except Exception as e:
+            print(f"   ❌ Error: {e}")
+            continue
+    
+    # Process video documents
+    for video in videos:
+        current_item += 1
+        try:
+            content = video["content"]
+            print(f"   [{current_item}/{total_items}] Video: {video['title'][:40]}...")
+            
+            # Generate embedding using HF Inference API
+            embedding = generate_embedding(content)
+            
+            documents.append(content)
+            embeddings.append(embedding)
+            metadatas.append({
+                "source": "videos.json",
+                "type": "video",
+                "video_id": video["id"],
+                "r2_file_name": video.get("r2_file_name", ""),
+                "video_title": video["title"],
+                "access_level": video.get("access_level", "public")  # Default to public for videos
+            })
+            ids.append(f"video_{video['id']}")
             
             # Rate limiting for HuggingFace free tier (avoid 429 errors)
             time.sleep(0.5)
