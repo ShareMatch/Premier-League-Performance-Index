@@ -236,6 +236,7 @@ serve(async (req: Request) => {
         // --- 1. Create user in public.users table (Core Profile) ---
         const userPayload = {
             full_name: fullName,
+            display_name: fullName,
             email,
             phone_e164: phone,
             whatsapp_phone_e164: whatsappPhone,
@@ -319,17 +320,18 @@ serve(async (req: Request) => {
         }
 
         // --- 5. Create user_preferences based on user's marketing consent ---
-        const preferencesPayload = {
-            id: userId,
-            email: body.email_marketing ?? false,
-            whatsapp: body.whatsapp_marketing ?? false,
-            sms: false,
-            personalized_marketing: (body.email_marketing || body.whatsapp_marketing) ?? false,
-        };
+        const preferencesPayload = [
+            { user_id: userId, channel: "email", permission: body.email_marketing ?? false },
+            { user_id: userId, channel: "whatsapp", permission: body.whatsapp_marketing ?? false },
+            { user_id: userId, channel: "sms", permission: false },
+            { user_id: userId, channel: "personalized_marketing", permission: (body.email_marketing || body.whatsapp_marketing) ?? false },
+            { user_id: userId, channel: "email_otp", permission: true },  // OTP channels default to true
+            { user_id: userId, channel: "whatsapp_otp", permission: true },
+        ];
 
         const { error: prefsErr } = await supabase
             .from("user_preferences")
-            .insert([preferencesPayload]);
+            .insert(preferencesPayload);
 
         if (prefsErr) {
             console.error("User preferences creation error (non-fatal):", prefsErr);

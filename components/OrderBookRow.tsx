@@ -42,7 +42,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
 
   return (
     <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
-      {/* Asset name with responsive logo */}
+      {/* Asset name with logo */}
       <div
         className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
         onClick={() => onViewAsset?.(team)}

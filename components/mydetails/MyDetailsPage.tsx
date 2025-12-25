@@ -20,6 +20,8 @@ import {
   getKycUserStatus,
   fetchUserDetails,
   fetchUserBankingDetails,
+  fetchAuthUserData,
+  fetchLoginHistory,
   UserDetails,
   UserBankingDetails,
   sendEmailOtp,
@@ -38,6 +40,7 @@ interface PendingAboutYouChanges {
   email?: string;
   phone?: string;
   whatsapp?: string;
+  displayName?: string;
   emailChanged: boolean;
   whatsappChanged: boolean;
 }
@@ -130,6 +133,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [userBankingDetails, setUserBankingDetails] =
     useState<UserBankingDetails | null>(null);
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
   const [activeModal, setActiveModal] = useState<EditModalType>(null);
 
   // Verification flow state
@@ -187,20 +192,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     });
   };
 
-  // Build login history from user's source_ip and updated_at
-  const loginHistory = userDetails
-    ? [
-        {
-          id: "1",
-          timestamp: formatLastLogin(userDetails.updated_at),
-          location: userDetails.country || "Unknown",
-          countryCode: userDetails.country_code?.toLowerCase() || undefined,
-          ip: userDetails.source_ip || "N/A",
-          successful: true,
-        },
-      ]
-    : [];
-
   // Fetch user details, KYC status, banking details, and marketing preferences
   useEffect(() => {
     const fetchData = async () => {
@@ -213,33 +204,49 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         // Fetch user details, KYC status, banking details, and preferences in parallel
         const fetchPreferences = async () => {
           try {
-            // Use maybeSingle() instead of single() to avoid 406 error when no row exists
-            const { data, error } = await supabase
-              .from("user_preferences")
-              .select("*")
-              .eq("id", userId)
-              .maybeSingle();
+            // Use RPC function to get preferences as a single object
+            const { data, error } = await supabase.rpc("get_user_preferences", {
+              p_user_id: userId,
+            });
             if (error) {
               console.error("Error fetching preferences:", error);
               return null;
             }
-            return { data };
+            return { data: data || {} };
           } catch (err) {
             console.error("Exception fetching preferences:", err);
             return null;
           }
         };
 
-        const [details, kycStatusResponse, bankingDetails, userPrefs] =
+        const [details, kycStatusResponse, bankingDetails, userPrefs, user, logins] =
           await Promise.all([
             fetchUserDetails(userId),
             getKycUserStatus(userId).catch(() => null),
             fetchUserBankingDetails(userId).catch(() => null),
             fetchPreferences(),
+            fetchAuthUserData().catch(() => null),
+            fetchLoginHistory(userId, 5).catch(() => []),
           ]);
 
         if (details) {
           setUserDetails(details);
+        }
+
+        // Get auth user data with last_sign_in_at
+        if (user) {
+          setAuthUser(user);
+        }
+
+        // Set login history from auth logs
+        if (logins && logins.length > 0) {
+          console.log("📋 Login history fetched:", logins);
+          // Format timestamps for display
+          const formattedLogins = logins.map((login) => ({
+            ...login,
+            timestamp: formatLastLogin(login.timestamp),
+          }));
+          setLoginHistory(formattedLogins);
         }
 
         // Get KYC status from user_compliance table
@@ -268,13 +275,13 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           setPersonalizedMarketing(Boolean(prefs.personalized_marketing));
           setPreferencesLoaded(true);
         } else {
-          // No preferences found - use defaults (for users who signed up before this feature)
+          // No preferences found - use defaults (all disabled for safety)
           setPreferences([
-            { id: "email", label: "Email", enabled: true },
-            { id: "whatsapp", label: "WhatsApp", enabled: true },
+            { id: "email", label: "Email", enabled: false },
+            { id: "whatsapp", label: "WhatsApp", enabled: false },
             { id: "sms", label: "SMS", enabled: false },
           ]);
-          setPersonalizedMarketing(true);
+          setPersonalizedMarketing(false);
           setPreferencesLoaded(true);
         }
       } catch (error) {
@@ -290,7 +297,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
   // Build user object from fetched data or fallback to props/defaults
   const user = {
-    name: userDetails?.full_name || userData?.name || "N/A",
+    name:  userDetails?.display_name || "N/A",
     email: userDetails?.email || userData?.email || "N/A",
     phone: userDetails?.phone_e164 || userData?.phone || "N/A",
     whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || "N/A",
@@ -320,10 +327,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const handleSaveAboutYou = async (updatedFields: Record<string, string>) => {
     if (!userId) return;
 
+    console.log("📝 handleSaveAboutYou called with:", updatedFields);
+
     const currentEmail = userDetails?.email || "";
     const currentWhatsApp = userDetails?.whatsapp_phone_e164 || "";
     const newEmail = updatedFields.email || "";
     const newWhatsApp = updatedFields.whatsapp || "";
+    const newDisplayName = updatedFields.name;
+    
 
     const emailChanged = newEmail !== currentEmail && newEmail !== "";
     const whatsappChanged =
@@ -334,6 +345,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       email: newEmail,
       phone: updatedFields.phone,
       whatsapp: newWhatsApp,
+      displayName: newDisplayName,
       emailChanged,
       whatsappChanged,
     };
@@ -395,10 +407,17 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       }
     }
 
-    // No verification needed - just update phone number via edge function
+    // No verification needed - just update phone and/or display name via edge function
+    console.log("📝 Sending to editUserProfile:", { 
+      currentEmail, 
+      phone: updatedFields.phone, 
+      displayName: newDisplayName 
+    });
+    
     await editUserProfile({
       currentEmail: currentEmail,
       phone: updatedFields.phone,
+      displayName: newDisplayName,
     });
 
     // Refresh user details
@@ -440,10 +459,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           currentEmail: currentEmail,
           newEmail: pendingChanges.email,
           phone: pendingChanges.phone || undefined,
+          displayName: pendingChanges.displayName,
           emailAlreadyVerified: true,
         });
 
-        console.log("✅ Email updated successfully via editUserProfile");
+        console.log("✅ Email and display name updated successfully via editUserProfile");
       }
 
       // Check if WhatsApp also needs verification
@@ -515,10 +535,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           currentEmail: currentEmail,
           whatsappPhone: pendingChanges.whatsapp,
           phone: pendingChanges.phone || undefined,
+          displayName: pendingChanges.displayName,
           whatsappAlreadyVerified: true,
         });
 
-        console.log("✅ WhatsApp updated successfully via editUserProfile");
+        console.log("✅ WhatsApp and display name updated successfully via editUserProfile");
       }
 
       // Refresh user details
@@ -918,7 +939,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             key: "name",
             label: "Name",
             value: user.name === "N/A" ? "" : user.name,
-            editable: false,
+            editable: true,
           },
           {
             key: "email",

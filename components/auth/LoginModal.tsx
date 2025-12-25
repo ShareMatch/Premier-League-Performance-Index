@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { loginUser, LoginResponse } from "../../lib/api";
-import { X } from "lucide-react";
+import { X, HelpCircle } from "lucide-react";
 import Button from "../Button";
+import HelpCenterModal from "../HelpCenterModal";
 
 // Email Icon SVG
 const EmailIcon = () => (
@@ -194,6 +195,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -367,6 +369,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </button>
               </div>
 
+              
+
               {error && (
                 <p className="text-center text-red-400 font-sans text-sm">
                   {error}
@@ -418,10 +422,31 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   </Button>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowHelp(true)}
+                className="flex items-center justify-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Need help logging in?</span>
+              </button>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Help Center Modal */}
+      <HelpCenterModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        isLoggedIn={false}
+        defaultExpandedTopic="login"
+        onOpenLogin={() => setShowHelp(false)}
+        onOpenSignUp={() => {
+          setShowHelp(false);
+          onSwitchToSignUp?.();
+        }}
+      />
     </div>
   );
 };

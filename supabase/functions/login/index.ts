@@ -7,6 +7,34 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Parse User-Agent to extract device info
+function parseUserAgent(ua: string): { deviceType: string; browser: string; os: string } {
+    const result = { deviceType: "desktop", browser: "Unknown", os: "Unknown" };
+    
+    if (!ua) return result;
+    
+    // Detect OS
+    if (/Windows/i.test(ua)) result.os = "Windows";
+    else if (/Macintosh|Mac OS/i.test(ua)) result.os = "macOS";
+    else if (/iPhone|iPad/i.test(ua)) result.os = "iOS";
+    else if (/Android/i.test(ua)) result.os = "Android";
+    else if (/Linux/i.test(ua)) result.os = "Linux";
+    
+    // Detect Browser
+    if (/Edg\//i.test(ua)) result.browser = "Edge";
+    else if (/Chrome/i.test(ua) && !/Chromium/i.test(ua)) result.browser = "Chrome";
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) result.browser = "Safari";
+    else if (/Firefox/i.test(ua)) result.browser = "Firefox";
+    else if (/Opera|OPR/i.test(ua)) result.browser = "Opera";
+    
+    // Detect Device Type
+    if (/Mobile|iPhone|Android.*Mobile/i.test(ua)) result.deviceType = "mobile";
+    else if (/iPad|Android(?!.*Mobile)|Tablet/i.test(ua)) result.deviceType = "tablet";
+    else result.deviceType = "desktop";
+    
+    return result;
+}
+
 
 serve(async (req: Request) => {
     // Handle CORS preflight
@@ -124,6 +152,33 @@ serve(async (req: Request) => {
                 { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
+
+        // --- Store login in login_history table ---
+        const clientIp = req.headers.get("cf-connecting-ip") || 
+                         req.headers.get("x-real-ip") || 
+                         req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                         null;
+        const userAgent = req.headers.get("user-agent") || "";
+        const deviceInfo = parseUserAgent(userAgent);
+
+        // Insert login record (fire and forget - don't block the response)
+        supabaseAdmin
+            .from("login_history")
+            .insert({
+                user_id: userId,
+                auth_user_id: authData.user.id,
+                ip_address: clientIp,
+                device_type: deviceInfo.deviceType,
+                browser: deviceInfo.browser,
+                os: deviceInfo.os,
+            })
+            .then(({ error: insertError }) => {
+                if (insertError) {
+                    console.error("Failed to store login history:", insertError);
+                } else {
+                    console.log("Login history stored for user:", userId);
+                }
+            });
 
         return new Response(
             JSON.stringify({

@@ -28,4 +28,4 @@ Token prices are based solely on user supply and demand in the secondary market.
 12. COOLING-OFF PERIOD
 After KYC approval, you will be subject to a 24-hour cooling-off period before you can trade. This is designed to give you time to consider your investment decisions carefully.
 13. CONTACT US
-For any questions regarding risks, please contact us at info@sharematch.me.
+For any questions regarding risks, please contact us at hello@sharematch.me.
