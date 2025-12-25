@@ -52,67 +52,84 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
         <div className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
             {/* Mobile Header - Compact */}
             <div className="lg:hidden sticky top-0 z-30 bg-[#0B1221] border-b border-gray-800">
-                <div className="flex items-center justify-between p-3">
+                <div className="flex items-center justify-between p-2 gap-1">
                     <button
                         onClick={onBack}
-                        className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-4 h-4" />
                     </button>
                     
-                    <div className="flex items-center gap-2 flex-1 mx-3">
-                        <div className={`w-8 h-8 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10`}>
-                            <span className="text-sm font-bold text-white">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10 flex-shrink-0`}>
+                            <span className="text-xs font-bold text-white">
                                 {asset.name.substring(0, 2).toUpperCase()}
                             </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-sm font-bold text-white truncate">{asset.name}</h1>
-                            <span className="text-xs text-gray-400">{asset.market || 'Asset'}</span>
+                        <div className="min-w-0">
+                            <h1 className="text-xs font-bold text-white truncate">{asset.name}</h1>
+                            <span className="text-[10px] text-gray-400">{asset.market || 'Asset'}</span>
                         </div>
                     </div>
 
-                    <div className="flex gap-1">
+                    {asset.is_settled && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className="text-xs font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded border bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                Settled
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="flex items-center flex-shrink-0">
                         <button
                             onClick={() => setIsFavorite(!isFavorite)}
-                            className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:bg-gray-800'}`}
+                            className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:bg-gray-800'}`}
                         >
                             <Star className={`w-4 h-4 ${isFavorite ? 'fill-yellow-400' : ''}`} />
                         </button>
                         <button
                             onClick={handleShare}
-                            className="p-2 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
                         >
                             <Share2 className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile Price & Actions */}
-                <div className="p-3 border-t border-gray-800 bg-[#0B1221]/50">
-                    <div className="flex items-center justify-between mb-3">
-                        <div>
-                            <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
-                            <span className="ml-2 text-xs text-brand-emerald500 font-medium">
-                                +{(Math.random() * 5).toFixed(2)}%
-                            </span>
+                {/* Mobile Price & Actions - Only for open markets */}
+                {!asset.is_settled && (
+                    <div className="p-2 border-t border-gray-800 bg-[#0B1221]/50">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                                <span className="text-base font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
+                                {(() => {
+                                    const change = (Math.random() * 10 - 3).toFixed(2);
+                                    const isPositive = parseFloat(change) >= 0;
+                                    return (
+                                        <span className={`ml-1.5 text-[10px] font-medium ${isPositive ? 'text-brand-emerald500' : 'text-red-400'}`}>
+                                            {isPositive ? '+' : ''}{change}%
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'sell')}
+                                className="flex-1 px-3 py-2 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-xs"
+                            >
+                                Sell
+                            </button>
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'buy')}
+                                className="flex-1 px-3 py-2 bg-[#005430] text-white font-bold rounded-lg transition-colors text-xs"
+                            >
+                                Buy
+                            </button>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'sell')}
-                            className="flex-1 px-4 py-2.5 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-sm"
-                        >
-                            Sell
-                        </button>
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'buy')}
-                            className="flex-1 px-4 py-2.5 bg-[#005430] text-white font-bold rounded-lg transition-colors text-sm"
-                        >
-                            Buy
-                        </button>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Desktop Header */}
@@ -157,25 +174,37 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end mr-2">
                         <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
-                        <span className="text-xs text-brand-emerald500 font-medium flex items-center gap-1">
-                            +{(Math.random() * 5).toFixed(2)}% (24h)
-                        </span>
+                        {(() => {
+                            const change = (Math.random() * 10 - 3).toFixed(2);
+                            const isPositive = parseFloat(change) >= 0;
+                            return (
+                                <span className={`text-xs font-medium flex items-center gap-1 ${isPositive ? 'text-brand-emerald500' : 'text-red-400'}`}>
+                                    {isPositive ? '+' : ''}{change}% (24h)
+                                </span>
+                            );
+                        })()}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'sell')}
-                            className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
-                        >
-                            Sell
-                        </button>
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'buy')}
-                            className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
-                        >
-                            Buy
-                        </button>
-                    </div>
+                    {asset.is_settled ? (
+                        <span className="px-2.5 py-1 text-[10px] sm:text-xs font-bold rounded border bg-amber-500/10 text-amber-500 border-amber-500/30 whitespace-nowrap">
+                            Market Settled
+                        </span>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'sell')}
+                                className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
+                            >
+                                Sell
+                            </button>
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'buy')}
+                                className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
+                            >
+                                Buy
+                            </button>
+                        </div>
+                    )}
 
                     <div className="h-8 w-px bg-gray-700 mx-2"></div>
 
