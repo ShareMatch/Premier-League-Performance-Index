@@ -362,7 +362,7 @@ export const fetchSettledAssets = async () => {
             const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
 
             settledAssets.push({
-                id: `settled-${season.id}-${tradingAsset.asset_id}`,
+                id: `settled-${season.id}-${tradingAsset.id}`,
                 asset_id: tradingAsset.asset_id,
                 buy: settlementPrice,
                 sell: settlementPrice,
@@ -767,6 +767,7 @@ export interface EditProfilePayload {
     currentEmail: string;
     newEmail?: string;
     fullName?: string;
+    displayName?: string;
     dob?: string;
     countryOfResidence?: string;
     phone?: string;
@@ -1171,6 +1172,7 @@ export const checkWhatsAppVerificationStatus = async (
 export interface UserDetails {
     id: string;
     full_name: string | null;
+    display_name: string | null;
     email: string | null;
     phone_e164: string | null;
     whatsapp_phone_e164: string | null;
@@ -1192,7 +1194,7 @@ export interface UserDetails {
 export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
     const { data, error } = await supabase
         .from('users')
-        .select('id, full_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
+        .select('id, full_name, display_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
         .eq('id', userId)
         .single();
 

@@ -236,6 +236,7 @@ serve(async (req: Request) => {
         // --- 1. Create user in public.users table (Core Profile) ---
         const userPayload = {
             full_name: fullName,
+            display_name: fullName,
             email,
             phone_e164: phone,
             whatsapp_phone_e164: whatsappPhone,
