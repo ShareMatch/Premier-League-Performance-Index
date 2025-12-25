@@ -423,8 +423,12 @@ const App: React.FC = () => {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
       setTeams(filtered);
     }
-    // Trade slip persisted on navigation
   }, [activeLeague, allAssets]);
+
+  // Close TradeSlip when league changes
+  useEffect(() => {
+    setSelectedOrder(null);
+  }, [activeLeague]);
 
   const handleNavigate = (league: League) => {
     // Reset view to dashboard when navigating
@@ -450,6 +454,11 @@ const App: React.FC = () => {
   };
 
   const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
+    // Prevent trading on settled/closed markets
+    if (team.is_settled) {
+      return;
+    }
+
     console.log('handleSelectOrder Debug:', {
       teamName: team.name,
       teamMarketTradingAssetId: team.market_trading_asset_id,

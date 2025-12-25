@@ -162,7 +162,8 @@ def main():
                 "source": "faq.pdf",
                 "type": "text",
                 "page": chunk.metadata.get("page", 0),
-                "chunk_index": i
+                "chunk_index": i,
+                "access_level": "public"  # FAQ is public product info (prompt handles topic restrictions)
             })
             ids.append(f"faq_chunk_{i}")
             
@@ -190,7 +191,8 @@ def main():
                 "type": "video",
                 "video_id": video["id"],
                 "r2_file_name": video.get("r2_file_name", ""),
-                "video_title": video["title"]
+                "video_title": video["title"],
+                "access_level": video.get("access_level", "public")  # Default to public for videos
             })
             ids.append(f"video_{video['id']}")
             

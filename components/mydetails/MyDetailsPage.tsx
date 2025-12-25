@@ -40,6 +40,7 @@ interface PendingAboutYouChanges {
   email?: string;
   phone?: string;
   whatsapp?: string;
+  displayName?: string;
   emailChanged: boolean;
   whatsappChanged: boolean;
 }
@@ -296,7 +297,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
   // Build user object from fetched data or fallback to props/defaults
   const user = {
-    name: userDetails?.full_name || userData?.name || "N/A",
+    name:  userDetails?.display_name || "N/A",
     email: userDetails?.email || userData?.email || "N/A",
     phone: userDetails?.phone_e164 || userData?.phone || "N/A",
     whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || "N/A",
@@ -326,10 +327,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const handleSaveAboutYou = async (updatedFields: Record<string, string>) => {
     if (!userId) return;
 
+    console.log("📝 handleSaveAboutYou called with:", updatedFields);
+
     const currentEmail = userDetails?.email || "";
     const currentWhatsApp = userDetails?.whatsapp_phone_e164 || "";
     const newEmail = updatedFields.email || "";
     const newWhatsApp = updatedFields.whatsapp || "";
+    const newDisplayName = updatedFields.name;
+    
 
     const emailChanged = newEmail !== currentEmail && newEmail !== "";
     const whatsappChanged =
@@ -340,6 +345,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       email: newEmail,
       phone: updatedFields.phone,
       whatsapp: newWhatsApp,
+      displayName: newDisplayName,
       emailChanged,
       whatsappChanged,
     };
@@ -401,10 +407,17 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       }
     }
 
-    // No verification needed - just update phone number via edge function
+    // No verification needed - just update phone and/or display name via edge function
+    console.log("📝 Sending to editUserProfile:", { 
+      currentEmail, 
+      phone: updatedFields.phone, 
+      displayName: newDisplayName 
+    });
+    
     await editUserProfile({
       currentEmail: currentEmail,
       phone: updatedFields.phone,
+      displayName: newDisplayName,
     });
 
     // Refresh user details
@@ -446,10 +459,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           currentEmail: currentEmail,
           newEmail: pendingChanges.email,
           phone: pendingChanges.phone || undefined,
+          displayName: pendingChanges.displayName,
           emailAlreadyVerified: true,
         });
 
-        console.log("✅ Email updated successfully via editUserProfile");
+        console.log("✅ Email and display name updated successfully via editUserProfile");
       }
 
       // Check if WhatsApp also needs verification
@@ -521,10 +535,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           currentEmail: currentEmail,
           whatsappPhone: pendingChanges.whatsapp,
           phone: pendingChanges.phone || undefined,
+          displayName: pendingChanges.displayName,
           whatsappAlreadyVerified: true,
         });
 
-        console.log("✅ WhatsApp updated successfully via editUserProfile");
+        console.log("✅ WhatsApp and display name updated successfully via editUserProfile");
       }
 
       // Refresh user details
@@ -924,7 +939,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             key: "name",
             label: "Name",
             value: user.name === "N/A" ? "" : user.name,
-            editable: false,
+            editable: true,
           },
           {
             key: "email",
