@@ -38,7 +38,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
     }
   };
 
-  const logoUrl = team.market ? getLogoUrl(team.name, team.market) : null;
+  const logoUrl = team.market ? getLogoUrl(team.name || '', team.market, team.id) : null;
 
   return (
     <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
@@ -48,27 +48,25 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
         onClick={() => onViewAsset?.(team)}
       >
         {logoUrl && !logoError ? (
-          <div
-            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 border border-white/20 flex items-center justify-center p-0.5 sm:p-1"
-          >
+          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
             <img
               src={logoUrl}
               alt={`${team.name} logo`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-full"
               onError={() => setLogoError(true)}
             />
           </div>
         ) : (
           <div
-            className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
             style={{ backgroundColor: team.color || '#6B7280' }}
           >
-            <span className="text-white text-[10px] sm:text-xs font-bold">
-              {team.name.charAt(0)}
+            <span className="text-white text-xs font-bold">
+              {team.name?.charAt(0) || '?'}
             </span>
           </div>
         )}
-        <span className="truncate text-xs sm:text-sm">{team.name}</span>
+        <span className="truncate text-xs sm:text-sm">{team.name || 'Unknown'}</span>
       </div>
 
       {team.is_settled ? (

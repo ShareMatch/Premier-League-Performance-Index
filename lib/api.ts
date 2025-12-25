@@ -362,7 +362,7 @@ export const fetchSettledAssets = async () => {
             const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
 
             settledAssets.push({
-                id: `settled-${season.id}-${tradingAsset.asset_id}`,
+                id: `settled-${season.id}-${tradingAsset.id}`,
                 asset_id: tradingAsset.asset_id,
                 buy: settlementPrice,
                 sell: settlementPrice,

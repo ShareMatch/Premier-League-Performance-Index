@@ -41,13 +41,46 @@ const TEAM_LOGOS: Record<string, string> = {
 };
 
 /**
+ * Generate avatar URL for assets using local SVG files
+ * @param tradingAssetId - The trading asset ID (UUID from market_index_trading_assets table)
+ * @returns Avatar URL or null if not available
+ */
+export const getAvatarUrl = (tradingAssetId: string | undefined): string | null => {
+    if (!tradingAssetId) return null;
+
+    // Handle settled asset IDs by extracting the original trading asset ID
+    let actualId = tradingAssetId;
+    if (tradingAssetId.startsWith('settled-')) {
+        // Extract the trading asset ID from the end of the composite ID
+        const parts = tradingAssetId.split('-');
+        if (parts.length >= 6) { // settled-{season_id}-{trading_asset_id}
+            // The trading asset ID is the last 5 parts (UUID format)
+            actualId = parts.slice(-5).join('-');
+        }
+    }
+
+    const filename = `${actualId}.svg`;
+    return `/avatars/${filename}`;
+};
+
+/**
  * Generate logo URL for a team/driver
  * @param name - Team or driver name
  * @param market - Market type (EPL, F1, etc.)
+ * @param tradingAssetId - Trading asset ID for avatars (optional)
  * @returns Logo URL or null if not available
  */
-export const getLogoUrl = (name: string, market: string): string | null => {
-    // Check if we have a direct mapping
+export const getLogoUrl = (name: string, market: string, tradingAssetId?: string): string | null => {
+    // Defensive programming - ensure we have valid inputs
+    if (!name || !market) return null;
+
+    // Try to use the generated avatar first (if trading asset ID is available)
+    if (tradingAssetId) {
+        const avatarUrl = getAvatarUrl(tradingAssetId);
+        if (avatarUrl) return avatarUrl;
+    }
+
+    // Fallback to traditional logo mappings
     if (TEAM_LOGOS[name]) {
         return TEAM_LOGOS[name];
     }

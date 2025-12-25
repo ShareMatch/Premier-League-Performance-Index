@@ -1,0 +1,11 @@
+{
+  "default_class": "",
+  "icons": {
+    "football": "football.svg",
+    "basketball": "basketball.svg",
+    "cricket": "cricket.svg",
+    "american_football": "american_football.svg",
+    "motorsport": "motorsport.svg",
+    "music": "music.svg"
+  }
+}

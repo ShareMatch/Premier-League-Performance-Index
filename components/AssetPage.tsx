@@ -7,6 +7,7 @@ import { Team } from "../types";
 import NewsFeed from "./NewsFeed";
 import DidYouKnow from "./DidYouKnow";
 import OnThisDay from "./OnThisDay";
+import { getLogoUrl } from "../lib/logoHelper";
 
 interface AssetPageProps {
     asset: Team;
@@ -31,7 +32,12 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
         return generateTradeHistory(basePrice);
     }, [asset.id, asset.offer]);
 
-    // Generate a distinct color for the avatar based on name hash or just use brand color
+    // Get avatar URL for the asset
+    const avatarUrl = useMemo(() => {
+        return asset.market ? getLogoUrl(asset.name || '', asset.market, asset.id) : null;
+    }, [asset.name, asset.market, asset.id]);
+
+    // Generate a distinct color for fallback avatar based on name hash
     const avatarColor = useMemo(() => {
         const colors = ['bg-blue-600', 'bg-emerald-600', 'bg-violet-600', 'bg-amber-600', 'bg-rose-600'];
         const index = asset.name.length % colors.length;
@@ -58,12 +64,22 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     </button>
 
                     <div className="flex items-center gap-3">
-                        {/* ShareMatch Branded Avatar - Generated Style */}
-                        <div className={`w-12 h-12 rounded-xl ${avatarColor} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10`}>
-                            <span className="text-xl font-black text-white tracking-tighter">
-                                {asset.name.substring(0, 2).toUpperCase()}
-                            </span>
-                        </div>
+                        {/* Asset Avatar */}
+                        {avatarUrl ? (
+                            <div className="w-20 h-20 rounded-xl flex items-center justify-center">
+                                <img
+                                    src={avatarUrl}
+                                    alt={`${asset.name} avatar`}
+                                    className="w-full h-full object-contain rounded-xl"
+                                />
+                            </div>
+                        ) : (
+                            <div className={`w-20 h-20 rounded-xl ${avatarColor} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10`}>
+                                <span className="text-xl font-black text-white tracking-tighter">
+                                    {asset.name?.substring(0, 2).toUpperCase() || '??'}
+                                </span>
+                            </div>
+                        )}
 
                         <div>
                             <h1 className="text-xl font-bold text-white tracking-tight">{asset.name}</h1>
