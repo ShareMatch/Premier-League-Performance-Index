@@ -524,6 +524,9 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       // Build final data with full E.164 phone numbers
       const finalData = { ...formData };
+      
+      console.log("📋 EditDetailsModal formData:", formData);
+      console.log("📋 EditDetailsModal finalData (before phone conversion):", finalData);
 
       // Convert phone numbers to E.164 format
       if (formData.phone) {
@@ -537,6 +540,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         finalData.whatsapp = newWhatsAppE164;
       }
 
+      console.log("📋 EditDetailsModal calling onSave with:", finalData);
       await onSave(finalData);
     } catch (err: any) {
       console.error("Failed to save:", err);
