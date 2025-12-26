@@ -136,12 +136,36 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <div className="space-y-3">
                   {transactions.map((tx) => {
                     const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
+                    // Currently TradeHistoryList is NOT used here! 
+                    // Wait, looking at RightPanel code, it seems TradeHistoryList component is NOT actually imported or used? 
+                    // Let me check lines 137-140 again.
+                    // Ah, the user asked for "history box". In RightPanel, "history" tab just renders a map of divs. 
+                    // But wait, where is TradeHistoryList used?
+                    // I will check via grep quickly after this tool call if I made a mistake assumption, 
+                    // but for now I will update the transaction list items in RightPanel which serves as the "History" tab content.
+                    
                     return (
                       <div
                         key={tx.id}
-                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
+                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors flex items-start gap-3"
                       >
-                        <div className="flex justify-between items-start mb-1">
+                         {/* Avatar Block */}
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30 mt-0.5">
+                            {asset?.logo_url ? (
+                            <img 
+                                src={asset.logo_url} 
+                                alt={asset?.name || "Asset"} 
+                                className="w-full h-full object-contain"
+                            />
+                            ) : (
+                            <span className="text-[10px] text-gray-400 font-bold">
+                                {asset?.name?.substring(0, 2) || "??"}
+                            </span>
+                            )}
+                        </div>
+
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start mb-1">
                           <span className="text-gray-200 font-medium text-sm">
                             {asset?.name || tx.asset_name || "Unknown Asset"}
                           </span>
@@ -171,6 +195,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                           </span>
                         </div>
                       </div>
+                    </div>
                     );
                   })}
                 </div>

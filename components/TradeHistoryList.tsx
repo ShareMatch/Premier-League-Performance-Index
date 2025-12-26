@@ -13,17 +13,31 @@ interface Trade {
 interface TradeHistoryListProps {
     trades: Trade[];
     assetName: string;
+    assetLogo?: string;
 }
 
-const TradeHistoryList: React.FC<TradeHistoryListProps> = ({ trades, assetName }) => {
+const TradeHistoryList: React.FC<TradeHistoryListProps> = ({ trades, assetName, assetLogo }) => {
     return (
         <div className="bg-[#02060a] rounded-xl border border-gray-800 flex flex-col h-[400px]">
-            <div className="p-4 border-b border-gray-800 bg-[#0B1221]">
-                <h3 className="text-white font-bold text-sm">
-                    Asset Marketplace History
-                </h3>
-                <div className="mt-2 text-xs text-white bg-[#005430] border border-[#005430] px-2 py-1 rounded w-fit font-medium">
-                    {assetName}
+            <div className="p-4 border-b border-gray-800 bg-[#0B1221] flex items-center gap-3">
+                {/* Avatar Block */}
+                {assetLogo && (
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30">
+                        <img 
+                            src={assetLogo} 
+                            alt={assetName} 
+                            className="w-full h-full object-contain"
+                        />
+                    </div>
+                )}
+                
+                <div>
+                    <h3 className="text-white font-bold text-sm">
+                        Asset Marketplace History
+                    </h3>
+                    <div className="mt-1 text-xs text-white bg-[#005430] border border-[#005430] px-2 py-0.5 rounded w-fit font-medium">
+                        {assetName}
+                    </div>
                 </div>
             </div>
 
