@@ -88,7 +88,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
                         ) : team.lastChange === 'down' ? (
                             <TrendingDown className="w-3 h-3 text-red-500" />
                         ) : (
-                            <Minus className="w-3 h-3 text-gray-600" />
+                            null
                         )}
                     </div>
                 ))}
