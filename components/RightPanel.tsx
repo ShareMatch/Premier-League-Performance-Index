@@ -136,12 +136,29 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <div className="space-y-3">
                   {transactions.map((tx) => {
                     const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
+                    // ... (rest of the map remains the same)
                     return (
                       <div
                         key={tx.id}
-                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors"
+                        className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors flex items-start gap-3"
                       >
-                        <div className="flex justify-between items-start mb-1">
+                         {/* Avatar Block */}
+                        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30 mt-0.5">
+                            {asset?.logo_url ? (
+                            <img 
+                                src={asset.logo_url} 
+                                alt={asset?.name || "Asset"} 
+                                className="w-full h-full object-contain"
+                            />
+                            ) : (
+                            <span className="text-[10px] text-gray-400 font-bold">
+                                {asset?.name?.substring(0, 2) || "??"}
+                            </span>
+                            )}
+                        </div>
+
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start mb-1">
                           <span className="text-gray-200 font-medium text-sm">
                             {asset?.name || tx.asset_name || "Unknown Asset"}
                           </span>
@@ -171,8 +188,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
                           </span>
                         </div>
                       </div>
+                    </div>
                     );
                   })}
+                  {/* Bottom spacer for mobile scrollability */}
+                  <div className="h-20 sm:h-0" />
                 </div>
               )}
             </div>

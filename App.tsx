@@ -32,6 +32,7 @@ import {
   KycStatus,
   needsKycVerification,
 } from "./lib/api";
+import { getLogoUrl } from "./lib/logoHelper";
 import { useAuth } from "./components/auth/AuthProvider";
 import KYCModal from "./components/kyc/KYCModal";
 import InactivityHandler from "./components/auth/InactivityHandler";
@@ -254,7 +255,7 @@ const App: React.FC = () => {
           offer: Number(ta.buy), // Buy price is offer
           lastChange: 'none' as const, // TODO: Calculate from price history
           color: staticAsset.color,
-          logo_url: staticAsset.logo_url,
+          logo_url: getLogoUrl(staticAsset.name, category, ta.id) || staticAsset.logo_url,
           category: category,
           market: market,
           market_trading_asset_id: ta.id,
@@ -343,6 +344,7 @@ const App: React.FC = () => {
 
 
   const handleViewAsset = (asset: Team) => {
+    setSelectedOrder(null); // Close trade slip when viewing an asset page
     setViewAsset(asset);
     setCurrentView('asset');
     // Sync sidebar active league with the asset's market if available
@@ -426,15 +428,22 @@ const App: React.FC = () => {
   }, [activeLeague, allAssets]);
 
   // Close TradeSlip when league changes
-  useEffect(() => {
-    setSelectedOrder(null);
-  }, [activeLeague]);
+  // useEffect logic moved to handleNavigate to prevent conflict with Portfolio click
+  // useEffect(() => {
+  //   setSelectedOrder(null);
+  // }, [activeLeague]);
 
   const handleNavigate = (league: League) => {
     // Reset view to dashboard when navigating
     setCurrentView('dashboard');
     setViewAsset(null);
     setIsMobileMenuOpen(false);
+    
+    // Explicitly close trade slip when navigating (replacing the useEffect)
+    // This allows other functions (like Portfolio row click) to open it immediately after navigation
+    if (activeLeague !== league) {
+      setSelectedOrder(null);
+    }
 
     if (league === "AI_ANALYTICS") {
       if (!user) {
@@ -667,14 +676,15 @@ const App: React.FC = () => {
                   {/* Main content wrapper - grows to fill space */}
                   <div className="flex-1">
                   {currentView === 'asset' && viewAsset ? (
-                    <AssetPage
-                      asset={viewAsset}
-                      onBack={() => {
-                        setCurrentView('dashboard');
-                        setViewAsset(null);
-                      }}
-                      onSelectOrder={handleSelectOrder}
-                    />
+                      <AssetPage
+                        asset={viewAsset}
+                        onBack={() => {
+                          setCurrentView('dashboard');
+                          setViewAsset(null);
+                          setSelectedOrder(null); // Close trade slip when going back
+                        }}
+                        onSelectOrder={handleSelectOrder}
+                      />
                   ) : activeLeague === "HOME" ? (
                     <HomeDashboard
                       onNavigate={handleNavigate}

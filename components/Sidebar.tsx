@@ -73,7 +73,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
       icon: Globe,
       label: 'Global Events',
       subItems: [
-        { label: 'Eurovision', id: 'Eurovision', active: activeLeague === 'Eurovision' }
+        { label: 'Eurovision', badge: 'SOON' },
+        { label: 'Oscars', badge: 'SOON' },
+        { label: 'Golden Globes', badge: 'SOON' },
       ]
     },
   ];
@@ -136,19 +138,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                   {item.subItems.map((subItem) => (
                     <div key={subItem.label}>
                       <button
-                        onClick={() => subItem.subItems ? toggleExpand(subItem.label) : (subItem.id && onLeagueChange(subItem.id as any))}
+                        disabled={!!(subItem as any).badge}
+                        onClick={() => subItem.subItems ? toggleExpand(subItem.label) : ((subItem as any).id && onLeagueChange((subItem as any).id))}
                         className={`
                           w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
                           ${(subItem as any).badge
                             ? 'cursor-not-allowed opacity-60 text-gray-400'
-                            : subItem.active
+                            : (subItem as any).active
                               ? 'bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20'
                               : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                           }
                         `}
                       >
                         <div className="flex items-center gap-2">
-                          <span>{subItem.label}</span>
+                          <span className="whitespace-nowrap">{subItem.label}</span>
                           {(subItem as any).badge && (
                             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-800 text-gray-500 rounded border border-gray-700">
                               {(subItem as any).badge}
