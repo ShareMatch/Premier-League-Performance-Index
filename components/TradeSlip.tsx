@@ -259,8 +259,16 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
 
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className="bg-gray-600 rounded-full p-1 flex-shrink-0">
-              <SoccerBallIcon className="w-4 h-4 text-gray-300" />
+            <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center overflow-hidden">
+              {order.team.logo_url ? (
+                <img 
+                  src={order.team.logo_url} 
+                  alt={order.team.name} 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <SoccerBallIcon className="w-4 h-4 text-gray-300" />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[9px] text-gray-400">

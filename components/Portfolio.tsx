@@ -70,28 +70,46 @@ const Portfolio: React.FC<PortfolioProps> = ({
       {holdings.map((holding) => (
         <div
           key={holding.id}
-          className="bg-gray-800/50 p-3 rounded border border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700/50 transition-colors"
+          className="bg-gray-800/50 p-3 rounded border border-gray-700 flex items-center gap-3 cursor-pointer hover:bg-gray-700/50 transition-colors"
           onClick={() => handleRowClick(holding)}
           role="button"
           tabIndex={0}
         >
-          <div>
-            <div className="font-medium text-gray-200 text-sm">
-              {holding.asset?.name || holding.asset_name || "Unknown Asset"}
-            </div>
-            <div className="text-xs text-gray-500">
-              {holding.quantity} units
-            </div>
-            <div className="text-[10px] bg-[#005430] text-white px-1.5 rounded inline-block mt-1">
-              {getMarketName(holding.market)}
-            </div>
+          {/* Avatar Block */}
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30">
+            {holding.asset?.logo_url ? (
+               <img 
+                 src={holding.asset.logo_url} 
+                 alt={holding.asset.name} 
+                 className="w-full h-full object-contain"
+               />
+            ) : (
+              <span className="text-[10px] text-gray-400 font-bold">
+                {holding.asset?.name?.substring(0, 2) || "??"}
+              </span>
+            )}
           </div>
-          <div className="text-right">
-            <div className="text-sm bg-[#005430] text-white px-2 py-0.5 rounded font-bold inline-block">
-              ${(holding.quantity * holding.currentPrice).toFixed(1)}
+
+          {/* Content Block */}
+          <div className="flex-1 flex justify-between items-center">
+            <div>
+              <div className="font-medium text-gray-200 text-sm">
+                {holding.asset?.name || holding.asset_name || "Unknown Asset"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {holding.quantity} units
+              </div>
+              <div className="text-[10px] bg-[#005430] text-white px-1.5 rounded inline-block mt-1">
+                {getMarketName(holding.market)}
+              </div>
             </div>
-            <div className="text-[10px] text-gray-500">
-              @ ${holding.currentPrice.toFixed(1)}
+            <div className="text-right">
+              <div className="text-sm bg-[#005430] text-white px-2 py-0.5 rounded font-bold inline-block">
+                ${(holding.quantity * holding.currentPrice).toFixed(1)}
+              </div>
+              <div className="text-[10px] text-gray-500">
+                @ ${holding.currentPrice.toFixed(1)}
+              </div>
             </div>
           </div>
         </div>
