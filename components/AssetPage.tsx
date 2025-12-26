@@ -61,11 +61,21 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     </button>
                     
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        <div className={`w-7 h-7 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10 flex-shrink-0`}>
-                            <span className="text-xs font-bold text-white">
-                                {asset.name.substring(0, 2).toUpperCase()}
-                            </span>
-                        </div>
+                        {avatarUrl ? (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 flex-shrink-0">
+                                <img
+                                    src={avatarUrl}
+                                    alt={`${asset.name} avatar`}
+                                    className="w-full h-full object-contain rounded-lg"
+                                />
+                            </div>
+                        ) : (
+                            <div className={`w-8 h-8 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10 flex-shrink-0`}>
+                                <span className="text-xs font-bold text-white">
+                                    {asset.name.substring(0, 2).toUpperCase()}
+                                </span>
+                            </div>
+                        )}
                         <div className="min-w-0">
                             <h1 className="text-xs font-bold text-white truncate">{asset.name}</h1>
                             <span className="text-[10px] text-gray-400">{asset.market || 'Asset'}</span>

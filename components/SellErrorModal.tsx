@@ -37,7 +37,7 @@ const SellErrorModal: React.FC<SellErrorModalProps> = ({ isOpen, onClose, assetN
                     <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
                         <div className="absolute inset-0 bg-[#005430]/20 rounded-full animate-pulse z-0" />
                         <div className="absolute inset-2 bg-[#005430]/40 rounded-full z-10" />
-                        <AlertTriangle className="w-10 h-10 text-amber-500 relative z-20" />
+                        <AlertTriangle className="w-10 h-10 text-white relative z-20" />
                     </div>
 
                     <div className="space-y-3">

@@ -136,14 +136,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <div className="space-y-3">
                   {transactions.map((tx) => {
                     const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
-                    // Currently TradeHistoryList is NOT used here! 
-                    // Wait, looking at RightPanel code, it seems TradeHistoryList component is NOT actually imported or used? 
-                    // Let me check lines 137-140 again.
-                    // Ah, the user asked for "history box". In RightPanel, "history" tab just renders a map of divs. 
-                    // But wait, where is TradeHistoryList used?
-                    // I will check via grep quickly after this tool call if I made a mistake assumption, 
-                    // but for now I will update the transaction list items in RightPanel which serves as the "History" tab content.
-                    
+                    // ... (rest of the map remains the same)
                     return (
                       <div
                         key={tx.id}
@@ -198,6 +191,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
                     </div>
                     );
                   })}
+                  {/* Bottom spacer for mobile scrollability */}
+                  <div className="h-20 sm:h-0" />
                 </div>
               )}
             </div>

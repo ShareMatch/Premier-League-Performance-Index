@@ -459,8 +459,8 @@ const ResubmissionView: React.FC<{
 
   return (
     <div className="p-8 text-center">
-      <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-        <AlertTriangle className="w-10 h-10 text-yellow-500" />
+      <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+        <AlertTriangle className="w-10 h-10 text-white" />
       </div>
 
       <h3 className="text-2xl font-bold text-white mb-4">
@@ -473,9 +473,9 @@ const ResubmissionView: React.FC<{
       </p>
 
       {(rejectLabels.length > 0 || buttonIds.length > 0) && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
-          <div className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
+          <div className="text-emerald-400 font-medium mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-white" />
             Please Fix:
           </div>
           <ul className="text-sm text-gray-300 space-y-1">
@@ -540,9 +540,9 @@ const UpdateConfirmView: React.FC<{
           reset while we review the new documents.
         </p>
 
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
-          <div className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
+          <div className="text-emerald-400 font-medium mb-2 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-white" />
             Please Note:
           </div>
           <ul className="text-sm text-gray-300 space-y-1">
