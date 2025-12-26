@@ -21,6 +21,7 @@ interface RegistrationPayload {
     email_marketing?: boolean;
     whatsapp_marketing?: boolean;
     company?: string; // Honeypot
+    referral_code?: string;
 }
 
 // --- HELPER FUNCTIONS (Database Accessors) ---
@@ -112,6 +113,7 @@ serve(async (req: Request) => {
         const dob = String(body.dob ?? "").trim();
         const country = String(body.country_of_residence ?? "").trim();
         const password = String(body.password ?? "").trim();
+        const referralCode = body.referral_code ? String(body.referral_code).trim() : null;
         
         // ... (Validation and duplicate checks remain the same) ...
 
@@ -244,7 +246,8 @@ serve(async (req: Request) => {
             country,
             source_ip: sourceIp,
             // user_agent: userAgent, // Assuming this is kept
-            auth_user_id: authUserId, 
+            auth_user_id: authUserId,
+            referral_code: referralCode, 
         };
 
         const { data: userRow, error: userErr } = await supabase

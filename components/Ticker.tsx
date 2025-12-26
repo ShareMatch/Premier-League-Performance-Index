@@ -54,12 +54,13 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
             onNavigate(team.market as any);
         } else {
             // Fallback to ID-based detection
-            if (team.id >= 1 && team.id <= 100) onNavigate('EPL');
-            else if (team.id >= 101 && team.id <= 200) onNavigate('UCL');
-            else if (team.id >= 201 && team.id <= 300) onNavigate('WC');
-            else if (team.id >= 301 && team.id <= 400) onNavigate('SPL');
-            else if (team.id >= 401 && team.id <= 500) onNavigate('F1');
-            else if (team.id >= 501 && team.id <= 600) onNavigate('ISL');
+            const id = Number(team.id);
+            if (id >= 1 && id <= 100) onNavigate('EPL');
+            else if (id >= 101 && id <= 200) onNavigate('UCL');
+            else if (id >= 201 && id <= 300) onNavigate('WC');
+            else if (id >= 301 && id <= 400) onNavigate('SPL');
+            else if (id >= 401 && id <= 500) onNavigate('F1');
+            else if (id >= 501 && id <= 600) onNavigate('ISL');
         }
     };
 
@@ -72,6 +73,13 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
                         className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-800 px-2 py-1 rounded transition-colors flex-shrink-0"
                         onClick={() => handleItemClick(team)}
                     >
+                        {team.logo_url && (
+                            <img 
+                                src={team.logo_url} 
+                                alt={team.name}
+                                className="w-6 h-6 object-contain" 
+                            />
+                        )}
                         <span className="font-bold text-gray-300">{team.name}</span>
                         <span className="text-gray-400 font-medium text-xs text-emerald-500">Buy</span>
                         <span className="text-gray-400">${team.offer.toFixed(1)}</span>
@@ -80,7 +88,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, teams }) => {
                         ) : team.lastChange === 'down' ? (
                             <TrendingDown className="w-3 h-3 text-red-500" />
                         ) : (
-                            <Minus className="w-3 h-3 text-gray-600" />
+                            null
                         )}
                     </div>
                 ))}
