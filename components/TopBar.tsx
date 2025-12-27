@@ -127,6 +127,21 @@ const TopBar: React.FC<TopBarProps> = ({
   const avatarRef = useRef<HTMLDivElement | null>(null);
   const mobileQuickRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'login' && !user) {
+      setShowLoginModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (action === 'signup' && !user) {
+      setShowSignUpModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Search Logic
   useEffect(() => {
     if (searchQuery.trim() === "") {
