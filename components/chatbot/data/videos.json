@@ -25,5 +25,59 @@
     "access_level": "public",
     "keywords": ["kyc", "verification", "identity", "verify", "document", "id verification", "passport", "driving license"],
     "content": "How to complete KYC verification on ShareMatch: Click Start Verification to initiate the identity verification process within ShareMatch. Click continue in the SumSub interface to move forward with the verification steps. Click Start verification to launch the identity verification procedure in SumSub. Click agree and continue to accept the terms and proceed with the verification process. Select the identity document issuing country. Choose the type of identification document to be submitted for verification. Upload front side of the document. Upload backside of the document and click on continue. Your profile is verified successfully and you can start trading with ShareMatch."
+  },
+  {
+    "id":"buyAssets",
+    "type":"video",
+    "title":"How to Buy Assets on ShareMatch",
+    "r2_file_name":"How to buy.mp4",
+    "access_level":"authenticated",
+    "keywords":["buy","purchase","acquire","assets","invest"],
+    "content":"How to buy assets on ShareMatch: Select an index to browse available assets. Choose the asset you want to purchase which will open the asset page. Click the Buy button on the asset page to initiate your purchase. Enter the number of units you want to buy. Agree to the Terms and Conditions and Risk Statement. Click Confirm Transaction to complete your purchase."
+  },
+  {
+    "id":"sellAssets",
+    "type":"video",
+    "title":"How to Sell Assets on ShareMatch",
+    "r2_file_name":"How to sell.mp4",
+    "access_level":"authenticated",
+    "keywords":["sell","trade","liquidate","assets","divest"],
+    "content":"How to sell assets on ShareMatch: Select a position you want to sell from your portfolio. Choose which position you want to sell from your portfolio. Click Sell on the transaction slip to begin the selling process. Enter the number of units you want to sell. Agree to the Terms and Conditions and Risk Statement. Click Confirm Transaction to complete your sale."
+  },
+  {
+    "id":"forgotPassword",
+    "type":"video",
+    "title":"How to Reset Your Password on ShareMatch",
+    "r2_file_name":"forgot password.mp4",
+    "access_level":"public",
+    "keywords":["forgot password", "reset password", "password reset", "account recovery"],
+    "content":"How to reset your password on ShareMatch: Click the Login button to access the login page. Click Forgot Password to start the password recovery process. Enter your email address associated with your ShareMatch account. Click Send Link to receive the password reset email. Open your email and click the Reset Password link. Enter your new password. Confirm your new password. Click Reset Password to save your new credentials. Enter your email address. Enter your new password and click Login to access your account with the changed password."
+  },
+  {
+    "id":"updateUserDetails",
+    "type":"video",
+    "title":"How to Update User Details on ShareMatch",
+    "r2_file_name":"How to update user details.mp4",
+    "access_level":"authenticated",
+    "keywords":["update details","edit profile","change information","user settings"],
+    "content":"How to update user details on ShareMatch: Tap on the user profile icon to access your account. Click on Settings to view your account options. Click or tap the Edit button to modify your information. Enter your updated details in the respective fields. Click Save to confirm your changes. Enter your Email OTP if you changed your email address. Enter your WhatsApp OTP if you changed your WhatsApp number. Your details have been updated successfully."
+  },
+  {
+    "id":"editMarketingPreferences",
+    "type":"video",
+    "title":"How to Edit Marketing Preferences on ShareMatch",
+    "r2_file_name":"how to edit marketing preferences.mp4",
+    "access_level":"authenticated",
+    "keywords":["marketing preferences","edit marketing","change preferences","communication settings"],
+    "content":"How to edit marketing preferences on ShareMatch: Tap on the user profile icon to access your account. Click on Settings to view your account options. Click or tap the Edit button to modify your preferences. Choose your marketing and communication preferences according to your needs. Click Save to update your marketing preferences."
+  },
+  {
+    "id":"changePassword",
+    "type":"video",
+    "title":"How to Change Your Password on ShareMatch",
+    "r2_file_name":"how to change password.mp4",
+    "access_level":"authenticated",
+    "keywords":["change password","update password","modify password","password settings"],
+    "content":"How to change your password on ShareMatch: Tap on the user profile icon to access your account. Click on Settings to view your account options. Tap on Change Password to begin the password update process. Enter your current password for verification. Enter your new password. Confirm your new password to ensure it matches. Click or tap Update to save your new password."
   }
 ]
