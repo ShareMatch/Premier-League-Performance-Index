@@ -25,5 +25,59 @@
     "access_level": "public",
     "keywords": ["kyc", "verification", "identity", "verify", "document", "id verification", "passport", "driving license"],
     "content": "How to complete KYC verification on ShareMatch: Click Start Verification to initiate the identity verification process within ShareMatch. Click continue in the SumSub interface to move forward with the verification steps. Click Start verification to launch the identity verification procedure in SumSub. Click agree and continue to accept the terms and proceed with the verification process. Select the identity document issuing country. Choose the type of identification document to be submitted for verification. Upload front side of the document. Upload backside of the document and click on continue. Your profile is verified successfully and you can start trading with ShareMatch."
+  },
+  {
+    "id":"buyAssets",
+    "type":"video",
+    "title":"How to Buy Assets on ShareMatch",
+    "r2_file_name":"How to buy.mp4",
+    "access_level":"authenticated",
+    "keywords":["buy","purchase","acquire","assets","invest"],
+    "content":""
+  },
+  {
+    "id":"sellAssets",
+    "type":"video",
+    "title":"How to Sell Assets on ShareMatch",
+    "r2_file_name":"How to sell.mp4",
+    "access_level":"authenticated",
+    "keywords":["sell","trade","liquidate","assets","divest"],
+    "content":""
+  },
+  {
+    "id":"forgotPassword",
+    "type":"video",
+    "title":"How to Reset Your Password on ShareMatch",
+    "r2_file_name":"forgot password.mp4",
+    "access_level":"public",
+    "keywords":["forgot password", "reset password", "password reset", "account recovery"],
+    "content":"How to reset your password on ShareMatch: Click the forgot password link on the login page. Enter your email address associated with your ShareMatch account. Check your inbox for a password reset email from ShareMatch. Click the reset password link in the email. Enter a new secure password and confirm it. Click the reset button to finalize the process and return to the login page."
+  },
+  {
+    "id":"updateUserDetails",
+    "type":"video",
+    "title":"How to Update User Details on ShareMatch",
+    "r2_file_name":"How to update user details.mp4",
+    "access_level":"authenticated",
+    "keywords":["update details","edit profile","change information","user settings"],
+    "content":""
+  },
+  {
+    "id":"editMarketingPreferences",
+    "type":"video",
+    "title":"How to Edit Marketing Preferences on ShareMatch",
+    "r2_file_name":"how to edit marketing preferences.mp4",
+    "access_level":"authenticated",
+    "keywords":["marketing preferences","edit marketing","change preferences","communication settings"],
+    "content":""
+  },
+  {
+    "id":"changePassword",
+    "type":"video",
+    "title":"How to Change Your Password on ShareMatch",
+    "r2_file_name":"how to change password.mp4",
+    "access_level":"authenticated",
+    "keywords":["change password","update password","modify password","password settings"],
+    "content":""
   }
 ]
