@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { requestPasswordReset } from '../../lib/api';
+import Button from '../Button';
 
 // Mask email address (e.g., john@example.com -> j***n@example.com)
 const maskEmail = (email: string): string => {
@@ -287,22 +288,19 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             {/* Button outside inner container */}
             <form onSubmit={handleSubmit} className="w-full flex justify-center">
               <div
-                className={`rounded-full transition-all duration-300 p-0.5 ${
-                  isButtonHovered && canSubmit
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
+                className={`rounded-full transition-all duration-300 ${
+                  isButtonHovered && canSubmit ? 'shadow-glow' : ''
                 }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
-                <button
+                <Button
                   type="submit"
                   disabled={!canSubmit || loading}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                    isButtonHovered && canSubmit
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
-                  }`}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                    isButtonHovered && canSubmit ? 'opacity-90' : ''
+                  } !disabled:opacity-100 disabled:cursor-not-allowed`}
+                  variant="white"
                 >
                   {loading ? "Sending..." : "Send Link"}
                   {!loading && (
@@ -311,7 +309,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </>
