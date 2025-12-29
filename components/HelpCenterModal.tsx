@@ -11,47 +11,78 @@ import {
 } from "lucide-react";
 
 // Supabase Edge Function URL for fetching video signed URLs
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://lbmixnhxerrmecfxdfkx.supabase.co";
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ||
+  "https://lbmixnhxerrmecfxdfkx.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
-// Map topic IDs to R2 video file names
-const VIDEO_FILE_NAMES: Record<string, string> = {
-  login: "Streamline Login Process With Sharematch.mp4",
-  signup: "Streamline Signup Process With Sharematch Product Demo.mp4",
-  kyc: "Streamline KYC Verification With Sharematch Demo.mp4",
-};
-
-interface HelpTopic {
-  id: "login" | "signup" | "kyc";
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  actionLabel: string;
-}
-
-const ALL_HELP_TOPICS: HelpTopic[] = [
-  {
-    id: "signup",
+const HELP_TOPICS = {
+  signup: {
     title: "How to Sign Up",
     description: "Create your ShareMatch account in a few easy steps",
     icon: <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     actionLabel: "Sign Up",
+    video: "Streamline Signup Process With Sharematch Product Demo.mp4",
   },
-  {
-    id: "login",
+  login: {
     title: "How to Login",
     description: "Step-by-step guide to logging into your ShareMatch account",
     icon: <LogIn className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     actionLabel: "Login",
+    video: "Streamline Login Process With Sharematch.mp4",
   },
-  {
-    id: "kyc",
+  kyc: {
     title: "KYC Verification",
     description: "Complete your identity verification to unlock all features",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     actionLabel: "Verify",
+    video: "Streamline KYC Verification With Sharematch Demo.mp4",
   },
-];
+  forgotPassword: {
+    title: "How to Reset Password",
+    description: "Easily reset your password if you've forgotten it",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Reset Password",
+    video: "forgot password.mp4",
+  },
+  buyAssets: {
+    title: "How to Buy Assets",
+    description: "Learn how to purchase assets on ShareMatch",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Buy Assets",
+    video: "How to buy.mp4",
+  },
+  sellAssets: {
+    title: "How to Sell Assets",
+    description: "Learn how to sell assets on ShareMatch",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Sell Assets",
+    video: "How to sell.mp4",
+  },
+  updateUserDetails: {
+    title: "How to Update User Details",
+    description: "Learn how to update your user details on ShareMatch",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Update Details",
+    video: "How to update user details.mp4",
+  },
+  editMarketingPreferences: {
+    title: "How to Edit Marketing Preferences",
+    description: "Learn how to edit your marketing preferences on ShareMatch",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Edit Preferences",
+    video: "how to edit marketing preferences.mp4",
+  },
+  changePassword: {
+    title: "How to Change Password",
+    description: "Learn how to change your password on ShareMatch",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    actionLabel: "Change Password",
+    video: "how to change password.mp4",
+  },
+} as const;
+
+type HelpTopicId = keyof typeof HELP_TOPICS;
 
 interface HelpCenterModalProps {
   isOpen: boolean;
@@ -60,7 +91,8 @@ interface HelpCenterModalProps {
   onOpenLogin?: () => void;
   onOpenSignUp?: () => void;
   onOpenKYC?: () => void;
-  defaultExpandedTopic?: "login" | "signup" | "kyc"; // Auto-expand this topic when modal opens
+  onOpenForgotPassword?: () => void;
+  defaultExpandedTopic?: HelpTopicId; // Auto-expand this topic when modal opens
 }
 
 const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
@@ -72,59 +104,73 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
   onOpenKYC,
   defaultExpandedTopic,
 }) => {
-  const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
-  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
-  const [loadingVideos, setLoadingVideos] = useState<Set<string>>(new Set());
-  const [videoErrors, setVideoErrors] = useState<Record<string, string>>({});
+  const [expandedTopics, setExpandedTopics] = useState<Set<HelpTopicId>>(
+    new Set()
+  );
+  const [videoUrls, setVideoUrls] = useState<
+    Partial<Record<HelpTopicId, string>>
+  >({});
+  const [loadingVideos, setLoadingVideos] = useState<Set<HelpTopicId>>(
+    new Set()
+  );
+  const [videoErrors, setVideoErrors] = useState<
+    Partial<Record<HelpTopicId, string>>
+  >({});
 
   // Fetch signed URL from Edge Function
-  const fetchVideoUrl = useCallback(async (topicId: string) => {
-    const videoName = VIDEO_FILE_NAMES[topicId];
-    if (!videoName || videoUrls[topicId]) return; // Already fetched or no video
+  const fetchVideoUrl = useCallback(
+    async (topicId: HelpTopicId) => {
+      const videoName = HELP_TOPICS[topicId].video;
+      if (!videoName || videoUrls[topicId]) return; // Already fetched or no video
 
-    setLoadingVideos((prev) => new Set(prev).add(topicId));
-    setVideoErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[topicId];
-      return newErrors;
-    });
-
-    try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/getVideo?name=${encodeURIComponent(videoName)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch video URL: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.ok && data.url) {
-        setVideoUrls((prev) => ({ ...prev, [topicId]: data.url }));
-      } else {
-        throw new Error(data.error || "Failed to get video URL");
-      }
-    } catch (error) {
-      console.error(`Error fetching video for ${topicId}:`, error);
-      setVideoErrors((prev) => ({
-        ...prev,
-        [topicId]: error instanceof Error ? error.message : "Failed to load video",
-      }));
-    } finally {
-      setLoadingVideos((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(topicId);
-        return newSet;
+      setLoadingVideos((prev) => new Set(prev).add(topicId));
+      setVideoErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[topicId];
+        return newErrors;
       });
-    }
-  }, [videoUrls]);
+
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/getVideo?name=${encodeURIComponent(
+            videoName
+          )}`,
+          {
+            headers: {
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch video URL: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.ok && data.url) {
+          setVideoUrls((prev) => ({ ...prev, [topicId]: data.url }));
+        } else {
+          throw new Error(data.error || "Failed to get video URL");
+        }
+      } catch (error) {
+        console.error(`Error fetching video for ${topicId}:`, error);
+        setVideoErrors((prev) => ({
+          ...prev,
+          [topicId]:
+            error instanceof Error ? error.message : "Failed to load video",
+        }));
+      } finally {
+        setLoadingVideos((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(topicId);
+          return newSet;
+        });
+      }
+    },
+    [videoUrls]
+  );
 
   // Auto-expand the default topic when modal opens
   useEffect(() => {
@@ -141,11 +187,18 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
   // Filter topics based on login state
   // Logged out: show login, signup, kyc
   // Logged in: show only kyc
-  const visibleTopics = isLoggedIn
-    ? ALL_HELP_TOPICS.filter((t) => t.id === "kyc")
-    : ALL_HELP_TOPICS;
+  const visibleTopics: HelpTopicId[] = isLoggedIn
+    ? [
+        "kyc",
+        "buyAssets",
+        "sellAssets",
+        "updateUserDetails",
+        "editMarketingPreferences",
+        "changePassword",
+      ]
+    : ["login", "signup", "kyc", "forgotPassword"];
 
-  const toggleTopicExpanded = (topicId: string) => {
+  const toggleTopicExpanded = (topicId: HelpTopicId) => {
     setExpandedTopics((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(topicId)) {
@@ -159,21 +212,16 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
     });
   };
 
-  const handleActionClick = (topicId: "login" | "signup" | "kyc", e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card expansion
-    onClose(); // Close help modal first
-    
-    switch (topicId) {
-      case "login":
-        onOpenLogin?.();
-        break;
-      case "signup":
-        onOpenSignUp?.();
-        break;
-      case "kyc":
-        onOpenKYC?.();
-        break;
-    }
+  const ACTION_HANDLERS: Partial<Record<HelpTopicId, () => void>> = {
+    login: onOpenLogin,
+    signup: onOpenSignUp,
+    kyc: onOpenKYC,
+  };
+
+  const handleActionClick = (topicId: HelpTopicId, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+    ACTION_HANDLERS[topicId]?.();
   };
 
   if (!isOpen) return null;
@@ -215,17 +263,18 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
 
           {/* Help Topic Cards */}
           <div className="flex flex-col gap-3 mt-2">
-            {visibleTopics.map((topic) => {
-              const isExpanded = expandedTopics.has(topic.id);
+            {visibleTopics.map((id) => {
+              const topic = HELP_TOPICS[id];
+              const isExpanded = expandedTopics.has(id);
 
               return (
                 <div
-                  key={topic.id}
+                  key={id}
                   className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
                 >
                   {/* Card Header - Clickable to expand/collapse */}
                   <button
-                    onClick={() => toggleTopicExpanded(topic.id)}
+                    onClick={() => toggleTopicExpanded(id)}
                     className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3.5 bg-brand-emerald500/10 hover:bg-brand-emerald500/15 transition-colors"
                   >
                     <div className="flex items-center gap-3">
@@ -254,54 +303,61 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                   {/* Video Container - Collapsible */}
                   {isExpanded && (
                     <div className="p-3 sm:p-4 border-t border-white/10">
-                      <div className="relative w-full rounded-lg overflow-hidden bg-gray-900" style={{ paddingBottom: "56.25%" }}>
+                      <div
+                        className="relative w-full rounded-lg overflow-hidden bg-gray-900"
+                        style={{ paddingBottom: "56.25%" }}
+                      >
                         {/* Loading State */}
-                        {loadingVideos.has(topic.id) && (
+                        {loadingVideos.has(id) && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
                           </div>
                         )}
-                        
+
                         {/* Error State */}
-                        {videoErrors[topic.id] && !loadingVideos.has(topic.id) && (
+                        {videoErrors[id] && !loadingVideos.has(id) && (
                           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
-                            <p className="text-sm text-center mb-2">Unable to load video</p>
+                            <p className="text-sm text-center mb-2">
+                              Unable to load video
+                            </p>
                             <button
-                              onClick={() => fetchVideoUrl(topic.id)}
+                              onClick={() => fetchVideoUrl(id)}
                               className="text-brand-primary text-sm hover:underline"
                             >
                               Try again
                             </button>
                           </div>
                         )}
-                        
+
                         {/* Video Player */}
-                        {videoUrls[topic.id] && !loadingVideos.has(topic.id) && !videoErrors[topic.id] && (
-                          <video
-                            src={videoUrls[topic.id]}
-                            title={topic.title}
-                            className="absolute inset-0 w-full h-full object-contain"
-                            controls
-                            controlsList="nodownload"
-                            playsInline
-                            preload="metadata"
-                          >
-                            Your browser does not support the video tag.
-                          </video>
-                        )}
+                        {videoUrls[id] &&
+                          !loadingVideos.has(id) &&
+                          !videoErrors[id] && (
+                            <video
+                              src={videoUrls[id]}
+                              title={topic.title}
+                              className="absolute inset-0 w-full h-full object-contain"
+                              controls
+                              controlsList="nodownload"
+                              playsInline
+                              preload="metadata"
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
                       </div>
                       {/* Action link - centered below video */}
-                      {((!isLoggedIn && (topic.id === "login" || topic.id === "signup")) ||
-                        (isLoggedIn && topic.id === "kyc")) && (
+                      {((!isLoggedIn && (id === "login" || id === "signup")) ||
+                        (isLoggedIn && id === "kyc")) && (
                         <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
-                          {topic.id === "login" && (
+                          {id === "login" && (
                             <>
                               Ready to{" "}
                               <a
                                 href="#"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  handleActionClick(topic.id, e);
+                                  handleActionClick(id, e);
                                 }}
                                 className="text-brand-primary hover:underline font-medium"
                               >
@@ -310,14 +366,14 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                               ?
                             </>
                           )}
-                          {topic.id === "signup" && (
+                          {id === "signup" && (
                             <>
                               Ready to{" "}
                               <a
                                 href="#"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  handleActionClick(topic.id, e);
+                                  handleActionClick(id, e);
                                 }}
                                 className="text-brand-primary hover:underline font-medium"
                               >
@@ -326,14 +382,14 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                               ?
                             </>
                           )}
-                          {topic.id === "kyc" && (
+                          {id === "kyc" && (
                             <>
                               Ready to{" "}
                               <a
                                 href="#"
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  handleActionClick(topic.id, e);
+                                  handleActionClick(id, e);
                                 }}
                                 className="text-brand-primary hover:underline font-medium"
                               >

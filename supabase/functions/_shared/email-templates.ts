@@ -61,7 +61,7 @@ export function generateForgotPasswordEmailSubject(): string {
  * Build password reset email HTML - simplified version with magic link
  */
 export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-  const logoUrl = logoImageUrl || "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
+  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
   return PASSWORD_RESET_TEMPLATE
     .replace(/\${magicLink}/g, magicLink)
     .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
@@ -138,8 +138,8 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
         }
 
         .logo-image {
-            max-width: 320px;
-            width: 320px;
+            max-width: 280px;
+            width: 100%;
             height: auto;
         }
 
@@ -478,7 +478,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <!-- Content Section -->
@@ -600,7 +600,7 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
                 <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <tr>
@@ -1065,7 +1065,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
-                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" width="100%" height="auto" style="display: block; margin: 0 auto; max-width: 280px; width: 100%; height: auto; max-height: 80px;" onerror="this.style.display='none';">
+                            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
                         </td>
                     </tr>
                     <!-- Content Section -->

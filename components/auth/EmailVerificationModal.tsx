@@ -178,8 +178,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [status, setStatus] = useState<VerificationStatus>("idle");
   const [message, setMessage] = useState<string>("");
-  const [timeLeft, setTimeLeft] = useState(60); // 60 seconds cooldown before resend
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes validity
+  const [resendCooldown, setResendCooldown] = useState(0); // 30 seconds internal cooldown
 
   // Reset state when modal opens
   useEffect(() => {
@@ -187,27 +187,22 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setCode(Array(CODE_LENGTH).fill(""));
       setStatus("idle");
       setMessage("");
-      setTimeLeft(60); // 60 seconds cooldown before resend
-      setIsButtonHovered(false);
+      setTimeLeft(300); // 5 minutes validity
+      setResendCooldown(30); // 30 seconds internal cooldown
     }
   }, [isOpen]);
 
   // Countdown timer
   useEffect(() => {
-    if (!isOpen || timeLeft <= 0 || status === "sending") return;
+    if (!isOpen || status === "sending") return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, timeLeft, status]);
+  }, [isOpen, status]);
 
   const handleCodeChange = useCallback(
     (newCode: string[]) => {
@@ -253,12 +248,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       setStatus("error");
       setMessage(error.message || "Invalid code. Please try again.");
       setCode(Array(CODE_LENGTH).fill(""));
-      setIsButtonHovered(false);
     }
   };
 
   const handleResend = async () => {
-    if (timeLeft > 0 || status === "sending") return;
+    if (resendCooldown > 0 || status === "sending") return;
 
     setStatus("sending");
     setMessage("Sending new code...");
@@ -267,23 +261,25 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
       if (onResendCode) {
         const success = await onResendCode();
         if (success) {
-          setTimeLeft(60); // 60 seconds cooldown before resend
+          setTimeLeft(300); // 5 minutes validity
+          setResendCooldown(30); // 30 seconds cooldown
           setStatus("idle");
           setMessage(`A new code has been sent to ${email}`);
+          setCode(Array(CODE_LENGTH).fill("")); // Clear code on resend
         } else {
           throw new Error("Failed to send code");
         }
       } else {
-        // Default behavior: simulate sending
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        setTimeLeft(60); // 60 seconds cooldown before resend
+        setTimeLeft(300); // 5 minutes validity
+        setResendCooldown(30); // 30 seconds cooldown
         setStatus("idle");
         setMessage(`A new code has been sent to ${email}`);
+        setCode(Array(CODE_LENGTH).fill("")); // Clear code on resend
       }
     } catch (error: any) {
       setStatus("error");
       setMessage(error.message || "Failed to send code. Please try again.");
-      setIsButtonHovered(false);
     }
   };
 
@@ -301,7 +297,8 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     status === "verifying" ||
     status === "sending" ||
     status === "success";
-  const isResendDisabled = timeLeft > 0 || status === "sending";
+  const isResendDisabled = resendCooldown > 0 || status === "sending";
+  const isCodeExpired = timeLeft <= 0;
 
   if (!isOpen) return null;
 
@@ -391,12 +388,9 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
               {formatTime(timeLeft)}
             </p>
 
-            {/* Resend */}
+            {/* Resend Section */}
             <div className="text-center">
-              <span
-                className="text-white text-sm"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
+              <span className="text-white text-sm font-sans">
                 Didn't receive the code?{" "}
               </span>
               <button
@@ -406,7 +400,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 className={`text-sm font-semibold transition-colors ${
                   isResendDisabled
                     ? "text-white/40 cursor-not-allowed"
-                    : "text-white underline hover:text-white/80"
+                    : "text-white hover:text-white/80"
                 }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
@@ -416,53 +410,43 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
             {/* Verify Button - Inside Container */}
             <div className="flex justify-center pt-2">
-              <div
-                className={`rounded-full transition-all duration-300 p-0.5 ${
-                  isButtonHovered && isCodeComplete
-                    ? "border border-white shadow-glow"
-                    : "border border-brand-emerald500"
+              <button
+                type="button"
+                onClick={() => handleVerify()}
+                disabled={isVerifyDisabled}
+                className={`px-6 py-2 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                  !isVerifyDisabled
+                    ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
+                    : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
               >
-                <button
-                  type="button"
-                  onClick={() => handleVerify()}
-                  disabled={isVerifyDisabled}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                    isButtonHovered && isCodeComplete
-                      ? "bg-white text-brand-emerald500"
-                      : "bg-gradient-primary text-white"
-                  }`}
-                >
-                  {status === "verifying" ? "Verifying..." : "Verify"}
-                  {status !== "verifying" && (
-                    <svg
-                      width="18"
-                      height="7"
-                      viewBox="0 0 48 14"
-                      fill="none"
-                      className="transition-colors"
-                    >
-                      <line
-                        x1="0"
-                        y1="7"
-                        x2="40"
-                        y2="7"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M40 1L47 7L40 13"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
+                {status === "verifying" ? "Verifying..." : "Verify"}
+                {status !== "verifying" && (
+                  <svg
+                    width="18"
+                    height="7"
+                    viewBox="0 0 48 14"
+                    fill="none"
+                    className="transition-colors"
+                  >
+                    <line
+                      x1="0"
+                      y1="7"
+                      x2="40"
+                      y2="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M40 1L47 7L40 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </div>

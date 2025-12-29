@@ -13,6 +13,7 @@ import {
   Menu,
 } from "lucide-react";
 import type { Wallet as WalletType, Team, League } from "../types";
+import { supabase } from "../lib/supabase";
 import { useAuth } from "./auth/AuthProvider";
 import { LoginModal } from "./auth/LoginModal";
 import {
@@ -126,6 +127,21 @@ const TopBar: React.FC<TopBarProps> = ({
   const balanceRef = useRef<HTMLDivElement | null>(null);
   const avatarRef = useRef<HTMLDivElement | null>(null);
   const mobileQuickRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'login' && !user) {
+      setShowLoginModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (action === 'signup' && !user) {
+      setShowSignUpModal(true);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   // Search Logic
   useEffect(() => {
@@ -1074,7 +1090,9 @@ const TopBar: React.FC<TopBarProps> = ({
       {/* Reset Password Modal */}
       <ResetPasswordModal
         isOpen={showResetPasswordModal}
-        onClose={() => {
+        onClose={async () => {
+          // Sign out to prevent auto-login when closing without resetting password
+          await supabase.auth.signOut();
           setShowResetPasswordModal(false);
           clearPasswordRecovery();
           setShowLoginModal(true);

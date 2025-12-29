@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 interface ChatRequest {
@@ -26,6 +27,12 @@ const VIDEO_FILE_NAMES: Record<string, string> = {
   login: "Streamline Login Process With Sharematch.mp4",
   signup: "Streamline Signup Process With Sharematch Product Demo.mp4",
   kyc: "Streamline KYC Verification With Sharematch Demo.mp4",
+  buyAssets: "How to buy.mp4",
+  sellAssets: "How to sell.mp4",
+  forgotPassword: "forgot password.mp4",
+  updateUserDetails: "How to update user details.mp4",
+  editMarketingPreferences: "how to edit marketing preferences.mp4",
+  changePassword: "how to change password.mp4",
 };
 
 // Video metadata mapping (without URLs - URLs are generated dynamically)
@@ -39,24 +46,65 @@ const VIDEO_METADATA: {
 } = {
   login: {
     title: "How to Login to ShareMatch",
-    intro: "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
+    intro:
+      "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
     accessLevel: "public",
   },
   signup: {
     title: "How to Sign Up for ShareMatch",
-    intro: "I've got a helpful video that will guide you through the signup process step by step.",
+    intro:
+      "I've got a helpful video that will guide you through the signup process step by step.",
     accessLevel: "public",
   },
   kyc: {
     title: "How to Complete KYC Verification on ShareMatch",
-    intro: "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
+    intro:
+      "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
     accessLevel: "public",
+  },
+  buyAssets: {
+    title: "How to Buy Assets on ShareMatch",
+    intro:
+      "Here's a step-by-step video showing you how to purchase assets on ShareMatch!",
+    accessLevel: "authenticated",
+  },
+  sellAssets: {
+    title: "How to Sell Assets on ShareMatch",
+    intro:
+      "Check out this guide on how to sell your assets on the ShareMatch platform!",
+    accessLevel: "authenticated",
+  },
+  forgotPassword: {
+    title: "How to Reset Your Password on ShareMatch",
+    intro:
+      "Here's a quick video showing you how to reset your password if you've forgotten it!",
+    accessLevel: "public",
+  },
+  updateUserDetails: {
+    title: "How to Update User Details on ShareMatch",
+    intro:
+      "This video will walk you through updating your profile information on ShareMatch!",
+    accessLevel: "authenticated",
+  },
+  editMarketingPreferences: {
+    title: "How to Edit Marketing Preferences on ShareMatch",
+    intro:
+      "Learn how to customize your communication preferences with this helpful video!",
+    accessLevel: "authenticated",
+  },
+  changePassword: {
+    title: "How to Change Your Password on ShareMatch",
+    intro: "Here's a guide on how to change your password",
+    accessLevel: "authenticated",
   },
 };
 
 // ============== R2 Signed URL Generation ==============
 
-async function hmacSha256(key: ArrayBuffer | Uint8Array, message: string): Promise<ArrayBuffer> {
+async function hmacSha256(
+  key: ArrayBuffer | Uint8Array,
+  message: string
+): Promise<ArrayBuffer> {
   const encoder = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
@@ -107,11 +155,17 @@ async function generateSignedUrl(
   const endpoint = `https://${host}`;
 
   const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "").slice(0, 15) + "Z";
+  const amzDate =
+    now
+      .toISOString()
+      .replace(/[:-]|\.\d{3}/g, "")
+      .slice(0, 15) + "Z";
   const dateStamp = amzDate.slice(0, 8);
 
   const method = "GET";
-  const canonicalUri = `/${R2_BUCKET_NAME}/${encodeURIComponent(objectKey).replace(/%2F/g, "/")}`;
+  const canonicalUri = `/${R2_BUCKET_NAME}/${encodeURIComponent(
+    objectKey
+  ).replace(/%2F/g, "/")}`;
   const signedHeaders = "host";
   const payloadHash = "UNSIGNED-PAYLOAD";
 
@@ -142,7 +196,12 @@ async function generateSignedUrl(
     await sha256Hex(canonicalRequest),
   ].join("\n");
 
-  const signingKey = await getSignatureKey(R2_SECRET_ACCESS_KEY, dateStamp, region, service);
+  const signingKey = await getSignatureKey(
+    R2_SECRET_ACCESS_KEY,
+    dateStamp,
+    region,
+    service
+  );
   const signature = toHex(await hmacSha256(signingKey, stringToSign));
 
   queryParams.set("X-Amz-Signature", signature);
@@ -161,18 +220,39 @@ async function classifyIntent(
 ): Promise<{ wantsVideo: boolean; videoTopic: string | null }> {
   const classificationPrompt = `You are an intent classifier. Analyze the user's question and determine:
 1. Does the user want a step-by-step tutorial/guide (visual walkthrough)?
-2. If yes, which topic: login, signup, or kyc (identity verification)?
+2. If yes, which topic from this list:
+   - login: How to log into ShareMatch
+   - signup: How to create a new account
+   - kyc: How to verify identity/complete KYC
+   - forgotPassword: How to reset/recover password
+   - buyAssets: How to purchase/buy assets
+   - sellAssets: How to sell assets
+   - updateUserDetails: How to update profile/user information
+   - editMarketingPreferences: How to change communication/marketing settings
+   - changePassword: How to change password (when logged in)
 
-TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for"
+TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for", "tutorial"
 INFORMATION indicators: "what is", "explain", "tell me about", "describe", "why", "when"
 
+IMPORTANT: 
+- "forgot password" or "reset password" → forgotPassword
+- "change password" (when logged in) → changePassword
+- "how to buy" → buyAssets
+- "how to sell" → sellAssets
+
 Respond with ONLY valid JSON (no markdown, no explanation):
-{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|null}
+{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|"forgotPassword"|"buyAssets"|"sellAssets"|"updateUserDetails"|"editMarketingPreferences"|"changePassword"|null}
 
 Examples:
 - "how do I sign up?" → {"wantsVideo": true, "videoTopic": "signup"}
 - "what is the signup flow?" → {"wantsVideo": false, "videoTopic": null}
 - "show me how to login" → {"wantsVideo": true, "videoTopic": "login"}
+- "I forgot my password" → {"wantsVideo": true, "videoTopic": "forgotPassword"}
+- "how to reset my password" → {"wantsVideo": true, "videoTopic": "forgotPassword"}
+- "how do I change my password" → {"wantsVideo": true, "videoTopic": "changePassword"}
+- "how to buy assets" → {"wantsVideo": true, "videoTopic": "buyAssets"}
+- "show me how to sell" → {"wantsVideo": true, "videoTopic": "sellAssets"}
+- "how to update my profile" → {"wantsVideo": true, "videoTopic": "updateUserDetails"}
 - "what is ShareMatch?" → {"wantsVideo": false, "videoTopic": null}
 - "how to verify my identity" → {"wantsVideo": true, "videoTopic": "kyc"}
 - "explain the KYC process" → {"wantsVideo": false, "videoTopic": null}
@@ -180,21 +260,22 @@ Examples:
 User question: "${query}"`;
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${groqApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          { role: "user", content: classificationPrompt }
-        ],
-        temperature: 0,
-        max_tokens: 50,
-      }),
-    });
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [{ role: "user", content: classificationPrompt }],
+          temperature: 0,
+          max_tokens: 100, // Increased from 50 to handle longer responses
+        }),
+      }
+    );
 
     if (!response.ok) {
       console.error("Intent classification failed, defaulting to no video");
@@ -203,9 +284,9 @@ User question: "${query}"`;
 
     const data = await response.json();
     const content = data.choices[0]?.message?.content?.trim() || "";
-    
+
     console.log(`🧠 Intent classification raw response: ${content}`);
-    
+
     // Parse JSON response
     const parsed = JSON.parse(content);
     return {
@@ -228,10 +309,10 @@ serve(async (req) => {
     const { message, conversation_id }: ChatRequest = await req.json();
 
     if (!message) {
-      return new Response(
-        JSON.stringify({ error: "Message is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Message is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ============== Session Validation ==============
@@ -240,7 +321,11 @@ serve(async (req) => {
     let userId: string | null = null;
 
     const authHeader = req.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ") && SUPABASE_URL && SUPABASE_ANON_KEY) {
+    if (
+      authHeader?.startsWith("Bearer ") &&
+      SUPABASE_URL &&
+      SUPABASE_ANON_KEY
+    ) {
       try {
         const token = authHeader.substring(7);
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -248,8 +333,11 @@ serve(async (req) => {
             headers: { Authorization: `Bearer ${token}` },
           },
         });
-        
-        const { data: { user }, error } = await supabase.auth.getUser();
+
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
         if (!error && user) {
           isAuthenticated = true;
           userId = user.id;
@@ -269,7 +357,8 @@ serve(async (req) => {
     const chromaApiKey = Deno.env.get("CHROMA_API_KEY");
     const chromaTenant = Deno.env.get("CHROMA_TENANT");
     const chromaDatabase = Deno.env.get("CHROMA_DATABASE") || "Prod";
-    const chromaCollection = Deno.env.get("CHROMA_COLLECTION") || "sharematch_faq";
+    const chromaCollection =
+      Deno.env.get("CHROMA_COLLECTION") || "sharematch_faq";
 
     console.log("=== CONFIG CHECK ===");
     console.log("GROQ_API_KEY:", groqApiKey ? "✓ SET" : "✗ MISSING");
@@ -289,21 +378,25 @@ serve(async (req) => {
     // Determine if user wants a video tutorial or information
     console.log("Step 0: Classifying user intent...");
     const intent = await classifyIntent(message, groqApiKey);
-    console.log(`🧠 Intent: wantsVideo=${intent.wantsVideo}, topic=${intent.videoTopic}`);
-    
+    console.log(
+      `🧠 Intent: wantsVideo=${intent.wantsVideo}, topic=${intent.videoTopic}`
+    );
+
     // If user wants a video tutorial, return it immediately
     if (intent.wantsVideo && intent.videoTopic) {
       const videoInfo = VIDEO_METADATA[intent.videoTopic];
       const videoFileName = VIDEO_FILE_NAMES[intent.videoTopic];
-      
+
       if (videoInfo && videoFileName) {
         // Check access level for authenticated-only videos
         if (videoInfo.accessLevel === "authenticated" && !isAuthenticated) {
           console.log(`🚫 Video ${intent.videoTopic} requires authentication`);
-          const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+          const convId =
+            conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
           return new Response(
             JSON.stringify({
-              message: "To access this tutorial, please log in to your ShareMatch account first. I can help you with login or signup if you need!",
+              message:
+                "To access this tutorial, please log in to your ShareMatch account first. I can help you with login or signup if you need!",
               conversation_id: convId,
             }),
             {
@@ -313,8 +406,9 @@ serve(async (req) => {
         }
 
         console.log(`🎬 Returning video tutorial: ${intent.videoTopic}`);
-        const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
-        
+        const convId =
+          conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
+
         // Generate signed URL for R2 video
         let videoUrl = "";
         try {
@@ -322,12 +416,14 @@ serve(async (req) => {
             videoUrl = await generateSignedUrl(videoFileName, 604800); // 7 days
             console.log(`✅ Generated signed URL for ${videoFileName}`);
           } else {
-            console.warn("⚠️ R2 credentials not configured, video URL will be empty");
+            console.warn(
+              "⚠️ R2 credentials not configured, video URL will be empty"
+            );
           }
         } catch (error) {
           console.error("❌ Failed to generate signed URL:", error);
         }
-        
+
         return new Response(
           JSON.stringify({
             message: videoInfo.intro,
@@ -345,23 +441,23 @@ serve(async (req) => {
         );
       }
     }
-    
+
     console.log("📝 User wants information, proceeding with RAG...");
 
     // Step 1: Generate embedding
     console.log("Step 1: Generating embedding...");
-    
+
     const embeddingResponse = await fetch(
       "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${hfToken}`,
+          Authorization: `Bearer ${hfToken}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           inputs: message,
-          options: { wait_for_model: true }
+          options: { wait_for_model: true },
         }),
       }
     );
@@ -373,7 +469,7 @@ serve(async (req) => {
     }
 
     const embeddingResult = await embeddingResponse.json();
-    
+
     // Mean pooling for nested arrays
     let queryEmbedding: number[];
     if (Array.isArray(embeddingResult) && Array.isArray(embeddingResult[0])) {
@@ -385,88 +481,90 @@ serve(async (req) => {
           queryEmbedding[j] += embeddingResult[i][j];
         }
       }
-      queryEmbedding = queryEmbedding.map(v => v / numTokens);
+      queryEmbedding = queryEmbedding.map((v) => v / numTokens);
     } else if (Array.isArray(embeddingResult)) {
       queryEmbedding = embeddingResult;
     } else {
       throw new Error("Unexpected embedding format");
     }
-    
+
     console.log("✓ Embedding generated, dimension:", queryEmbedding.length);
 
     // Step 2: Query Chroma Cloud
     console.log("Step 2: Querying Chroma Cloud...");
-    
+
     const chromaHeaders = {
       "Content-Type": "application/json",
       "X-Chroma-Token": chromaApiKey,
     };
-    
+
     // Get collection ID
-      const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
-      
-      const collectionsResponse = await fetch(collectionUrl, {
-        method: "GET",
-        headers: chromaHeaders,
-      });
+    const collectionUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${chromaCollection}`;
 
-      if (!collectionsResponse.ok) {
-        const errText = await collectionsResponse.text();
-        console.error("✗ Collection error:", collectionsResponse.status, errText);
-        throw new Error(`Collection not found: ${errText}`);
-      }
-      
-      const collectionData = await collectionsResponse.json();
-      console.log("✓ Collection found, ID:", collectionData.id);
-      
-      // Query the collection with access level filtering
-      const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
-      
-      // Build query body with optional access_level filter for unauthenticated users
-      const queryBody: {
-        query_embeddings: number[][];
-        n_results: number;
-        include: string[];
-        where?: { access_level: { $eq: string } };
-      } = {
-        query_embeddings: [queryEmbedding],
-        n_results: 4,
-        include: ["documents"],
-      };
-      
-      // Filter to only public documents for unauthenticated users
-      if (!isAuthenticated) {
-        queryBody.where = { access_level: { $eq: "public" } };
-        console.log("🔓 Filtering RAG to public documents only");
-      } else {
-        console.log("🔐 RAG has access to all documents");
-      }
-      
-      const queryResponse = await fetch(queryUrl, {
-        method: "POST",
-        headers: chromaHeaders,
-        body: JSON.stringify(queryBody),
-      });
+    const collectionsResponse = await fetch(collectionUrl, {
+      method: "GET",
+      headers: chromaHeaders,
+    });
 
-      if (!queryResponse.ok) {
-        const errText = await queryResponse.text();
-        console.error("✗ Query error:", queryResponse.status, errText);
-        throw new Error(`Query failed: ${errText}`);
-      }
-      
-      const queryData = await queryResponse.json();
-      const documents = queryData.documents?.[0] || [];
-    
-      console.log("✓ Found", documents.length, "documents");
+    if (!collectionsResponse.ok) {
+      const errText = await collectionsResponse.text();
+      console.error("✗ Collection error:", collectionsResponse.status, errText);
+      throw new Error(`Collection not found: ${errText}`);
+    }
+
+    const collectionData = await collectionsResponse.json();
+    console.log("✓ Collection found, ID:", collectionData.id);
+
+    // Query the collection with access level filtering
+    const queryUrl = `https://api.trychroma.com/api/v2/tenants/${chromaTenant}/databases/${chromaDatabase}/collections/${collectionData.id}/query`;
+
+    // Build query body with optional access_level filter for unauthenticated users
+    const queryBody: {
+      query_embeddings: number[][];
+      n_results: number;
+      include: string[];
+      where?: { access_level: { $eq: string } };
+    } = {
+      query_embeddings: [queryEmbedding],
+      n_results: 4,
+      include: ["documents"],
+    };
+
+    // Filter to only public documents for unauthenticated users
+    if (!isAuthenticated) {
+      queryBody.where = { access_level: { $eq: "public" } };
+      console.log("🔓 Filtering RAG to public documents only");
+    } else {
+      console.log("🔐 RAG has access to all documents");
+    }
+
+    const queryResponse = await fetch(queryUrl, {
+      method: "POST",
+      headers: chromaHeaders,
+      body: JSON.stringify(queryBody),
+    });
+
+    if (!queryResponse.ok) {
+      const errText = await queryResponse.text();
+      console.error("✗ Query error:", queryResponse.status, errText);
+      throw new Error(`Query failed: ${errText}`);
+    }
+
+    const queryData = await queryResponse.json();
+    const documents = queryData.documents?.[0] || [];
+
+    console.log("✓ Found", documents.length, "documents");
 
     // Step 3: Generate response using RAG (intent classification already handled video requests)
     console.log("Step 3: Generating RAG response...");
-    
-    const context = documents.join("\n\n") || "No specific information found in the knowledge base.";
-    
+
+    const context =
+      documents.join("\n\n") ||
+      "No specific information found in the knowledge base.";
+
     // ============== Dual System Prompts ==============
     // Different prompts for authenticated vs public users
-    
+
     const publicSystemPrompt = `You are ShareMatch AI, helping visitors learn about ShareMatch.
 
 COMMUNICATION STYLE:
@@ -474,10 +572,17 @@ COMMUNICATION STYLE:
 - Speak naturally and directly
 - Encourage users to sign up or log in when appropriate
 
-GREETINGS (CRITICAL):
+GREETINGS:
 When the user says greetings like "hi", "hey", "hello", "good morning", "what's up", etc.:
-→ Respond warmly: "Hey there! Welcome to ShareMatch! I'm here to help you get started. You can ask me about signing up, logging in, or how ShareMatch works. What would you like to know?"
+→ Respond warmly and naturally, welcoming them to ShareMatch
+→ Let them know you can help with: signing up, logging in, KYC verification, or learning about ShareMatch
+→ Keep it brief and friendly
 → Do NOT ask them to rephrase - greetings are NOT unclear questions!
+
+Example greeting responses:
+- "Hey there! 👋 Welcome to ShareMatch! What can I help you with today?"
+- "Hello! I'm here to help you with ShareMatch. Feel free to ask about signing up, logging in, or how the platform works!"
+- "Hi! Welcome! I can assist you with account creation, login, or any questions about ShareMatch."
 
 TOPICS YOU CAN HELP WITH:
 - What is ShareMatch and how it works
@@ -557,32 +662,39 @@ CONTEXT:
 ${context}`;
 
     // Select prompt based on authentication status
-    const systemPrompt = isAuthenticated ? authenticatedSystemPrompt : publicSystemPrompt;
-    console.log(`📝 Using ${isAuthenticated ? "authenticated" : "public"} system prompt`);
+    const systemPrompt = isAuthenticated
+      ? authenticatedSystemPrompt
+      : publicSystemPrompt;
+    console.log(
+      `📝 Using ${isAuthenticated ? "authenticated" : "public"} system prompt`
+    );
     // ============== End Dual System Prompts ==============
 
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${groqApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-        temperature: 0.1,
-        max_tokens: 512,
-      }),
-    });
+    const groqResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt,
+            },
+            {
+              role: "user",
+              content: message,
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 512,
+        }),
+      }
+    );
 
     if (!groqResponse.ok) {
       const errorText = await groqResponse.text();
@@ -591,7 +703,9 @@ ${context}`;
     }
 
     const groqData = await groqResponse.json();
-    const aiMessage = groqData.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+    const aiMessage =
+      groqData.choices[0]?.message?.content ||
+      "I'm sorry, I couldn't generate a response.";
 
     const convId = conversation_id || `conv_${crypto.randomUUID().slice(0, 8)}`;
 
@@ -607,13 +721,13 @@ ${context}`;
   } catch (error) {
     console.error("Chatbot error:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: "An error occurred processing your message",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
