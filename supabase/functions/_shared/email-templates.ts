@@ -61,7 +61,7 @@ export function generateForgotPasswordEmailSubject(): string {
  * Build password reset email HTML - simplified version with magic link
  */
 export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-  const logoUrl = logoImageUrl || "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
+  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
   return PASSWORD_RESET_TEMPLATE
     .replace(/\${magicLink}/g, magicLink)
     .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
