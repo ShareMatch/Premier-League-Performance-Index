@@ -1,0 +1,2 @@
+alter table public.user_compliance
+add column registration_completed_at timestamptz;
