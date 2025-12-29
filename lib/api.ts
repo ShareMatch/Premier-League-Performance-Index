@@ -891,8 +891,17 @@ export const requestPasswordReset = async (email: string): Promise<ForgotPasswor
     });
 
     const result = await response.json();
+    console.log('Password reset response:', { status: response.status, ok: response.ok, result });
 
-    // We always return success for security (don't reveal if email exists)
+    // If the API returned an explicit error field, throw it so the UI can display the message
+    if (result.error) {
+        throw new Error(result.error);
+    }
+
+    if (!response.ok) {
+        throw new Error(result.message || 'Failed to request password reset');
+    }
+
     return result as ForgotPasswordResponse;
 };
 
