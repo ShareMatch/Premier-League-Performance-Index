@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from './AuthProvider';
+import Button from '../Button';
 
 // Eye Icon for password visibility toggle
 const EyeIcon = ({ off = false }: { off?: boolean }) => (
@@ -256,29 +257,26 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
             {/* Button outside inner container */}
             <div
-              className={`rounded-full transition-all duration-300 p-0.5 ${
-                isButtonHovered
-                  ? 'border border-white shadow-glow'
-                  : 'border border-brand-emerald500'
+              className={`rounded-full transition-all duration-300 ${
+                isButtonHovered ? 'shadow-glow' : ''
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
-              <button
+              <Button
                 type="button"
                 onClick={handleClose}
                 className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
-                  isButtonHovered
-                    ? 'bg-white text-brand-emerald500'
-                    : 'bg-gradient-primary text-white'
-                }`}
+                  isButtonHovered ? 'opacity-90' : ''
+                } !disabled:opacity-100 disabled:cursor-not-allowed`}
+                variant="white"
               >
                 Back to Login
                 <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
                   <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
                   <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -316,22 +314,19 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             {/* Button outside inner container */}
             <form onSubmit={handleSubmit} className="flex justify-center">
               <div
-                className={`rounded-full transition-all duration-300 p-0.5 ${
-                  isButtonHovered && canSubmit
-                    ? 'border border-white shadow-glow'
-                    : 'border border-brand-emerald500'
+                className={`rounded-full transition-all duration-300 ${
+                  isButtonHovered && canSubmit ? 'shadow-glow' : ''
                 }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
               >
-                <button
+                <Button
                   type="submit"
                   disabled={!canSubmit || loading}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 disabled:opacity-60 text-sm font-sans ${
-                    isButtonHovered && canSubmit
-                      ? 'bg-white text-brand-emerald500'
-                      : 'bg-gradient-primary text-white'
-                  }`}
+                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                    isButtonHovered && canSubmit ? 'opacity-90' : ''
+                  } !disabled:opacity-100 disabled:cursor-not-allowed`}
+                  variant="white"
                 >
                   {loading ? "Updating..." : "Reset Password"}
                   {!loading && (
@@ -340,7 +335,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                       <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </>
