@@ -30,6 +30,7 @@ const PasswordField = ({
   onChange,
   error,
   hint,
+  autoComplete,
 }: {
   id: string;
   label: string;
@@ -38,6 +39,7 @@ const PasswordField = ({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   hint?: string;
+  autoComplete?: string;
 }) => {
   const [visible, setVisible] = useState(false);
   
@@ -58,6 +60,7 @@ const PasswordField = ({
           onChange={onChange}
           className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
           required
+          autoComplete={autoComplete}
         />
         <button
           type="button"
@@ -192,7 +195,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    // Sign out user to prevent auto-login when closing without resetting password
+    await supabase.auth.signOut();
+    
     // Reset state when closing
     setNewPassword('');
     setConfirmPassword('');
@@ -293,6 +299,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 hint={newPassword.length > 0 && newPassword.length < 8 ? 'Must be at least 8 characters' : undefined}
+                autoComplete="new-password"
               />
               
               <PasswordField
@@ -302,6 +309,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 error={confirmPassword.length > 0 && !passwordsMatch ? 'Passwords do not match' : undefined}
+                autoComplete="confirm-password"
               />
 
               {error && (
@@ -312,31 +320,24 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             </div>
 
             {/* Button outside inner container */}
-            <form onSubmit={handleSubmit} className="flex justify-center">
-              <div
-                className={`rounded-full transition-all duration-300 ${
-                  isButtonHovered && canSubmit ? 'shadow-glow' : ''
+            <form onSubmit={handleSubmit} className="w-full flex justify-center">
+              <button
+                type="submit"
+                disabled={!canSubmit || loading}
+                className={`px-6 py-2 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                  canSubmit && !loading
+                    ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
+                    : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
               >
-                <Button
-                  type="submit"
-                  disabled={!canSubmit || loading}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
-                    isButtonHovered && canSubmit ? 'opacity-90' : ''
-                  } !disabled:opacity-100 disabled:cursor-not-allowed`}
-                  variant="white"
-                >
-                  {loading ? "Updating..." : "Reset Password"}
-                  {!loading && (
-                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </Button>
-              </div>
+                {loading ? "Updating..." : "Reset Password"}
+                {!loading && (
+                  <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                    <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                    <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
             </form>
           </>
         )}

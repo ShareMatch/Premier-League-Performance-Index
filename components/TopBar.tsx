@@ -13,6 +13,7 @@ import {
   Menu,
 } from "lucide-react";
 import type { Wallet as WalletType, Team, League } from "../types";
+import { supabase } from "../lib/supabase";
 import { useAuth } from "./auth/AuthProvider";
 import { LoginModal } from "./auth/LoginModal";
 import {
@@ -1089,7 +1090,9 @@ const TopBar: React.FC<TopBarProps> = ({
       {/* Reset Password Modal */}
       <ResetPasswordModal
         isOpen={showResetPasswordModal}
-        onClose={() => {
+        onClose={async () => {
+          // Sign out to prevent auto-login when closing without resetting password
+          await supabase.auth.signOut();
           setShowResetPasswordModal(false);
           clearPasswordRecovery();
           setShowLoginModal(true);
