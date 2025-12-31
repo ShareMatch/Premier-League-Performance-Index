@@ -91,10 +91,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [countdown, setCountdown] = useState(300); // 5 minutes in seconds
-  const [canResend, setCanResend] = useState(false);
+  const [countdown, setCountdown] = useState(300); // 5 minutes code validity
+  const [resendCooldown, setResendCooldown] = useState(0); // 30 seconds resend internal cooldown
+  const [canResend, setCanResend] = useState(true);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -102,10 +102,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setEmail('');
       setLoading(false);
       setError(null);
-      setIsButtonHovered(false);
       setEmailSent(false);
       setCountdown(300);
-      setCanResend(false);
+      setResendCooldown(0);
+      setCanResend(true);
     }
   }, [isOpen]);
 
@@ -113,15 +113,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
   // Countdown timer effect
   useEffect(() => {
-    if (!emailSent) return;
+    if (!isOpen || !emailSent) return;
     
-    if (countdown <= 0) {
-      setCanResend(true);
-      return;
-    }
-
     const timer = setInterval(() => {
-      setCountdown((prev) => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+      setResendCooldown((prev) => {
         if (prev <= 1) {
           setCanResend(true);
           return 0;
@@ -131,7 +127,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [emailSent, countdown]);
+  }, [isOpen, emailSent]);
 
   const sendResetEmail = useCallback(async () => {
     setLoading(true);
@@ -141,13 +137,12 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       await requestPasswordReset(email.trim().toLowerCase());
       setEmailSent(true);
       setCountdown(300); // Reset to 5 minutes
+      setResendCooldown(30); // 30s resend cooldown
       setCanResend(false);
     } catch (err: any) {
-      // We always show success message for security (don't reveal if email exists)
-      setEmailSent(true);
-      setCountdown(300);
-      setCanResend(false);
-      setIsButtonHovered(false);
+      console.error('Password reset error:', err);
+      setError(err.message || 'Failed to request password reset');
+      setEmailSent(false); // Ensure we stay in form state
     } finally {
       setLoading(false);
     }
@@ -170,7 +165,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setEmailSent(false);
     setError(null);
     setCountdown(300);
-    setCanResend(false);
+    setResendCooldown(0);
+    setCanResend(true);
     onClose();
   };
 
@@ -179,7 +175,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setEmailSent(false);
     setError(null);
     setCountdown(300);
-    setCanResend(false);
+    setResendCooldown(0);
+    setCanResend(true);
     onBackToLogin?.();
   };
 
@@ -215,29 +212,29 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           // Success State
           <div className="flex flex-col w-full rounded-xl p-5">
             <div className="flex flex-col items-center text-center gap-4">
-              <p className="text-gray-300 font-sans text-sm leading-relaxed">
+              <p className="text-white font-sans text-sm leading-relaxed">
                 We've sent a password reset link to your email address{' '}
-                <span className="text-brand-emerald500 font-medium">{maskEmail(email)}</span>.{' '}
+                <span className="text-white font-medium">{maskEmail(email)}</span>.{' '}
                 Please check your inbox and click the link to reset your password.
               </p>
               
-              {/* Countdown Timer */}
-              <p className="text-white font-medium font-sans text-xl tracking-wide">
-                {formatTime(countdown)}
-              </p>
               
               {/* Resend Section */}
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-gray-500 font-sans text-sm">
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-white/60 font-sans text-xs">
                   Haven't received a request?
-                </p>
+                </span>
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={!canResend || loading}
-                  className={`font-medium transition-colors font-sans text-sm ${canResend ? 'text-brand-emerald500 hover:text-white cursor-pointer' : 'text-gray-500 cursor-not-allowed'}`}
+                  className={`px-6 py-2 rounded-full font-medium transition-all duration-300 text-sm font-sans ${
+                    canResend && !loading
+                      ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm transform active:scale-95'
+                      : 'bg-gray-700/30 text-white/20 cursor-not-allowed'
+                  }`}
                 >
-                  {loading ? 'Sending...' : 'Resend'}
+                  {loading ? 'Sending...' : 'Resend Link'}
                 </button>
               </div>
             </div>
@@ -261,6 +258,12 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 disabled={loading}
               />
 
+              {error && (
+                <p className="text-left text-red-400 font-sans text-sm -mt-2">
+                  {error}
+                </p>
+              )}
+
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -277,40 +280,27 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   Sign up
                 </button>
               </div>
-
-              {error && (
-                <p className="text-center text-red-400 font-sans text-sm">
-                  {error}
-                </p>
-              )}
             </div>
 
             {/* Button outside inner container */}
             <form onSubmit={handleSubmit} className="w-full flex justify-center">
-              <div
-                className={`rounded-full transition-all duration-300 ${
-                  isButtonHovered && canSubmit ? 'shadow-glow' : ''
+              <button
+                type="submit"
+                disabled={!canSubmit || loading}
+                className={`px-6 py-2 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                  canSubmit && !loading
+                    ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
+                    : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
-                onMouseEnter={() => setIsButtonHovered(true)}
-                onMouseLeave={() => setIsButtonHovered(false)}
               >
-                <Button
-                  type="submit"
-                  disabled={!canSubmit || loading}
-                  className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
-                    isButtonHovered && canSubmit ? 'opacity-90' : ''
-                  } !disabled:opacity-100 disabled:cursor-not-allowed`}
-                  variant="white"
-                >
-                  {loading ? "Sending..." : "Send Link"}
-                  {!loading && (
-                    <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                      <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                      <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </Button>
-              </div>
+                {loading ? "Sending..." : "Send Link"}
+                {!loading && (
+                  <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
+                    <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
+                    <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
             </form>
           </>
         )}

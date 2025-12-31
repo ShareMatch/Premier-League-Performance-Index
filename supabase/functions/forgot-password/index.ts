@@ -67,20 +67,22 @@ serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
-    // Check if user exists (we don't need their name since template doesn't use it)
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from("users")
-      .select("id, email")
-      .eq("email", email)
-      .single();
+    // Check if user exists in auth.users table
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = authUser?.users?.some(u => u.email?.toLowerCase() === email);
 
-    if (userError || !userData) {
-      console.log("🟡 [forgot-password] User not found, returning neutral response");
-      // Return neutral response to prevent email enumeration
-      return neutralResponse();
+    if (authError || !userExists) {
+      console.log("🟡 [forgot-password] User not found - returning 404 error");
+      return new Response(
+        JSON.stringify({ error: "User does not exist" }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
     }
 
-    console.log("🟢 [forgot-password] User found:", userData.id);
+    console.log("🟢 [forgot-password] User found for email:", email);
 
     // Generate the password reset link using Supabase Admin API
     // The redirectTo should point to your app's base URL
@@ -110,7 +112,7 @@ serve(async (req: Request) => {
     }
 
     // Build the email HTML using the simplified template
-    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
+    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
     const emailHtml = buildResetEmailHTML(resetLink, logoImageUrl);
     const emailSubject = "Reset your ShareMatch password";
 
