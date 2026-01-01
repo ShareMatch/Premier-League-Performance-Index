@@ -8,6 +8,9 @@ import {
   UserPlus,
   ShieldCheck,
   Loader2,
+  Settings,
+  TrendingUp,
+  Globe,
 } from "lucide-react";
 
 // Supabase Edge Function URL for fetching video signed URLs
@@ -16,73 +19,295 @@ const SUPABASE_URL =
   "https://lbmixnhxerrmecfxdfkx.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
+// Translation strings
+const TRANSLATIONS = {
+  en: {
+    helpCenter: "Help Center",
+    videoTutorials: "Video tutorials to get you started",
+    onboarding: "Customer Onboarding",
+    onboardingDesc: "Get started with ShareMatch",
+    customerSettings: "User Settings",
+    customerSettingsDesc: "Manage your account and preferences",
+    tradingIndexes: "Trading & Indices",
+    tradingIndexesDesc: "Learn how to trade and explore our indices",
+    howToLogin: "How to Login",
+    howToLoginDesc:
+      "Step-by-step guide to logging into your ShareMatch account",
+    howToSignUp: "How to Sign Up",
+    howToSignUpDesc: "Create your ShareMatch account in a few easy steps",
+    kycVerification: "KYC Verification",
+    kycVerificationDesc:
+      "Complete your identity verification to unlock all features",
+    howToResetPassword: "How to Reset Password",
+    howToResetPasswordDesc: "Easily reset your password if you've forgotten it",
+    howToUpdateUserDetails: "How to Update User Details",
+    howToUpdateUserDetailsDesc:
+      "Learn how to update your user details on ShareMatch",
+    howToEditMarketingPreferences: "How to Edit Marketing Preferences",
+    howToEditMarketingPreferencesDesc:
+      "Learn how to edit your marketing preferences on ShareMatch",
+    howToChangePassword: "How to Change Password",
+    howToChangePasswordDesc: "Learn how to change your password on ShareMatch",
+    howToBuyAssets: "How to Buy Assets",
+    howToBuyAssetsDesc: "Learn how to purchase assets on ShareMatch",
+    howToSellAssets: "How to Sell Assets",
+    howToSellAssetsDesc: "Learn how to sell assets on ShareMatch",
+    eplIndex: "EPL Index",
+    eplIndexDesc: "Learn about the English Premier League Index",
+    splIndex: "SPL Index",
+    splIndexDesc: "Learn about the Saudi Pro League Index",
+    uefaIndex: "UEFA Champions League Index",
+    uefaIndexDesc: "Learn about the UEFA Champions League Index",
+    fifaIndex: "FIFA World Cup Index",
+    fifaIndexDesc: "Learn about the FIFA World Cup Index",
+    islIndex: "ISL Index",
+    islIndexDesc: "Learn about the Indonesia Super League Index",
+    f1Index: "F1 Index",
+    f1IndexDesc: "Learn about the F1 Index",
+    nbaIndex: "NBA Index",
+    nbaIndexDesc: "Learn about the NBA Index",
+    nflIndex: "NFL Index",
+    nflIndexDesc: "Learn about the NFL Index",
+    t20Index: "T20 Cricket Index",
+    t20IndexDesc: "Learn about the T20 Cricket Index",
+    unableToLoadVideo: "Unable to load video",
+    tryAgain: "Try again",
+    readyToLogin: "Ready to",
+    readyToSignUp: "Ready to",
+    readyToVerify: "Ready to",
+    login: "login",
+    signUp: "sign up",
+    verify: "verify",
+  },
+  ar: {
+    helpCenter: "مركز المساعدة",
+    videoTutorials: "دروس فيديو لمساعدتك على البدء",
+    onboarding: "التسجيل",
+    onboardingDesc: "ابدأ مع ShareMatch",
+    customerSettings: "إعدادات العميل",
+    customerSettingsDesc: "إدارة حسابك وتفضيلاتك",
+    tradingIndexes: "التداول والمؤشرات",
+    tradingIndexesDesc: "تعلم كيفية التداول واستكشاف مؤشراتنا",
+    howToLogin: "كيفية تسجيل الدخول",
+    howToLoginDesc:
+      "دليل خطوة بخطوة لتسجيل الدخول إلى حساب ShareMatch الخاص بك",
+    howToSignUp: "كيفية التسجيل",
+    howToSignUpDesc: "إنشاء حساب ShareMatch الخاص بك في خطوات سهلة",
+    kycVerification: "التحقق من الهوية",
+    kycVerificationDesc: "أكمل التحقق من هويتك لفتح جميع الميزات",
+    howToResetPassword: "كيفية إعادة تعيين كلمة المرور",
+    howToResetPasswordDesc:
+      "إعادة تعيين كلمة المرور الخاصة بك بسهولة إذا نسيتها",
+    howToUpdateUserDetails: "كيفية تحديث تفاصيل المستخدم",
+    howToUpdateUserDetailsDesc:
+      "تعلم كيفية تحديث تفاصيل المستخدم الخاصة بك على ShareMatch",
+    howToEditMarketingPreferences: "كيفية تعديل تفضيلات التسويق",
+    howToEditMarketingPreferencesDesc:
+      "تعلم كيفية تعديل تفضيلات التسويق الخاصة بك على ShareMatch",
+    howToChangePassword: "كيفية تغيير كلمة المرور",
+    howToChangePasswordDesc:
+      "تعلم كيفية تغيير كلمة المرور الخاصة بك على ShareMatch",
+    howToBuyAssets: "كيفية شراء الأصول",
+    howToBuyAssetsDesc: "تعلم كيفية شراء الأصول على ShareMatch",
+    howToSellAssets: "كيفية بيع الأصول",
+    howToSellAssetsDesc: "تعلم كيفية بيع الأصول على ShareMatch",
+    eplIndex: "مؤشر الدوري الإنجليزي الممتاز",
+    eplIndexDesc: "تعرف على مؤشر الدوري الإنجليزي الممتاز",
+    splIndex: "مؤشر دوري روشن السعودي",
+    splIndexDesc: "تعرف على مؤشر دوري روشن السعودي",
+    uefaIndex: "مؤشر دوري أبطال أوروبا",
+    uefaIndexDesc: "تعرف على مؤشر دوري أبطال أوروبا",
+    fifaIndex: "مؤشر كأس العالم",
+    fifaIndexDesc: "تعرف على مؤشر كأس العالم",
+    islIndex: "مؤشر الدوري الإندونيسي",
+    islIndexDesc: "تعرف على مؤشر الدوري الإندونيسي الممتاز",
+    f1Index: "مؤشر الفورمولا 1",
+    f1IndexDesc: "تعرف على مؤشر الفورمولا 1",
+    nbaIndex: "مؤشر NBA",
+    nbaIndexDesc: "تعرف على مؤشر NBA",
+    nflIndex: "مؤشر NFL",
+    nflIndexDesc: "تعرف على مؤشر NFL",
+    t20Index: "مؤشر كريكيت T20",
+    t20IndexDesc: "تعرف على مؤشر كريكيت T20",
+    unableToLoadVideo: "تعذر تحميل الفيديو",
+    tryAgain: "حاول مرة أخرى",
+    readyToLogin: "هل أنت مستعد",
+    readyToSignUp: "هل أنت مستعد",
+    readyToVerify: "هل أنت مستعد",
+    login: "لتسجيل الدخول",
+    signUp: "للتسجيل",
+    verify: "للتحقق",
+  },
+};
+
 const HELP_TOPICS = {
   signup: {
-    title: "How to Sign Up",
-    description: "Create your ShareMatch account in a few easy steps",
+    titleKey: "howToSignUp",
+    descriptionKey: "howToSignUpDesc",
     icon: <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Sign Up",
-    video: "Streamline Signup Process With Sharematch Product Demo.mp4",
+    videoEn: "Streamline Signup Process With Sharematch Product Demo.mp4",
+    videoAr: "Arabic Streamline Signup Process With Sharematch Product Demo.mp4", // Add your Arabic video filename
+    section: "onboarding" as const,
   },
   login: {
-    title: "How to Login",
-    description: "Step-by-step guide to logging into your ShareMatch account",
+    titleKey: "howToLogin",
+    descriptionKey: "howToLoginDesc",
     icon: <LogIn className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Login",
-    video: "Streamline Login Process With Sharematch.mp4",
+    videoEn: "Streamline Login Process With Sharematch.mp4",
+    videoAr: "Arabic Streamline Login Process With Sharematch.mp4", // Add your Arabic video filename
+    section: "onboarding" as const,
   },
   kyc: {
-    title: "KYC Verification",
-    description: "Complete your identity verification to unlock all features",
+    titleKey: "kycVerification",
+    descriptionKey: "kycVerificationDesc",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Verify",
-    video: "Streamline KYC Verification With Sharematch Demo.mp4",
+    videoEn: "Streamline KYC Verification With Sharematch Demo.mp4",
+    videoAr: "Arabic Streamline KYC Verification With Sharematch Demo.mp4", // Add your Arabic video filename
+    section: "onboarding" as const,
   },
   forgotPassword: {
-    title: "How to Reset Password",
-    description: "Easily reset your password if you've forgotten it",
+    titleKey: "howToResetPassword",
+    descriptionKey: "howToResetPasswordDesc",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Reset Password",
-    video: "forgot password.mp4",
-  },
-  buyAssets: {
-    title: "How to Buy Assets",
-    description: "Learn how to purchase assets on ShareMatch",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Buy Assets",
-    video: "How to buy.mp4",
-  },
-  sellAssets: {
-    title: "How to Sell Assets",
-    description: "Learn how to sell assets on ShareMatch",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Sell Assets",
-    video: "How to sell.mp4",
+    videoEn: "forgot password.mp4",
+    videoAr: "Arabic forgot password.mp4", // Add your Arabic video filename
+    section: "onboarding" as const,
   },
   updateUserDetails: {
-    title: "How to Update User Details",
-    description: "Learn how to update your user details on ShareMatch",
+    titleKey: "howToUpdateUserDetails",
+    descriptionKey: "howToUpdateUserDetailsDesc",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Update Details",
-    video: "How to update user details.mp4",
+    videoEn: "How to update user details.mp4",
+    videoAr: "Arabic How to update user details.mp4", // Add your Arabic video filename
+    section: "customer" as const,
   },
   editMarketingPreferences: {
-    title: "How to Edit Marketing Preferences",
-    description: "Learn how to edit your marketing preferences on ShareMatch",
+    titleKey: "howToEditMarketingPreferences",
+    descriptionKey: "howToEditMarketingPreferencesDesc",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Edit Preferences",
-    video: "how to edit marketing preferences.mp4",
+    videoEn: "how to edit marketing preferences.mp4",
+    videoAr: "Arabic how to edit marketing preferences.mp4", // Add your Arabic video filename
+    section: "customer" as const,
   },
   changePassword: {
-    title: "How to Change Password",
-    description: "Learn how to change your password on ShareMatch",
+    titleKey: "howToChangePassword",
+    descriptionKey: "howToChangePasswordDesc",
     icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
-    actionLabel: "Change Password",
-    video: "how to change password.mp4",
+    videoEn: "how to change password.mp4",
+    videoAr: "Arabic how to change password.mp4", // Add your Arabic video filename
+    section: "customer" as const,
+  },
+  buyAssets: {
+    titleKey: "howToBuyAssets",
+    descriptionKey: "howToBuyAssetsDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "How to buy.mp4",
+    videoAr: "Arabic How to buy.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  sellAssets: {
+    titleKey: "howToSellAssets",
+    descriptionKey: "howToSellAssetsDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "How to sell.mp4",
+    videoAr: "Arabic How to sell.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  eplIndex: {
+    titleKey: "eplIndex",
+    descriptionKey: "eplIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English epl.mp4",
+    videoAr: "Arabic epl.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  splIndex: {
+    titleKey: "splIndex",
+    descriptionKey: "splIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English SPL.mp4",
+    videoAr: "Arabic SPL.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  uefaIndex: {
+    titleKey: "uefaIndex",
+    descriptionKey: "uefaIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English UEFA.mp4",
+    videoAr: "Arabic UEFA.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  fifaIndex: {
+    titleKey: "fifaIndex",
+    descriptionKey: "fifaIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English FIFA World Cup.mp4",
+    videoAr: "Arabic FIFA World Cup.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  islIndex: {
+    titleKey: "islIndex",
+    descriptionKey: "islIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English Indonesia Super League.mp4",
+    videoAr: "Arabic Indonesia Super League.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  f1Index: {
+    titleKey: "f1Index",
+    descriptionKey: "f1IndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English Formula 1.mp4",
+    videoAr: "Arabic Formula 1.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  nbaIndex: {
+    titleKey: "nbaIndex",
+    descriptionKey: "nbaIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English NBA Market.mp4",
+    videoAr: "Arabic NBA Market.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  nflIndex: {
+    titleKey: "nflIndex",
+    descriptionKey: "nflIndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English NFL.mp4",
+    videoAr: "Arabic NFL.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+  t20Index: {
+    titleKey: "t20Index",
+    descriptionKey: "t20IndexDesc",
+    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    videoEn: "English T20 World Cup.mp4",
+    videoAr: "Arabic T20 World Cup.mp4", // Add your Arabic video filename
+    section: "trading" as const,
+  },
+} as const;
+
+const SECTIONS = {
+  onboarding: {
+    titleKey: "onboarding",
+    descriptionKey: "onboardingDesc",
+    icon: <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />,
+  },
+  customer: {
+    titleKey: "customerSettings",
+    descriptionKey: "customerSettingsDesc",
+    icon: <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />,
+  },
+  trading: {
+    titleKey: "tradingIndexes",
+    descriptionKey: "tradingIndexesDesc",
+    icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />,
   },
 } as const;
 
 type HelpTopicId = keyof typeof HELP_TOPICS;
+type SectionId = keyof typeof SECTIONS;
+type Language = "en" | "ar";
 
 interface HelpCenterModalProps {
   isOpen: boolean;
@@ -91,8 +316,7 @@ interface HelpCenterModalProps {
   onOpenLogin?: () => void;
   onOpenSignUp?: () => void;
   onOpenKYC?: () => void;
-  onOpenForgotPassword?: () => void;
-  defaultExpandedTopic?: HelpTopicId; // Auto-expand this topic when modal opens
+  defaultExpandedTopic?: HelpTopicId;
 }
 
 const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
@@ -104,12 +328,16 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
   onOpenKYC,
   defaultExpandedTopic,
 }) => {
+  const [language, setLanguage] = useState<Language>("en");
+  const [expandedSections, setExpandedSections] = useState<Set<SectionId>>(
+    new Set()
+  );
   const [expandedTopics, setExpandedTopics] = useState<Set<HelpTopicId>>(
     new Set()
   );
-  const [videoUrls, setVideoUrls] = useState<
-    Partial<Record<HelpTopicId, string>>
-  >({});
+  const [videoUrls, setVideoUrls] = useState<Partial<Record<string, string>>>(
+    {}
+  );
   const [loadingVideos, setLoadingVideos] = useState<Set<HelpTopicId>>(
     new Set()
   );
@@ -117,11 +345,17 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
     Partial<Record<HelpTopicId, string>>
   >({});
 
+  const t = TRANSLATIONS[language];
+  const isRTL = language === "ar";
+
   // Fetch signed URL from Edge Function
   const fetchVideoUrl = useCallback(
-    async (topicId: HelpTopicId) => {
-      const videoName = HELP_TOPICS[topicId].video;
-      if (!videoName || videoUrls[topicId]) return; // Already fetched or no video
+    async (topicId: HelpTopicId, lang: Language) => {
+      const topic = HELP_TOPICS[topicId];
+      const videoName = lang === "en" ? topic.videoEn : topic.videoAr;
+      const cacheKey = `${topicId}-${lang}`;
+
+      if (!videoName || videoUrls[cacheKey]) return;
 
       setLoadingVideos((prev) => new Set(prev).add(topicId));
       setVideoErrors((prev) => {
@@ -150,7 +384,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         const data = await response.json();
 
         if (data.ok && data.url) {
-          setVideoUrls((prev) => ({ ...prev, [topicId]: data.url }));
+          setVideoUrls((prev) => ({ ...prev, [cacheKey]: data.url }));
         } else {
           throw new Error(data.error || "Failed to get video URL");
         }
@@ -172,31 +406,50 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
     [videoUrls]
   );
 
-  // Auto-expand the default topic when modal opens
+  // Auto-expand section and topic when modal opens with default
   useEffect(() => {
     if (isOpen && defaultExpandedTopic) {
+      const section = HELP_TOPICS[defaultExpandedTopic].section;
+      setExpandedSections(new Set([section]));
       setExpandedTopics(new Set([defaultExpandedTopic]));
-      // Fetch video for default expanded topic
-      fetchVideoUrl(defaultExpandedTopic);
+      fetchVideoUrl(defaultExpandedTopic, language);
     } else if (!isOpen) {
-      // Reset when modal closes
+      setExpandedSections(new Set());
       setExpandedTopics(new Set());
     }
-  }, [isOpen, defaultExpandedTopic, fetchVideoUrl]);
+  }, [isOpen, defaultExpandedTopic, language, fetchVideoUrl]);
 
-  // Filter topics based on login state
-  // Logged out: show login, signup, kyc
-  // Logged in: show only kyc
-  const visibleTopics: HelpTopicId[] = isLoggedIn
-    ? [
-        "kyc",
-        "buyAssets",
-        "sellAssets",
-        "updateUserDetails",
-        "editMarketingPreferences",
-        "changePassword",
-      ]
-    : ["login", "signup", "kyc", "forgotPassword"];
+  // Refetch videos when language changes for already expanded topics
+  useEffect(() => {
+    expandedTopics.forEach((topicId) => {
+      fetchVideoUrl(topicId, language);
+    });
+  }, [language, expandedTopics, fetchVideoUrl]);
+
+  // Get topics for a specific section
+  const getTopicsForSection = (sectionId: SectionId): HelpTopicId[] => {
+    return (Object.keys(HELP_TOPICS) as HelpTopicId[]).filter(
+      (key) => HELP_TOPICS[key].section === sectionId
+    );
+  };
+
+  // Filter sections based on login state
+  const visibleSections: SectionId[] = isLoggedIn
+    ? ["onboarding", "customer", "trading"]
+    : ["onboarding"];
+
+  const toggleSectionExpanded = (sectionId: SectionId) => {
+    setExpandedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.clear();
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
 
   const toggleTopicExpanded = (topicId: HelpTopicId) => {
     setExpandedTopics((prev) => {
@@ -205,8 +458,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         newSet.delete(topicId);
       } else {
         newSet.add(topicId);
-        // Fetch video URL when expanding
-        fetchVideoUrl(topicId);
+        fetchVideoUrl(topicId, language);
       }
       return newSet;
     });
@@ -235,7 +487,63 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-2xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        {/* Language Toggle - Top Left */}
+        <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
+          <div className="flex gap-1 p-1 bg-white/10 rounded-full border border-white/20">
+            {isRTL ? ( // Reverse DOM order in RTL to counter visual flip
+              <>
+                <button
+                  onClick={() => setLanguage("ar")}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "ar"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  AR
+                </button>
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "en"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  EN
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "en"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage("ar")}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "ar"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  AR
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -245,161 +553,210 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         </button>
 
         {/* Content Container */}
-        <div className="flex flex-col rounded-xl p-3 sm:p-5 gap-3 sm:gap-4">
+        <div className="flex flex-col mt-5 rounded-xl p-3 sm:p-5 gap-3 sm:gap-4">
           {/* Header */}
-          <div className="flex items-center gap-2 sm:gap-3 pr-6">
+          <div
+            className={`flex items-center gap-2 sm:gap-3 ${
+              isRTL ? "pr-0 pl-6" : "pl-0 pr-6"
+            }`}
+          >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-emerald500/20 flex items-center justify-center flex-shrink-0">
               <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />
             </div>
             <div className="min-w-0">
               <h2 className="text-white font-bold font-sans text-base sm:text-xl">
-                Help Center
+                {t.helpCenter}
               </h2>
               <p className="text-gray-400 text-xs sm:text-sm">
-                Video tutorials to get you started
+                {t.videoTutorials}
               </p>
             </div>
           </div>
 
-          {/* Help Topic Cards */}
+          {/* Main Sections */}
           <div className="flex flex-col gap-3 mt-2">
-            {visibleTopics.map((id) => {
-              const topic = HELP_TOPICS[id];
-              const isExpanded = expandedTopics.has(id);
+            {visibleSections.map((sectionId) => {
+              const section = SECTIONS[sectionId];
+              const isSectionExpanded = expandedSections.has(sectionId);
+              const sectionTopics = getTopicsForSection(sectionId);
 
               return (
                 <div
-                  key={id}
+                  key={sectionId}
                   className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
                 >
-                  {/* Card Header - Clickable to expand/collapse */}
+                  {/* Main Section Header */}
                   <button
-                    onClick={() => toggleTopicExpanded(id)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3.5 bg-brand-emerald500/10 hover:bg-brand-emerald500/15 transition-colors"
+                    onClick={() => toggleSectionExpanded(sectionId)}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 bg-brand-emerald500/20 hover:bg-brand-emerald500/25 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-brand-emerald500/20">
-                        {topic.icon}
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-brand-emerald500/30">
+                        {section.icon}
                       </div>
-                      <div className="text-left">
-                        <span className="text-white font-semibold text-sm sm:text-base block">
-                          {topic.title}
+                      <div className={isRTL ? "text-right" : "text-left"}>
+                        <span className="text-white font-bold text-sm sm:text-base block">
+                          {t[section.titleKey]}
                         </span>
                         <span className="text-gray-400 text-xs sm:text-sm block">
-                          {topic.description}
+                          {t[section.descriptionKey]}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Action Button - Show for login/signup when logged out, or KYC when logged in */}
-                      <ChevronRight
-                        className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${
-                          isExpanded ? "rotate-90" : ""
-                        }`}
-                      />
-                    </div>
+                    <ChevronRight
+                      className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                        isSectionExpanded ? "rotate-90" : ""
+                      } ${isRTL ? "rotate-180" : ""}`}
+                    />
                   </button>
 
-                  {/* Video Container - Collapsible */}
-                  {isExpanded && (
-                    <div className="p-3 sm:p-4 border-t border-white/10">
-                      <div
-                        className="relative w-full rounded-lg overflow-hidden bg-gray-900"
-                        style={{ paddingBottom: "56.25%" }}
-                      >
-                        {/* Loading State */}
-                        {loadingVideos.has(id) && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
-                          </div>
-                        )}
+                  {/* Sub-topics (nested accordions) */}
+                  {isSectionExpanded && (
+                    <div className="border-t border-white/10">
+                      {sectionTopics.map((topicId) => {
+                        const topic = HELP_TOPICS[topicId];
+                        const isTopicExpanded = expandedTopics.has(topicId);
+                        const cacheKey = `${topicId}-${language}`;
 
-                        {/* Error State */}
-                        {videoErrors[id] && !loadingVideos.has(id) && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
-                            <p className="text-sm text-center mb-2">
-                              Unable to load video
-                            </p>
+                        return (
+                          <div
+                            key={topicId}
+                            className="border-b border-white/5 last:border-b-0"
+                          >
+                            {/* Sub-topic Header */}
                             <button
-                              onClick={() => fetchVideoUrl(id)}
-                              className="text-brand-primary text-sm hover:underline"
+                              onClick={() => toggleTopicExpanded(topicId)}
+                              className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3 bg-brand-emerald500/5 hover:bg-brand-emerald500/10 transition-colors"
                             >
-                              Try again
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-brand-emerald500/15">
+                                  {topic.icon}
+                                </div>
+                                <div
+                                  className={isRTL ? "text-right" : "text-left"}
+                                >
+                                  <span className="text-white font-semibold text-xs sm:text-sm block">
+                                    {t[topic.titleKey]}
+                                  </span>
+                                  <span className="text-gray-400 text-xs block">
+                                    {t[topic.descriptionKey]}
+                                  </span>
+                                </div>
+                              </div>
+                              <ChevronRight
+                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                                  isTopicExpanded ? "rotate-90" : ""
+                                } ${isRTL ? "rotate-180" : ""}`}
+                              />
                             </button>
-                          </div>
-                        )}
 
-                        {/* Video Player */}
-                        {videoUrls[id] &&
-                          !loadingVideos.has(id) &&
-                          !videoErrors[id] && (
-                            <video
-                              src={videoUrls[id]}
-                              title={topic.title}
-                              className="absolute inset-0 w-full h-full object-contain"
-                              controls
-                              controlsList="nodownload"
-                              playsInline
-                              preload="metadata"
-                            >
-                              Your browser does not support the video tag.
-                            </video>
-                          )}
-                      </div>
-                      {/* Action link - centered below video */}
-                      {((!isLoggedIn && (id === "login" || id === "signup")) ||
-                        (isLoggedIn && id === "kyc")) && (
-                        <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
-                          {id === "login" && (
-                            <>
-                              Ready to{" "}
-                              <a
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleActionClick(id, e);
-                                }}
-                                className="text-brand-primary hover:underline font-medium"
-                              >
-                                login
-                              </a>
-                              ?
-                            </>
-                          )}
-                          {id === "signup" && (
-                            <>
-                              Ready to{" "}
-                              <a
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleActionClick(id, e);
-                                }}
-                                className="text-brand-primary hover:underline font-medium"
-                              >
-                                sign up
-                              </a>
-                              ?
-                            </>
-                          )}
-                          {id === "kyc" && (
-                            <>
-                              Ready to{" "}
-                              <a
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handleActionClick(id, e);
-                                }}
-                                className="text-brand-primary hover:underline font-medium"
-                              >
-                                verify
-                              </a>
-                              ?
-                            </>
-                          )}
-                        </p>
-                      )}
+                            {/* Video Container */}
+                            {isTopicExpanded && (
+                              <div className="p-3 sm:p-4 bg-black/20">
+                                <div
+                                  className="relative w-full rounded-lg overflow-hidden bg-gray-900"
+                                  style={{ paddingBottom: "56.25%" }}
+                                >
+                                  {loadingVideos.has(topicId) && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                                    </div>
+                                  )}
+
+                                  {videoErrors[topicId] &&
+                                    !loadingVideos.has(topicId) && (
+                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
+                                        <p className="text-sm text-center mb-2">
+                                          {t.unableToLoadVideo}
+                                        </p>
+                                        <button
+                                          onClick={() =>
+                                            fetchVideoUrl(topicId, language)
+                                          }
+                                          className="text-brand-primary text-sm hover:underline"
+                                        >
+                                          {t.tryAgain}
+                                        </button>
+                                      </div>
+                                    )}
+
+                                  {videoUrls[cacheKey] &&
+                                    !loadingVideos.has(topicId) &&
+                                    !videoErrors[topicId] && (
+                                      <video
+                                        src={videoUrls[cacheKey]}
+                                        title={t[topic.titleKey]}
+                                        className="absolute inset-0 w-full h-full object-contain"
+                                        controls
+                                        controlsList="nodownload"
+                                        playsInline
+                                        preload="metadata"
+                                      >
+                                        Your browser does not support the video
+                                        tag.
+                                      </video>
+                                    )}
+                                </div>
+                                {((!isLoggedIn &&
+                                  (topicId === "login" ||
+                                    topicId === "signup")) ||
+                                  (isLoggedIn && topicId === "kyc")) && (
+                                  <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
+                                    {topicId === "login" && (
+                                      <>
+                                        {t.readyToLogin}{" "}
+                                        <a
+                                          href="#"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            handleActionClick(topicId, e);
+                                          }}
+                                          className="text-brand-primary hover:underline font-medium"
+                                        >
+                                          {t.login}
+                                        </a>
+                                        ?
+                                      </>
+                                    )}
+                                    {topicId === "signup" && (
+                                      <>
+                                        {t.readyToSignUp}{" "}
+                                        <a
+                                          href="#"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            handleActionClick(topicId, e);
+                                          }}
+                                          className="text-brand-primary hover:underline font-medium"
+                                        >
+                                          {t.signUp}
+                                        </a>
+                                        ?
+                                      </>
+                                    )}
+                                    {topicId === "kyc" && (
+                                      <>
+                                        {t.readyToVerify}{" "}
+                                        <a
+                                          href="#"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            handleActionClick(topicId, e);
+                                          }}
+                                          className="text-brand-primary hover:underline font-medium"
+                                        >
+                                          {t.verify}
+                                        </a>
+                                        ?
+                                      </>
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
