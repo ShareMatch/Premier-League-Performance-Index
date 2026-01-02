@@ -1,0 +1,688 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\Trebol\\Desktop\\Premier-League-Performance-Index\\playwright.config.ts",
+    "rootDir": "C:/Users/Trebol/Desktop/Premier-League-Performance-Index/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "audit-reports"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "audit-reports/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/Trebol/Desktop/Premier-League-Performance-Index/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/Trebol/Desktop/Premier-League-Performance-Index/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "seed.spec.ts",
+      "file": "seed.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Seed Test - Environment Setup",
+          "file": "seed.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "can navigate to the app",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8626,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:15.097Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-78f128d4bca4f9f3b852",
+              "file": "seed.spec.ts",
+              "line": 14,
+              "column": 3
+            },
+            {
+              "title": "can open login modal via query param",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 10198,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:15.208Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-f413e7aab38dd55c8016",
+              "file": "seed.spec.ts",
+              "line": 22,
+              "column": 3
+            },
+            {
+              "title": "can open login modal via button click",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 12417,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:15.394Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-8318bfe2f5ebfd24e2db",
+              "file": "seed.spec.ts",
+              "line": 31,
+              "column": 3
+            },
+            {
+              "title": "can open signup modal via query param",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 11710,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:15.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-2d1b8c6d8c446f6af7f7",
+              "file": "seed.spec.ts",
+              "line": 45,
+              "column": 3
+            },
+            {
+              "title": "can verify Sumsub API connection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 556,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops\n"
+                        },
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }\n"
+                        },
+                        {
+                          "text": "[Audit] Sumsub connection test - Status: ERROR\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Error] Sumsub API check failed: Request failed with status code 404\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:24.280Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-b8d8f231644fa12e5a5a",
+              "file": "seed.spec.ts",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "can verify Supabase adapter connection",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "C:\\Users\\Trebol\\Desktop\\Premier-League-Performance-Index\\tests\\seed.spec.ts",
+                        "line": 75,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 177,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild\n"
+                        },
+                        {
+                          "text": "[Audit] Skipping Supabase test - credentials not configured\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Supabase Adapter] Not configured, using mock\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:24.868Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\Trebol\\Desktop\\Premier-League-Performance-Index\\tests\\seed.spec.ts",
+                            "line": 75,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11ceb7af692008938f3b-e40f32777f3f7d342b6c",
+              "file": "seed.spec.ts",
+              "line": 71,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "signup-e2e.spec.ts",
+      "file": "signup-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "E2E Signup Flow - Agentic",
+          "file": "signup-e2e.spec.ts",
+          "line": 30,
+          "column": 6,
+          "specs": [
+            {
+              "title": "can complete signup flow - traditional approach",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14373,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }\n"
+                        },
+                        {
+                          "text": "[Test] Signup form step 1 completed, now on step 2\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Supabase Adapter] Not configured, using mock\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:25.130Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-c7f39a53794814f36518",
+              "file": "signup-e2e.spec.ts",
+              "line": 46,
+              "column": 3
+            },
+            {
+              "title": "can complete signup flow - agentic approach",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "C:\\Users\\Trebol\\Desktop\\Premier-League-Performance-Index\\tests\\signup-e2e.spec.ts",
+                        "line": 83,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:25.885Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\Trebol\\Desktop\\Premier-League-Performance-Index\\tests\\signup-e2e.spec.ts",
+                            "line": 83,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-9938985a9c7340504354",
+              "file": "signup-e2e.spec.ts",
+              "line": 83,
+              "column": 8
+            },
+            {
+              "title": "hybrid: agent navigates, explicit verification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 11004,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops\n"
+                        },
+                        {
+                          "text": "[Test] Filled email\n"
+                        },
+                        {
+                          "text": "[Test] Filled full name\n"
+                        },
+                        {
+                          "text": "[Test] Hybrid test completed - demonstrated form filling\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Supabase Adapter] Not configured, using mock\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:25.994Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-0fa243b4e16176edd3ee",
+              "file": "signup-e2e.spec.ts",
+              "line": 112,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "E2E Login Flow",
+          "file": "signup-e2e.spec.ts",
+          "line": 138,
+          "column": 6,
+          "specs": [
+            {
+              "title": "can open login modal and see form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 8061,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[Test] Login modal is properly displayed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:27.692Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-9f18fadd13d75b497bc7",
+              "file": "signup-e2e.spec.ts",
+              "line": 140,
+              "column": 3
+            },
+            {
+              "title": "can fill login form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 9156,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[Test] Login form filled successfully\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:28.525Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-b67a2ce1a142c4f1b369",
+              "file": "signup-e2e.spec.ts",
+              "line": 151,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "Supabase Adapter Tests",
+          "file": "signup-e2e.spec.ts",
+          "line": 166,
+          "column": 6,
+          "specs": [
+            {
+              "title": "can connect to Supabase",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1188,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild\n"
+                        },
+                        {
+                          "text": "[Test] Supabase adapter is properly configured\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Supabase Adapter] Not configured, using mock\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:35.901Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-5324f80e1019f25c50be",
+              "file": "signup-e2e.spec.ts",
+              "line": 168,
+              "column": 3
+            },
+            {
+              "title": "can query user verification status",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 34,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }\n"
+                        },
+                        {
+                          "text": "[Test] Verification status query works\n"
+                        }
+                      ],
+                      "stderr": [
+                        {
+                          "text": "[Supabase Adapter] Not configured, using mock\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-01-02T13:18:37.205Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fc409c9a01d3f4ab7d24-9e378dae21c8aee7f3bb",
+              "file": "signup-e2e.spec.ts",
+              "line": 177,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-02T13:18:12.614Z",
+    "duration": 27079.387,
+    "expected": 11,
+    "skipped": 2,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
