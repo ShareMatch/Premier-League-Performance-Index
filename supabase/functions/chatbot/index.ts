@@ -33,6 +33,15 @@ const VIDEO_FILE_NAMES: Record<string, string> = {
   updateUserDetails: "How to update user details.mp4",
   editMarketingPreferences: "how to edit marketing preferences.mp4",
   changePassword: "how to change password.mp4",
+  eplIndex: "English epl.mp4",
+  splIndex: "English SPL.mp4",
+  uefaIndex: "English UEFA.mp4",
+  nflIndex: "English NFL.mp4",
+  nbaIndex: "English NBA Market.mp4",
+  islIndex: "English Indonesia Super League.mp4",
+  t20Index: "English T20 World Cup.mp4",
+  fifaIndex: "English FIFA World Cup.mp4",
+  f1Index: "English Formula 1.mp4",
 };
 
 // Video metadata mapping (without URLs - URLs are generated dynamically)
@@ -95,6 +104,60 @@ const VIDEO_METADATA: {
   changePassword: {
     title: "How to Change Your Password on ShareMatch",
     intro: "Here's a guide on how to change your password",
+    accessLevel: "authenticated",
+  },
+  eplIndex: {
+    title: "Understanding the English Premier League Index on ShareMatch",
+    intro:
+      "This video explains how the English Premier League index token works on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  splIndex: {
+    title: "Understanding the Saudi Pro League Index on ShareMatch",
+    intro:
+      "Learn how the Saudi Pro League index token functions on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  uefaIndex: {
+    title: "Understanding the UEFA Champions League Index on ShareMatch",
+    intro:
+      "This video explains how the UEFA Champions League index token works on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  nflIndex: {
+    title: "Understanding the NFL Index on ShareMatch",
+    intro:
+      "This video explains how the NFL index token functions on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  nbaIndex: {
+    title: "Understanding the NBA Index on ShareMatch",
+    intro:
+      "Learn how the NBA index token works and how index values are represented on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  islIndex: {
+    title: "Understanding the Indonesia Super League Index on ShareMatch",
+    intro:
+      "This video explains how the Indonesia Super League index token functions on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  t20Index: {
+    title: "Understanding the T20 Cricket Index on ShareMatch",
+    intro:
+      "Learn how the T20 Cricket index token works and how index performance is represented.",
+    accessLevel: "authenticated",
+  },
+  fifaIndex: {
+    title: "Understanding the FIFA World Cup Index on ShareMatch",
+    intro:
+      "This video explains how the FIFA World Cup index token works on ShareMatch.",
+    accessLevel: "authenticated",
+  },
+  f1Index: {
+    title: "Understanding the F1 Index on ShareMatch",
+    intro:
+      "Learn how the F1 index token operates and how index values move on ShareMatch.",
     accessLevel: "authenticated",
   },
 };
@@ -230,6 +293,16 @@ async function classifyIntent(
    - updateUserDetails: How to update profile/user information
    - editMarketingPreferences: How to change communication/marketing settings
    - changePassword: How to change password (when logged in)
+   - eplIndex: English Premier League index overview
+   - splIndex: Saudi Pro League index overview
+   - uefaIndex: UEFA Champions League index overview
+   - nflIndex: NFL index overview
+   - nbaIndex: NBA index overview
+   - islIndex: Indonesia Super League index overview
+   - t20Index: T20 Cricket index overview
+   - fifaIndex: FIFA World Cup index overview
+   - f1Index: Formula 1 index overview
+
 
 TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for", "tutorial"
 INFORMATION indicators: "what is", "explain", "tell me about", "describe", "why", "when"
@@ -240,8 +313,19 @@ IMPORTANT:
 - "how to buy" → buyAssets
 - "how to sell" → sellAssets
 
+IMPORTANT (Index Videos):
+- If the user asks to explain, show, or understand an index, return wantsVideo=true
+- Examples of index intent:
+  "what is epl index"
+  "explain nba index"
+  "how does the fifa index work"
+  "show me the f1 index"
+- These are EDUCATIONAL index videos, not trading tutorials
+
+
 Respond with ONLY valid JSON (no markdown, no explanation):
-{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|"forgotPassword"|"buyAssets"|"sellAssets"|"updateUserDetails"|"editMarketingPreferences"|"changePassword"|null}
+{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|"forgotPassword"|"buyAssets"|"sellAssets"|"updateUserDetails"|"editMarketingPreferences"|"changePassword"|"eplIndex"|"splIndex"|"uefaIndex"|"nflIndex"|"nbaIndex"|"islIndex"|"t20Index"|"fifaIndex"|"f1Index"|null}
+
 
 Examples:
 - "how do I sign up?" → {"wantsVideo": true, "videoTopic": "signup"}
