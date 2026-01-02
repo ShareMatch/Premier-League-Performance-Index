@@ -24,7 +24,7 @@ const TRANSLATIONS = {
   en: {
     helpCenter: "Help Center",
     videoTutorials: "Video tutorials to get you started",
-    onboarding: "Customer Onboarding",
+    onboarding: "User Onboarding",
     onboardingDesc: "Get started with ShareMatch",
     customerSettings: "User Settings",
     customerSettingsDesc: "Manage your account and preferences",
@@ -573,169 +573,275 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
             </div>
           </div>
 
-          {/* Main Sections */}
+          {/* Main Content - Different structure based on login state */}
           <div className="flex flex-col gap-3 mt-2">
-            {visibleSections.map((sectionId) => {
-              const section = SECTIONS[sectionId];
-              const isSectionExpanded = expandedSections.has(sectionId);
-              const sectionTopics = getTopicsForSection(sectionId);
+            {!isLoggedIn ? (
+              /* LOGGED OUT: Original flat accordion structure */
+              <>
+                {visibleSections
+                  .flatMap((sectionId) => getTopicsForSection(sectionId))
+                  .map((topicId) => {
+                    const topic = HELP_TOPICS[topicId];
+                    const isExpanded = expandedTopics.has(topicId);
+                    const cacheKey = `${topicId}-${language}`;
 
-              return (
-                <div
-                  key={sectionId}
-                  className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
-                >
-                  {/* Main Section Header */}
-                  <button
-                    onClick={() => toggleSectionExpanded(sectionId)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 bg-brand-emerald500/20 hover:bg-brand-emerald500/25 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-brand-emerald500/30">
-                        {section.icon}
-                      </div>
-                      <div className={isRTL ? "text-right" : "text-left"}>
-                        <span className="text-white font-bold text-sm sm:text-base block">
-                          {t[section.titleKey]}
-                        </span>
-                        <span className="text-gray-400 text-xs sm:text-sm block">
-                          {t[section.descriptionKey]}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight
-                      className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
-                        isSectionExpanded ? "rotate-90" : ""
-                      } ${isRTL ? "rotate-180" : ""}`}
-                    />
-                  </button>
+                    return (
+                      <div
+                        key={topicId}
+                        className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
+                      >
+                        {/* Card Header - Clickable to expand/collapse */}
+                        <button
+                          onClick={() => toggleTopicExpanded(topicId)}
+                          className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3.5 bg-brand-emerald500/10 hover:bg-brand-emerald500/15 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-brand-emerald500/20">
+                              {topic.icon}
+                            </div>
+                            <div className={isRTL ? "text-right" : "text-left"}>
+                              <span className="text-white font-semibold text-sm sm:text-base block">
+                                {t[topic.titleKey]}
+                              </span>
+                              <span className="text-gray-400 text-xs sm:text-sm block">
+                                {t[topic.descriptionKey]}
+                              </span>
+                            </div>
+                          </div>
+                          <ChevronRight
+                            className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${
+                              isRTL
+                                ? isExpanded ? "-rotate-90" : "rotate-180"
+                                : isExpanded ? "rotate-90" : ""
+                            }`}
+                          />
+                        </button>
 
-                  {/* Sub-topics (nested accordions) */}
-                  {isSectionExpanded && (
-                    <div className="border-t border-white/10">
-                      {sectionTopics.map((topicId) => {
-                        const topic = HELP_TOPICS[topicId];
-                        const isTopicExpanded = expandedTopics.has(topicId);
-                        const cacheKey = `${topicId}-${language}`;
-
-                        return (
-                          <div
-                            key={topicId}
-                            className="border-b border-white/5 last:border-b-0"
-                          >
-                            {/* Sub-topic Header */}
-                            <button
-                              onClick={() => toggleTopicExpanded(topicId)}
-                              className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3 bg-brand-emerald500/5 hover:bg-brand-emerald500/10 transition-colors"
+                        {/* Video Container - Collapsible */}
+                        {isExpanded && (
+                          <div className="p-3 sm:p-4 border-t border-white/10">
+                            <div
+                              className="relative w-full rounded-lg overflow-hidden bg-gray-900"
+                              style={{ paddingBottom: "56.25%" }}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-brand-emerald500/15">
-                                  {topic.icon}
+                              {/* Loading State */}
+                              {loadingVideos.has(topicId) && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
                                 </div>
-                                <div
-                                  className={isRTL ? "text-right" : "text-left"}
-                                >
-                                  <span className="text-white font-semibold text-xs sm:text-sm block">
-                                    {t[topic.titleKey]}
-                                  </span>
-                                  <span className="text-gray-400 text-xs block">
-                                    {t[topic.descriptionKey]}
-                                  </span>
-                                </div>
-                              </div>
-                              <ChevronRight
-                                className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
-                                  isTopicExpanded ? "rotate-90" : ""
-                                } ${isRTL ? "rotate-180" : ""}`}
-                              />
-                            </button>
+                              )}
 
-                            {/* Video Container */}
-                            {isTopicExpanded && (
-                              <div className="p-3 sm:p-4 bg-black/20">
-                                <div
-                                  className="relative w-full rounded-lg overflow-hidden bg-gray-900"
-                                  style={{ paddingBottom: "56.25%" }}
+                              {/* Error State */}
+                              {videoErrors[topicId] &&
+                                !loadingVideos.has(topicId) && (
+                                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
+                                    <p className="text-sm text-center mb-2">
+                                      {t.unableToLoadVideo}
+                                    </p>
+                                    <button
+                                      onClick={() =>
+                                        fetchVideoUrl(topicId, language)
+                                      }
+                                      className="text-brand-primary text-sm hover:underline"
+                                    >
+                                      {t.tryAgain}
+                                    </button>
+                                  </div>
+                                )}
+
+                              {/* Video Player */}
+                              {videoUrls[cacheKey] &&
+                                !loadingVideos.has(topicId) &&
+                                !videoErrors[topicId] && (
+                                  <video
+                                    src={videoUrls[cacheKey]}
+                                    title={t[topic.titleKey]}
+                                    className="absolute inset-0 w-full h-full object-contain"
+                                    controls
+                                    controlsList="nodownload"
+                                    playsInline
+                                    preload="metadata"
+                                  >
+                                    Your browser does not support the video tag.
+                                  </video>
+                                )}
+                            </div>
+                            {/* Action link - centered below video (only login/signup for logged-out users) */}
+                            {(topicId === "login" || topicId === "signup") && (
+                              <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
+                                {topicId === "login" && (
+                                  <>
+                                    {t.readyToLogin}{" "}
+                                    <a
+                                      href="#"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleActionClick(topicId, e);
+                                      }}
+                                      className="text-brand-primary hover:underline font-medium"
+                                    >
+                                      {t.login}
+                                    </a>
+                                    ?
+                                  </>
+                                )}
+                                {topicId === "signup" && (
+                                  <>
+                                    {t.readyToSignUp}{" "}
+                                    <a
+                                      href="#"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        handleActionClick(topicId, e);
+                                      }}
+                                      className="text-brand-primary hover:underline font-medium"
+                                    >
+                                      {t.signUp}
+                                    </a>
+                                    ?
+                                  </>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </>
+            ) : (
+              /* LOGGED IN: New nested section structure */
+              <>
+                {visibleSections.map((sectionId) => {
+                  const section = SECTIONS[sectionId];
+                  const isSectionExpanded = expandedSections.has(sectionId);
+                  const sectionTopics = getTopicsForSection(sectionId);
+
+                  return (
+                    <div
+                      key={sectionId}
+                      className="rounded-xl border border-white/10 overflow-hidden bg-white/5"
+                    >
+                      {/* Main Section Header */}
+                      <button
+                        onClick={() => toggleSectionExpanded(sectionId)}
+                        className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4 bg-brand-emerald500/20 hover:bg-brand-emerald500/25 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-brand-emerald500/30">
+                            {section.icon}
+                          </div>
+                          <div className={isRTL ? "text-right" : "text-left"}>
+                            <span className="text-white font-bold text-sm sm:text-base block">
+                              {t[section.titleKey]}
+                            </span>
+                            <span className="text-gray-400 text-xs sm:text-sm block">
+                              {t[section.descriptionKey]}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight
+                          className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                            isRTL
+                              ? isSectionExpanded ? "rotate-90" : "rotate-180"
+                              : isSectionExpanded ? "rotate-90" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Sub-topics (nested accordions) */}
+                      {isSectionExpanded && (
+                        <div className="border-t border-white/10">
+                          {sectionTopics.map((topicId) => {
+                            const topic = HELP_TOPICS[topicId];
+                            const isTopicExpanded = expandedTopics.has(topicId);
+                            const cacheKey = `${topicId}-${language}`;
+
+                            return (
+                              <div
+                                key={topicId}
+                                className="border-b border-white/5 last:border-b-0"
+                              >
+                                {/* Sub-topic Header */}
+                                <button
+                                  onClick={() => toggleTopicExpanded(topicId)}
+                                  className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3 bg-brand-emerald500/5 hover:bg-brand-emerald500/10 transition-colors"
                                 >
-                                  {loadingVideos.has(topicId) && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-brand-emerald500/15">
+                                      {topic.icon}
                                     </div>
-                                  )}
+                                    <div
+                                      className={
+                                        isRTL ? "text-right" : "text-left"
+                                      }
+                                    >
+                                      <span className="text-white font-semibold text-xs sm:text-sm block">
+                                        {t[topic.titleKey]}
+                                      </span>
+                                      <span className="text-gray-400 text-xs block">
+                                        {t[topic.descriptionKey]}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <ChevronRight
+                                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                                      isRTL
+                                        ? isTopicExpanded ? "rotate-90" : "rotate-180"
+                                        : isTopicExpanded ? "rotate-90" : ""
+                                    }`}
+                                  />
+                                </button>
 
-                                  {videoErrors[topicId] &&
-                                    !loadingVideos.has(topicId) && (
-                                      <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
-                                        <p className="text-sm text-center mb-2">
-                                          {t.unableToLoadVideo}
-                                        </p>
-                                        <button
-                                          onClick={() =>
-                                            fetchVideoUrl(topicId, language)
-                                          }
-                                          className="text-brand-primary text-sm hover:underline"
-                                        >
-                                          {t.tryAgain}
-                                        </button>
-                                      </div>
-                                    )}
+                                {/* Video Container */}
+                                {isTopicExpanded && (
+                                  <div className="p-3 sm:p-4 bg-black/20">
+                                    <div
+                                      className="relative w-full rounded-lg overflow-hidden bg-gray-900"
+                                      style={{ paddingBottom: "56.25%" }}
+                                    >
+                                      {loadingVideos.has(topicId) && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                                        </div>
+                                      )}
 
-                                  {videoUrls[cacheKey] &&
-                                    !loadingVideos.has(topicId) &&
-                                    !videoErrors[topicId] && (
-                                      <video
-                                        src={videoUrls[cacheKey]}
-                                        title={t[topic.titleKey]}
-                                        className="absolute inset-0 w-full h-full object-contain"
-                                        controls
-                                        controlsList="nodownload"
-                                        playsInline
-                                        preload="metadata"
-                                      >
-                                        Your browser does not support the video
-                                        tag.
-                                      </video>
-                                    )}
-                                </div>
-                                {((!isLoggedIn &&
-                                  (topicId === "login" ||
-                                    topicId === "signup")) ||
-                                  (isLoggedIn && topicId === "kyc")) && (
-                                  <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
-                                    {topicId === "login" && (
-                                      <>
-                                        {t.readyToLogin}{" "}
-                                        <a
-                                          href="#"
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            handleActionClick(topicId, e);
-                                          }}
-                                          className="text-brand-primary hover:underline font-medium"
-                                        >
-                                          {t.login}
-                                        </a>
-                                        ?
-                                      </>
-                                    )}
-                                    {topicId === "signup" && (
-                                      <>
-                                        {t.readyToSignUp}{" "}
-                                        <a
-                                          href="#"
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            handleActionClick(topicId, e);
-                                          }}
-                                          className="text-brand-primary hover:underline font-medium"
-                                        >
-                                          {t.signUp}
-                                        </a>
-                                        ?
-                                      </>
-                                    )}
+                                      {videoErrors[topicId] &&
+                                        !loadingVideos.has(topicId) && (
+                                          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 p-4">
+                                            <p className="text-sm text-center mb-2">
+                                              {t.unableToLoadVideo}
+                                            </p>
+                                            <button
+                                              onClick={() =>
+                                                fetchVideoUrl(topicId, language)
+                                              }
+                                              className="text-brand-primary text-sm hover:underline"
+                                            >
+                                              {t.tryAgain}
+                                            </button>
+                                          </div>
+                                        )}
+
+                                      {videoUrls[cacheKey] &&
+                                        !loadingVideos.has(topicId) &&
+                                        !videoErrors[topicId] && (
+                                          <video
+                                            src={videoUrls[cacheKey]}
+                                            title={t[topic.titleKey]}
+                                            className="absolute inset-0 w-full h-full object-contain"
+                                            controls
+                                            controlsList="nodownload"
+                                            playsInline
+                                            preload="metadata"
+                                          >
+                                            Your browser does not support the
+                                            video tag.
+                                          </video>
+                                        )}
+                                    </div>
                                     {topicId === "kyc" && (
-                                      <>
+                                      <p className="text-center text-gray-400 text-xs sm:text-sm mt-3">
                                         {t.readyToVerify}{" "}
                                         <a
                                           href="#"
@@ -748,20 +854,20 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                           {t.verify}
                                         </a>
                                         ?
-                                      </>
+                                      </p>
                                     )}
-                                  </p>
+                                  </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
       </div>
