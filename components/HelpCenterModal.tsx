@@ -611,7 +611,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                           <ChevronRight
                             className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${
                               isRTL
-                                ? isExpanded ? "-rotate-90" : "rotate-180"
+                                ? isExpanded ? "rotate-90" : "rotate-180"
                                 : isExpanded ? "rotate-90" : ""
                             }`}
                           />
