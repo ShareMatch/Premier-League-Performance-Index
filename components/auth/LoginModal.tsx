@@ -268,6 +268,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       {/* Modal Content - Matching SignUp theme */}
       <div
+        data-testid="login-modal"
         className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-[#005430] rounded-modal z-[101]"
         style={{
           maxWidth: "min(90vw, 850px)",

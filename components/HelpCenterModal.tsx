@@ -9,9 +9,22 @@ import {
   ShieldCheck,
   Loader2,
   Settings,
-  TrendingUp,
+  ArrowUp,
+  ArrowDown,
   Globe,
+  KeyRound,
+  UserCog,
+  Mail,
+  TrendingUp,
 } from "lucide-react";
+import {
+  GiSoccerBall,
+  GiBasketballBall,
+  GiAmericanFootballBall,
+  GiCricketBat,
+  GiTrophy,
+  GiFullMotorcycleHelmet,
+} from "react-icons/gi";
 
 // Supabase Edge Function URL for fetching video signed URLs
 const SUPABASE_URL =
@@ -168,7 +181,7 @@ const HELP_TOPICS = {
   forgotPassword: {
     titleKey: "howToResetPassword",
     descriptionKey: "howToResetPasswordDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "forgot password.mp4",
     videoAr: "Arabic forgot password.mp4", // Add your Arabic video filename
     section: "onboarding" as const,
@@ -176,7 +189,7 @@ const HELP_TOPICS = {
   updateUserDetails: {
     titleKey: "howToUpdateUserDetails",
     descriptionKey: "howToUpdateUserDetailsDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <UserCog className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "How to update user details.mp4",
     videoAr: "Arabic How to update user details.mp4", // Add your Arabic video filename
     section: "customer" as const,
@@ -184,7 +197,7 @@ const HELP_TOPICS = {
   editMarketingPreferences: {
     titleKey: "howToEditMarketingPreferences",
     descriptionKey: "howToEditMarketingPreferencesDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "how to edit marketing preferences.mp4",
     videoAr: "Arabic how to edit marketing preferences.mp4", // Add your Arabic video filename
     section: "customer" as const,
@@ -192,7 +205,7 @@ const HELP_TOPICS = {
   changePassword: {
     titleKey: "howToChangePassword",
     descriptionKey: "howToChangePasswordDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "how to change password.mp4",
     videoAr: "Arabic how to change password.mp4", // Add your Arabic video filename
     section: "customer" as const,
@@ -200,7 +213,7 @@ const HELP_TOPICS = {
   buyAssets: {
     titleKey: "howToBuyAssets",
     descriptionKey: "howToBuyAssetsDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "How to buy.mp4",
     videoAr: "Arabic How to buy.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -208,7 +221,7 @@ const HELP_TOPICS = {
   sellAssets: {
     titleKey: "howToSellAssets",
     descriptionKey: "howToSellAssetsDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "How to sell.mp4",
     videoAr: "Arabic How to sell.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -216,7 +229,7 @@ const HELP_TOPICS = {
   eplIndex: {
     titleKey: "eplIndex",
     descriptionKey: "eplIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiSoccerBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English epl.mp4",
     videoAr: "Arabic epl.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -224,7 +237,7 @@ const HELP_TOPICS = {
   splIndex: {
     titleKey: "splIndex",
     descriptionKey: "splIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiSoccerBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English SPL.mp4",
     videoAr: "Arabic SPL.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -232,7 +245,7 @@ const HELP_TOPICS = {
   uefaIndex: {
     titleKey: "uefaIndex",
     descriptionKey: "uefaIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiSoccerBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English UEFA.mp4",
     videoAr: "Arabic UEFA.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -240,7 +253,7 @@ const HELP_TOPICS = {
   fifaIndex: {
     titleKey: "fifaIndex",
     descriptionKey: "fifaIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiTrophy className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English FIFA World Cup.mp4",
     videoAr: "Arabic FIFA World Cup.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -248,7 +261,7 @@ const HELP_TOPICS = {
   islIndex: {
     titleKey: "islIndex",
     descriptionKey: "islIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiSoccerBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English Indonesia Super League.mp4",
     videoAr: "Arabic Indonesia Super League.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -256,7 +269,7 @@ const HELP_TOPICS = {
   f1Index: {
     titleKey: "f1Index",
     descriptionKey: "f1IndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiFullMotorcycleHelmet className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English Formula 1.mp4",
     videoAr: "Arabic Formula 1.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -264,7 +277,7 @@ const HELP_TOPICS = {
   nbaIndex: {
     titleKey: "nbaIndex",
     descriptionKey: "nbaIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiBasketballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English NBA Market.mp4",
     videoAr: "Arabic NBA Market.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -272,7 +285,7 @@ const HELP_TOPICS = {
   nflIndex: {
     titleKey: "nflIndex",
     descriptionKey: "nflIndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiAmericanFootballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English NFL.mp4",
     videoAr: "Arabic NFL.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -280,7 +293,7 @@ const HELP_TOPICS = {
   t20Index: {
     titleKey: "t20Index",
     descriptionKey: "t20IndexDesc",
-    icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: <GiCricketBat className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "English T20 World Cup.mp4",
     videoAr: "Arabic T20 World Cup.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -765,7 +778,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                 {/* Sub-topic Header */}
                                 <button
                                   onClick={() => toggleTopicExpanded(topicId)}
-                                  className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3 bg-brand-emerald500/5 hover:bg-brand-emerald500/10 transition-colors"
+                                  className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3 bg-black/15 hover:bg-black/20 transition-colors"
                                 >
                                   <div className="flex items-center gap-3">
                                     <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-brand-emerald500/15">
@@ -795,7 +808,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
 
                                 {/* Video Container */}
                                 {isTopicExpanded && (
-                                  <div className="p-3 sm:p-4 bg-black/20">
+                                  <div className="p-3 sm:p-4 bg-black/30">
                                     <div
                                       className="relative w-full rounded-lg overflow-hidden bg-gray-900"
                                       style={{ paddingBottom: "56.25%" }}
