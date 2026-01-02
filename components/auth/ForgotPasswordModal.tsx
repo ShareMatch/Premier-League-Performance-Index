@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { requestPasswordReset } from '../../lib/api';
+import Button from '../Button';
 
 // Mask email address (e.g., john@example.com -> j***n@example.com)
 const maskEmail = (email: string): string => {

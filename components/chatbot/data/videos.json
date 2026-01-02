@@ -79,5 +79,86 @@
     "access_level":"authenticated",
     "keywords":["change password","update password","modify password","password settings"],
     "content":"How to change your password on ShareMatch: Tap on the user profile icon to access your account. Click on Settings to view your account options. Tap on Change Password to begin the password update process. Enter your current password for verification. Enter your new password. Confirm your new password to ensure it matches. Click or tap Update to save your new password."
+  },
+   {
+    "id": "eplIndex",
+    "type": "video",
+    "title": "Understanding the English Premier League Index on ShareMatch",
+    "r2_file_name": "English epl.mp4",
+    "access_level": "authenticated",
+    "keywords": ["epl", "premier league", "football index", "sports index", "index token"],
+    "content": "Learn how the English Premier League Index works on ShareMatch. This video explains what the EPL index token represents, how index values are calculated, and how users can interact with the index on the platform."
+  },
+  {
+    "id": "splIndex",
+    "type": "video",
+    "title": "Understanding the Saudi Pro League Index on ShareMatch",
+    "r2_file_name": "English SPL.mp4",
+    "access_level": "authenticated",
+    "keywords": ["spl", "saudi pro league", "sports index", "football index", "index token"],
+    "content": "Learn how the Saudi Pro League Index functions on ShareMatch. This video covers the concept of the SPL index token, its structure, and how users can view and trade the index within the platform."
+  },
+  {
+    "id": "uefaIndex",
+    "type": "video",
+    "title": "Understanding the UEFA Champions League Index on ShareMatch",
+    "r2_file_name": "English UEFA.mp4",
+    "access_level": "authenticated",
+    "keywords": ["uefa", "champions league", "sports index", "football index", "index token"],
+    "content": "Learn how the UEFA Champions League Index operates on ShareMatch. This video explains the purpose of the index token, how index movements are reflected, and how users can engage with the index."
+  },
+  {
+    "id": "nflIndex",
+    "type": "video",
+    "title": "Understanding the NFL Index on ShareMatch",
+    "r2_file_name": "English NFL.mp4",
+    "access_level": "authenticated",
+    "keywords": ["nfl", "american football", "sports index", "index token"],
+    "content": "Learn how the NFL Index works on ShareMatch. This video introduces the NFL index token, explains how index values change, and shows how users can interact with the index."
+  },
+  {
+    "id": "nbaIndex",
+    "type": "video",
+    "title": "Understanding the NBA Index on ShareMatch",
+    "r2_file_name": "English NBA Market.mp4",
+    "access_level": "authenticated",
+    "keywords": ["nba", "basketball", "sports index", "index token"],
+    "content": "Learn how the NBA Index functions on ShareMatch. This video provides an overview of the index token, how it tracks overall market performance, and how users can trade the index."
+  },
+  {
+    "id": "islIndex",
+    "type": "video",
+    "title": "Understanding the Indonesia Super League Index on ShareMatch",
+    "r2_file_name": "English Indonesia Super League.mp4",
+    "access_level": "authenticated",
+    "keywords": ["isl", "indonesia super league", "sports index", "football index", "index token"],
+    "content": "Learn how the Indonesia Super League Index operates on ShareMatch. This video explains the structure of the index token and how users can access and trade the index."
+  },
+  {
+    "id": "t20Index",
+    "type": "video",
+    "title": "Understanding the T20 Cricket Index on ShareMatch",
+    "r2_file_name": "English T20 World Cup.mp4",
+    "access_level": "authenticated",
+    "keywords": ["t20", "cricket", "sports index", "cricket index", "index token"],
+    "content": "Learn how the T20 Cricket Index works on ShareMatch. This video explains the concept of the index token, how index performance is represented, and how users can interact with it."
+  },
+  {
+    "id": "fifaIndex",
+    "type": "video",
+    "title": "Understanding the FIFA World Cup Index on ShareMatch",
+    "r2_file_name": "English FIFA World Cup.mp4",
+    "access_level": "authenticated",
+    "keywords": ["fifa", "world cup", "sports index", "football index", "index token"],
+    "content": "Learn how the FIFA World Cup Index functions on ShareMatch. This video covers what the index token represents and how users can view and trade the index on the platform."
+  },
+  {
+    "id": "f1Index",
+    "type": "video",
+    "title": "Understanding the F1 Index on ShareMatch",
+    "r2_file_name": "English Formula 1.mp4",
+    "access_level": "authenticated",
+    "keywords": ["f1", "formula 1", "motorsport", "sports index", "index token"],
+    "content": "Learn how the F1 Index operates on ShareMatch. This video explains the index token model, how index values move, and how users can trade the index."
   }
 ]
