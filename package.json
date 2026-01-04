@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:report": "playwright show-report audit-reports"
+    "test:report": "playwright show-report audit-reports",
+    "test:e2e": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts",
+    "test:ci": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts --reporter=list",
+    "generate-tests": "npx tsx scripts/generate-tests.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.1",

@@ -1,0 +1,111 @@
+# =============================================================================
+# E2E Test Pipeline (Blocks Merge on Failure)
+# =============================================================================
+# This workflow runs Playwright tests on Pull Requests to main.
+# Tests MUST pass before merge is allowed.
+#
+# Key Features:
+#   - NO LLM calls - runs pre-committed tests only
+#   - Blocks merge if tests fail (via branch protection)
+#   - Fast execution (~2 minutes)
+#   - Uploads reports on failure
+# =============================================================================
+
+name: E2E Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+# Ensure only one run per PR at a time
+concurrency:
+  group: e2e-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Supabase credentials for adapter
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      
+      # Sumsub credentials
+      SUMSUB_APP_TOKEN: ${{ secrets.SUMSUB_APP_TOKEN }}
+      SUMSUB_SECRET_KEY: ${{ secrets.SUMSUB_SECRET_KEY }}
+      
+      # App configuration
+      APP_BASE_URL: http://localhost:3000
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Setup
+      # -----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # -----------------------------------------------------------------------
+      # Build and Test
+      # -----------------------------------------------------------------------
+      - name: Build application
+        run: npm run build
+
+      - name: Run E2E Tests
+        id: tests
+        run: |
+          # Run only the reference tests (pre-committed, no LLM calls)
+          npx playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts
+        env:
+          CI: true
+
+      # -----------------------------------------------------------------------
+      # Artifacts (on failure)
+      # -----------------------------------------------------------------------
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            audit-reports/
+            test-results/
+          retention-days: 7
+
+      # -----------------------------------------------------------------------
+      # Summary
+      # -----------------------------------------------------------------------
+      - name: Post test summary
+        if: always()
+        run: |
+          echo "## 🧪 E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.tests.outcome }}" == "success" ]; then
+            echo "✅ **All tests passed!** Merge is allowed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tests failed!** Please fix before merging." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📋 Download the test report from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          fi
+
