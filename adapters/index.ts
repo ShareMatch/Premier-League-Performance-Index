@@ -21,6 +21,7 @@ export const test = base.extend<{
   };
   supabaseAdapter: {
     client: any;
+    createUser: (email: string, password: string) => Promise<any | null>;
     getEmailOtp: (email: string) => Promise<string | null>;
     getWhatsAppOtp: (email: string) => Promise<string | null>;
     getUserByEmail: (email: string) => Promise<any | null>;
@@ -112,6 +113,7 @@ export const test = base.extend<{
       console.warn('[Supabase Adapter] Not configured, using mock');
       await use({
         client: null,
+        createUser: async () => null,
         getEmailOtp: async () => null,
         getWhatsAppOtp: async () => null,
         getUserByEmail: async () => null,
@@ -127,6 +129,27 @@ export const test = base.extend<{
 
     const adapter = {
       client,
+      createUser: async (email: string, password: string) => {
+        try {
+          // Create user in Supabase Auth
+          const { data, error } = await client.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // Auto-confirm for tests
+          });
+
+          if (error) {
+            console.error('[Supabase] Error creating user:', error);
+            return null;
+          }
+
+          console.log(`[Supabase] Created test user: ${email}`);
+          return data.user;
+        } catch (err) {
+          console.error('[Supabase] Exception creating user:', err);
+          return null;
+        }
+      },
       getEmailOtp: async (email: string) => {
         try {
           const { data } = await client
