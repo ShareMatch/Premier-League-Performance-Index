@@ -10,14 +10,14 @@
  * IMPORTANT: Uses real Supabase connection to fetch OTP codes
  */
 
-import { test, expect } from '../adapters';
+import { test, expect } from '../adapters/supabase';
 
 // Your real test data
 const REAL_USER = {
   email: 'affan@sharematch.me',
   password: 'TestPassword123!',
   fullName: 'A P',
-  phone: '561564959', // Without leading 0, UAE format
+  phone: '561164259', // Without leading 0, UAE format
   dob: {
     month: '0', // January (0-indexed)
     year: '1990',
