@@ -45,7 +45,9 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
       let percentage = (elapsed / totalDuration) * 100;
       percentage = Math.max(0, Math.min(100, percentage)); // Clamp between 0 and 100
 
-      return { percentage, startStr, endStr };
+      const daysRemaining = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      return { percentage, startStr, endStr, daysRemaining };
     } catch (e) {
       return null;
     }
@@ -113,9 +115,20 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
               </div>
               <div className="h-1.5 sm:h-2 bg-gray-700/50 rounded-full overflow-hidden relative">
                 <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#005430] to-emerald-500 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${progressInfo.percentage}%` }}
+                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{ 
+                    width: `${progressInfo.percentage}%`,
+                    background: 'linear-gradient(90deg, #005430 0%, #10b981 100%)',
+                  }}
                 />
+              </div>
+              <div className="text-center mt-2">
+                <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-300">
+                  {progressInfo.daysRemaining > 0 
+                    ? `${progressInfo.daysRemaining} day${progressInfo.daysRemaining !== 1 ? 's' : ''} remaining`
+                    : 'Season ended'
+                  }
+                </span>
               </div>
             </div>
           )}

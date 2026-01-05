@@ -21,6 +21,9 @@ export interface Team {
   index_name?: string;
   index_token?: string;
   season_status?: string;
+  season_start_date?: string;
+  season_end_date?: string;
+  season_stage?: string; // 'open' | 'closed' | 'settled'
   units?: number;
 }
 
