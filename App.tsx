@@ -31,6 +31,8 @@ import {
   getKycUserStatus,
   KycStatus,
   needsKycVerification,
+  fetchSeasonDates,
+  SeasonDates,
 } from "./lib/api";
 import { getLogoUrl } from "./lib/logoHelper";
 import { useAuth } from "./components/auth/AuthProvider";
@@ -92,6 +94,9 @@ const App: React.FC = () => {
 
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
+
+  // Season dates from market_index_seasons table (for InfoPopup)
+  const [seasonDatesMap, setSeasonDatesMap] = useState<Map<string, SeasonDates>>(new Map());
 
   // Lock body scroll when mobile panel is open (prevents iOS Safari scroll issues)
   useEffect(() => {
@@ -185,12 +190,16 @@ const App: React.FC = () => {
   // Fetch Assets
   const loadAssets = useCallback(async () => {
     try {
-      // Fetch static asset data, active trading data, and settled assets in parallel
-      const [staticAssets, tradingAssets, settledAssets] = await Promise.all([
+      // Fetch static asset data, active trading data, settled assets, and season dates in parallel
+      const [staticAssets, tradingAssets, settledAssets, seasonDates] = await Promise.all([
         fetchAssets(),
         fetchTradingAssets(),
-        fetchSettledAssets()
+        fetchSettledAssets(),
+        fetchSeasonDates()
       ]);
+
+      // Store season dates for use in Header/InfoPopup
+      setSeasonDatesMap(seasonDates);
 
       // Create a map of static assets by ID for quick lookup
       const assetMap = new Map(staticAssets.map(asset => [asset.id, asset]));
@@ -267,6 +276,9 @@ const App: React.FC = () => {
           index_name: ta.market_index_seasons.market_indexes.name,
           index_token: ta.market_index_seasons.market_indexes.token,
           season_status: ta.market_index_seasons.status,
+          season_start_date: ta.market_index_seasons.start_date,
+          season_end_date: ta.market_index_seasons.end_date,
+          season_stage: ta.market_index_seasons.stage,
           units: Number(ta.units)
         };
       }).filter(Boolean) as Team[];
@@ -419,10 +431,25 @@ const App: React.FC = () => {
 
   // Filter teams when league changes or assets update
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:filter-effect',message:'Filter effect running',data:{activeLeague,allAssetsCount:allAssets.length,sampleMarkets:allAssets.slice(0,3).map(a=>a.market)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H2'})}).catch(()=>{});
+    // #endregion
     if (activeLeague === "HOME") {
       setTeams([]);
     } else {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:filter-result',message:'Filtered teams result',data:{activeLeague,filteredCount:filtered.length,firstTeamSeasonData:filtered[0]?{start:filtered[0].season_start_date,end:filtered[0].season_end_date,stage:filtered[0].season_stage}:null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      // Debug: Log filtered teams
+      console.log('[DEBUG] Filtered teams for', activeLeague, ':', filtered.length, 'teams');
+      if (filtered.length > 0) {
+        console.log('[DEBUG] First team season data:', {
+          season_start_date: filtered[0]?.season_start_date,
+          season_end_date: filtered[0]?.season_end_date,
+          season_stage: filtered[0]?.season_stage
+        });
+      }
       setTeams(filtered);
     }
   }, [activeLeague, allAssets]);
@@ -675,6 +702,9 @@ const App: React.FC = () => {
                 <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                   {/* Main content wrapper - grows to fill space */}
                   <div className="flex-1">
+                  {/* #region agent log */}
+                  {(() => { fetch('http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:render-branch',message:'Checking render branch',data:{currentView,hasViewAsset:!!viewAsset,activeLeague,teamsLength:teams.length,firstTeamSeasonStart:teams[0]?.season_start_date},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3'})}).catch(()=>{}); return null; })()}
+                  {/* #endregion */}
                   {currentView === 'asset' && viewAsset ? (
                       <AssetPage
                         asset={viewAsset}
@@ -690,6 +720,7 @@ const App: React.FC = () => {
                       onNavigate={handleNavigate}
                       teams={allAssets}
                       onViewAsset={handleViewAsset}
+                      seasonDatesMap={seasonDatesMap}
                     />
                   ) : activeLeague === "AI_ANALYTICS" ? (
                     <React.Suspense
@@ -711,6 +742,9 @@ const App: React.FC = () => {
                           <Header
                             title={getLeagueTitle(activeLeague)}
                             market={activeLeague}
+                            seasonStartDate={seasonDatesMap.get(activeLeague)?.start_date}
+                            seasonEndDate={seasonDatesMap.get(activeLeague)?.end_date}
+                            seasonStage={seasonDatesMap.get(activeLeague)?.stage || undefined}
                           />
                         </div>
 

@@ -3,11 +3,13 @@ import { Team, League } from '../types';
 import { TrendingUp, Trophy, Flag, Activity, Zap } from 'lucide-react';
 import InfoPopup from './InfoPopup';
 import { getMarketInfo } from '../lib/marketInfo';
+import { SeasonDates } from '../lib/api';
 
 interface HotQuestionsProps {
   teams: Team[];
   onNavigate: (league: League) => void;
   onViewAsset?: (asset: Team) => void;
+  seasonDatesMap?: Map<string, SeasonDates>;
 }
 
 interface Question {
@@ -23,7 +25,7 @@ interface Question {
   team: Team;
 }
 
-const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAsset }) => {
+const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAsset, seasonDatesMap }) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -35,7 +37,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
       if (t.is_settled) return false;
       if (t.offer <= 5.00) return false;
 
-      const marketInfo = getMarketInfo(t.market as League);
+      const seasonData = seasonDatesMap?.get(t.market || '');
+      const marketInfo = getMarketInfo(
+        t.market as League,
+        seasonData?.start_date,
+        seasonData?.end_date,
+        seasonData?.stage || undefined
+      );
       return marketInfo.isOpen;
     });
 
@@ -88,7 +96,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
 
     // Shuffle full pool
     return generated.sort(() => 0.5 - Math.random());
-  }, [teams]);
+  }, [teams, seasonDatesMap]);
 
   // Initial load
   useEffect(() => {
@@ -190,7 +198,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
                     <span className="text-[10px] sm:text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
                   </div>
                   {(() => {
-                    const info = getMarketInfo(q.market);
+                    const seasonData = seasonDatesMap?.get(q.market);
+                    const info = getMarketInfo(
+                      q.market,
+                      seasonData?.start_date,
+                      seasonData?.end_date,
+                      seasonData?.stage || undefined
+                    );
                     return (
                       <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         <span className={`px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
