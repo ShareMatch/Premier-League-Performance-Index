@@ -449,6 +449,10 @@ const PhoneInputField = ({
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
             alt={selectedCountry.name}
             className="w-5 h-4 object-cover rounded"
+            onError={(e) => {
+              // Some libphonenumber regions (territories) may not exist on flagcdn.
+              e.currentTarget.style.visibility = "hidden";
+            }}
           />
           <ChevronDown
             className={`w-3 h-3 text-gray-600 transition-transform ${
@@ -505,6 +509,9 @@ const PhoneInputField = ({
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
                     alt={c.name}
                     className="w-5 h-4 object-cover rounded"
+                    onError={(e) => {
+                      e.currentTarget.style.visibility = "hidden";
+                    }}
                   />
                   <span className="text-sm text-gray-800 flex-1 truncate">
                     {c.name}
@@ -587,6 +594,9 @@ const CountrySelectField = ({
               src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
               alt={selectedCountry.name}
               className="w-5 h-4 object-cover rounded mr-2"
+              onError={(e) => {
+                e.currentTarget.style.visibility = "hidden";
+              }}
             />
             <span className="text-gray-900 text-xs flex-1 truncate font-sans">
               {selectedCountry.name}
@@ -643,6 +653,9 @@ const CountrySelectField = ({
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
                     alt={c.name}
                     className="w-5 h-4 object-cover rounded"
+                    onError={(e) => {
+                      e.currentTarget.style.visibility = "hidden";
+                    }}
                   />
                   <span className="text-sm text-gray-800 flex-1 truncate">
                     {c.name}
