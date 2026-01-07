@@ -20,12 +20,12 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, teams, onView
             </div>
 
             {/* Bottom Section: News Feed */}
-            <div className="flex-shrink-0">
+            {/* <div className="flex-shrink-0">
                 <div className="mb-4">
                     <h2 className="text-xl font-bold text-gray-200">ShareMatch News Wire</h2>
                 </div>
                 <NewsFeed topic="Global" showHeader={false} />
-            </div>
+            </div> */}
         </div>
     );
 };

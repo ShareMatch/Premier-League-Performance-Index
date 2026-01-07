@@ -101,13 +101,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
   // Initial load
   useEffect(() => {
     if (questionPool.length > 0 && displayedQuestions.length === 0) {
-      setDisplayedQuestions(questionPool.slice(0, 3));
+      setDisplayedQuestions(questionPool.slice(0, 6));
     }
   }, [questionPool]);
 
   // Dynamic Update Interval - only when collapsed
   useEffect(() => {
-    if (questionPool.length <= 3 || expanded) return; // No rotation when expanded or not enough items
+    if (questionPool.length <= 6 || expanded) return; // No rotation when expanded or not enough items
 
     const scheduleNextUpdate = () => {
       // Random delay between 3s and 5s
@@ -115,7 +115,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
 
       return setTimeout(() => {
         // Pick random slot to update (0, 1, or 2)
-        const slotToUpdate = Math.floor(Math.random() * 3);
+        const slotToUpdate = Math.floor(Math.random() * 6);
 
         // Pick new question that isn't currently displayed
         const currentIds = displayedQuestions.map(q => q?.id);
@@ -245,7 +245,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
       </div>
 
       {/* View More / View Less button */}
-      {questionPool.length > 3 && (
+      {questionPool.length > 6 && (
         <div className="flex justify-center mt-4">
           <button
             onClick={() => setExpanded(!expanded)}
