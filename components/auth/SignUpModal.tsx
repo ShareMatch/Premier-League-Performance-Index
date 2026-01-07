@@ -1410,6 +1410,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-30"
+          data-testid="signup-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -1420,6 +1421,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
             type="button"
             onClick={() => setStep(1)}
             className="absolute top-6 left-6 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors z-30"
+            data-testid="signup-back-button"
           >
             <ArrowLeft className="w-4 h-4 text-white" />
           </button>
@@ -1504,6 +1506,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     value={formData.fullName}
                     onChange={handleChange}
                     error={errors.fullName}
+                    data-testid="signup-fullname-input"
                     icon={
                       <svg
                         className="w-4 h-4"
@@ -1549,6 +1552,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     onBlur={handleEmailBlur}
                     error={errors.email}
                     isValidating={emailValidating}
+                    data-testid="signup-email-input"
                     icon={
                       <svg
                         className="w-4 h-4"
@@ -1573,6 +1577,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                         ? "Must be at least 8 characters"
                         : undefined
                     }
+                    data-testid="signup-password-input"
                   />
                   <PasswordField
                     label="Confirm Password *"
@@ -1581,6 +1586,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     error={errors.confirmPassword}
+                    data-testid="signup-confirm-password-input"
                   />
                   <InputField
                     label="Referral Code (Optional)"
@@ -1588,6 +1594,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     placeholder="Enter code"
                     value={formData.referralCode}
                     onChange={handleChange}
+                    data-testid="signup-referral-input"
                     icon={
                       <svg
                         className="w-4 h-4"
@@ -1612,6 +1619,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     countryIso={formData.phoneIso}
                     countryDialCode={formData.phoneCode}
                     onCountryChange={(c) => handleCountryChange("phone", c)}
+                    data-testid="signup-phone-input"
                   />
 
                   <Checkbox
@@ -1640,6 +1648,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     countryIso={formData.whatsappIso}
                     countryDialCode={formData.whatsappCode}
                     onCountryChange={(c) => handleCountryChange("whatsapp", c)}
+                    data-testid="signup-whatsapp-input"
                   />
 
                   <Checkbox
@@ -1729,6 +1738,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                       isButtonHovered ? "opacity-90" : ""
                     } !disabled:opacity-100 disabled:cursor-not-allowed`}
                     variant="white"
+                    data-testid={step === 1 ? "signup-continue-button" : "signup-submit-button"}
                   >
                     {loading
                       ? "Processing..."
@@ -1774,6 +1784,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     type="button"
                     onClick={onSwitchToLogin}
                     className="underline hover:text-brand-emerald500 transition-colors"
+                    data-testid="signup-switch-to-login"
                   >
                     Login
                   </button>

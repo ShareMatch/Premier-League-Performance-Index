@@ -41,7 +41,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
   const logoUrl = team.market ? getLogoUrl(team.name || '', team.market, team.id) : null;
 
   return (
-    <div className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
+    <div data-testid={`order-book-row-${team.id}`} className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
       {/* Asset name with logo */}
       <div
         className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
@@ -87,6 +87,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
             role="button"
             tabIndex={0}
             aria-label={`Sell ${team.name} Performance Index at $${team.bid.toFixed(1)}`}
+            data-testid={`sell-button-${team.id}`}
           >
             <span className="font-semibold text-red-400 text-xs sm:text-sm">${team.bid.toFixed(1)}</span>
           </div>
@@ -96,6 +97,7 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
             role="button"
             tabIndex={0}
             aria-label={`Buy ${team.name} Performance Index at $${team.offer.toFixed(1)}`}
+            data-testid={`buy-button-${team.id}`}
           >
             <span className="font-semibold bg-[#005430] text-white px-2 py-1 rounded text-xs sm:text-sm">${team.offer.toFixed(1)}</span>
           </div>

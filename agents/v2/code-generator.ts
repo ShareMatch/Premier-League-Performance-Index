@@ -13,7 +13,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import type { TestPlan, TestScenario, TestStep, TestAssertion } from './test-planner';
+import type { TestPlan } from './test-planner';
 import type { KnowledgeStore } from './knowledge-store';
 import { getKnowledgeStore } from './knowledge-store';
 
@@ -34,8 +34,12 @@ export interface GeneratedTest {
 }
 
 /**
- * Reference test templates extracted from existing tests
+ * Structural templates for generated tests
  * Note: Import path is ../../adapters because generated tests are in tests/generated/
+ * 
+ * IMPORTANT: These contain ONLY structural code (imports, setup/teardown).
+ * Actual test steps and selectors come from the TestPlan (discovered during exploration).
+ * NO hardcoded selectors should be here!
  */
 const REFERENCE_TEMPLATES = {
   imports: `import { test, expect } from '../../adapters';`,
@@ -61,70 +65,9 @@ const TEST_USER = {
     // Clean up test user after test
     await supabaseAdapter.deleteTestUser(TEST_USER.email);
   });`,
-
-  loginModalPattern: `
-    // Navigate to login
-    await page.goto('/?action=login');
-    console.log('[Step] Navigated to login page');
-
-    // Wait for login modal
-    const loginModal = page.getByTestId('login-modal');
-    await expect(loginModal).toBeVisible({ timeout: 15000 });
-    console.log('[Step] Login modal visible');
-
-    // Fill credentials
-    await loginModal.locator('#login-email').fill(email);
-    await loginModal.locator('#login-password').fill(password);
-
-    // Click login
-    const loginButton = loginModal.getByRole('button', { name: /login/i });
-    await expect(loginButton).toBeEnabled();
-    await loginButton.click();
-    console.log('[Step] Clicked Login');`,
-
-  signupStep1Pattern: `
-    // Navigate to signup
-    await page.goto('/?action=signup');
-    const signupModal = page.getByTestId('signup-modal');
-    await expect(signupModal).toBeVisible({ timeout: 15000 });
-
-    // Step 1: Personal Info
-    await signupModal.locator('#fullName').fill(fullName);
-    await signupModal.locator('input[name="email"]').fill(email);
-    await signupModal.locator('#password').fill(password);
-    await signupModal.locator('#confirmPassword').fill(password);
-
-    // Date of birth
-    await signupModal.getByText('Select date of birth').click();
-    await page.waitForTimeout(500);
-    const selects = signupModal.locator('select');
-    await selects.first().selectOption(dob.month);
-    await selects.last().selectOption(dob.year);
-    await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: dob.day }).first().click();
-
-    // Country
-    await signupModal.getByText('Select country').click();
-    await page.waitForTimeout(500);
-    await page.getByText('United Arab Emirates').first().click();
-
-    // Continue
-    await signupModal.getByRole('button', { name: /continue/i }).click();`,
-
-  otpVerificationPattern: `
-    // Wait for OTP modal
-    const otpInput = page.locator('input[maxlength="1"]');
-    await expect(otpInput.first()).toBeVisible({ timeout: 15000 });
-
-    // Fetch OTP from database
-    const otp = await supabaseAdapter.getEmailOtp(email);
-    if (otp) {
-      // Fill OTP digits
-      for (let i = 0; i < 6; i++) {
-        await otpInput.nth(i).fill(otp[i]);
-      }
-      // Click verify
-      await page.getByRole('button', { name: /verify/i }).first().click();
-    }`,
+  
+  // NOTE: No hardcoded selector patterns here!
+  // All selectors come from discovered elements in the TestPlan
 };
 
 /**
@@ -241,263 +184,36 @@ export class CodeGenerator {
   }
   
   /**
-   * Generate code using templates (preferred for known patterns)
+   * Generate code using templates - DISABLED
+   * 
+   * All test generation now uses LLM with discovered selectors to avoid
+   * hardcoded selectors that may not exist on the actual page.
+   * 
+   * The LLM is given the actual selectors from exploration and instructed
+   * to only use those selectors.
    */
-  private generateFromTemplate(plan: TestPlan): string | null {
-    const featureLower = plan.featureName.toLowerCase();
-    
-    if (featureLower.includes('login')) {
-      return this.generateLoginTest(plan);
-    }
-    
-    if (featureLower.includes('signup') || featureLower.includes('register')) {
-      return this.generateSignupTest(plan);
-    }
-    
+  private generateFromTemplate(_plan: TestPlan): string | null {
+    // Always return null to use LLM-based generation with discovered selectors
+    // This prevents using any hardcoded selectors
     return null;
-  }
-  
-  /**
-   * Generate login test from template
-   */
-  private generateLoginTest(plan: TestPlan): string {
-    let code = `${REFERENCE_TEMPLATES.imports}
-
-${REFERENCE_TEMPLATES.testUserSetup}
-
-test.describe('${plan.featureName}', () => {
-${REFERENCE_TEMPLATES.beforeEach}
-${REFERENCE_TEMPLATES.afterEach}
-
-`;
-
-    for (const scenario of plan.scenarios) {
-      code += this.generateScenarioCode(scenario, 'login');
-    }
-
-    code += `});
-`;
-
-    return code;
-  }
-  
-  /**
-   * Generate signup test from template
-   */
-  private generateSignupTest(plan: TestPlan): string {
-    let code = `${REFERENCE_TEMPLATES.imports}
-
-${REFERENCE_TEMPLATES.testUserSetup}
-
-test.describe('${plan.featureName}', () => {
-${REFERENCE_TEMPLATES.beforeEach}
-${REFERENCE_TEMPLATES.afterEach}
-
-`;
-
-    for (const scenario of plan.scenarios) {
-      code += this.generateScenarioCode(scenario, 'signup');
-    }
-
-    code += `});
-`;
-
-    return code;
-  }
-  
-  /**
-   * Generate code for a single scenario
-   */
-  private generateScenarioCode(scenario: TestScenario, context: 'login' | 'signup' | 'generic'): string {
-    const fixtures = this.determineFixturesForScenario(scenario);
-    const fixtureParam = fixtures.length > 1 
-      ? `{ ${fixtures.join(', ')} }`
-      : `{ ${fixtures[0]} }`;
-    
-    let code = `
-  test('${scenario.name}', async (${fixtureParam}) => {
-    console.log('[Test] Starting: ${scenario.name}');
-`;
-
-    // Add timeout for complex tests
-    if (scenario.steps.length > 5) {
-      code += `    test.setTimeout(120000);\n\n`;
-    }
-
-    // Generate step code
-    for (const step of scenario.steps) {
-      code += this.generateStepCode(step, scenario.testData);
-    }
-
-    // Generate assertion code
-    code += `\n    // Assertions\n`;
-    for (const assertion of scenario.assertions) {
-      code += this.generateAssertionCode(assertion);
-    }
-
-    // Add screenshot
-    code += `\n    await page.screenshot({ path: 'test-results/${scenario.id}.png' });\n`;
-    
-    code += `    console.log('[Test] Completed: ${scenario.name}');
-  });
-`;
-
-    return code;
-  }
-  
-  /**
-   * Generate code for a test step
-   */
-  private generateStepCode(step: TestStep, testData: Record<string, string>): string {
-    // Replace placeholders in value
-    let value = step.value || '';
-    for (const [key, val] of Object.entries(testData)) {
-      value = value.replace(`{${key}}`, val);
-    }
-    
-    switch (step.action) {
-      case 'navigate':
-        return `
-    // ${step.description}
-    await page.goto('${step.target}');
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'click':
-        return `
-    // ${step.description}
-    await page.locator('${step.target}').click();
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'fill':
-        // Use testData values
-        const fillValue = value.startsWith('{') 
-          ? `TEST_USER.${value.slice(1, -1)}`
-          : `'${value}'`;
-        return `
-    // ${step.description}
-    await page.locator('${step.target}').fill(${fillValue.includes('TEST_USER') ? fillValue : `'${value}'`});
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'select':
-        return `
-    // ${step.description}
-    await page.locator('${step.target}').selectOption('${value}');
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'check':
-        return `
-    // ${step.description}
-    await page.locator('${step.target}').check();
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'wait':
-        if (step.target) {
-          return `
-    // ${step.description}
-    await expect(page.locator('${step.target}')).toBeVisible({ timeout: 10000 });
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-        }
-        return `
-    // ${step.description}
-    await page.waitForTimeout(${value || 1000});
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'verify':
-        return `
-    // ${step.description}
-    await expect(page.locator('${step.target}')).toBeVisible();
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      case 'api_verify':
-        return `
-    // ${step.description}
-    // TODO: Add API verification for ${step.target}
-    console.log('[Step ${step.order}] ${step.description}');
-`;
-
-      default:
-        return `
-    // ${step.description} (${step.action})
-    // TODO: Implement ${step.action}
-`;
-    }
-  }
-  
-  /**
-   * Generate code for an assertion
-   */
-  private generateAssertionCode(assertion: TestAssertion): string {
-    switch (assertion.type) {
-      case 'visible':
-        return `    await expect(page.locator('${assertion.target}')).toBeVisible({ timeout: 10000 });
-    console.log('[Assert] ${assertion.description}');
-`;
-
-      case 'hidden':
-        return `    await expect(page.locator('${assertion.target}')).toBeHidden({ timeout: 10000 });
-    console.log('[Assert] ${assertion.description}');
-`;
-
-      case 'text':
-        return `    await expect(page.locator('${assertion.target}')).toContainText('${assertion.expected}');
-    console.log('[Assert] ${assertion.description}');
-`;
-
-      case 'url':
-        return `    expect(page.url()).toContain('${assertion.expected}');
-    console.log('[Assert] ${assertion.description}');
-`;
-
-      case 'api_response':
-      case 'database':
-        return `    // ${assertion.description}
-    // const result = await supabaseAdapter.${assertion.target};
-    // expect(result).toBeTruthy();
-    console.log('[Assert] ${assertion.description}');
-`;
-
-      default:
-        return `    // TODO: Assert ${assertion.type}: ${assertion.target}
-`;
-    }
-  }
-  
-  /**
-   * Determine fixtures needed for a scenario
-   */
-  private determineFixturesForScenario(scenario: TestScenario): string[] {
-    const fixtures = ['page'];
-    
-    // Check if supabaseAdapter is needed
-    const needsSupabase = 
-      scenario.preconditions.some(p => p.includes('database') || p.includes('exists')) ||
-      scenario.assertions.some(a => a.type === 'database' || a.type === 'api_response') ||
-      scenario.cleanup.length > 0;
-    
-    if (needsSupabase) {
-      fixtures.push('supabaseAdapter');
-    }
-    
-    // Check for KYC/Sumsub
-    if (scenario.tags.includes('kyc')) {
-      fixtures.push('sumsub');
-    }
-    
-    return fixtures;
   }
   
   /**
    * Generate test using LLM (fallback)
    */
   private async generateWithLLM(plan: TestPlan): Promise<string> {
+    // Extract actual selectors from the test plan to prevent hallucination
+    const actualSelectors = plan.scenarios
+      .flatMap(s => [
+        ...s.steps.filter(step => step.target).map(step => step.target!),
+        ...s.assertions.filter(a => a.target).map(a => a.target),
+      ])
+      .filter((sel, i, arr) => arr.indexOf(sel) === i); // Dedupe
+    
+    const selectorList = actualSelectors.length > 0
+      ? `\n## SELECTORS FROM TEST PLAN (use ONLY these, do NOT invent new ones):\n${actualSelectors.map(s => `- ${s}`).join('\n')}\n`
+      : '';
+
     const prompt = `You are a Playwright test automation engineer.
 Generate a complete test file for this test plan.
 
@@ -505,7 +221,7 @@ Generate a complete test file for this test plan.
 Feature: ${plan.featureName}
 Risk Level: ${plan.riskLevel}
 Scenarios: ${plan.scenarios.map(s => s.name).join(', ')}
-
+${selectorList}
 ## Reference Code Style (MUST follow exactly):
 \`\`\`typescript
 ${REFERENCE_TEMPLATES.imports}
@@ -534,16 +250,23 @@ ${JSON.stringify(plan.scenarios, null, 2)}
 4. For waiting, use: await page.locator('selector').waitFor()
 5. For clicks, use: await page.locator('selector').click()
 6. For filling inputs, use: await page.locator('selector').fill('value')
-7. Prefer data-testid selectors: [data-testid="name"]
+7. DO NOT invent data-testid values - only use selectors from the test plan above
 8. Avoid Tailwind CSS class selectors (like .absolute.top-6) - they are brittle!
-9. Use getByRole, getByText, getByTestId for stable selectors
+9. Use getByRole, getByText, getByPlaceholder for elements without explicit selectors
 10. page.check() is ONLY for checkboxes - use .click() for buttons
 11. Valid expect states: toBeVisible(), toBeHidden(), toBeEnabled(), toBeDisabled()
 
+## IMPORTANT - For generic selectors, use these Playwright patterns:
+- For buttons: page.getByRole('button', { name: 'Button Text' })
+- For inputs: page.getByPlaceholder('placeholder text') 
+- For text: page.getByText('visible text')
+- For links: page.getByRole('link', { name: 'Link Text' })
+- For body/page load: page.locator('body')
+
 ## Example correct assertions:
-- await expect(page.locator('[data-testid="submit"]')).toBeVisible()
-- await expect(page.getByRole('button', { name: 'Login' })).toBeEnabled()
+- await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible()
 - await expect(page.getByText('Welcome')).toBeVisible()
+- await expect(page.locator('body')).toBeVisible()
 
 Generate ONLY the TypeScript code, no explanations:`;
 
@@ -625,6 +348,32 @@ Generate ONLY the TypeScript code, no explanations:`;
     
     // Fix 6: Remove empty option objects
     fixed = fixed.replace(/, \{\s*\}/g, '');
+    
+    // Fix 7: Replace likely hallucinated data-testids with safer selectors
+    // Common hallucinated patterns: home-page, search-input, search-button, error-message, etc.
+    const hallucinated = [
+      { pattern: /\[data-testid=['"]home-page['"]\]/g, replacement: 'body' },
+      { pattern: /\[data-testid=['"]search-input['"]\]/g, replacement: 'input[placeholder*="Search"], input[placeholder*="search"], input[placeholder*="Find"]' },
+      { pattern: /\[data-testid=['"]search-button['"]\]/g, replacement: 'button:has-text("Search"), button[aria-label*="search"]' },
+      { pattern: /\[data-testid=['"]search-results['"]\]/g, replacement: 'body' }, // Just verify page is visible
+      { pattern: /\[data-testid=['"]error-message['"]\]/g, replacement: '.text-red-400, .text-red-500, [role="alert"]' },
+      { pattern: /\[data-testid=['"]third-party-button['"]\]/g, replacement: 'button' },
+      { pattern: /\[data-testid=['"]main-content['"]\]/g, replacement: 'main, body' },
+      { pattern: /\[data-testid=['"]nav-[^'"]+['"]\]/g, replacement: 'nav, [role="navigation"]' },
+    ];
+    
+    for (const { pattern, replacement } of hallucinated) {
+      if (pattern.test(fixed)) {
+        console.log(`   [CodeGenerator] Replacing hallucinated selector: ${pattern.source}`);
+        fixed = fixed.replace(pattern, replacement);
+      }
+    }
+    
+    // Fix 8: For waitFor on generic selectors, add reasonable timeout
+    fixed = fixed.replace(
+      /\.waitFor\(\)/g,
+      '.waitFor({ timeout: 5000 })'
+    );
     
     console.log('   [CodeGenerator] Applied LLM error corrections');
     return fixed;

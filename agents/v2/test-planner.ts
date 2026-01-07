@@ -431,17 +431,85 @@ export class TestPlanner {
     explorationState?: ExplorationState,
     excludeFeatures?: string[]
   ): Promise<TestScenario[]> {
-    const explorationInfo = explorationState
-      ? `\n## Discovered Elements:\n${Array.from(explorationState.discoveredSelectors.values())
-        .map(s => `- ${s.selector}: ${s.description}`)
-        .join('\n')
-      }`
+    // Format discovered selectors with emphasis on USING THEM
+    const discoveredSelectors = explorationState
+      ? Array.from(explorationState.discoveredSelectors.entries())
+          .map(([sel, info]) => ({
+            selector: sel,
+            type: info.elementType,
+            description: info.description || '',
+          }))
+      : [];
+
+    const explorationInfo = discoveredSelectors.length > 0
+      ? `\n## DISCOVERED SELECTORS (YOU MUST USE ONLY THESE - DO NOT INVENT SELECTORS):
+${discoveredSelectors.map(s => `- ${s.type}: "${s.selector}" - ${s.description}`).join('\n')}
+
+⚠️ CRITICAL: Only use selectors from the list above. Do NOT invent data-testid values that are not listed.
+If you need a selector for an element not in the list, use generic Playwright locators like:
+- page.getByRole('button', { name: 'Button Text' })
+- page.getByText('Some visible text')
+- page.getByPlaceholder('placeholder text')
+- page.locator('button:has-text("text")')
+`
       : '';
 
     // Build exclusion warning if features should be excluded
     const exclusionWarning = excludeFeatures?.length
       ? `\n## IMPORTANT - DO NOT INCLUDE THESE FEATURES (already tested separately):\n${excludeFeatures.map(f => `- ${f}`).join('\n')}\nDo NOT generate any scenarios related to: ${excludeFeatures.join(', ')}\n`
       : '';
+
+    // Only include auth context for auth-related features
+    const featureLower = risk.featureName.toLowerCase();
+    const isAuthFeature = featureLower.includes('login') || featureLower.includes('signup') || 
+                          featureLower.includes('auth') || featureLower.includes('register');
+    
+    const authContext = isAuthFeature ? `
+## Auth-specific Selectors (only for login/signup features):
+- Login modal: data-testid="login-modal"
+- Signup modal: data-testid="signup-modal"
+- Email input (login): #login-email
+- Password input (login): #login-password
+- Error messages: .text-red-400 or .text-red-500
+` : '';
+
+    // Build example based on feature type
+    const exampleScenario = isAuthFeature ? `
+    {
+      "id": "login_valid_credentials",
+      "name": "Login with valid email and password",
+      "type": "happy_path",
+      "priority": 1,
+      "preconditions": ["User exists in database"],
+      "steps": [
+        { "order": 1, "action": "navigate", "target": "/?action=login", "description": "Open login modal" },
+        { "order": 2, "action": "wait", "target": "[data-testid='login-modal']", "description": "Wait for modal" },
+        { "order": 3, "action": "fill", "target": "#login-email", "value": "{email}", "description": "Enter email" }
+      ],
+      "assertions": [
+        { "type": "hidden", "target": "[data-testid='login-modal']", "expected": "modal closes", "description": "Modal closes" }
+      ],
+      "testData": { "email": "test@example.com", "password": "TestPassword123!" },
+      "cleanup": [],
+      "tags": ["auth", "login"]
+    }` : `
+    {
+      "id": "page_loads_correctly",
+      "name": "Page loads and displays main content",
+      "type": "happy_path",
+      "priority": 1,
+      "preconditions": [],
+      "steps": [
+        { "order": 1, "action": "navigate", "target": "/", "description": "Navigate to page" },
+        { "order": 2, "action": "wait", "description": "Wait for content to load" }
+      ],
+      "assertions": [
+        { "type": "visible", "target": "body", "expected": "true", "description": "Page content is visible" }
+      ],
+      "testData": {},
+      "cleanup": [],
+      "tags": ["smoke", "navigation"]
+    }`;
 
     const prompt = `You are a QA test planner. Create detailed test scenarios for this feature.
 
@@ -456,47 +524,29 @@ Total scenarios needed: ${risk.testingRecommendations.scenarioCount}
 
 ${context}
 ${explorationInfo}
+${authContext}
 
-## ShareMatch App Context (Use these exact selectors/messages):
-- Login modal: data-testid="login-modal"
-- Signup modal: data-testid="signup-modal"
-- Email input (login): #login-email
-- Password input (login): #login-password
-- Error messages: .text-red-400 or .text-red-500
-- OTP inputs: input[maxlength="1"] (6 separate inputs)
-- "Invalid login credentials" - actual error text
-- "Invalid email format" - actual error text
-- Test OTP code: "123456" (bypass in test mode)
+## SELECTOR RULES:
+1. ONLY use selectors from the "DISCOVERED SELECTORS" list above
+2. If no discovered selector exists for an element, use:
+   - getByRole('button', { name: 'text' }) for buttons
+   - getByText('text') for text content
+   - getByPlaceholder('text') for inputs
+   - locator('tag:has-text("text")') for generic elements
+3. DO NOT invent data-testid or ID values that are not in the discovered list
+4. For visible text on page, use getByText() or :has-text() patterns
 
 Generate test scenarios as JSON array. Each scenario should have:
 1. Unique ID (snake_case)
 2. Descriptive name
 3. Type (from the required types)
-4. Detailed steps with selectors
+4. Detailed steps with REAL selectors from discovered list
 5. Clear assertions
 6. Required test data
 
 Respond ONLY with valid JSON:
 {
-  "scenarios": [
-    {
-      "id": "login_valid_credentials",
-      "name": "Login with valid email and password",
-      "type": "happy_path",
-      "priority": 1,
-      "preconditions": ["User exists in database", "User is verified"],
-      "steps": [
-        { "order": 1, "action": "navigate", "target": "/?action=login", "description": "Open login modal" },
-        { "order": 2, "action": "wait", "target": "[data-testid='login-modal']", "description": "Wait for modal" },
-        { "order": 3, "action": "fill", "target": "#login-email", "value": "{email}", "description": "Enter email" }
-      ],
-      "assertions": [
-        { "type": "hidden", "target": "[data-testid='login-modal']", "expected": "modal closes", "description": "Login modal should close after success" }
-      ],
-      "testData": { "email": "test@example.com", "password": "TestPassword123!" },
-      "cleanup": ["Delete test user"],
-      "tags": ["auth", "login", "smoke"]
-    }
+  "scenarios": [${exampleScenario}
   ]
 }`;
 

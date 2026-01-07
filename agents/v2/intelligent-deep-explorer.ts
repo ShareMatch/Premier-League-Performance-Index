@@ -239,7 +239,12 @@ export class IntelligentDeepExplorer {
       }
 
       // Slow path: Ask LLM for ambiguous cases
-      const prompt = `You are an expert at web UI exploration. Analyze this element and decide the best action.
+      // Detect if we're in a form context
+      const isInFormContext = context.currentModal?.includes('signup') || 
+                               context.currentModal?.includes('login') ||
+                               context.currentModal?.includes('form');
+      
+      const prompt = `You are an expert at web UI exploration testing a ${isInFormContext ? 'FORM/SIGNUP' : 'web'} flow.
 
 Element Details:
 - Type: ${element.type}
@@ -259,10 +264,20 @@ Current Situation:
         Array.from(context.learnedPatterns.keys()).join(", ") || "none"
       }
 
-Goal: Explore all interactive elements WITHOUT:
-- Closing modals prematurely (preserve context)
-- Navigating away from the page
-- Causing destructive actions
+PRIORITIES (in order):
+1. INPUT FIELDS (text, email, password) - these are PRIMARY for forms, use "fill" action
+2. SUBMIT/CONTINUE buttons - click these to progress the form flow
+3. SKIP auxiliary UI elements like:
+   - Date picker day buttons (1-31)
+   - Calendar navigation arrows
+   - Dropdown option items
+   - Close/X buttons (they break context)
+
+Goal: Explore the MAIN form flow:
+- Fill input fields to test validation
+- Click submit/continue to test form progression
+- DON'T get stuck on auxiliary elements like calendars
+- DON'T close modals prematurely
 
 Respond with ONLY valid JSON (no markdown):
 {
@@ -301,6 +316,10 @@ Respond with ONLY valid JSON (no markdown):
   /**
    * Check if element matches any learned patterns
    */
+  // Track filled inputs to know when form is ready for Continue
+  private filledInputsCount = 0;
+  private expectedInputsInForm = 0;
+
   private checkLearnedPatterns(
     element: ElementDescriptor,
     patterns: Map<string, Pattern>
@@ -355,6 +374,29 @@ Respond with ONLY valid JSON (no markdown):
           elementClassification: "navigation",
         };
       }
+    }
+    
+    // FAST PATH: Input fields in forms should always be filled
+    if (element.type === 'input') {
+      this.filledInputsCount++;
+      return {
+        shouldInteract: true,
+        interactionType: "fill",
+        reasoning: "Input field - fill with test data",
+        confidence: 0.95,
+        elementClassification: "input",
+      };
+    }
+    
+    // FAST PATH: Date picker and dropdown triggers should complete selection
+    if (this.isDatePickerTrigger(element) || this.isDropdownTrigger(element)) {
+      return {
+        shouldInteract: true,
+        interactionType: "click",
+        reasoning: "Dropdown/picker trigger - will complete selection",
+        confidence: 0.9,
+        elementClassification: "action_button",
+      };
     }
 
     return null; // No pattern match - use LLM
@@ -427,6 +469,33 @@ Respond with ONLY valid JSON (no markdown):
       try {
         switch (decision.interactionType) {
           case "click":
+            // SPECIAL CASE: Date picker trigger - complete the selection
+            if (this.isDatePickerTrigger(element)) {
+              await this.completeDropdownSelection(locator, element, 'date');
+              return { success: true, modalOpened: false, urlChanged: false };
+            }
+            
+            // SPECIAL CASE: Country/dropdown trigger - complete the selection
+            if (this.isDropdownTrigger(element)) {
+              await this.completeDropdownSelection(locator, element, 'dropdown');
+              return { success: true, modalOpened: false, urlChanged: false };
+            }
+            
+            // SPECIAL CASE: Continue/Submit button - check if form content changes (step progression)
+            if (this.isContinueButton(element)) {
+              const beforeElements = await this.countFormElements();
+              await locator.click({ timeout: 3000 });
+              await this.page.waitForTimeout(1500);
+              const afterElements = await this.countFormElements();
+              
+              // If form content changed (new inputs appeared), trigger re-exploration
+              if (afterElements.inputCount !== beforeElements.inputCount) {
+                console.log(`      📋 Form progressed: ${beforeElements.inputCount} → ${afterElements.inputCount} inputs`);
+                return { success: true, modalOpened: true, urlChanged: false }; // Treat as "new modal" to trigger re-exploration
+              }
+              return { success: true, modalOpened: false, urlChanged: false };
+            }
+            
             await locator.click({ timeout: 3000 });
             await this.page.waitForTimeout(1000);
             break;
@@ -464,6 +533,177 @@ Respond with ONLY valid JSON (no markdown):
     },
     { name: "execute_interaction", tags: ["exploration", "action"] }
   );
+
+  /**
+   * Detect if a button is a date picker trigger
+   */
+  private isDatePickerTrigger(element: ElementDescriptor): boolean {
+    const text = element.text.toLowerCase();
+    const selector = element.selector.toLowerCase();
+    const attrs = JSON.stringify(element.attributes).toLowerCase();
+    
+    return (
+      text.includes('date of birth') ||
+      text.includes('select date') ||
+      text.includes('dob') ||
+      text.includes('birthday') ||
+      selector.includes('date') ||
+      selector.includes('dob') ||
+      attrs.includes('date') ||
+      attrs.includes('calendar')
+    );
+  }
+
+  /**
+   * Detect if a button is a dropdown trigger (country, etc.)
+   */
+  private isDropdownTrigger(element: ElementDescriptor): boolean {
+    const text = element.text.toLowerCase();
+    const selector = element.selector.toLowerCase();
+    const attrs = JSON.stringify(element.attributes).toLowerCase();
+    
+    return (
+      text.includes('select country') ||
+      text.includes('select region') ||
+      text.includes('select state') ||
+      text.includes('choose') ||
+      selector.includes('country') ||
+      selector.includes('dropdown') ||
+      attrs.includes('listbox') ||
+      attrs.includes('combobox')
+    );
+  }
+
+  /**
+   * Detect if a button is a Continue/Submit button
+   * MUST have explicit text - empty buttons are NOT Continue buttons
+   */
+  private isContinueButton(element: ElementDescriptor): boolean {
+    const text = element.text.toLowerCase().trim();
+    
+    // MUST have text to be a Continue button - empty buttons are NOT submit buttons
+    if (!text || text.length < 2) {
+      return false;
+    }
+    
+    // Must match specific continue/submit patterns
+    return (
+      text === 'continue' ||
+      text === 'submit' ||
+      text === 'next' ||
+      text === 'next step' ||
+      text === 'create account' ||
+      text === 'sign up' ||
+      text === 'register' ||
+      text === 'save changes' ||
+      text === 'save'
+    );
+  }
+
+  /**
+   * Count form elements (to detect step changes)
+   */
+  private async countFormElements(): Promise<{ inputCount: number; buttonCount: number }> {
+    try {
+      const scopeLocator = this.currentScope || this.page.locator("body");
+      const inputCount = await scopeLocator.locator('input:visible').count();
+      const buttonCount = await scopeLocator.locator('button:visible').count();
+      return { inputCount, buttonCount };
+    } catch {
+      return { inputCount: 0, buttonCount: 0 };
+    }
+  }
+
+  /**
+   * Complete a dropdown or date picker selection (instead of just exploring it)
+   */
+  private async completeDropdownSelection(
+    locator: Locator,
+    element: ElementDescriptor,
+    type: 'date' | 'dropdown'
+  ): Promise<void> {
+    try {
+      // Click to open the dropdown/picker
+      await locator.click({ timeout: 3000 });
+      await this.page.waitForTimeout(500);
+
+      if (type === 'date') {
+        // For date pickers: select a valid date (e.g., 15th of current displayed month)
+        // First try to find a day button that's selectable (not disabled, in current month)
+        const dayButton = this.page.locator('button:has-text("15"):not([disabled])').first();
+        if (await dayButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await dayButton.click();
+          console.log(`      ✅ Selected date: 15`);
+        } else {
+          // Fallback: click any visible day button
+          const anyDay = this.page.locator('button').filter({ hasText: /^([1-9]|[12][0-9]|3[01])$/ }).first();
+          if (await anyDay.isVisible({ timeout: 1000 }).catch(() => false)) {
+            await anyDay.click();
+            console.log(`      ✅ Selected a date`);
+          }
+        }
+        await this.page.waitForTimeout(300);
+      } else {
+        // For country dropdowns: look for specific country (UAE) or first available
+        // The SignUpModal uses <div> elements with country names, not buttons
+        
+        // First, try to select UAE specifically
+        const uaeOption = this.page.locator('div').filter({ hasText: /United Arab Emirates|UAE/i }).first();
+        if (await uaeOption.isVisible({ timeout: 500 }).catch(() => false)) {
+          await uaeOption.click();
+          console.log(`      ✅ Selected country: United Arab Emirates`);
+          await this.page.waitForTimeout(300);
+          return;
+        }
+        
+        // Try clicking div elements with country-like text (inside dropdown container)
+        // Look for divs with flag images (country options have img tags)
+        const countryDivs = this.page.locator('div.overflow-y-auto div:has(img)');
+        const firstCountry = countryDivs.first();
+        if (await firstCountry.isVisible({ timeout: 500 }).catch(() => false)) {
+          const countryText = await firstCountry.textContent().catch(() => '');
+          await firstCountry.click();
+          console.log(`      ✅ Selected country: ${countryText?.trim().substring(0, 25)}`);
+          await this.page.waitForTimeout(300);
+          return;
+        }
+        
+        // Try standard dropdown option selectors
+        const optionSelectors = [
+          '[role="option"]',
+          '[role="listitem"]',
+          'li[data-value]',
+          '.dropdown-item',
+          '[data-testid*="option"]',
+        ];
+        
+        for (const optSel of optionSelectors) {
+          const option = this.page.locator(optSel).first();
+          if (await option.isVisible({ timeout: 300 }).catch(() => false)) {
+            const optionText = await option.textContent().catch(() => '');
+            await option.click();
+            console.log(`      ✅ Selected dropdown option: ${optionText?.substring(0, 20)}`);
+            await this.page.waitForTimeout(300);
+            return;
+          }
+        }
+        
+        // Last fallback: click any clickable item in the dropdown area
+        const anyClickable = this.page.locator('.max-h-32 > div, .max-h-48 > div').first();
+        if (await anyClickable.isVisible({ timeout: 300 }).catch(() => false)) {
+          const text = await anyClickable.textContent().catch(() => '');
+          await anyClickable.click();
+          console.log(`      ✅ Selected: ${text?.trim().substring(0, 25)}`);
+        } else {
+          console.log(`      ⚠️ Could not find any dropdown option to select`);
+        }
+        
+        await this.page.waitForTimeout(300);
+      }
+    } catch (e: any) {
+      console.log(`      ⚠️ Could not complete ${type} selection: ${e.message?.substring(0, 50)}`);
+    }
+  }
 
   /**
    * Get appropriate test value for input type
@@ -739,6 +979,32 @@ Respond with ONLY valid JSON (no markdown):
                   this.state.modalStack[this.state.modalStack.length - 1]
                 }`
               : "root";
+        } else if (modalId && this.state.modalStack.includes(modalId)) {
+          // FORM STEP CHANGE: Same modal but content changed (e.g., Step 1 → Step 2)
+          // Re-explore the same modal context to discover new elements
+          
+          // Count how many steps we've already explored in this modal (max 3 steps)
+          const stepsInModal = this.state.modalStack.filter(m => m.startsWith(modalId)).length;
+          const MAX_FORM_STEPS = 3;
+          
+          if (stepsInModal < MAX_FORM_STEPS) {
+            console.log(`${indent}   📋 Form step change detected in ${modalId} - re-exploring (step ${stepsInModal + 1}/${MAX_FORM_STEPS})`);
+            
+            // Create a step-specific context to avoid infinite loops
+            const stepContext = `${modalId}-step-${stepsInModal + 1}`;
+            this.state.modalStack.push(stepContext);
+            this.state.currentContext = `modal:${stepContext}`;
+            await this.exploreCurrentContext(depth + 1);
+            this.state.modalStack.pop();
+            this.state.currentContext =
+              this.state.modalStack.length > 0
+                ? `modal:${
+                    this.state.modalStack[this.state.modalStack.length - 1]
+                  }`
+                : "root";
+          } else {
+            console.log(`${indent}   ⚠️ Max form steps (${MAX_FORM_STEPS}) reached for ${modalId} - stopping`);
+          }
         }
       }
     }
@@ -749,7 +1015,7 @@ Respond with ONLY valid JSON (no markdown):
   }
 
   /**
-   * Get interactive scope - automatically detects modals or uses page body
+   * Get interactive scope - automatically detects modals, dropdowns, or uses page body
    * Uses generic detection patterns instead of hardcoded selectors
    */
   private async getInteractiveScope(): Promise<Locator | null> {
@@ -768,6 +1034,15 @@ Respond with ONLY valid JSON (no markdown):
       '[role="dialog"][aria-modal="true"]', // Standard ARIA dialog
       '[role="dialog"]', // Dialog without aria-modal
       '[aria-modal="true"]', // aria-modal without role
+    ];
+    
+    // Strategy 1b: Detect dropdown menus (often appear after clicking buttons)
+    const dropdownSelectors = [
+      '[role="menu"]', // ARIA menu
+      '[role="listbox"]', // ARIA listbox/dropdown
+      '[role="tooltip"]', // Tooltips
+      '[data-state="open"]', // Radix/Headless UI pattern
+      '[data-open="true"]', // Common open state
     ];
 
     for (const selector of ariaModalSelectors) {
@@ -933,8 +1208,70 @@ Respond with ONLY valid JSON (no markdown):
       }
     } catch {}
 
-    // Fallback: Use body if no modal detected
-    console.log("   📦 No modal detected, using body scope");
+    // Strategy 5: Detect dropdown menus (for sub-menus after clicking)
+    for (const selector of dropdownSelectors) {
+      try {
+        const dropdown = this.page.locator(selector).first();
+        if (await dropdown.isVisible({ timeout: 300 })) {
+          console.log(`   📂 Found dropdown (${selector})`);
+          return dropdown;
+        }
+      } catch {}
+    }
+
+    // Strategy 6: Detect visible popover/menu content by class patterns
+    try {
+      const popoverElements = await this.page
+        .locator("div")
+        .evaluateAll((elements) => {
+          return elements
+            .filter((el) => {
+              const classes = el.className || "";
+              const style = window.getComputedStyle(el);
+              
+              // Look for elements that:
+              // - Are visible and have reasonable size
+              // - Have popover/menu-like class patterns
+              // - Are positioned absolutely/fixed with high z-index
+              const isVisible = style.display !== "none" && 
+                               style.visibility !== "hidden" &&
+                               el.offsetWidth > 100 && 
+                               el.offsetHeight > 50;
+              
+              const hasMenuClasses = /dropdown|popover|menu|submenu|flyout/i.test(classes);
+              const isPositioned = (style.position === "absolute" || style.position === "fixed") &&
+                                   parseInt(style.zIndex, 10) > 10;
+              
+              return isVisible && (hasMenuClasses || isPositioned);
+            })
+            .map((el) => ({
+              testId: el.getAttribute("data-testid"),
+              id: el.id,
+              className: el.className?.split(" ").slice(0, 2).join("."),
+            }))[0];
+        });
+
+      if (popoverElements) {
+        const sel = popoverElements.testId 
+          ? `[data-testid="${popoverElements.testId}"]`
+          : popoverElements.id 
+            ? `#${popoverElements.id}`
+            : popoverElements.className 
+              ? `.${popoverElements.className}`
+              : null;
+        
+        if (sel) {
+          const element = this.page.locator(sel).first();
+          if (await element.isVisible({ timeout: 300 })) {
+            console.log(`   📂 Found popover/menu: ${sel}`);
+            return element;
+          }
+        }
+      }
+    } catch {}
+
+    // Fallback: Use body if no modal/dropdown detected
+    console.log("   📦 No modal/dropdown detected, using body scope");
     return this.page.locator("body");
   }
 
@@ -942,46 +1279,140 @@ Respond with ONLY valid JSON (no markdown):
    * Discover interactive elements (buttons, inputs, links, etc.)
    */
   private async discoverInteractiveElements(): Promise<ElementDescriptor[]> {
-    const elements: ElementDescriptor[] = [];
+    const inputElements: ElementDescriptor[] = [];
+    const buttonElements: ElementDescriptor[] = [];
+    const linkElements: ElementDescriptor[] = [];
     const scopeLocator = this.currentScope || this.page.locator("body");
 
-    // Buttons
-    const buttons = await scopeLocator
-      .locator('button, [role="button"], input[type="submit"]')
-      .all();
-    for (const btn of buttons) {
-      const descriptor = await this.createElementDescriptor(btn, "button");
-      if (descriptor?.isVisible) {
-        elements.push(descriptor);
-        // Store selector
-        await this.storeSelector(descriptor);
-      }
-    }
-
-    // Inputs (text, email, password, etc.)
+    // PRIORITY 1: Inputs (text, email, password, etc.) - these are the main form elements
     const inputs = await scopeLocator
       .locator('input:not([type="hidden"]):not([type="submit"]), textarea')
       .all();
     for (const input of inputs) {
       const descriptor = await this.createElementDescriptor(input, "input");
       if (descriptor?.isVisible) {
-        elements.push(descriptor);
-        // Store selector
+        inputElements.push(descriptor);
         await this.storeSelector(descriptor);
       }
     }
 
-    // Links
+    // PRIORITY 2: Buttons (but filter out date picker and numeric patterns)
+    const buttons = await scopeLocator
+      .locator('button, [role="button"], input[type="submit"]')
+      .all();
+    for (const btn of buttons) {
+      const descriptor = await this.createElementDescriptor(btn, "button");
+      if (descriptor?.isVisible) {
+        // Filter out date picker day buttons (numeric 1-31)
+        if (this.isDatePickerDayButton(descriptor)) {
+          continue; // Skip individual day buttons
+        }
+        // Filter out other noise patterns
+        if (this.isNoiseButton(descriptor)) {
+          continue;
+        }
+        buttonElements.push(descriptor);
+        await this.storeSelector(descriptor);
+      }
+    }
+
+    // PRIORITY 3: Links
     const links = await scopeLocator.locator("a[href]").all();
     for (const link of links) {
       const descriptor = await this.createElementDescriptor(link, "link");
       if (descriptor?.isVisible) {
-        elements.push(descriptor);
+        linkElements.push(descriptor);
         await this.storeSelector(descriptor);
       }
     }
 
-    return elements;
+    // Return elements in priority order: inputs first, then buttons, then links
+    // This ensures form fields are explored before auxiliary buttons
+    return [...inputElements, ...buttonElements, ...linkElements];
+  }
+
+  /**
+   * Detect if a button is a date picker day button (1-31 pattern)
+   */
+  private isDatePickerDayButton(element: ElementDescriptor): boolean {
+    const text = element.text.trim();
+    
+    // Check if text is a number 1-31 (day of month)
+    const num = parseInt(text, 10);
+    if (!isNaN(num) && num >= 1 && num <= 31 && text === String(num)) {
+      // Additional check: look for date picker context in selector
+      const selector = element.selector.toLowerCase();
+      const attrs = JSON.stringify(element.attributes).toLowerCase();
+      
+      // If it's in a calendar/date context, skip it
+      if (selector.includes('calendar') || 
+          selector.includes('date') || 
+          selector.includes('day') ||
+          selector.includes('picker') ||
+          attrs.includes('calendar') ||
+          attrs.includes('date')) {
+        return true;
+      }
+      
+      // Even without explicit context, single digit buttons 1-31 are likely calendar days
+      // if we're in a modal context
+      if (this.state.modalStack.length > 0) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Detect noise buttons that shouldn't be explored individually
+   */
+  private isNoiseButton(element: ElementDescriptor): boolean {
+    const text = element.text.trim().toLowerCase();
+    const selector = element.selector.toLowerCase();
+    
+    // Skip navigation arrows in date pickers
+    if (text === '' && (selector.includes('prev') || selector.includes('next') || 
+        selector.includes('arrow') || selector.includes('chevron'))) {
+      // These are likely calendar navigation - we can skip them or explore once
+      return false; // Let the LLM decide on these
+    }
+    
+    // Skip month/year buttons in date pickers
+    const months = ['january', 'february', 'march', 'april', 'may', 'june', 
+                    'july', 'august', 'september', 'october', 'november', 'december',
+                    'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    if (months.some(m => text === m)) {
+      return true; // Skip individual month buttons in date pickers
+    }
+    
+    // Skip year buttons (1900-2100)
+    const yearNum = parseInt(text, 10);
+    if (!isNaN(yearNum) && yearNum >= 1900 && yearNum <= 2100 && text === String(yearNum)) {
+      return true;
+    }
+    
+    // Skip date display buttons (e.g., "15 Jan 2000", "21 Dec 1995")
+    if (/^\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{4}$/i.test(text)) {
+      return true;
+    }
+    
+    // Skip country name display buttons (already selected country)
+    // Common country patterns
+    const countryPatterns = [
+      'united arab emirates', 'uae', 'saudi arabia', 'united states', 'united kingdom',
+      'canada', 'australia', 'india', 'pakistan', 'germany', 'france', 'spain', 'italy',
+      'netherlands', 'belgium', 'switzerland', 'austria', 'sweden', 'norway', 'denmark',
+      'finland', 'poland', 'portugal', 'ireland', 'new zealand', 'singapore', 'malaysia',
+      'indonesia', 'philippines', 'thailand', 'vietnam', 'japan', 'south korea', 'china',
+      'brazil', 'mexico', 'argentina', 'chile', 'colombia', 'peru', 'egypt', 'morocco',
+      'south africa', 'nigeria', 'kenya', 'qatar', 'kuwait', 'bahrain', 'oman'
+    ];
+    if (countryPatterns.some(c => text === c)) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**
@@ -1051,29 +1482,101 @@ Respond with ONLY valid JSON (no markdown):
   }
 
   /**
-   * Generate selector
+   * Generate selector - prioritize stable, role-based, and text-based selectors
+   * Avoids brittle Tailwind class selectors
    */
   private async generateSelector(
     locator: Locator,
     attrs: Record<string, string>
   ): Promise<string> {
+    // Priority 1: Explicit test IDs (most stable)
     if (attrs["data-testid"]) return `[data-testid="${attrs["data-testid"]}"]`;
+    
+    // Priority 2: ID (stable if exists)
     if (attrs["id"]) return `#${attrs["id"]}`;
+    
+    // Priority 3: Name attribute (common for form inputs)
     if (attrs["name"]) return `[name="${attrs["name"]}"]`;
+    
+    // Priority 4: ARIA label (accessible and stable)
+    if (attrs["aria-label"]) {
+      const label = attrs["aria-label"].replace(/"/g, '\\"');
+      return `[aria-label="${label}"]`;
+    }
+    
+    // Priority 5: Placeholder for inputs (stable for form fields)
+    if (attrs["placeholder"]) {
+      const placeholder = attrs["placeholder"].replace(/"/g, '\\"');
+      return `[placeholder="${placeholder}"]`;
+    }
+    
+    // Priority 6: Role-based selectors with text
+    if (attrs["role"]) {
+      const role = attrs["role"];
+      try {
+        const text = await locator.textContent().catch(() => "");
+        const cleanText = text?.trim().slice(0, 30).replace(/"/g, '\\"');
+        if (cleanText) {
+          return `[role="${role}"]:has-text("${cleanText}")`;
+        }
+        return `[role="${role}"]`;
+      } catch {}
+    }
 
     try {
       const selector = await locator.evaluate((el) => {
         const tagName = el.tagName.toLowerCase();
-        const safeClasses = Array.from(el.classList)
-          .filter((cls) => !/[:\.\[\]\/]/.test(cls))
-          .slice(0, 2);
-        if (safeClasses.length === 0) {
-          const text = el.textContent?.trim().slice(0, 30);
-          if (text)
-            return `${tagName}:has-text("${text.replace(/"/g, '\\"')}")`;
-          return tagName;
+        
+        // For buttons, prefer text-based selectors (most stable)
+        if (tagName === 'button' || el.getAttribute('type') === 'button') {
+          const text = el.textContent?.trim().slice(0, 40);
+          if (text) {
+            return `button:has-text("${text.replace(/"/g, '\\"')}")`;
+          }
         }
-        return `${tagName}.${safeClasses.join(".")}`;
+        
+        // For inputs, try to find identifying attributes
+        if (tagName === 'input') {
+          const type = el.getAttribute('type') || 'text';
+          const placeholder = el.getAttribute('placeholder');
+          if (placeholder) {
+            return `input[placeholder="${placeholder.replace(/"/g, '\\"')}"]`;
+          }
+          return `input[type="${type}"]`;
+        }
+        
+        // For links, use href or text
+        if (tagName === 'a') {
+          const text = el.textContent?.trim().slice(0, 30);
+          if (text) {
+            return `a:has-text("${text.replace(/"/g, '\\"')}")`;
+          }
+          const href = el.getAttribute('href');
+          if (href && href !== '#') {
+            return `a[href="${href.replace(/"/g, '\\"')}"]`;
+          }
+        }
+        
+        // Generic fallback: tag + visible text (avoiding Tailwind classes)
+        const text = el.textContent?.trim().slice(0, 30);
+        if (text) {
+          return `${tagName}:has-text("${text.replace(/"/g, '\\"')}")`;
+        }
+        
+        // Last resort: only use non-Tailwind classes
+        const safeClasses = Array.from(el.classList)
+          .filter((cls) => {
+            // Filter out Tailwind utility classes
+            return !/^(bg-|text-|p-|m-|w-|h-|flex|grid|absolute|relative|fixed|top-|left-|right-|bottom-|z-|rounded|border|shadow|transition|hover:|focus:|active:)/.test(cls)
+              && !/[:\.\[\]\/]/.test(cls);
+          })
+          .slice(0, 2);
+        
+        if (safeClasses.length > 0) {
+          return `${tagName}.${safeClasses.join(".")}`;
+        }
+        
+        return tagName;
       });
       return selector;
     } catch {
@@ -1082,10 +1585,15 @@ Respond with ONLY valid JSON (no markdown):
   }
 
   /**
-   * Detect new modal
+   * Detect new modal or dropdown that appeared after an interaction
    */
   private async detectNewModal(): Promise<string | null> {
-    const modalSelectors = ['[role="dialog"]', '[data-testid*="modal"]'];
+    // Check for modals first
+    const modalSelectors = [
+      '[role="dialog"]', 
+      '[data-testid*="modal"]',
+      '[aria-modal="true"]',
+    ];
 
     for (const selector of modalSelectors) {
       const modal = this.page.locator(selector).first();
@@ -1093,6 +1601,24 @@ Respond with ONLY valid JSON (no markdown):
         const testId =
           (await modal.getAttribute("data-testid").catch(() => null)) ||
           selector;
+        return testId;
+      }
+    }
+
+    // Also check for dropdowns/menus (may appear after clicking menu items)
+    const dropdownSelectors = [
+      '[role="menu"]',
+      '[role="listbox"]',
+      '[data-state="open"]',
+    ];
+
+    for (const selector of dropdownSelectors) {
+      const dropdown = this.page.locator(selector).first();
+      if (await dropdown.isVisible().catch(() => false)) {
+        const testId =
+          (await dropdown.getAttribute("data-testid").catch(() => null)) ||
+          (await dropdown.getAttribute("id").catch(() => null)) ||
+          `dropdown:${selector}`;
         return testId;
       }
     }

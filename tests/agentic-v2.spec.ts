@@ -73,6 +73,7 @@ test.describe("Agentic Testing System v2", () => {
     const orchestrator = createOrchestrator(page, {
       qualityThreshold: 70,
       maxExplorationDepth: 3, // Faster exploration
+      skipModals: ["signup-modal", "signup"],
     });
 
     await orchestrator.init();
@@ -166,8 +167,8 @@ test.describe("Agentic Testing System v2", () => {
 
     const orchestrator = createOrchestrator(page, {
       qualityThreshold: 70,
-      maxExplorationDepth: 3,
-      skipExploration: true,
+      maxExplorationDepth: 5,
+      skipModals: ["login-modal", "login"],
     });
 
     await orchestrator.init();
@@ -270,7 +271,7 @@ test.describe("Single Feature Generation", () => {
 
     const orchestrator = createOrchestrator(page, {
       qualityThreshold: 70,
-      maxExplorationDepth: 5, // Deep exploration - modals within modals
+      maxExplorationDepth: 10, // Deep exploration - modals within modals
       // Skip login/signup modals - they are already tested separately in:
       // - tests/generated/login-flow.spec.ts
       // - tests/generated/signup-flow.spec.ts

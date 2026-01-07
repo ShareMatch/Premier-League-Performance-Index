@@ -650,7 +650,7 @@ const App: React.FC = () => {
       warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
       enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
-      <div className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
+      <div data-testid="app-container" className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
         {/* Top Bar - Full Width */}
         <TopBar
           wallet={wallet}

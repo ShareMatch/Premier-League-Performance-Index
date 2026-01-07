@@ -151,7 +151,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
   if (displayedQuestions.length === 0) return null;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div data-testid="hot-questions" className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
           <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A651]" />
@@ -250,6 +250,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
           <button
             onClick={() => setExpanded(!expanded)}
             className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
+            data-testid="hot-questions-view-more"
           >
             <span>{expanded ? 'View Less' : 'View More'}</span>
             <svg
