@@ -5,10 +5,13 @@ import { getMarketInfo } from '../lib/marketInfo';
 interface HeaderProps {
   title: string;
   market: string; // e.g., 'EPL', 'F1', 'UCL', etc.
+  seasonStartDate?: string; // From Supabase market_index_seasons.start_date
+  seasonEndDate?: string;   // From Supabase market_index_seasons.end_date
+  seasonStage?: string;     // 'open' | 'closed' | 'settled'
 }
 
-const Header: React.FC<HeaderProps> = ({ title, market }) => {
-  const marketInfo = getMarketInfo(market);
+const Header: React.FC<HeaderProps> = ({ title, market, seasonStartDate, seasonEndDate, seasonStage }) => {
+  const marketInfo = getMarketInfo(market, seasonStartDate, seasonEndDate, seasonStage);
 
   return (
     <div className="flex items-center justify-between py-3 sm:py-4">

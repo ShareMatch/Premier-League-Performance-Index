@@ -1,0 +1,413 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - img "ShareMatch" [ref=e6]
+    - generic [ref=e8]:
+      - img
+      - textbox "Find assets and indices..." [ref=e9]
+      - button [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+    - generic [ref=e14]:
+      - generic [ref=e16]: Jan 6, 2026, 23:57:54
+      - generic [ref=e17]:
+        - button "Log In" [ref=e18] [cursor=pointer]
+        - button "Join Now" [ref=e19] [cursor=pointer]
+  - button "ShareMatch AI Analytics Engine PREMIUM" [ref=e21] [cursor=pointer]:
+    - generic [ref=e23]:
+      - img "ShareMatch" [ref=e24]
+      - generic [ref=e26]:
+        - generic [ref=e27]: AI Analytics Engine
+        - generic [ref=e28]: PREMIUM
+        - img [ref=e29]
+  - generic [ref=e32]:
+    - navigation [ref=e34]:
+      - generic [ref=e35]:
+        - button "Home" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - img [ref=e39]
+            - generic [ref=e42]: Home
+        - generic [ref=e43]:
+          - button "Sports" [ref=e44] [cursor=pointer]:
+            - generic [ref=e45]:
+              - img [ref=e46]
+              - generic [ref=e52]: Sports
+            - img [ref=e53]
+          - generic [ref=e55]:
+            - generic [ref=e56]:
+              - button "Football" [ref=e57] [cursor=pointer]:
+                - generic [ref=e59]: Football
+                - img [ref=e60]
+              - generic [ref=e62]:
+                - button "England Premier League" [ref=e63] [cursor=pointer]:
+                  - generic [ref=e65]: England Premier League
+                - button "Saudi Pro League" [ref=e66] [cursor=pointer]:
+                  - generic [ref=e68]: Saudi Pro League
+                - button "UEFA Champions League" [ref=e69] [cursor=pointer]:
+                  - generic [ref=e71]: UEFA Champions League
+                - button "FIFA World Cup" [ref=e72] [cursor=pointer]:
+                  - generic [ref=e74]: FIFA World Cup
+                - button "Indonesia Super League" [ref=e75] [cursor=pointer]:
+                  - generic [ref=e77]: Indonesia Super League
+            - button "Motorsport" [ref=e79] [cursor=pointer]:
+              - generic [ref=e81]: Motorsport
+              - img [ref=e82]
+            - button "Basketball" [ref=e85] [cursor=pointer]:
+              - generic [ref=e87]: Basketball
+              - img [ref=e88]
+            - button "American Football" [ref=e91] [cursor=pointer]:
+              - generic [ref=e93]: American Football
+              - img [ref=e94]
+            - button "Golf SOON" [disabled] [ref=e97]:
+              - generic [ref=e98]:
+                - generic [ref=e99]: Golf
+                - generic [ref=e100]: SOON
+            - button "Cricket" [ref=e102] [cursor=pointer]:
+              - generic [ref=e104]: Cricket
+              - img [ref=e105]
+        - button "E-Sports SOON" [ref=e108] [cursor=pointer]:
+          - generic [ref=e109]:
+            - img [ref=e110]
+            - generic [ref=e112]: E-Sports
+            - generic [ref=e113]: SOON
+        - button "Global Events" [ref=e115] [cursor=pointer]:
+          - generic [ref=e116]:
+            - img [ref=e117]
+            - generic [ref=e120]: Global Events
+          - img [ref=e121]
+      - button "Help Center" [ref=e124] [cursor=pointer]:
+        - img [ref=e125]
+        - generic [ref=e128]: Help Center
+    - generic [ref=e129]:
+      - generic [ref=e132]:
+        - generic [ref=e134]:
+          - generic [ref=e136]:
+            - heading "Trending Markets" [level=2] [ref=e138]:
+              - img [ref=e139]
+              - generic [ref=e142]: Trending Markets
+              - img [ref=e143]
+            - generic [ref=e145]:
+              - generic [ref=e147] [cursor=pointer]:
+                - generic [ref=e148]:
+                  - generic [ref=e149]:
+                    - generic [ref=e150]:
+                      - img [ref=e151]
+                      - generic [ref=e157]: UCL
+                    - generic [ref=e158]: "Vol: £114K"
+                  - generic [ref=e159]:
+                    - generic [ref=e160]: Market Open
+                    - button "More information" [ref=e161]:
+                      - generic [ref=e162]: i
+                - heading "Will Barcelona Top the UCL Index?" [level=3] [ref=e163]
+                - generic [ref=e164]:
+                  - button "Buy $10.50" [ref=e165]:
+                    - generic [ref=e166]: Buy
+                    - generic [ref=e167]: $10.50
+                  - button "Sell $9.50" [ref=e168]:
+                    - generic [ref=e169]: Sell
+                    - generic [ref=e170]: $9.50
+              - generic [ref=e172] [cursor=pointer]:
+                - generic [ref=e173]:
+                  - generic [ref=e174]:
+                    - generic [ref=e175]:
+                      - img [ref=e176]
+                      - generic [ref=e182]: UCL
+                    - generic [ref=e183]: "Vol: £9.8M"
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: Market Open
+                    - button "More information" [ref=e186]:
+                      - generic [ref=e187]: i
+                - heading "Will Man City Top the UCL Index?" [level=3] [ref=e188]
+                - generic [ref=e189]:
+                  - button "Buy $15.00" [ref=e190]:
+                    - generic [ref=e191]: Buy
+                    - generic [ref=e192]: $15.00
+                  - button "Sell $13.60" [ref=e193]:
+                    - generic [ref=e194]: Sell
+                    - generic [ref=e195]: $13.60
+              - generic [ref=e197] [cursor=pointer]:
+                - generic [ref=e198]:
+                  - generic [ref=e199]:
+                    - generic [ref=e200]:
+                      - img [ref=e201]
+                      - generic [ref=e207]: UCL
+                    - generic [ref=e208]: "Vol: £351K"
+                  - generic [ref=e209]:
+                    - generic [ref=e210]: Market Open
+                    - button "More information" [ref=e211]:
+                      - generic [ref=e212]: i
+                - heading "Will Bayern Munich Top the UCL Index?" [level=3] [ref=e213]
+                - generic [ref=e214]:
+                  - button "Buy $19.10" [ref=e215]:
+                    - generic [ref=e216]: Buy
+                    - generic [ref=e217]: $19.10
+                  - button "Sell $17.30" [ref=e218]:
+                    - generic [ref=e219]: Sell
+                    - generic [ref=e220]: $17.30
+            - button "View More" [ref=e222] [cursor=pointer]:
+              - generic [ref=e223]: View More
+              - img [ref=e224]
+          - generic [ref=e226]:
+            - heading "ShareMatch News Wire" [level=2] [ref=e228]
+            - generic [ref=e231]:
+              - generic [ref=e232] [cursor=pointer]:
+                - paragraph [ref=e233]: A'ja Wilson is The Sporting News 2025 Female Athlete of the Year.
+                - generic [ref=e234]:
+                  - generic [ref=e235]: Sporting News
+                  - generic [ref=e236]: 20d ago
+              - generic [ref=e237] [cursor=pointer]:
+                - paragraph [ref=e238]: Why did Terence Crawford retire? Explaining boxing legend's decision to leave sport after Canelo Alvarez.
+                - generic [ref=e239]:
+                  - generic [ref=e240]: Sporting News
+                  - generic [ref=e241]: 20d ago
+              - generic [ref=e242] [cursor=pointer]:
+                - paragraph [ref=e243]: Skate Canada to stop holding major events in Alberta, cites new transgender legislation.
+                - generic [ref=e244]:
+                  - generic [ref=e245]: CBC Sports
+                  - generic [ref=e246]: 20d ago
+              - generic [ref=e247] [cursor=pointer]:
+                - paragraph [ref=e248]: Titans' injury list grows longer with trio of safeties placed on injured reserve.
+                - generic [ref=e249]:
+                  - generic [ref=e250]: AP News
+                  - generic [ref=e251]: 20d ago
+              - generic [ref=e252] [cursor=pointer]:
+                - paragraph [ref=e253]: Chelsea reaches English League Cup semifinals as subs make difference in win over 3rd-tier Cardiff.
+                - generic [ref=e254]:
+                  - generic [ref=e255]: AP News
+                  - generic [ref=e256]: 20d ago
+        - generic [ref=e259]:
+          - generic [ref=e260] [cursor=pointer]:
+            - img "West Ham" [ref=e261]
+            - generic [ref=e262]: West Ham
+            - generic [ref=e263]: Buy
+            - generic [ref=e264]: $0.2
+          - generic [ref=e265] [cursor=pointer]:
+            - img "Club Brugge" [ref=e266]
+            - generic [ref=e267]: Club Brugge
+            - generic [ref=e268]: Buy
+            - generic [ref=e269]: $0.2
+          - generic [ref=e270] [cursor=pointer]:
+            - img "Paraguay" [ref=e271]
+            - generic [ref=e272]: Paraguay
+            - generic [ref=e273]: Buy
+            - generic [ref=e274]: $0.2
+          - generic [ref=e275] [cursor=pointer]:
+            - img "Al Najma" [ref=e276]
+            - generic [ref=e277]: Al Najma
+            - generic [ref=e278]: Buy
+            - generic [ref=e279]: $0.2
+          - generic [ref=e280] [cursor=pointer]:
+            - img "Oklahoma City Thunder" [ref=e281]
+            - generic [ref=e282]: Oklahoma City Thunder
+            - generic [ref=e283]: Buy
+            - generic [ref=e284]: $44.7
+          - generic [ref=e285] [cursor=pointer]:
+            - img "San Francisco 49ers" [ref=e286]
+            - generic [ref=e287]: San Francisco 49ers
+            - generic [ref=e288]: Buy
+            - generic [ref=e289]: $4.0
+          - generic [ref=e290] [cursor=pointer]:
+            - img "India" [ref=e291]
+            - generic [ref=e292]: India
+            - generic [ref=e293]: Buy
+            - generic [ref=e294]: $44.1
+          - generic [ref=e295] [cursor=pointer]:
+            - img "Arema" [ref=e296]
+            - generic [ref=e297]: Arema
+            - generic [ref=e298]: Buy
+            - generic [ref=e299]: $0.2
+          - generic [ref=e300] [cursor=pointer]:
+            - img "Burnley" [ref=e301]
+            - generic [ref=e302]: Burnley
+            - generic [ref=e303]: Buy
+            - generic [ref=e304]: $0.2
+          - generic [ref=e305] [cursor=pointer]:
+            - img "Chelsea" [ref=e306]
+            - generic [ref=e307]: Chelsea
+            - generic [ref=e308]: Buy
+            - generic [ref=e309]: $5.5
+          - generic [ref=e310] [cursor=pointer]:
+            - img "Colombia" [ref=e311]
+            - generic [ref=e312]: Colombia
+            - generic [ref=e313]: Buy
+            - generic [ref=e314]: $2.1
+          - generic [ref=e315] [cursor=pointer]:
+            - img "Neom SC" [ref=e316]
+            - generic [ref=e317]: Neom SC
+            - generic [ref=e318]: Buy
+            - generic [ref=e319]: $0.2
+          - generic [ref=e320] [cursor=pointer]:
+            - img "Atlanta Hawks" [ref=e321]
+            - generic [ref=e322]: Atlanta Hawks
+            - generic [ref=e323]: Buy
+            - generic [ref=e324]: $2.1
+          - generic [ref=e325] [cursor=pointer]:
+            - img "Kansas City Chiefs" [ref=e326]
+            - generic [ref=e327]: Kansas City Chiefs
+            - generic [ref=e328]: Buy
+            - generic [ref=e329]: $6.2
+          - generic [ref=e330] [cursor=pointer]:
+            - img "West Indies" [ref=e331]
+            - generic [ref=e332]: West Indies
+            - generic [ref=e333]: Buy
+            - generic [ref=e334]: $5.0
+          - generic [ref=e335] [cursor=pointer]:
+            - img "Persita Tangerang" [ref=e336]
+            - generic [ref=e337]: Persita Tangerang
+            - generic [ref=e338]: Buy
+            - generic [ref=e339]: $0.2
+          - generic [ref=e340] [cursor=pointer]:
+            - img "Wolves" [ref=e341]
+            - generic [ref=e342]: Wolves
+            - generic [ref=e343]: Buy
+            - generic [ref=e344]: $0.2
+          - generic [ref=e345] [cursor=pointer]:
+            - img "Arsenal" [ref=e346]
+            - generic [ref=e347]: Arsenal
+            - generic [ref=e348]: Buy
+            - generic [ref=e349]: $23.3
+          - generic [ref=e350] [cursor=pointer]:
+            - img "Jordan" [ref=e351]
+            - generic [ref=e352]: Jordan
+            - generic [ref=e353]: Buy
+            - generic [ref=e354]: $0.2
+          - generic [ref=e355] [cursor=pointer]:
+            - img "Al Ahli Jeddah" [ref=e356]
+            - generic [ref=e357]: Al Ahli Jeddah
+            - generic [ref=e358]: Buy
+            - generic [ref=e359]: $10.5
+          - generic [ref=e360] [cursor=pointer]:
+            - img "West Ham" [ref=e361]
+            - generic [ref=e362]: West Ham
+            - generic [ref=e363]: Buy
+            - generic [ref=e364]: $0.2
+          - generic [ref=e365] [cursor=pointer]:
+            - img "Club Brugge" [ref=e366]
+            - generic [ref=e367]: Club Brugge
+            - generic [ref=e368]: Buy
+            - generic [ref=e369]: $0.2
+          - generic [ref=e370] [cursor=pointer]:
+            - img "Paraguay" [ref=e371]
+            - generic [ref=e372]: Paraguay
+            - generic [ref=e373]: Buy
+            - generic [ref=e374]: $0.2
+          - generic [ref=e375] [cursor=pointer]:
+            - img "Al Najma" [ref=e376]
+            - generic [ref=e377]: Al Najma
+            - generic [ref=e378]: Buy
+            - generic [ref=e379]: $0.2
+          - generic [ref=e380] [cursor=pointer]:
+            - img "Oklahoma City Thunder" [ref=e381]
+            - generic [ref=e382]: Oklahoma City Thunder
+            - generic [ref=e383]: Buy
+            - generic [ref=e384]: $44.7
+          - generic [ref=e385] [cursor=pointer]:
+            - img "San Francisco 49ers" [ref=e386]
+            - generic [ref=e387]: San Francisco 49ers
+            - generic [ref=e388]: Buy
+            - generic [ref=e389]: $4.0
+          - generic [ref=e390] [cursor=pointer]:
+            - img "India" [ref=e391]
+            - generic [ref=e392]: India
+            - generic [ref=e393]: Buy
+            - generic [ref=e394]: $44.1
+          - generic [ref=e395] [cursor=pointer]:
+            - img "Arema" [ref=e396]
+            - generic [ref=e397]: Arema
+            - generic [ref=e398]: Buy
+            - generic [ref=e399]: $0.2
+          - generic [ref=e400] [cursor=pointer]:
+            - img "Burnley" [ref=e401]
+            - generic [ref=e402]: Burnley
+            - generic [ref=e403]: Buy
+            - generic [ref=e404]: $0.2
+          - generic [ref=e405] [cursor=pointer]:
+            - img "Chelsea" [ref=e406]
+            - generic [ref=e407]: Chelsea
+            - generic [ref=e408]: Buy
+            - generic [ref=e409]: $5.5
+          - generic [ref=e410] [cursor=pointer]:
+            - img "Colombia" [ref=e411]
+            - generic [ref=e412]: Colombia
+            - generic [ref=e413]: Buy
+            - generic [ref=e414]: $2.1
+          - generic [ref=e415] [cursor=pointer]:
+            - img "Neom SC" [ref=e416]
+            - generic [ref=e417]: Neom SC
+            - generic [ref=e418]: Buy
+            - generic [ref=e419]: $0.2
+          - generic [ref=e420] [cursor=pointer]:
+            - img "Atlanta Hawks" [ref=e421]
+            - generic [ref=e422]: Atlanta Hawks
+            - generic [ref=e423]: Buy
+            - generic [ref=e424]: $2.1
+          - generic [ref=e425] [cursor=pointer]:
+            - img "Kansas City Chiefs" [ref=e426]
+            - generic [ref=e427]: Kansas City Chiefs
+            - generic [ref=e428]: Buy
+            - generic [ref=e429]: $6.2
+          - generic [ref=e430] [cursor=pointer]:
+            - img "West Indies" [ref=e431]
+            - generic [ref=e432]: West Indies
+            - generic [ref=e433]: Buy
+            - generic [ref=e434]: $5.0
+          - generic [ref=e435] [cursor=pointer]:
+            - img "Persita Tangerang" [ref=e436]
+            - generic [ref=e437]: Persita Tangerang
+            - generic [ref=e438]: Buy
+            - generic [ref=e439]: $0.2
+          - generic [ref=e440] [cursor=pointer]:
+            - img "Wolves" [ref=e441]
+            - generic [ref=e442]: Wolves
+            - generic [ref=e443]: Buy
+            - generic [ref=e444]: $0.2
+          - generic [ref=e445] [cursor=pointer]:
+            - img "Arsenal" [ref=e446]
+            - generic [ref=e447]: Arsenal
+            - generic [ref=e448]: Buy
+            - generic [ref=e449]: $23.3
+          - generic [ref=e450] [cursor=pointer]:
+            - img "Jordan" [ref=e451]
+            - generic [ref=e452]: Jordan
+            - generic [ref=e453]: Buy
+            - generic [ref=e454]: $0.2
+          - generic [ref=e455] [cursor=pointer]:
+            - img "Al Ahli Jeddah" [ref=e456]
+            - generic [ref=e457]: Al Ahli Jeddah
+            - generic [ref=e458]: Buy
+            - generic [ref=e459]: $10.5
+      - generic [ref=e462]:
+        - generic [ref=e463]:
+          - button "Portfolio" [ref=e464] [cursor=pointer]:
+            - img [ref=e465]
+            - text: Portfolio
+          - button "History" [ref=e467] [cursor=pointer]:
+            - img [ref=e468]
+            - text: History
+        - generic [ref=e472]:
+          - generic [ref=e473]:
+            - heading "Your Portfolio" [level=2] [ref=e474]: Your Portfolio
+            - paragraph [ref=e476]: Values reflect potential sell price (realisable value)
+          - generic [ref=e478]: No active positions
+  - generic [ref=e480]:
+    - generic [ref=e481]:
+      - heading "Portfolio & History" [level=2] [ref=e482]
+      - button [ref=e483] [cursor=pointer]:
+        - img [ref=e484]
+    - generic [ref=e487]:
+      - generic [ref=e488]:
+        - button "Portfolio" [ref=e489] [cursor=pointer]:
+          - img [ref=e490]
+          - text: Portfolio
+        - button "History" [ref=e492] [cursor=pointer]:
+          - img [ref=e493]
+          - text: History
+      - generic [ref=e497]:
+        - generic [ref=e498]:
+          - heading "Your Portfolio" [level=2] [ref=e499]: Your Portfolio
+          - paragraph [ref=e501]: Values reflect potential sell price (realisable value)
+        - generic [ref=e503]: No active positions
+  - button "Open AI Chat" [ref=e504] [cursor=pointer]:
+    - img [ref=e505]
+```

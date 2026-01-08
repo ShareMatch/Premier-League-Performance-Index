@@ -447,6 +447,7 @@ export const WhatsAppVerificationModal: React.FC<
 
       {/* Modal Content */}
       <div
+        data-testid="whatsapp-verification-modal"
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
         style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
@@ -454,6 +455,7 @@ export const WhatsAppVerificationModal: React.FC<
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+          data-testid="whatsapp-verification-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -492,6 +494,7 @@ export const WhatsAppVerificationModal: React.FC<
                 <button
                   onClick={onEditPhone}
                   className="text-xs transition-colors font-sans"
+                  data-testid="whatsapp-verification-edit-phone"
                 >
                   <span className="text-white/60">Wrong Number?</span>{" "}
                   <span className="text-white hover:text-white/80 underline">
@@ -540,6 +543,7 @@ export const WhatsAppVerificationModal: React.FC<
                     ? "text-white/40 cursor-not-allowed"
                     : "text-white hover:text-white/80 cursor-pointer"
                 }`}
+                data-testid="whatsapp-verification-resend-button"
               >
                 Resend
               </button>
@@ -556,6 +560,7 @@ export const WhatsAppVerificationModal: React.FC<
                     ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
                     : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
+                data-testid="whatsapp-verification-submit-button"
               >
                 {status === "verifying" ? "Verifying..." : "Verify"}
                 {status !== "verifying" && (

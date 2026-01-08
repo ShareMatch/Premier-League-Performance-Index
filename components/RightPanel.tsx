@@ -39,6 +39,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
+      data-testid="right-panel"
       className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
         }`}
     >
@@ -85,6 +86,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
               ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
               : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               }`}
+            data-testid="right-panel-portfolio-tab"
           >
             <Activity className="w-4 h-4" />
             Portfolio
@@ -95,6 +97,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
               ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
               : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               }`}
+            data-testid="right-panel-history-tab"
           >
             <History className="w-4 h-4" />
             History

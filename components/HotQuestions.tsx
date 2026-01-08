@@ -1,13 +1,18 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Team, League } from '../types';
-import { TrendingUp, Trophy, Flag, Activity, Zap } from 'lucide-react';
-import InfoPopup from './InfoPopup';
-import { getMarketInfo } from '../lib/marketInfo';
+import React, { useMemo, useState, useEffect } from "react";
+import { Team, League } from "../types";
+import { Rocket, Trophy, Flag, Activity, ChevronRight } from "lucide-react";
+import { getMarketInfo } from "../lib/marketInfo";
+import { SeasonDates } from "../lib/api";
 
 interface HotQuestionsProps {
   teams: Team[];
   onNavigate: (league: League) => void;
   onViewAsset?: (asset: Team) => void;
+  seasonDatesMap?: Map<string, SeasonDates>;
+  limit?: number;
+  showHeader?: boolean;
+  enableAnimation?: boolean;
+  isLoading?: boolean;
 }
 
 interface Question {
@@ -23,45 +28,69 @@ interface Question {
   team: Team;
 }
 
-const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAsset }) => {
+const HotQuestions: React.FC<HotQuestionsProps> = ({
+  teams,
+  onNavigate,
+  onViewAsset,
+  seasonDatesMap,
+  limit = 3,
+  showHeader = true,
+  enableAnimation = true,
+  isLoading = false,
+}) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
+
+  // ... (useMemo logic is unchanged, skipping for brevity in replacement if possible, but safer to replace block) 
 
   // Create a pool of ALL valid questions
   const questionPool = useMemo(() => {
     // 1. Filter active teams, price > $5.00, and OPEN markets
-    const activeTeams = teams.filter(t => {
+    const activeTeams = teams.filter((t) => {
       if (t.is_settled) return false;
-      if (t.offer <= 5.00) return false;
+      if (t.offer <= 5.0) return false;
 
-      const marketInfo = getMarketInfo(t.market as League);
+      const seasonData = seasonDatesMap?.get(t.market || "");
+      const marketInfo = getMarketInfo(
+        t.market as League,
+        seasonData?.start_date,
+        seasonData?.end_date,
+        seasonData?.stage || undefined,
+      );
       return marketInfo.isOpen;
     });
 
     const markets = {
-      EPL: activeTeams.filter(t => t.market === 'EPL'),
-      UCL: activeTeams.filter(t => t.market === 'UCL'),
-      SPL: activeTeams.filter(t => t.market === 'SPL'),
-      F1: activeTeams.filter(t => t.market === 'F1'),
-      WC: activeTeams.filter(t => t.market === 'WC'),
-      NBA: activeTeams.filter(t => t.market === 'NBA'),
-      NFL: activeTeams.filter(t => t.market === 'NFL'),
+      EPL: activeTeams.filter((t) => t.market === "EPL"),
+      UCL: activeTeams.filter((t) => t.market === "UCL"),
+      SPL: activeTeams.filter((t) => t.market === "SPL"),
+      F1: activeTeams.filter((t) => t.market === "F1"),
+      WC: activeTeams.filter((t) => t.market === "WC"),
+      NBA: activeTeams.filter((t) => t.market === "NBA"),
+      NFL: activeTeams.filter((t) => t.market === "NFL"),
     };
 
     const generated: Question[] = [];
 
     // Helper to generate questions
-    const addQuestions = (leagueTeams: Team[], market: League, icon: React.ReactNode, color: string, border: string) => {
-      // Create questions for multiple top teams to fill the pool
-      // Sort by price descending to get "hottest" assets
-      const sorted = [...leagueTeams].sort((a, b) => b.offer - a.offer).slice(0, 5);
+    const addQuestions = (
+      leagueTeams: Team[],
+      market: League,
+      icon: React.ReactNode,
+      color: string,
+      border: string,
+    ) => {
+      const sorted = [...leagueTeams]
+        .sort((a, b) => b.offer - a.offer)
+        .slice(0, 5);
 
       sorted.forEach((team, idx) => {
-        // Calculate dynamic volume (mock) based on price
         const validId = parseInt(team.id) || team.name.length;
         const volNum = (team.offer * (10000 + validId * 100)) / 1000;
-        const volStr = volNum > 1000 ? `£${(volNum / 1000).toFixed(1)}M` : `£${volNum.toFixed(0)}K`;
+        const volStr =
+          volNum > 1000
+            ? `$${(volNum / 1000).toFixed(1)}M`
+            : `$${volNum.toFixed(0)}K`;
 
         generated.push({
           id: `${market.toLowerCase()}-${team.id}`,
@@ -73,95 +102,180 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
           icon: icon,
           color: color,
           borderColor: border,
-          team: team
+          team: team,
         });
       });
     };
 
     // Generate for all markets
-    if (markets.EPL.length > 0) addQuestions(markets.EPL, 'EPL', <Trophy className="w-5 h-5 text-purple-400" />, 'from-purple-500/20 to-blue-500/20', 'group-hover:border-purple-500/50');
-    if (markets.F1.length > 0) addQuestions(markets.F1, 'F1', <Flag className="w-5 h-5 text-red-400" />, 'from-red-500/20 to-orange-500/20', 'group-hover:border-red-500/50');
-    if (markets.SPL.length > 0) addQuestions(markets.SPL, 'SPL', <Activity className="w-5 h-5 text-green-400" />, 'from-green-500/20 to-emerald-500/20', 'group-hover:border-green-500/50');
-    if (markets.UCL.length > 0) addQuestions(markets.UCL, 'UCL', <Trophy className="w-5 h-5 text-blue-400" />, 'from-blue-600/20 to-indigo-600/20', 'group-hover:border-blue-500/50');
-    if (markets.NBA.length > 0) addQuestions(markets.NBA, 'NBA', <Activity className="w-5 h-5 text-orange-400" />, 'from-orange-500/20 to-amber-500/20', 'group-hover:border-orange-500/50');
-    if (markets.NFL.length > 0) addQuestions(markets.NFL, 'NFL', <Trophy className="w-5 h-5 text-blue-800" />, 'from-blue-800/20 to-blue-900/20', 'group-hover:border-blue-800/50');
+    if (markets.EPL.length > 0)
+      addQuestions(
+        markets.EPL,
+        "EPL",
+        <Trophy className="w-3 h-3 text-purple-400" />,
+        "from-purple-500/20 to-blue-500/20",
+        "group-hover:border-purple-500/50",
+      );
+    if (markets.F1.length > 0)
+      addQuestions(
+        markets.F1,
+        "F1",
+        <Flag className="w-3 h-3 text-red-400" />,
+        "from-red-500/20 to-orange-500/20",
+        "group-hover:border-red-500/50",
+      );
+    if (markets.SPL.length > 0)
+      addQuestions(
+        markets.SPL,
+        "SPL",
+        <Activity className="w-3 h-3 text-green-400" />,
+        "from-green-500/20 to-emerald-500/20",
+        "group-hover:border-green-500/50",
+      );
+    if (markets.UCL.length > 0)
+      addQuestions(
+        markets.UCL,
+        "UCL",
+        <Trophy className="w-3 h-3 text-blue-400" />,
+        "from-blue-600/20 to-indigo-600/20",
+        "group-hover:border-blue-500/50",
+      );
+    if (markets.NBA.length > 0)
+      addQuestions(
+        markets.NBA,
+        "NBA",
+        <Activity className="w-3 h-3 text-orange-400" />,
+        "from-orange-500/20 to-amber-500/20",
+        "group-hover:border-orange-500/50",
+      );
+    if (markets.NFL.length > 0)
+      addQuestions(
+        markets.NFL,
+        "NFL",
+        <Trophy className="w-3 h-3 text-blue-800" />,
+        "from-blue-800/20 to-blue-900/20",
+        "group-hover:border-blue-800/50",
+      );
 
-    // Shuffle full pool
     return generated.sort(() => 0.5 - Math.random());
-  }, [teams]);
+  }, [teams, seasonDatesMap]);
 
   // Initial load
   useEffect(() => {
-    if (questionPool.length > 0 && displayedQuestions.length === 0) {
-      setDisplayedQuestions(questionPool.slice(0, 3));
+    if (questionPool.length > 0) {
+      // If limit is provided (and > 0), slice. Otherwise show all.
+      const questionsToShow = (limit && limit > 0)
+        ? questionPool.slice(0, limit)
+        : questionPool;
+      setDisplayedQuestions(questionsToShow);
     }
-  }, [questionPool]);
+  }, [questionPool, limit]);
 
-  // Dynamic Update Interval - only when collapsed
+  // Dynamic Update Interval - only if animation enabled and limited
   useEffect(() => {
-    if (questionPool.length <= 3 || expanded) return; // No rotation when expanded or not enough items
+    if (!enableAnimation || !limit || questionPool.length <= limit) return;
 
     const scheduleNextUpdate = () => {
-      // Random delay between 3s and 5s
       const delay = Math.floor(Math.random() * 2000) + 3000;
 
       return setTimeout(() => {
-        // Pick random slot to update (0, 1, or 2)
-        const slotToUpdate = Math.floor(Math.random() * 3);
-
-        // Pick new question that isn't currently displayed
-        const currentIds = displayedQuestions.map(q => q?.id);
-        const available = questionPool.filter(q => !currentIds.includes(q.id));
+        const slotToUpdate = Math.floor(Math.random() * limit);
+        const currentIds = displayedQuestions.map((q) => q?.id);
+        const available = questionPool.filter(
+          (q) => !currentIds.includes(q.id),
+        );
 
         if (available.length > 0) {
-          const nextQuestion = available[Math.floor(Math.random() * available.length)];
-
+          const nextQuestion =
+            available[Math.floor(Math.random() * available.length)];
           setAnimatingCard(slotToUpdate);
 
-          // Slight delay to sync with animation start if needed, or immediate
-          setDisplayedQuestions(prev => {
+          setDisplayedQuestions((prev) => {
             const next = [...prev];
             next[slotToUpdate] = nextQuestion;
             return next;
           });
 
-          // Reset animation state after pop fits
           setTimeout(() => setAnimatingCard(null), 600);
         }
 
-        // Reschedule
         timerRef.current = scheduleNextUpdate();
       }, delay);
     };
 
     let timerRef = { current: scheduleNextUpdate() };
-
     return () => clearTimeout(timerRef.current);
-  }, [questionPool, displayedQuestions, expanded]);
+  }, [questionPool, displayedQuestions, enableAnimation, limit]);
 
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {showHeader && (
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                New Markets
+              </span>
+            </h2>
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
+          {Array.from({ length: limit || 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 h-[180px] animate-pulse flex flex-col justify-between"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center gap-2">
+                    <div className="w-12 h-5 bg-gray-700/50 rounded-full" />
+                    <div className="w-8 h-3 bg-gray-700/30 rounded" />
+                  </div>
+                  <div className="w-full h-10 bg-gray-700/30 rounded-lg mt-2" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-auto">
+                <div className="h-10 bg-emerald-900/20 rounded-lg border border-emerald-900/30" />
+                <div className="h-10 bg-red-900/10 rounded-lg border border-red-900/20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (displayedQuestions.length === 0) return null;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-[#00A651]" />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Trending Markets
-          </span>
-          <Zap className="w-4 h-4 text-yellow-400 animate-pulse ml-1" fill="currentColor" />
-        </h2>
-      </div>
+    <div data-testid="hot-questions" className="space-y-3">
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              New Markets
+            </span>
+          </h2>
+
+          <button
+            onClick={() => onNavigate("NEW_MARKETS")}
+            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+          >
+            View All <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
-        {(expanded ? questionPool : displayedQuestions).map((q, index) => {
-          if (!q) return null; // Guard against race conditions (rare)
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
+        {displayedQuestions.map((q, index) => {
+          if (!q) return null;
 
           return (
             <div
-              key={`${q.id}-${index}`} // Key change triggers React re-render, but we manage animation via class
+              key={`${q.id}-${index}`}
               onClick={() => {
                 if (onViewAsset) {
                   onViewAsset(q.team);
@@ -170,58 +284,77 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
                 }
               }}
               className={`
-                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-3 sm:p-5 cursor-pointer 
+                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${!expanded && animatingCard === index ? 'animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800' : ''}
+                ${animatingCard === index
+                  ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
+                  : ""
+                }
               `}
             >
               {/* Gradient Background Effect */}
-              <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+              <div
+                className={`absolute inset-0 rounded-xl bg-gradient-to-br ${q.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`}
+              />
 
               <div className="relative z-10 flex flex-col h-full">
                 {/* Header - horizontal layout on mobile */}
-                <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900/60 rounded-full px-2 sm:px-3 py-1 border border-gray-700/50">
+                <div className="flex flex-wrap justify-between items-start gap-1.5 mb-2">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-1 sm:gap-1.5 bg-gray-900/60 rounded-full px-1.5 sm:px-2 py-0.5 border border-gray-700/50">
                       {q.icon}
-                      <span className="text-[10px] sm:text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
+                      <span className="text-[9px] sm:text-[10px] font-medium text-gray-300 whitespace-nowrap">
+                        {q.market}
+                      </span>
                     </div>
-                    <span className="text-[10px] sm:text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono pl-1">
+                      Vol: {q.volume}
+                    </span>
                   </div>
                   {(() => {
-                    const info = getMarketInfo(q.market);
+                    const seasonData = seasonDatesMap?.get(q.market);
+                    const info = getMarketInfo(
+                      q.market,
+                      seasonData?.start_date,
+                      seasonData?.end_date,
+                      seasonData?.stage || undefined,
+                    );
                     return (
-                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                        <span className={`px-1 sm:px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                          ? 'bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse'
-                          : 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                          }`}>
-                          {info.isOpen ? 'Market Open' : 'Market Closed'}
-                        </span>
-                        <InfoPopup
-                          title={info.title}
-                          content={info.content}
-                          seasonDates={info.seasonDates}
-                          isMarketOpen={info.isOpen}
-                        />
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* <span
+                          className={`px-1 sm:px-1.5 py-0.5 text-[8px] font-bold rounded border whitespace-nowrap ${info.isOpen
+                            ? "bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse"
+                            : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                            }`}
+                        >
+                          {info.isOpen ? "OPEN" : "CLOSED"}
+                        </span> */}
                       </div>
                     );
                   })()}
                 </div>
 
-                <h3 className="text-sm sm:text-base font-semibold text-gray-100 mb-3 sm:mb-6 group-hover:text-white transition-colors leading-snug line-clamp-2">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-100 mb-2 sm:mb-3 group-hover:text-white transition-colors leading-snug line-clamp-2">
                   {q.question}
                 </h3>
 
-                <div className="mt-auto grid grid-cols-2 gap-2 sm:gap-3">
-                  <button className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1.5 sm:p-2 transition-all group/btn shadow-lg shadow-black/20">
-                    <span className="text-[8px] sm:text-[10px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">Buy</span>
-                    <span className="text-base sm:text-lg font-bold text-white">${q.yesPrice.toFixed(2)}</span>
+                <div className="mt-auto grid grid-cols-2 gap-1.5 sm:gap-2">
+                  <button className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1 sm:p-1.5 transition-all group/btn shadow-lg shadow-black/20">
+                    <span className="text-[8px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">
+                      Buy
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-white">
+                      ${q.yesPrice.toFixed(2)}
+                    </span>
                   </button>
-                  <button className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1.5 sm:p-2 transition-all group/btn">
-                    <span className="text-[8px] sm:text-[10px] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">Sell</span>
-                    <span className="text-base sm:text-lg font-bold text-red-400">${q.noPrice.toFixed(2)}</span>
+                  <button className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1 sm:p-1.5 transition-all group/btn">
+                    <span className="text-[8px] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">
+                      Sell
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-red-400">
+                      ${q.noPrice.toFixed(2)}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -229,26 +362,6 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
           );
         })}
       </div>
-
-      {/* View More / View Less button */}
-      {questionPool.length > 3 && (
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
-          >
-            <span>{expanded ? 'View Less' : 'View More'}</span>
-            <svg
-              className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,0 +1,180 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\affan\\Desktop\\Premier-League-Performance-Index\\playwright.config.ts",
+    "rootDir": "C:/Users/affan/Desktop/Premier-League-Performance-Index/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "audit-reports"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "audit-reports/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/affan/Desktop/Premier-League-Performance-Index/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/affan/Desktop/Premier-League-Performance-Index/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "agentic-v2.spec.ts",
+      "file": "agentic-v2.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Agentic Testing System v2",
+          "file": "agentic-v2.spec.ts",
+          "line": 47,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debug: what is on the page?",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5050,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n════════════════════════════════════════════════════════════\n"
+                        },
+                        {
+                          "text": "🚀 AGENTIC TESTING SYSTEM v2\n"
+                        },
+                        {
+                          "text": "   Based on: \"Agentic AI for Testing & Automation\"\n"
+                        },
+                        {
+                          "text": "════════════════════════════════════════════════════════════\n"
+                        },
+                        {
+                          "text": "Screenshot saved to debug-login.png\n"
+                        },
+                        {
+                          "text": "Page HTML length: \u001b[33m6292\u001b[39m\n"
+                        },
+                        {
+                          "text": "Page title: ShareMatch\n"
+                        },
+                        {
+                          "text": "Page URL: http://localhost:3000/?action=login\n"
+                        },
+                        {
+                          "text": "\n📊 Element counts:\n"
+                        },
+                        {
+                          "text": "  Divs: \u001b[33m1\u001b[39m\n"
+                        },
+                        {
+                          "text": "  Buttons: \u001b[33m0\u001b[39m\n"
+                        },
+                        {
+                          "text": "  Inputs: \u001b[33m0\u001b[39m\n"
+                        },
+                        {
+                          "text": "\n📦 Modal detection:\n"
+                        },
+                        {
+                          "text": "  [data-testid=\"login-modal\"]: \u001b[33m0\u001b[39m\n"
+                        },
+                        {
+                          "text": "  [role=\"dialog\"]: \u001b[33m0\u001b[39m\n"
+                        },
+                        {
+                          "text": "  [aria-modal=\"true\"]: \u001b[33m0\u001b[39m\n"
+                        },
+                        {
+                          "text": "\nBody text (first 200 chars): \n  \n  \n\n\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-06T19:37:43.849Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "53707cda5e0a0b91f4cc-863d3c24598d4ab058e1",
+              "file": "agentic-v2.spec.ts",
+              "line": 92,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-06T19:37:29.729Z",
+    "duration": 20770.089,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

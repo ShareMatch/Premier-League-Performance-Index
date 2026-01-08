@@ -192,6 +192,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       
       {/* Modal Content */}
       <div
+        data-testid="forgot-password-modal"
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
         style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
       >
@@ -199,6 +200,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         <button
           onClick={handleClose}
           className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors z-10"
+          data-testid="forgot-password-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -233,6 +235,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm transform active:scale-95'
                       : 'bg-gray-700/30 text-white/20 cursor-not-allowed'
                   }`}
+                  data-testid="forgot-password-resend-button"
                 >
                   {loading ? 'Sending...' : 'Resend Link'}
                 </button>
@@ -256,6 +259,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
+                data-testid="forgot-password-email-input"
               />
 
               {error && (
@@ -269,6 +273,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   type="button"
                   onClick={handleBackToLogin}
                   className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
+                  data-testid="forgot-password-back-to-login"
                 >
                   Login
                 </button>
@@ -276,6 +281,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   type="button"
                   onClick={onSwitchToSignUp}
                   className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
+                  data-testid="forgot-password-switch-to-signup"
                 >
                   Sign up
                 </button>
@@ -292,6 +298,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                     ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
                     : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
+                data-testid="forgot-password-submit-button"
               >
                 {loading ? "Sending..." : "Send Link"}
                 {!loading && (
