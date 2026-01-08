@@ -15,6 +15,12 @@ import AIAnalysis from "./components/AIAnalysis";
 const AIAnalyticsPage = React.lazy(
   () => import("./components/AIAnalyticsPage")
 );
+const AllMarketsPage = React.lazy(
+  () => import("./components/AllMarketsPage")
+);
+const NewMarketsPage = React.lazy(
+  () => import("./components/NewMarketsPage")
+);
 import {
   fetchWallet,
   fetchPortfolio,
@@ -330,9 +336,9 @@ const App: React.FC = () => {
             is_settled: ta.market_index_seasons.is_settled,
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                  "en-US",
-                  { month: "short", day: "numeric", year: "numeric" }
-                )
+                "en-US",
+                { month: "short", day: "numeric", year: "numeric" }
+              )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -426,6 +432,11 @@ const App: React.FC = () => {
     if (asset.market) {
       setActiveLeague(asset.market as League);
     }
+    // Save to recently viewed
+    import("./utils/recentlyViewed").then(({ saveRecentlyViewed }) => {
+      saveRecentlyViewed(asset);
+    });
+
     setIsMobileMenuOpen(false); // Close menu if open
     // Scroll to top
     window.scrollTo(0, 0);
@@ -510,7 +521,7 @@ const App: React.FC = () => {
         sessionId: "debug-session",
         hypothesisId: "H1-H2",
       }),
-    }).catch(() => {});
+    }).catch(() => { });
     // #endregion
     if (activeLeague === "HOME") {
       setTeams([]);
@@ -530,10 +541,10 @@ const App: React.FC = () => {
               filteredCount: filtered.length,
               firstTeamSeasonData: filtered[0]
                 ? {
-                    start: filtered[0].season_start_date,
-                    end: filtered[0].season_end_date,
-                    stage: filtered[0].season_stage,
-                  }
+                  start: filtered[0].season_start_date,
+                  end: filtered[0].season_end_date,
+                  stage: filtered[0].season_stage,
+                }
                 : null,
             },
             timestamp: Date.now(),
@@ -541,7 +552,7 @@ const App: React.FC = () => {
             hypothesisId: "H1",
           }),
         }
-      ).catch(() => {});
+      ).catch(() => { });
       // #endregion
       // Debug: Log filtered teams
       console.log(
@@ -742,6 +753,10 @@ const App: React.FC = () => {
         return "Home Dashboard";
       case "AI_ANALYTICS":
         return "AI Analytics Engine";
+      case "ALL_MARKETS":
+        return "All Markets";
+      case "NEW_MARKETS":
+        return "New Markets";
       default:
         return "ShareMatch Pro";
     }
@@ -850,7 +865,7 @@ const App: React.FC = () => {
                             hypothesisId: "H3",
                           }),
                         }
-                      ).catch(() => {});
+                      ).catch(() => { });
                       return null;
                     })()}
                     {/* #endregion */}
@@ -880,6 +895,35 @@ const App: React.FC = () => {
                         }
                       >
                         <AIAnalyticsPage teams={allAssets} />
+                      </React.Suspense>
+                    ) : activeLeague === "ALL_MARKETS" ? (
+                      <React.Suspense
+                        fallback={
+                          <div className="h-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                          </div>
+                        }
+                      >
+                        <AllMarketsPage
+                          teams={allAssets}
+                          onNavigate={handleNavigate}
+                          onViewAsset={handleViewAsset}
+                        />
+                      </React.Suspense>
+                    ) : activeLeague === "NEW_MARKETS" ? (
+                      <React.Suspense
+                        fallback={
+                          <div className="h-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                          </div>
+                        }
+                      >
+                        <NewMarketsPage
+                          teams={allAssets}
+                          onNavigate={handleNavigate}
+                          onViewAsset={handleViewAsset}
+                          seasonDatesMap={seasonDatesMap}
+                        />
                       </React.Suspense>
                     ) : (
                       /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
@@ -972,7 +1016,7 @@ const App: React.FC = () => {
               </div>
               {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
               <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
-                <Ticker onNavigate={handleNavigate} teams={allAssets} />
+                <Ticker onNavigate={handleNavigate} onViewAsset={handleViewAsset} teams={allAssets} />
               </div>
             </div>
 
@@ -1002,9 +1046,8 @@ const App: React.FC = () => {
         {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
         {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
         <div
-          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
-            showRightPanel ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <RightPanel
             portfolio={portfolio}
@@ -1073,22 +1116,22 @@ const App: React.FC = () => {
               userData={
                 user
                   ? {
-                      name: user.user_metadata?.full_name || "",
-                      email: user.email || "",
-                      phone: user.user_metadata?.phone || "",
-                      whatsapp: user.user_metadata?.whatsapp_phone || "",
-                      address: user.user_metadata?.address_line || "",
-                      // address2: user.user_metadata?.address_line_2 || '',
-                      city: user.user_metadata?.city || "",
-                      state: user.user_metadata?.region || "",
-                      country: user.user_metadata?.country || "",
-                      postCode: user.user_metadata?.postal_code || "",
-                      accountName: "",
-                      accountNumber: "",
-                      iban: "",
-                      swiftBic: "",
-                      bankName: "",
-                    }
+                    name: user.user_metadata?.full_name || "",
+                    email: user.email || "",
+                    phone: user.user_metadata?.phone || "",
+                    whatsapp: user.user_metadata?.whatsapp_phone || "",
+                    address: user.user_metadata?.address_line || "",
+                    // address2: user.user_metadata?.address_line_2 || '',
+                    city: user.user_metadata?.city || "",
+                    state: user.user_metadata?.region || "",
+                    country: user.user_metadata?.country || "",
+                    postCode: user.user_metadata?.postal_code || "",
+                    accountName: "",
+                    accountNumber: "",
+                    iban: "",
+                    swiftBic: "",
+                    bankName: "",
+                  }
                   : undefined
               }
               onSignOut={async () => {

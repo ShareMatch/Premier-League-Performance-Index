@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Team, League } from "../types";
-import { TrendingUp, Trophy, Flag, Activity, Zap } from "lucide-react";
+import { Rocket, Trophy, Flag, Activity, ChevronRight } from "lucide-react";
 import { getMarketInfo } from "../lib/marketInfo";
 import { SeasonDates } from "../lib/api";
 
@@ -9,6 +9,10 @@ interface HotQuestionsProps {
   onNavigate: (league: League) => void;
   onViewAsset?: (asset: Team) => void;
   seasonDatesMap?: Map<string, SeasonDates>;
+  limit?: number;
+  showHeader?: boolean;
+  enableAnimation?: boolean;
+  isLoading?: boolean;
 }
 
 interface Question {
@@ -29,10 +33,15 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   onNavigate,
   onViewAsset,
   seasonDatesMap,
+  limit = 3,
+  showHeader = true,
+  enableAnimation = true,
+  isLoading = false,
 }) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
+
+  // ... (useMemo logic is unchanged, skipping for brevity in replacement if possible, but safer to replace block) 
 
   // Create a pool of ALL valid questions
   const questionPool = useMemo(() => {
@@ -46,7 +55,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         t.market as League,
         seasonData?.start_date,
         seasonData?.end_date,
-        seasonData?.stage || undefined
+        seasonData?.stage || undefined,
       );
       return marketInfo.isOpen;
     });
@@ -69,7 +78,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
       market: League,
       icon: React.ReactNode,
       color: string,
-      border: string
+      border: string,
     ) => {
       const sorted = [...leagueTeams]
         .sort((a, b) => b.offer - a.offer)
@@ -105,7 +114,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "EPL",
         <Trophy className="w-3 h-3 text-purple-400" />,
         "from-purple-500/20 to-blue-500/20",
-        "group-hover:border-purple-500/50"
+        "group-hover:border-purple-500/50",
       );
     if (markets.F1.length > 0)
       addQuestions(
@@ -113,7 +122,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "F1",
         <Flag className="w-3 h-3 text-red-400" />,
         "from-red-500/20 to-orange-500/20",
-        "group-hover:border-red-500/50"
+        "group-hover:border-red-500/50",
       );
     if (markets.SPL.length > 0)
       addQuestions(
@@ -121,7 +130,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "SPL",
         <Activity className="w-3 h-3 text-green-400" />,
         "from-green-500/20 to-emerald-500/20",
-        "group-hover:border-green-500/50"
+        "group-hover:border-green-500/50",
       );
     if (markets.UCL.length > 0)
       addQuestions(
@@ -129,7 +138,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "UCL",
         <Trophy className="w-3 h-3 text-blue-400" />,
         "from-blue-600/20 to-indigo-600/20",
-        "group-hover:border-blue-500/50"
+        "group-hover:border-blue-500/50",
       );
     if (markets.NBA.length > 0)
       addQuestions(
@@ -137,7 +146,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "NBA",
         <Activity className="w-3 h-3 text-orange-400" />,
         "from-orange-500/20 to-amber-500/20",
-        "group-hover:border-orange-500/50"
+        "group-hover:border-orange-500/50",
       );
     if (markets.NFL.length > 0)
       addQuestions(
@@ -145,7 +154,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "NFL",
         <Trophy className="w-3 h-3 text-blue-800" />,
         "from-blue-800/20 to-blue-900/20",
-        "group-hover:border-blue-800/50"
+        "group-hover:border-blue-800/50",
       );
 
     return generated.sort(() => 0.5 - Math.random());
@@ -153,23 +162,27 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
   // Initial load
   useEffect(() => {
-    if (questionPool.length > 0 && displayedQuestions.length === 0) {
-      setDisplayedQuestions(questionPool.slice(0, 6));
+    if (questionPool.length > 0) {
+      // If limit is provided (and > 0), slice. Otherwise show all.
+      const questionsToShow = (limit && limit > 0)
+        ? questionPool.slice(0, limit)
+        : questionPool;
+      setDisplayedQuestions(questionsToShow);
     }
-  }, [questionPool]);
+  }, [questionPool, limit]);
 
-  // Dynamic Update Interval - only when collapsed
+  // Dynamic Update Interval - only if animation enabled and limited
   useEffect(() => {
-    if (questionPool.length <= 6 || expanded) return;
+    if (!enableAnimation || !limit || questionPool.length <= limit) return;
 
     const scheduleNextUpdate = () => {
       const delay = Math.floor(Math.random() * 2000) + 3000;
 
       return setTimeout(() => {
-        const slotToUpdate = Math.floor(Math.random() * 6);
+        const slotToUpdate = Math.floor(Math.random() * limit);
         const currentIds = displayedQuestions.map((q) => q?.id);
         const available = questionPool.filter(
-          (q) => !currentIds.includes(q.id)
+          (q) => !currentIds.includes(q.id),
         );
 
         if (available.length > 0) {
@@ -192,28 +205,72 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
     let timerRef = { current: scheduleNextUpdate() };
     return () => clearTimeout(timerRef.current);
-  }, [questionPool, displayedQuestions, expanded]);
+  }, [questionPool, displayedQuestions, enableAnimation, limit]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {showHeader && (
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                New Markets
+              </span>
+            </h2>
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
+          {Array.from({ length: limit || 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 h-[180px] animate-pulse flex flex-col justify-between"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex flex-col gap-2 w-full">
+                  <div className="flex items-center gap-2">
+                    <div className="w-12 h-5 bg-gray-700/50 rounded-full" />
+                    <div className="w-8 h-3 bg-gray-700/30 rounded" />
+                  </div>
+                  <div className="w-full h-10 bg-gray-700/30 rounded-lg mt-2" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-auto">
+                <div className="h-10 bg-emerald-900/20 rounded-lg border border-emerald-900/30" />
+                <div className="h-10 bg-red-900/10 rounded-lg border border-red-900/20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (displayedQuestions.length === 0) return null;
 
   return (
     <div data-testid="hot-questions" className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Trending Markets
-          </span>
-          <Zap
-            className="w-3 h-3 text-yellow-400 animate-pulse ml-1"
-            fill="currentColor"
-          />
-        </h2>
-      </div>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              New Markets
+            </span>
+          </h2>
+
+          <button
+            onClick={() => onNavigate("NEW_MARKETS")}
+            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+          >
+            View All <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
-        {(expanded ? questionPool : displayedQuestions).map((q, index) => {
+        {displayedQuestions.map((q, index) => {
           if (!q) return null;
 
           return (
@@ -227,10 +284,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 }
               }}
               className={`
-                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer 
+                group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${!expanded && animatingCard === index
+                ${animatingCard === index
                   ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
                   : ""
                 }
@@ -261,7 +318,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       q.market,
                       seasonData?.start_date,
                       seasonData?.end_date,
-                      seasonData?.stage || undefined
+                      seasonData?.stage || undefined,
                     );
                     return (
                       <div className="flex items-center gap-1 flex-shrink-0">
@@ -305,33 +362,6 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
           );
         })}
       </div>
-
-      {/* View More / View Less button */}
-      {questionPool.length > 6 && (
-        <div className="flex justify-center mt-3">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 group"
-            data-testid="hot-questions-view-more"
-          >
-            <span>{expanded ? "View Less" : "View More"}</span>
-            <svg
-              className={`w-3 h-3 transition-transform duration-300 ${expanded ? "rotate-180" : ""
-                }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
     </div>
   );
 };
