@@ -226,6 +226,7 @@ const formatSeasonDate = (dateStr: string): string => {
 
 // Helper function to get market info with fallback
 // Now accepts optional dynamic season data from Supabase
+// IMPORTANT: Markets without Supabase season data default to CLOSED
 export const getMarketInfo = (
   market: string, 
   seasonStartDate?: string, 
@@ -239,7 +240,7 @@ export const getMarketInfo = (
     isOpen: false,
   };
 
-  // If we have dynamic season dates from Supabase, use them
+  // If we have dynamic season dates from Supabase, use them to determine if open
   if (seasonStartDate && seasonEndDate) {
     const formattedDates = `${formatSeasonDate(seasonStartDate)} - ${formatSeasonDate(seasonEndDate)}`;
     // Determine if market is open based on date range AND stage
@@ -249,10 +250,10 @@ export const getMarketInfo = (
     
     // Market is ONLY open if:
     // 1. Current date is within the season date range
-    // 2. AND stage is 'open' (or not explicitly closed/settled)
+    // 2. AND stage is EXPLICITLY 'open' (null, undefined, 'closed', 'settled' = closed)
     const isWithinRange = now >= startDate && now <= endDate;
     const hasSeasonEnded = now > endDate;
-    const isStageOpen = seasonStage === 'open' || (seasonStage !== 'closed' && seasonStage !== 'settled');
+    const isStageOpen = seasonStage === 'open'; // Must be explicitly 'open'
     
     // If season has ended, market is always closed
     const isOpen = !hasSeasonEnded && isWithinRange && isStageOpen;
@@ -264,5 +265,10 @@ export const getMarketInfo = (
     };
   }
 
-  return baseInfo;
+  // No season data from Supabase = market is CLOSED by default
+  // This ensures only markets with proper Supabase configuration are shown as open
+  return {
+    ...baseInfo,
+    isOpen: false,
+  };
 };

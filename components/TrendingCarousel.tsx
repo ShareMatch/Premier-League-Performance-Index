@@ -66,7 +66,7 @@ const generateQuestions = (
   teams: Team[],
   seasonDatesMap?: Map<string, SeasonDates>
 ): Question[] => {
-  // Filter teams: not settled, price > $5.00, AND market is OPEN
+  // Filter teams: not settled, price > $5.00, AND market is OPEN (same logic as HotQuestions)
   const activeTeams = teams.filter((t) => {
     if (t.is_settled) return false;
     if (t.offer <= 5.0) return false;
@@ -80,7 +80,7 @@ const generateQuestions = (
       seasonData?.stage || undefined
     );
     return marketInfo.isOpen;
-  }).slice(0, 50); // increased limit for pool
+  }).slice(0, 5); // Limit to 5 items to match the dots
 
   const questions: Question[] = [];
 
@@ -342,7 +342,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams, seasonDatesM
           </button>
 
           <div className="flex items-center gap-2">
-            {questionPool.slice(0, 5).map((_, idx) => (
+            {questionPool.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => {
@@ -352,7 +352,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams, seasonDatesM
                     setTimeout(() => setIsAnimating(false), 300);
                   }
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex % 5
+                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
                   ? "w-8 bg-green-500"
                   : "w-1.5 bg-gray-600 hover:bg-gray-500"
                   }`}
