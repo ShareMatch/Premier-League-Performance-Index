@@ -38,7 +38,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
         <LiveActivity />
       </div>
       <div className="flex-shrink-0">
-        <TopPerformers />
+        <TopPerformers onNavigate={onNavigate} />
       </div>
     </div>
   );

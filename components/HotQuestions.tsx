@@ -80,8 +80,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         const volNum = (team.offer * (10000 + validId * 100)) / 1000;
         const volStr =
           volNum > 1000
-            ? `£${(volNum / 1000).toFixed(1)}M`
-            : `£${volNum.toFixed(0)}K`;
+            ? `$${(volNum / 1000).toFixed(1)}M`
+            : `$${volNum.toFixed(0)}K`;
 
         generated.push({
           id: `${market.toLowerCase()}-${team.id}`,
@@ -230,10 +230,9 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer 
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${
-                  !expanded && animatingCard === index
-                    ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
-                    : ""
+                ${!expanded && animatingCard === index
+                  ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
+                  : ""
                 }
               `}
             >
@@ -266,15 +265,14 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                     );
                     return (
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        <span
-                          className={`px-1 sm:px-1.5 py-0.5 text-[8px] font-bold rounded border whitespace-nowrap ${
-                            info.isOpen
-                              ? "bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse"
-                              : "bg-amber-500/10 text-amber-500 border-amber-500/30"
-                          }`}
+                        {/* <span
+                          className={`px-1 sm:px-1.5 py-0.5 text-[8px] font-bold rounded border whitespace-nowrap ${info.isOpen
+                            ? "bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse"
+                            : "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                            }`}
                         >
                           {info.isOpen ? "OPEN" : "CLOSED"}
-                        </span>
+                        </span> */}
                       </div>
                     );
                   })()}
@@ -318,9 +316,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
           >
             <span>{expanded ? "View Less" : "View More"}</span>
             <svg
-              className={`w-3 h-3 transition-transform duration-300 ${
-                expanded ? "rotate-180" : ""
-              }`}
+              className={`w-3 h-3 transition-transform duration-300 ${expanded ? "rotate-180" : ""
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

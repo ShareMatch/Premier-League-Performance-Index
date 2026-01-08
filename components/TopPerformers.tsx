@@ -1,5 +1,10 @@
 import React from "react";
 import { Award } from "lucide-react";
+import { League } from "../types";
+
+interface TopPerformersProps {
+  onNavigate: (league: League) => void;
+}
 
 interface IndexItem {
   name: string;
@@ -7,31 +12,35 @@ interface IndexItem {
   volume: string;
   rank: number;
   logoUrl: string;
+  market: League;
 }
 
-const TopPerformers: React.FC = () => {
+const TopPerformers: React.FC<TopPerformersProps> = ({ onNavigate }) => {
   // Mock data for top performing indexes - in real app, this could come from props or API
   const indexes: IndexItem[] = [
     {
       name: "EPL",
       performance: "+12.5%",
-      volume: "£4.5M",
+      volume: "$4.5M",
       rank: 1,
       logoUrl: "https://logo.clearbit.com/premierleague.com",
+      market: "EPL",
     },
     {
       name: "F1",
       performance: "+9.8%",
-      volume: "£3.2M",
+      volume: "$3.2M",
       rank: 2,
       logoUrl: "https://logo.clearbit.com/formula1.com",
+      market: "F1",
     },
     {
       name: "NBA",
       performance: "+8.3%",
-      volume: "£2.8M",
+      volume: "$2.8M",
       rank: 3,
       logoUrl: "https://logo.clearbit.com/nba.com",
+      market: "NBA",
     },
   ];
 
@@ -47,17 +56,17 @@ const TopPerformers: React.FC = () => {
         {indexes.map((indexItem) => (
           <div
             key={indexItem.rank}
+            onClick={() => onNavigate(indexItem.market)}
             className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg hover:bg-gray-800 transition-all cursor-pointer group border border-transparent hover:border-gray-700"
           >
             <div className="flex items-center gap-3">
               <div
-                className={`w-6 h-6 flex items-center justify-center font-bold text-[10px] ${
-                  indexItem.rank === 1
-                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                    : indexItem.rank === 2
+                className={`w-6 h-6 flex items-center justify-center font-bold text-[10px] ${indexItem.rank === 1
+                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                  : indexItem.rank === 2
                     ? "bg-gray-500/20 text-gray-400 border border-gray-500/30"
                     : "bg-amber-700/20 text-amber-600 border border-amber-700/30"
-                } rounded-full`}
+                  } rounded-full`}
               >
                 {indexItem.rank}
               </div>
