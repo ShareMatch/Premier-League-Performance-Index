@@ -8,7 +8,7 @@ import TopPerformers from "./TopPerformers";
 import TrendingCarousel from "./TrendingCarousel";
 import RecentlyViewed from "./RecentlyViewed";
 import AllMarketsWidget from "./AllMarketsWidget";
-
+import { ChevronRight } from "lucide-react";
 
 interface HomeDashboardProps {
   onNavigate: (league: League) => void;
@@ -29,29 +29,38 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
       className="flex flex-col gap-8 h-full overflow-y-auto pb-8 scrollbar-hide"
     >
       {/* Top Section: Trending Markets */}
-      <div className="flex-shrink-0">
-        <TrendingCarousel teams={teams} seasonDatesMap={seasonDatesMap} />
-      </div>
-
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 space-y-4">
+        <TrendingCarousel
+          teams={teams}
+          seasonDatesMap={seasonDatesMap}
+          onViewAsset={onViewAsset}
+        />
         <HotQuestions
           teams={teams}
           onNavigate={onNavigate}
           seasonDatesMap={seasonDatesMap}
         />
-      </div>
+        {/* View All button aligned to the right */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => onNavigate("NEW_MARKETS")}
+            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+          >
+            View All <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
 
-      <div className="flex-shrink-0">
         <RecentlyViewed onNavigate={onNavigate} onViewAsset={onViewAsset} />
-      </div>
 
-      <div className="flex-shrink-0">
         <AllMarketsWidget
           teams={teams}
           onNavigate={onNavigate}
           onViewAsset={onViewAsset}
         />
       </div>
+      <div className="flex-shrink-0"></div>
+
+      <div className="flex-shrink-0"></div>
 
       {/* LiveActivity replaced by RecentlyViewed as per user request */}
       {/* <div className="flex-shrink-0">

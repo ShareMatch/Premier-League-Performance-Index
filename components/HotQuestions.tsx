@@ -41,7 +41,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
 
-  // ... (useMemo logic is unchanged, skipping for brevity in replacement if possible, but safer to replace block) 
+  // ... (useMemo logic is unchanged, skipping for brevity in replacement if possible, but safer to replace block)
 
   // Create a pool of ALL valid questions
   const questionPool = useMemo(() => {
@@ -164,9 +164,8 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   useEffect(() => {
     if (questionPool.length > 0) {
       // If limit is provided (and > 0), slice. Otherwise show all.
-      const questionsToShow = (limit && limit > 0)
-        ? questionPool.slice(0, limit)
-        : questionPool;
+      const questionsToShow =
+        limit && limit > 0 ? questionPool.slice(0, limit) : questionPool;
       setDisplayedQuestions(questionsToShow);
     }
   }, [questionPool, limit]);
@@ -210,16 +209,6 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {showHeader && (
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                New Markets
-              </span>
-            </h2>
-          </div>
-        )}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
           {Array.from({ length: limit || 3 }).map((_, i) => (
             <div
@@ -250,24 +239,6 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
   return (
     <div data-testid="hot-questions" className="space-y-3">
-      {showHeader && (
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-            <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-[#00A651]" />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-              New Markets
-            </span>
-          </h2>
-
-          <button
-            onClick={() => onNavigate("NEW_MARKETS")}
-            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
-          >
-            View All <ChevronRight className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-
       {/* Responsive grid: 1 col mobile, 2 cols tablet, 3 cols desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
         {displayedQuestions.map((q, index) => {
@@ -287,9 +258,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${animatingCard === index
-                  ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
-                  : ""
+                ${
+                  animatingCard === index
+                    ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
+                    : ""
                 }
               `}
             >
