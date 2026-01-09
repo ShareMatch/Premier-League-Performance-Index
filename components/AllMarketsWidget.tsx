@@ -1,6 +1,8 @@
 import React from "react";
 import { Team, League } from "../types";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Globe } from "lucide-react";
+import { ChevronRight, Globe } from "lucide-react";
+import { FaCaretDown } from "react-icons/fa";
+import { FaCaretUp } from "react-icons/fa6";
 
 interface AllMarketsWidgetProps {
     teams: Team[];
@@ -98,9 +100,9 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                                 {/* Arrow Indicator */}
                                 <div className={`flex items-center justify-center w-6 h-6 rounded-full bg-gray-800/50 border border-gray-700/50 flex-shrink-0 ${isPositive ? "text-green-500" : "text-red-500"}`}>
                                     {isPositive ? (
-                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                        <FaCaretUp className="w-3.5 h-3.5" />
                                     ) : (
-                                        <ArrowDownRight className="w-3.5 h-3.5" />
+                                        <FaCaretDown className="w-3.5 h-3.5" />
                                     )}
                                 </div>
                             </div>
