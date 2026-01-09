@@ -15,7 +15,7 @@ import {
   Zap,
 } from "lucide-react";
 import { FaCaretDown } from "react-icons/fa";
-import { FaCaretUp } from "react-icons/fa6";
+import { FaCaretUp, FaCheck } from "react-icons/fa6";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 interface AllMarketsPageProps {
@@ -69,7 +69,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   onViewAsset,
 }) => {
   const [activeCategory, setActiveCategory] = useState("ALL");
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [activeFilters, setActiveFilters] = useState<string[]>(["ALL"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,9 +79,28 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
 
   const ITEMS_PER_PAGE = 10;
 
-  const handleSelectMarket = (categoryId: string, filterId: string) => {
+  const handleSelectMarket = (categoryId: string, filterId: string, isFromDropdown = false) => {
     setActiveCategory(categoryId);
-    setActiveFilter(filterId);
+
+    if (filterId === "ALL") {
+      setActiveFilters(["ALL"]);
+    } else {
+      setActiveFilters(prev => {
+        // If we were in ALL, start a new list
+        const current = prev.filter(f => f !== "ALL");
+        const exists = current.includes(filterId);
+
+        let next;
+        if (exists) {
+          next = current.filter(f => f !== filterId);
+        } else {
+          next = [...current, filterId];
+        }
+
+        return next.length === 0 ? ["ALL"] : next;
+      });
+    }
+
     setCurrentPage(1);
   };
 
@@ -100,18 +119,17 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       return true;
     });
 
-    // 2. Category filtering
-    if (activeCategory !== "ALL") {
+    // 2. Category / Sub-market filtering
+    if (!activeFilters.includes("ALL")) {
+      // If specific markets are selected, they take priority
+      result = result.filter((t) => {
+        const marketMatch = activeFilters.includes(t.market || "");
+        const fifaMatch = activeFilters.includes("FIFA") && (t.market === "WC" || t.market === "FIFA");
+        return marketMatch || fifaMatch;
+      });
+    } else if (activeCategory !== "ALL") {
+      // Otherwise, if a category is selected and filters are at "ALL", filter by category
       result = result.filter((t) => t.category === activeCategory);
-    }
-
-    // 3. Sub-market (Index) filtering
-    if (activeFilter !== "ALL") {
-      if (activeFilter === "FIFA") {
-        result = result.filter((t) => t.market === "WC" || t.market === "FIFA");
-      } else {
-        result = result.filter((t) => t.market === activeFilter);
-      }
     }
 
     // 4. Search query
@@ -126,7 +144,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     }
 
     return result;
-  }, [teams, activeCategory, activeFilter, searchQuery]);
+  }, [teams, activeCategory, activeFilters, searchQuery]);
 
   // Compute which categories actually have active teams to display in the filter bar
   const visibleCategories = useMemo(() => {
@@ -159,7 +177,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   useEffect(() => {
     setPageCache({});
     setCurrentPage(1);
-  }, [activeCategory, activeFilter, searchQuery]);
+  }, [activeCategory, activeFilters, searchQuery]);
 
   // Pagination loading and caching logic
   useEffect(() => {
@@ -237,7 +255,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             <ArrowLeft className="w-5 h-5 text-gray-400" />
           </button>
           <h1 className="text-xl font-bold font-sans whitespace-nowrap">
-            All Index Tokens
+            Index Tokens
           </h1>
         </div>
 
@@ -307,21 +325,30 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       All {cat.label}
                     </DropdownMenu.Item>
                     <div className="h-px bg-gray-800/50 my-1 mx-2" />
-                    {cat.markets!.map((m) => (
-                      <DropdownMenu.Item
-                        key={m.id}
-                        className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none ${activeFilter === m.id
-                          ? "bg-brand-primary text-white"
-                          : "text-gray-400 hover:text-white hover:bg-white/5"
-                          }`}
-                        onClick={() => handleSelectMarket(cat.id, m.id)}
-                      >
-                        {m.label}
-                        {activeFilter === m.id && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
-                        )}
-                      </DropdownMenu.Item>
-                    ))}
+                    {cat.markets!.map((m) => {
+                      const isSelected = activeFilters.includes(m.id);
+                      return (
+                        <DropdownMenu.CheckboxItem
+                          key={m.id}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
+                            ? "bg-brand-primary text-white"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                            }`}
+                          checked={isSelected}
+                          onSelect={(e) => {
+                            e.preventDefault(); // Keep dropdown open for multi-select
+                            handleSelectMarket(cat.id, m.id, true);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {m.label}
+                          </div>
+                          {isSelected && (
+                            <FaCheck className="w-3 h-3 text-white" />
+                          )}
+                        </DropdownMenu.CheckboxItem>
+                      );
+                    })}
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
@@ -399,31 +426,24 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Buy/Sell & Arrow - Aligned with Widget */}
-                  <div className="flex items-center gap-3">
-                    {/* Sell (Bid) */}
-                    <div className="w-16 text-right">
-                      <span className="text-sm font-semibold text-red-400">
+                  {/* Right: Pricing (Ticker Style) - Tightened for better structure */}
+                  <div className="flex items-center gap-3 sm:gap-5">
+                    {/* Sell Section */}
+                    <div className="flex items-center w-[85px] sm:w-[100px]">
+                      <span className="text-[10px] font-black text-red-500 uppercase tracking-tighter w-8 shrink-0">Sell</span>
+                      <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
                         ${team.bid.toFixed(2)}
                       </span>
+                      <FaCaretDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
                     </div>
 
-                    {/* Buy (Offer) */}
-                    <div className="w-16 flex justify-end">
-                      <span className="bg-[#005430] text-white px-2 py-1 rounded text-sm font-bold shadow-sm shadow-black/20 group-hover:bg-[#006035] transition-colors min-w-[54px] text-center">
+                    {/* Buy Section */}
+                    <div className="flex items-center w-[85px] sm:w-[100px]">
+                      <span className="text-[10px] font-black text-[#00A651] uppercase tracking-tighter w-8 shrink-0">Buy</span>
+                      <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
                         ${team.offer.toFixed(2)}
                       </span>
-                    </div>
-
-                    {/* Arrow Indicator */}
-                    <div
-                      className={`flex items-center justify-center w-6 h-6 rounded-full bg-gray-800/50 border border-gray-700/50 flex-shrink-0 ${isPositive ? "text-green-500" : "text-red-500"}`}
-                    >
-                      {isPositive ? (
-                        <FaCaretUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <FaCaretDown className="w-3.5 h-3.5" />
-                      )}
+                      <FaCaretUp className="w-3.5 h-3.5 text-[#00A651] shrink-0" />
                     </div>
                   </div>
                 </div>

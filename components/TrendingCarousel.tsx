@@ -40,6 +40,7 @@ interface Question {
   icon: React.ReactNode;
   color: string;
   borderColor: string;
+  seasonData?: SeasonDates;
 }
 
 const generateTriplePriceHistory = (tokens: IndexToken[], days: number = 7) => {
@@ -188,6 +189,7 @@ const generateQuestions = (
       icon: config.icon,
       color: config.color,
       borderColor: config.borderColor,
+      seasonData: seasonDatesMap?.get(market),
     });
   });
 
@@ -279,7 +281,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
               <div key={question.id} className="w-full flex-shrink-0 grid grid-cols-1 lg:grid-cols-2 min-h-[240px]">
                 {/* Left Panel: Info and Buttons */}
                 <div className="p-4 flex items-center justify-center">
-                  <div className="w-full max-w-sm">
+                  <div className="w-full">
                     <div className={`group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border p-3 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl ${question.borderColor} border-gray-700/50`}>
                       <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
@@ -314,10 +316,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               <button
                                 key={token.id}
                                 onClick={() => handleTokenClick(token.id)}
-                                className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-xl py-2.5 transition-all shadow-lg shadow-black/20"
+                                className="col-span-1 sm:col-span-1 md:col-span-1 lg:col-span-1 flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg py-2 transition-all shadow-lg shadow-black/20 min-w-[90px]"
                               >
-                                <span className="text-[8px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">{token.name}</span>
-                                <span className="text-xl font-bold text-white">${token.price.toFixed(2)}</span>
+                                <span className="text-[8px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide truncate w-full px-1">{token.name}</span>
+                                <span className="text-sm sm:text-base font-bold text-white">${token.price.toFixed(2)}</span>
                               </button>
                             ))}
                           </div>
@@ -328,7 +330,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 <div key={`change-${token.id}`} className="flex items-center justify-center gap-1">
                                   {isPositive ? <FaCaretUp className="w-3 h-3 text-green-400" /> : <FaCaretDown className="w-3 h-3 text-red-400" />}
                                   <span className={`text-xs font-bold ${isPositive ? "text-green-400" : "text-red-400"}`}>
-                                    {token.changeDisplay}
+                                    ${token.changeDisplay}
                                   </span>
                                 </div>
                               );
@@ -342,19 +344,35 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                 {/* Right Panel: Chart */}
                 <div className="bg-slate-800 p-4 border-l border-gray-800 flex flex-col">
-                  <div className="flex items-center justify-between mb-3 relative">
-                    <div className="flex items-center gap-3">
+                  {/* Header: Season Dates (Top Center) & Logo */}
+                  <div className="flex items-center justify-center mb-2 relative">
+                    {question.seasonData && (
+                      <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-500 bg-gray-950/40 px-2.5 py-1 rounded-lg border border-gray-700/20">
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-600">Start:</span>
+                          <span className="text-gray-400">{new Date(question.seasonData.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+                        <div className="w-1 h-1 bg-gray-600 rounded-full" />
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-600">End:</span>
+                          <span className="text-gray-400">{new Date(question.seasonData.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-60">
+                      <img src="/logos/white_icon_on_green.jpeg" alt="Logo" className="w-5 h-5 object-contain" />
+                    </div>
+                  </div>
+
+                  {/* Sub-Header: Legend (Below Dates) */}
+                  <div className="flex items-center justify-start mb-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       {question.topTokens.map((token, idx) => (
                         <div key={token.id} className="flex items-center gap-1.5">
-                          <div className={`w-3 h-3 rounded-full ${tokenColorClasses[idx].bg}`} />
-                          <span className="text-xs text-gray-400 truncate max-w-[80px]">{token.name}</span>
+                          <div className={`w-2 h-2 rounded-full ${tokenColorClasses[idx].bg} shadow-sm`} />
+                          <span className="text-[10px] font-medium text-gray-400 truncate max-w-[70px]">{token.name}</span>
                         </div>
                       ))}
-                    </div>
-
-                    {/* Legend Branding */}
-                    <div className="flex-shrink-0">
-                      <img src="/logos/white_icon_on_green.jpeg" alt="Logo" className="w-7 h-7 object-contain" />
                     </div>
                   </div>
 
@@ -363,7 +381,20 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                       <LineChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                         <XAxis dataKey="date" stroke="#4B5563" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} />
                         <CartesianGrid stroke="#4B5563" strokeDasharray="3 3" vertical={false} />
-                        <YAxis stroke="#4B5563" tick={{ fill: "#9CA3AF", fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} tickFormatter={(val) => val} orientation="right" />
+                        <YAxis
+                          stroke="#4B5563"
+                          tick={{ fill: "#9CA3AF", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                          orientation="right"
+                          domain={[
+                            (dataMin: number) => Math.max(0, dataMin - 5),
+                            (dataMax: number) => dataMax + 5,
+                          ]}
+                          tickFormatter={(val) => `$${val.toFixed(2)}`}
+                        />
+
+
                         <Tooltip
                           contentStyle={{ backgroundColor: "#1a2332", border: "1px solid #374151", borderRadius: "8px", color: "#fff" }}
                           formatter={(value, name) => {

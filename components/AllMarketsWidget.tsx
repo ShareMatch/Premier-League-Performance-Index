@@ -33,12 +33,6 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                         All Index Tokens
                     </h2>
                 </div>
-                <button
-                    onClick={handleViewAll}
-                    className="text-xs text-brand-primary hover:text-brand-secondary transition-colors font-medium flex items-center gap-1"
-                >
-                    View All <ChevronRight className="w-3 h-3" />
-                </button>
             </div>
 
             {/* Rows */}
@@ -81,34 +75,37 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                                 </div>
                             </div>
 
-                            {/* Right: Buy/Sell & Arrow */}
-                            <div className="flex items-center gap-3">
-                                {/* Sell (Bid) */}
-                                <div className="w-16 text-right">
-                                    <span className="text-xs font-semibold text-red-400">
+                            {/* Right: Pricing (Ticker Style) - Fixed widths for perfect alignment */}
+                            <div className="flex items-center gap-2 sm:gap-4">
+                                {/* Sell Section */}
+                                <div className="flex items-center w-[85px] sm:w-[95px]">
+                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-tighter w-8 shrink-0">Sell</span>
+                                    <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
                                         ${team.bid.toFixed(2)}
                                     </span>
+                                    <FaCaretDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
                                 </div>
 
-                                {/* Buy (Offer) */}
-                                <div className="w-16 flex justify-end">
-                                    <span className="bg-[#005430] text-white px-2 py-1 rounded text-xs font-bold shadow-sm shadow-black/20 group-hover:bg-[#006035] transition-colors min-w-[50px] text-center">
+                                {/* Buy Section */}
+                                <div className="flex items-center w-[85px] sm:w-[95px]">
+                                    <span className="text-[10px] font-black text-[#00A651] uppercase tracking-tighter w-8 shrink-0">Buy</span>
+                                    <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
                                         ${team.offer.toFixed(2)}
                                     </span>
-                                </div>
-
-                                {/* Arrow Indicator */}
-                                <div className={`flex items-center justify-center w-6 h-6 rounded-full bg-gray-800/50 border border-gray-700/50 flex-shrink-0 ${isPositive ? "text-green-500" : "text-red-500"}`}>
-                                    {isPositive ? (
-                                        <FaCaretUp className="w-3.5 h-3.5" />
-                                    ) : (
-                                        <FaCaretDown className="w-3.5 h-3.5" />
-                                    )}
+                                    <FaCaretUp className="w-3.5 h-3.5 text-[#00A651] shrink-0" />
                                 </div>
                             </div>
                         </div>
                     );
                 })}
+            </div>
+            <div className="flex justify-end">
+                <button
+                    onClick={handleViewAll}
+                    className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+                >
+                    View All <ChevronRight className="w-3 h-3" />
+                </button>
             </div>
         </div>
     );
