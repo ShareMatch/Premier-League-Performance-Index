@@ -1,5 +1,7 @@
 import React, { useMemo } from "react";
-import { ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { Minus } from "lucide-react";
+import { FaCaretDown } from "react-icons/fa";
+import { FaCaretUp } from "react-icons/fa6";
 import { Team, League } from "../types";
 import { marketInfoData } from "../lib/marketInfo";
 
@@ -102,7 +104,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
                   <span className="text-gray-400">
                     ${team.offer.toFixed(1)}
                   </span>
-                  <ArrowUp className="w-3 h-3 text-emerald-500" />
+                  <FaCaretUp className="w-3 h-3 text-emerald-500" />
                 </>
               ) : (
                 <>
@@ -110,7 +112,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
                     Sell
                   </span>
                   <span className="text-gray-400">${team.bid.toFixed(1)}</span>
-                  <ArrowDown className="w-3 h-3 text-red-500" />
+                  <FaCaretDown className="w-3 h-3 text-red-500" />
                 </>
               )}
             </div>
