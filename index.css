@@ -144,3 +144,17 @@ iframe[src*="sumsub"] {
 .animate-pop {
   animation: pop 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
+/* Gentle breathing animation for asset avatars */
+@keyframes avatar-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.avatar-breathe {
+  animation: avatar-breathe 4s ease-in-out infinite;
+}

@@ -62,7 +62,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                         {avatarUrl ? (
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 flex-shrink-0">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 flex-shrink-0 avatar-breathe">
                                 <img
                                     src={avatarUrl}
                                     alt={`${asset.name} avatar`}
@@ -155,7 +155,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <div className="flex items-center gap-3">
                         {/* Asset Avatar */}
                         {avatarUrl ? (
-                            <div className="w-20 h-20 rounded-xl flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-xl flex items-center justify-center avatar-breathe">
                                 <img
                                     src={avatarUrl}
                                     alt={`${asset.name} avatar`}
