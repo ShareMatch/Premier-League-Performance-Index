@@ -6,6 +6,12 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
+// Ensure audit-reports directory exists
+const AUDIT_DIR = 'audit-reports';
+if (!fs.existsSync(AUDIT_DIR)) {
+  fs.mkdirSync(AUDIT_DIR, { recursive: true });
+}
+
 interface TestResult {
   attempt: number;
   success: boolean;
@@ -165,60 +171,111 @@ class Audit {
     const status = report.status === 'PASS' ? '✅ PASS' : '❌ FAIL';
     const statusEmoji = report.status === 'PASS' ? '🟢' : '🚨';
 
-    let reportText = `
-${statusEmoji} *ShareMatch CI/CD Audit Report*
+    // Generate Markdown report for GitHub Actions
+    let markdownReport = `# ${statusEmoji} CI/CD Audit Report
 
-*Status:* ${status}
-*Total Duration:* ${duration}s
-*Attempts:* ${this.results.length}
+**Status:** ${status}  
+**Total Duration:** ${duration}s  
+**Attempts:** ${this.results.length}  
+**Branch:** \`${process.env.GITHUB_REF_NAME || 'local'}\`  
+**Commit:** \`${process.env.GITHUB_SHA?.substring(0, 7) || 'N/A'}\`
 
-*Summary:* ${report.summary}
+## Summary
+${report.summary}
 
-*Test Files Processed:*
-${this.testFiles.map(file => `• \`${path.basename(file)}\``).join('\n')}
+## Test Files
+${this.testFiles.map(file => `- \`${path.basename(file)}\``).join('\n')}
 
-*Attempt Results:*
+## Attempt Results
 `;
 
-    this.results.forEach((result, index) => {
+    this.results.forEach((result) => {
       const attemptStatus = result.success ? '✅' : '❌';
       const attemptDuration = (result.duration / 1000).toFixed(2);
-      reportText += `\n${attemptStatus} *Attempt ${result.attempt}* (${attemptDuration}s)`;
+      markdownReport += `\n### ${attemptStatus} Attempt ${result.attempt} (${attemptDuration}s)\n`;
       
       if (!result.success && result.failedTests.length > 0) {
-        reportText += `\n  _Failed Tests:_ ${result.failedTests.slice(0, 3).join(', ')}`;
-        if (result.failedTests.length > 3) {
-          reportText += ` +${result.failedTests.length - 3} more`;
+        markdownReport += `\n**Failed Tests:**\n`;
+        result.failedTests.slice(0, 10).forEach(failure => {
+          markdownReport += `- \`${failure}\`\n`;
+        });
+        if (result.failedTests.length > 10) {
+          markdownReport += `- ... and ${result.failedTests.length - 10} more\n`;
         }
       }
     });
 
     if (report.persistentFailures.length > 0) {
-      reportText += `\n\n*🔴 Persistent Failures (all attempts):*\n`;
-      report.persistentFailures.slice(0, 5).forEach(failure => {
-        reportText += `• \`${failure}\`\n`;
+      markdownReport += `\n## 🔴 Persistent Failures (all ${this.maxRetries} attempts)\n`;
+      report.persistentFailures.slice(0, 10).forEach(failure => {
+        markdownReport += `- \`${failure}\`\n`;
       });
-      if (report.persistentFailures.length > 5) {
-        reportText += `• ... and ${report.persistentFailures.length - 5} more\n`;
-      }
     }
 
     if (report.flakyTests.length > 0) {
-      reportText += `\n\n*🟡 Flaky Tests (intermittent failures):*\n`;
-      report.flakyTests.slice(0, 3).forEach(test => {
-        reportText += `• \`${test}\`\n`;
+      markdownReport += `\n## 🟡 Flaky Tests (intermittent)\n`;
+      report.flakyTests.slice(0, 5).forEach(test => {
+        markdownReport += `- \`${test}\`\n`;
       });
-      if (report.flakyTests.length > 3) {
-        reportText += `• ... and ${report.flakyTests.length - 3} more\n`;
-      }
     }
 
-    reportText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'unknown'}\``;
-    reportText += `\n*Commit:* \`${process.env.GITHUB_SHA?.substring(0, 7) || 'unknown'}\``;
+    // Save markdown report to file
+    const summaryPath = path.join(AUDIT_DIR, 'summary.md');
+    fs.writeFileSync(summaryPath, markdownReport, 'utf-8');
+    console.log(`📄 Audit report saved to: ${summaryPath}`);
+
+    // Save JSON report for programmatic access
+    const jsonReport = {
+      timestamp: new Date().toISOString(),
+      status: report.status,
+      duration: report.totalDuration,
+      attempts: this.results,
+      persistentFailures: report.persistentFailures,
+      flakyTests: report.flakyTests,
+      branch: process.env.GITHUB_REF_NAME || 'local',
+      commit: process.env.GITHUB_SHA?.substring(0, 7) || 'N/A',
+    };
+    fs.writeFileSync(
+      path.join(AUDIT_DIR, 'results.json'),
+      JSON.stringify(jsonReport, null, 2),
+      'utf-8'
+    );
+
+    // Generate Telegram message (shorter format)
+    let telegramText = `
+${statusEmoji} *ShareMatch CI/CD Audit Report*
+
+*Status:* ${status}
+*Duration:* ${duration}s
+*Attempts:* ${this.results.length}
+
+*Summary:* ${report.summary}
+
+*Test Files:*
+${this.testFiles.map(file => `• \`${path.basename(file)}\``).join('\n')}
+`;
+
+    this.results.forEach((result) => {
+      const attemptStatus = result.success ? '✅' : '❌';
+      const attemptDuration = (result.duration / 1000).toFixed(2);
+      telegramText += `\n${attemptStatus} *Attempt ${result.attempt}* (${attemptDuration}s)`;
+    });
+
+    if (report.persistentFailures.length > 0) {
+      telegramText += `\n\n*🔴 Persistent Failures:*\n`;
+      report.persistentFailures.slice(0, 3).forEach(failure => {
+        telegramText += `• \`${failure.substring(0, 50)}...\`\n`;
+      });
+    }
+
+    telegramText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\``;
+    telegramText += `\n*Commit:* \`${process.env.GITHUB_SHA?.substring(0, 7) || 'N/A'}\``;
 
     console.log("📤 Sending audit report to Telegram...");
-    await sendTelegramMessage(reportText);
-    console.log("✅ Audit report sent successfully.");
+    const sent = await sendTelegramMessage(telegramText);
+    if (sent) {
+      console.log("✅ Audit report sent successfully.");
+    }
   }
 }
 
