@@ -44,14 +44,29 @@ class Audit {
     console.log("🚀 Starting  CI/CD Audit...");
     const startTime = Date.now();
 
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-      console.log(`\n📋 Attempt ${attempt}/${this.maxRetries}`);
-      const success = await this.runTestAttempt(attempt);
+    // Run each test file individually with retry logic
+    for (const testFile of this.testFiles) {
+      console.log(`\n📋 Testing: ${testFile}`);
       
-      // Stop early if successful on first attempt
-      if (success && attempt === 1) {
-        console.log("✅ All tests passed on first attempt - no need for retries");
-        break;
+      let fileSuccess = false;
+      let attempts = 0;
+      
+      while (!fileSuccess && attempts < this.maxRetries) {
+        attempts++;
+        console.log(`Attempt ${attempts}/${this.maxRetries} for ${testFile}`);
+        
+        const success = await this.runSingleTest(testFile, attempts);
+        
+        if (success) {
+          fileSuccess = true;
+          if (attempts === 1) {
+            console.log(`✅ ${testFile} passed on first attempt`);
+          } else {
+            console.log(`✅ ${testFile} passed after ${attempts} attempts`);
+          }
+        } else {
+          console.log(`❌ ${testFile} failed on attempt ${attempts}`);
+        }
       }
     }
 
@@ -63,7 +78,7 @@ class Audit {
     }
   }
 
-  private async runTestAttempt(attempt: number): Promise<boolean> {
+  private async runSingleTest(testFile: string, attempt: number): Promise<boolean> {
     const testResult: TestResult = {
       attempt,
       success: false,
@@ -75,31 +90,23 @@ class Audit {
     const startTime = Date.now();
 
     try {
-      console.log(`Running Playwright tests on generated files...`);
+      console.log(`Running ${testFile}...`);
       
-      let allOutput = '';
-      
-      // Run tests individually for better error handling
-      for (const testFile of this.testFiles) {
-        console.log(`Running ${testFile}...`);
-        const { stdout, stderr } = await execAsync(
-          `npx playwright test ${testFile} --reporter=line`,
-          {
-            env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
-            maxBuffer: 1024 * 1024 * 10,
-            timeout: 300000
-          }
-        );
-        console.log(stdout);
-        allOutput += stdout + '\n';
-      }
+      const { stdout, stderr } = await execAsync(
+        `npx playwright test ${testFile} --reporter=line`,
+        {
+          env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
+          maxBuffer: 1024 * 1024 * 10,
+          timeout: 300000
+        }
+      );
 
       testResult.success = true;
-      testResult.output = allOutput;
+      testResult.output = stdout;
       testResult.duration = Date.now() - startTime;
       
-      console.log(`✅ Attempt ${attempt} completed successfully`);
-      console.log(allOutput);
+      console.log(`✅ ${testFile} completed successfully`);
+      console.log(stdout);
 
     } catch (error: any) {
       testResult.success = false;
@@ -108,7 +115,7 @@ class Audit {
       testResult.duration = Date.now() - startTime;
       testResult.failedTests = this.parseFailedTests(error.stdout || error.stderr || '');
 
-      console.log(`❌ Attempt ${attempt} failed`);
+      console.log(`❌ ${testFile} failed`);
       console.error(`Error: ${testResult.error}`);
     }
 
