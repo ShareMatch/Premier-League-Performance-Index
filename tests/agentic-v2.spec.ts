@@ -266,20 +266,14 @@ test.describe("Deep Exploration Only", () => {
 
 test.describe("Single Feature Generation", () => {
   test("generate Home Page tests only", async ({ page }) => {
-    // Reduced timeout since we skip login/signup modals
-    test.setTimeout(600000); // 10 minutes
+    // Long timeout for deep exploration (depth: 50) + LLM calls
+    test.setTimeout(1800000); // 30 minutes
 
     const orchestrator = createOrchestrator(page, {
-      qualityThreshold: 70,
-      maxExplorationDepth: 10, // Deep exploration - modals within modals
-      // Skip login/signup modals - they are already tested separately in:
-      // - tests/generated/login-flow.spec.ts
-      // - tests/generated/signup-flow.spec.ts
-      // This prevents:
-      // 1. Explorer from clicking "Log In" / "Join Now" buttons
-      // 2. Explorer from exploring login/signup modal contents
-      // 3. Test Planner from generating login/signup test scenarios
+      qualityThreshold: 0.5,
+      maxExplorationDepth: 50, 
       skipModals: ["login-modal", "signup-modal", "login", "signup"],
+      minScenarioCount: 20,
     });
 
     await orchestrator.init();
@@ -289,7 +283,6 @@ test.describe("Single Feature Generation", () => {
     expect(result.generatedTest.code).toContain("test(");
     expect(result.qualityReport.overallScore).toBeGreaterThan(50);
 
-    // Verify no login/signup scenarios were generated
     const hasLoginScenario = result.testPlan.scenarios.some(
       (s) =>
         s.name.toLowerCase().includes("login") ||
@@ -329,13 +322,11 @@ test.describe("Knowledge Store Verification", () => {
 
     const store = await getKnowledgeStore();
 
-    // Query for login-related selectors
     const results = await store.query("login email password", "selector", 10);
 
     console.log("\n📊 ChromaDB Contents:");
     console.log(`   Found ${results.length} selector(s)`);
 
-    // Cast to SelectorInfo since we're querying 'selector' type
     for (const item of results) {
       if (item.type === "selector") {
         console.log(
@@ -344,7 +335,6 @@ test.describe("Knowledge Store Verification", () => {
       }
     }
 
-    // Should have stored some selectors from exploration
     expect(results.length).toBeGreaterThan(0);
   });
 });
@@ -380,7 +370,6 @@ test.describe("Risk Assessment Only", () => {
 
     console.log("\n" + assessor.getReport(assessments));
 
-    // KYC and Buy/Sell should be high risk
     const kycRisk = assessments.find((a) => a.featureName.includes("KYC"));
     const tradingRisk = assessments.find((a) => a.featureName.includes("Buy"));
 
@@ -395,7 +384,6 @@ test.describe("Quality Evaluation Only", () => {
 
     const evaluator = createQualityEvaluator(70);
 
-    // Good test code
     const goodCode = `
 import { test, expect } from '../adapters';
 

@@ -44,14 +44,11 @@ test.describe('Signup Flow', () => {
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
     
-    // Wait for modal to be visible
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
     
-    // Click Continue without filling any fields
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should show validation errors
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -64,13 +61,13 @@ test.describe('Signup Flow', () => {
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
     
-    // Fill with invalid email
+    
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('invalid_email');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
     
-    // Need to fill DOB and country to pass other validations
+    
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
@@ -86,7 +83,7 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should show email validation error
+    
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -104,7 +101,7 @@ test.describe('Signup Flow', () => {
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('DifferentPassword');
     
-    // Fill DOB and country
+    
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
@@ -120,7 +117,7 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should show password mismatch error
+    
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -135,11 +132,9 @@ test.describe('Signup Flow', () => {
     
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('john@example.com');
-    // Try SQL injection in password
     await page.locator('#password').fill('Password123! OR 1=1');
     await page.locator('#confirmPassword').fill('Password123! OR 1=1');
     
-    // Fill DOB and country
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
@@ -155,7 +150,6 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should proceed to step 2 (SQL injection should be treated as normal text)
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed - SQL injection properly handled as text');
   });
@@ -168,13 +162,12 @@ test.describe('Signup Flow', () => {
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
     
-    // Try XSS in full name
     await page.locator('#fullName').fill('<script>alert(\'XSS\')</script>');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
     
-    // Fill DOB and country
+    
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
@@ -190,7 +183,6 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should proceed to step 2 (XSS should be sanitized/stored as text)
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed - XSS properly handled');
   });
@@ -209,7 +201,6 @@ test.describe('Signup Flow', () => {
     await page.locator('#confirmPassword').fill('Password123!');
     await page.locator('input[name="referralCode"]').fill('REFERRAL_CODE');
     
-    // Fill DOB and country
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
@@ -225,7 +216,6 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should proceed to step 2
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed');
   });
@@ -243,19 +233,19 @@ test.describe('Signup Flow', () => {
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
     
-    // Test the date picker
+    
     await page.locator('button:has-text("Select date of birth")').click();
     
-    // Verify date picker opened
+    
     await expect(signupModal.locator('select').first()).toBeVisible();
     
-    // Select a valid date
+    
     const selects = signupModal.locator('select');
-    await selects.first().selectOption('0'); // January
+    await selects.first().selectOption('0'); 
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
     
-    // Fill country
+    
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
@@ -264,13 +254,13 @@ test.describe('Signup Flow', () => {
     
     await page.locator('[data-testid="signup-continue-button"]').click();
     
-    // Should proceed to step 2
+    
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed');
   });
 
   test('Complete signup with email and whatsapp verification', async ({ page, supabaseAdapter }) => {
-    test.setTimeout(180000); // 3 minutes
+    test.setTimeout(180000);
     
     console.log('========================================');
     console.log('COMPLETE SIGNUP TEST WITH VERIFICATION');
@@ -278,11 +268,9 @@ test.describe('Signup Flow', () => {
     console.log(`Phone: ${TEST_USER.phone}`);
     console.log('========================================');
 
-    // Navigate to signup
     await page.goto('/?action=signup');
     console.log('[Step] Navigated to signup page');
 
-    // Wait for signup modal
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 15000 });
     console.log('[Step] Signup modal visible');
@@ -290,23 +278,23 @@ test.describe('Signup Flow', () => {
     // ============ STEP 1: Personal Info ============
     console.log('[Step 1] Filling personal info...');
 
-    // Full name
+    
     await signupModal.locator('#fullName').fill(TEST_USER.fullName);
     console.log('  - Filled full name');
 
-    // Email
+    
     await signupModal.locator('input[name="email"]').fill(TEST_USER.email);
     console.log('  - Filled email');
 
-    // Password
+    
     await signupModal.locator('#password').fill(TEST_USER.password);
     console.log('  - Filled password');
 
-    // Confirm password
+    
     await signupModal.locator('#confirmPassword').fill(TEST_USER.password);
     console.log('  - Filled confirm password');
 
-    // Date of birth
+    
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(500);
     console.log('  - Opened date picker');
@@ -319,7 +307,7 @@ test.describe('Signup Flow', () => {
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: TEST_USER.dob.day }).first().click();
     console.log('  - Selected day');
 
-    // Country
+    
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(500);
     console.log('  - Opened country dropdown');
@@ -333,7 +321,7 @@ test.describe('Signup Flow', () => {
     await page.getByText('United Arab Emirates').first().click();
     console.log('  - Selected country');
 
-    // Click Continue
+    
     const continueButton = signupModal.getByTestId('signup-continue-button');
     await expect(continueButton).toBeVisible();
     await continueButton.click();
@@ -343,7 +331,7 @@ test.describe('Signup Flow', () => {
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Step 2] Security & Verification visible');
 
-    // Change phone country to UAE
+    
     const phoneCountryButton = signupModal.locator('input[name="phone"]').locator('..').locator('button').first();
     await phoneCountryButton.click();
     await page.waitForTimeout(300);

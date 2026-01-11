@@ -291,6 +291,11 @@ Weights should be 0.0-1.0 where 1.0 is highest risk.`;
   
   /**
    * Generate testing recommendations based on risk
+   * 
+   * Scenario count guidelines:
+   * - HIGH: Comprehensive testing (10-15 scenarios)
+   * - MEDIUM: Standard coverage (6-10 scenarios)
+   * - LOW: Basic smoke tests (3-5 scenarios)
    */
   private generateRecommendations(
     level: RiskLevel,
@@ -307,7 +312,7 @@ Weights should be 0.0-1.0 where 1.0 is highest risk.`;
     switch (level) {
       case 'HIGH':
         return {
-          scenarioCount: 8,
+          scenarioCount: 12,  // Increased from 8
           includeSecurityTests: true,
           includePerformanceTests: hasComplexityFactor,
           includeEdgeCases: true,
@@ -317,7 +322,7 @@ Weights should be 0.0-1.0 where 1.0 is highest risk.`;
       
       case 'MEDIUM':
         return {
-          scenarioCount: 5,
+          scenarioCount: 8,   // Increased from 5
           includeSecurityTests: hasSecurityFactor,
           includePerformanceTests: false,
           includeEdgeCases: true,
@@ -327,11 +332,11 @@ Weights should be 0.0-1.0 where 1.0 is highest risk.`;
       
       case 'LOW':
         return {
-          scenarioCount: 2,
+          scenarioCount: 4,   // Increased from 2
           includeSecurityTests: false,
           includePerformanceTests: false,
-          includeEdgeCases: false,
-          includeNegativeTests: false,
+          includeEdgeCases: true,  // Now includes edge cases
+          includeNegativeTests: true,  // Now includes negative tests
           priorityOrder: 3,
         };
     }

@@ -4,14 +4,14 @@
     "rootDir": "C:/Users/affan/Desktop/Premier-League-Performance-Index/tests",
     "forbidOnly": false,
     "fullyParallel": true,
-    "globalSetup": null,
+    "globalSetup": "C:\\Users\\affan\\Desktop\\Premier-League-Performance-Index\\tests\\global-setup.ts",
     "globalTeardown": null,
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 4
     },
     "preserveOutput": "always",
     "reporter": [
@@ -43,14 +43,14 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 4
         },
         "id": "chromium",
         "name": "chromium",
         "testDir": "C:/Users/affan/Desktop/Premier-League-Performance-Index/tests",
         "testIgnore": [],
         "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+          "**/*.spec.ts"
         ],
         "timeout": 30000
       }
@@ -65,20 +65,20 @@
   },
   "suites": [
     {
-      "title": "agentic-v2.spec.ts",
-      "file": "agentic-v2.spec.ts",
+      "title": "generated\\login-flow.spec.ts",
+      "file": "generated/login-flow.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Agentic Testing System v2",
-          "file": "agentic-v2.spec.ts",
-          "line": 47,
+          "title": "Login Flow",
+          "file": "generated/login-flow.spec.ts",
+          "line": 31,
           "column": 6,
           "specs": [
             {
-              "title": "debug: what is on the page?",
+              "title": "Login with invalid email and password",
               "ok": true,
               "tags": [],
               "tests": [
@@ -93,64 +93,16 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5050,
+                      "duration": 23020,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "\n════════════════════════════════════════════════════════════\n"
-                        },
-                        {
-                          "text": "🚀 AGENTIC TESTING SYSTEM v2\n"
-                        },
-                        {
-                          "text": "   Based on: \"Agentic AI for Testing & Automation\"\n"
-                        },
-                        {
-                          "text": "════════════════════════════════════════════════════════════\n"
-                        },
-                        {
-                          "text": "Screenshot saved to debug-login.png\n"
-                        },
-                        {
-                          "text": "Page HTML length: \u001b[33m6292\u001b[39m\n"
-                        },
-                        {
-                          "text": "Page title: ShareMatch\n"
-                        },
-                        {
-                          "text": "Page URL: http://localhost:3000/?action=login\n"
-                        },
-                        {
-                          "text": "\n📊 Element counts:\n"
-                        },
-                        {
-                          "text": "  Divs: \u001b[33m1\u001b[39m\n"
-                        },
-                        {
-                          "text": "  Buttons: \u001b[33m0\u001b[39m\n"
-                        },
-                        {
-                          "text": "  Inputs: \u001b[33m0\u001b[39m\n"
-                        },
-                        {
-                          "text": "\n📦 Modal detection:\n"
-                        },
-                        {
-                          "text": "  [data-testid=\"login-modal\"]: \u001b[33m0\u001b[39m\n"
-                        },
-                        {
-                          "text": "  [role=\"dialog\"]: \u001b[33m0\u001b[39m\n"
-                        },
-                        {
-                          "text": "  [aria-modal=\"true\"]: \u001b[33m0\u001b[39m\n"
-                        },
-                        {
-                          "text": "\nBody text (first 200 chars): \n  \n  \n\n\n\n"
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-06T19:37:43.849Z",
+                      "startTime": "2026-01-11T18:11:27.353Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -158,9 +110,267 @@
                   "status": "expected"
                 }
               ],
-              "id": "53707cda5e0a0b91f4cc-863d3c24598d4ab058e1",
-              "file": "agentic-v2.spec.ts",
-              "line": 92,
+              "id": "740042e3bf7096de4d15-6d1a719989e5cc71571f",
+              "file": "generated/login-flow.spec.ts",
+              "line": 49,
+              "column": 3
+            },
+            {
+              "title": "Login with empty email and password",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 14564,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com\n"
+                        },
+                        {
+                          "text": "[Test] Starting...\n"
+                        },
+                        {
+                          "text": "[Test] Completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:27.354Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-a13afbbab5aa7ad115cb",
+              "file": "generated/login-flow.spec.ts",
+              "line": 63,
+              "column": 3
+            },
+            {
+              "title": "Login with password visibility toggle",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 24263,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops\n"
+                        },
+                        {
+                          "text": "[Test] Starting...\n"
+                        },
+                        {
+                          "text": "[Test] Completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:27.443Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-be62227a5f65d2dee210",
+              "file": "generated/login-flow.spec.ts",
+              "line": 78,
+              "column": 3
+            },
+            {
+              "title": "Login with SQL injection attempt",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 16381,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit\n"
+                        },
+                        {
+                          "text": "[Test] Starting...\n"
+                        },
+                        {
+                          "text": "[Test] Completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:27.343Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-14faaeb440977f2d7484",
+              "file": "generated/login-flow.spec.ts",
+              "line": 95,
+              "column": 3
+            },
+            {
+              "title": "Login with cross-site scripting attempt",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 20083,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }\n"
+                        },
+                        {
+                          "text": "[Test] Starting...\n"
+                        },
+                        {
+                          "text": "[Test] Completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:43.632Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-f88ac900c8a6d09226ad",
+              "file": "generated/login-flow.spec.ts",
+              "line": 111,
+              "column": 3
+            },
+            {
+              "title": "Login with brute force attempt",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 24209,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com\n"
+                        },
+                        {
+                          "text": "[Test] Starting...\n"
+                        },
+                        {
+                          "text": "[Test] Completed\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:45.936Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-80915fa67699dca9e0ec",
+              "file": "generated/login-flow.spec.ts",
+              "line": 128,
+              "column": 3
+            },
+            {
+              "title": "Login with valid email and password",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21206,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-11T18:11:52.028Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "740042e3bf7096de4d15-03667d0134c72c5fc347",
+              "file": "generated/login-flow.spec.ts",
+              "line": 156,
               "column": 3
             }
           ]
@@ -170,9 +380,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-06T19:37:29.729Z",
-    "duration": 20770.089,
-    "expected": 1,
+    "startTime": "2026-01-11T18:11:20.287Z",
+    "duration": 55110.309,
+    "expected": 7,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

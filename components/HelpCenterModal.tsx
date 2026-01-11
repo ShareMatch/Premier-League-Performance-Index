@@ -159,7 +159,8 @@ const HELP_TOPICS = {
     descriptionKey: "howToSignUpDesc",
     icon: <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
     videoEn: "Streamline Signup Process With Sharematch Product Demo.mp4",
-    videoAr: "Arabic Streamline Signup Process With Sharematch Product Demo.mp4", // Add your Arabic video filename
+    videoAr:
+      "Arabic Streamline Signup Process With Sharematch Product Demo.mp4", // Add your Arabic video filename
     section: "onboarding" as const,
   },
   login: {
@@ -269,7 +270,9 @@ const HELP_TOPICS = {
   f1Index: {
     titleKey: "f1Index",
     descriptionKey: "f1IndexDesc",
-    icon: <GiFullMotorcycleHelmet className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: (
+      <GiFullMotorcycleHelmet className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />
+    ),
     videoEn: "English Formula 1.mp4",
     videoAr: "Arabic Formula 1.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -277,7 +280,9 @@ const HELP_TOPICS = {
   nbaIndex: {
     titleKey: "nbaIndex",
     descriptionKey: "nbaIndexDesc",
-    icon: <GiBasketballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: (
+      <GiBasketballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />
+    ),
     videoEn: "English NBA Market.mp4",
     videoAr: "Arabic NBA Market.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -285,7 +290,9 @@ const HELP_TOPICS = {
   nflIndex: {
     titleKey: "nflIndex",
     descriptionKey: "nflIndexDesc",
-    icon: <GiAmericanFootballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />,
+    icon: (
+      <GiAmericanFootballBall className="w-4 h-4 sm:w-5 sm:h-5 text-brand-primary" />
+    ),
     videoEn: "English NFL.mp4",
     videoAr: "Arabic NFL.mp4", // Add your Arabic video filename
     section: "trading" as const,
@@ -561,6 +568,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          data-testid="alert-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -624,8 +632,12 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                           <ChevronRight
                             className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${
                               isRTL
-                                ? isExpanded ? "rotate-90" : "rotate-180"
-                                : isExpanded ? "rotate-90" : ""
+                                ? isExpanded
+                                  ? "rotate-90"
+                                  : "rotate-180"
+                                : isExpanded
+                                ? "rotate-90"
+                                : ""
                             }`}
                           />
                         </button>
@@ -756,8 +768,12 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                         <ChevronRight
                           className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
                             isRTL
-                              ? isSectionExpanded ? "rotate-90" : "rotate-180"
-                              : isSectionExpanded ? "rotate-90" : ""
+                              ? isSectionExpanded
+                                ? "rotate-90"
+                                : "rotate-180"
+                              : isSectionExpanded
+                              ? "rotate-90"
+                              : ""
                           }`}
                         />
                       </button>
@@ -800,8 +816,12 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                   <ChevronRight
                                     className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
                                       isRTL
-                                        ? isTopicExpanded ? "rotate-90" : "rotate-180"
-                                        : isTopicExpanded ? "rotate-90" : ""
+                                        ? isTopicExpanded
+                                          ? "rotate-90"
+                                          : "rotate-180"
+                                        : isTopicExpanded
+                                        ? "rotate-90"
+                                        : ""
                                     }`}
                                   />
                                 </button>

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "audit": "ts-node monitoring/audit.ts",
+    "audit:ci": "ts-node monitoring/enhanced-audit.ts",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report audit-reports",
@@ -35,7 +36,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.19.5",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
