@@ -29,14 +29,14 @@ const TEST_USER = {
 };
 
 test.describe("Home Page", () => {
-  test.beforeEach(async ({ supabaseAdapter }) => {
-    console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
-    await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  });
+  // test.beforeEach(async ({ supabaseAdapter }) => {
+  //   console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
+  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
+  // });
 
-  test.afterEach(async ({ supabaseAdapter }) => {
-    await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  });
+  // test.afterEach(async ({ supabaseAdapter }) => {
+  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
+  // });
 
   test("Home page loads and displays main navigation elements", async ({
     page,

@@ -114,7 +114,7 @@ class Audit {
       testResult.duration = Date.now() - startTime;
       
       // Parse passed tests
-      const testInfo = this.parseTestResults(stdout);
+      const testInfo = this.parseTestResults(stdout, stderr);
       testResult.passedTests = testInfo.passedTests;
       testResult.totalTests = testInfo.totalTests;
       
@@ -128,7 +128,8 @@ class Audit {
       testResult.duration = Date.now() - startTime;
       
       // Parse test results from output
-      const testInfo = this.parseTestResults(error.stdout || error.stderr || '');
+      const combinedOutput = (error.stdout || '') + '\n' + (error.stderr || '');
+      const testInfo = this.parseTestResults(error.stdout || '', error.stderr || '');
       testResult.failedTests = testInfo.failedTests;
       testResult.passedTests = testInfo.passedTests;
       testResult.totalTests = testInfo.totalTests;
@@ -143,37 +144,74 @@ class Audit {
     return testResult.success;
   }
 
-  private parseTestResults(output: string): { 
+  private parseTestResults(stdout: string, stderr: string): { 
     failedTests: string[], 
     passedTests: string[],
     totalTests: number 
   } {
     const failedTests: string[] = [];
     const passedTests: string[] = [];
-    const lines = output.split('\n');
+    const combinedOutput = stdout + '\n' + stderr;
+    const lines = combinedOutput.split('\n');
 
+    // Extract all test names from the chromium test lines
+    const testNames = new Set<string>();
     for (const line of lines) {
-      // Parse test names from Playwright output
-      // Format: [1/8] [chromium] › tests/generated/home-page.spec.ts:41:3 › Home Page › Test name
-      const testMatch = line.match(/\[chromium\]\s*›.*?›\s*(.*?)\s*›\s*(.*?)$/);
-      if (testMatch) {
-        const testName = testMatch[2].trim();
+      // Match format: [chromium] › path › Suite › Test name
+      const match = line.match(/\[chromium\]\s*›.*?›\s*(.+?)\s*›\s*(.+?)(?:\s*\(retry|$)/);
+      if (match) {
+        const testName = match[2].trim();
+        if (testName && !testName.includes('(retry')) {
+          testNames.add(testName);
+        }
+      }
+    }
+
+    // Find the failed tests section
+    let inFailedSection = false;
+    for (const line of lines) {
+      // Look for "X failed" line to start capturing failures
+      if (line.match(/^\s*\d+\s+failed/)) {
+        inFailedSection = true;
+        continue;
+      }
+
+      // If we're in the failed section, capture test names
+      if (inFailedSection) {
+        // Match: [chromium] › path › Suite › Test name
+        const failMatch = line.match(/\[chromium\]\s*›.*?›\s*(.+?)\s*›\s*(.+?)$/);
+        if (failMatch) {
+          const testName = failMatch[2].trim();
+          if (testName) {
+            failedTests.push(testName);
+          }
+        }
         
-        // Check if this test failed
-        if (lines.some(l => l.includes(testName) && (l.includes('✗') || l.includes('failed')))) {
-          failedTests.push(testName);
-        } else {
-          passedTests.push(testName);
+        // Stop at the "passed" line
+        if (line.match(/^\s*\d+\s+passed/)) {
+          break;
         }
       }
     }
 
     // Parse summary line: "8 passed (20.4s)" or "3 passed, 2 failed (15.2s)"
-    const summaryMatch = output.match(/(\d+)\s+passed(?:,\s+(\d+)\s+failed)?/);
-    let totalTests = passedTests.length + failedTests.length;
+    const summaryMatch = combinedOutput.match(/(\d+)\s+passed(?:,?\s+(\d+)\s+failed)?/);
+    let passedCount = 0;
+    let failedCount = 0;
+    
     if (summaryMatch) {
-      totalTests = parseInt(summaryMatch[1]) + (summaryMatch[2] ? parseInt(summaryMatch[2]) : 0);
+      passedCount = parseInt(summaryMatch[1]);
+      failedCount = summaryMatch[2] ? parseInt(summaryMatch[2]) : 0;
     }
+
+    // Determine which tests passed (all tests that aren't failed)
+    testNames.forEach(testName => {
+      if (!failedTests.includes(testName)) {
+        passedTests.push(testName);
+      }
+    });
+
+    const totalTests = passedCount + failedCount;
 
     return { failedTests, passedTests, totalTests };
   }
@@ -349,35 +387,31 @@ ${this.testFiles.map(file => {
         const attemptStatus = result.success ? '✅' : '❌';
         const attemptDuration = (result.duration / 1000).toFixed(2);
         
-        telegramText += `\n${attemptStatus} *${fileName}*\nAttempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
+        telegramText += `${attemptStatus} *${fileName}*\nAttempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
         
         // Show failed tests if any
         if (!result.success && result.failedTests.length > 0) {
           telegramText += `*Failed:*\n`;
-          result.failedTests.slice(0, 3).forEach(test => {
-            const shortTest = test.length > 50 ? test.substring(0, 47) + '...' : test;
+          result.failedTests.forEach(test => {
+            const shortTest = test.length > 45 ? test.substring(0, 42) + '...' : test;
             telegramText += `  • ${shortTest}\n`;
           });
-          if (result.failedTests.length > 3) {
-            telegramText += `  • ... and ${result.failedTests.length - 3} more\n`;
-          }
         }
+        telegramText += '\n';
       });
     }
 
     if (report.persistentFailures.length > 0) {
-      telegramText += `\n*🔴 Persistent Failures:*\n`;
-      report.persistentFailures.slice(0, 3).forEach(failure => {
-        const shortFailure = failure.length > 50 ? failure.substring(0, 47) + '...' : failure;
+      telegramText += `*🔴 Persistent Failures:*\n`;
+      report.persistentFailures.forEach(failure => {
+        const shortFailure = failure.length > 45 ? failure.substring(0, 42) + '...' : failure;
         telegramText += `• ${shortFailure}\n`;
       });
-      if (report.persistentFailures.length > 3) {
-        telegramText += `• ... and ${report.persistentFailures.length - 3} more\n`;
-      }
+      telegramText += '\n';
     }
 
-    telegramText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\``;
-    telegramText += `\n*Commit:* ${commitMessage}`;
+    telegramText += `*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\`\n`;
+    telegramText += `*Commit Message:* ${commitMessage}`;
 
     console.log("📤 Sending audit report to Telegram...");
     const sent = await sendTelegramMessage(telegramText);
