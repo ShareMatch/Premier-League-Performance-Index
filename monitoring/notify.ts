@@ -1,10 +1,16 @@
-
 import fetch from 'node-fetch';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8494711955:AAFlDO3u3d7HMLYY2hjHmoi39_ayg6WJviM';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '-5081339100';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-export async function sendTelegramMessage(text: string) {
+export async function sendTelegramMessage(text: string): Promise<boolean> {
+    // Skip if Telegram isn't configured
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.warn('⚠️ [Telegram] Not configured - skipping notification');
+        console.log('   Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID environment variables to enable');
+        return false;
+    }
+
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
     try {
@@ -19,10 +25,17 @@ export async function sendTelegramMessage(text: string) {
         });
 
         if (!response.ok) {
-            console.error(`Failed to send Telegram message: ${response.status} ${response.statusText}`);
+            const errorBody = await response.text().catch(() => 'Unknown error');
+            console.error(`❌ [Telegram] Failed to send message: ${response.status} ${response.statusText}`);
+            console.error(`   Response: ${errorBody}`);
+            return false;
         }
+        
+        console.log('✅ [Telegram] Message sent successfully');
+        return true;
     } catch (error) {
-        console.error('Error sending Telegram message:', error);
+        console.error('❌ [Telegram] Error sending message:', error);
+        return false;
     }
 }
 
