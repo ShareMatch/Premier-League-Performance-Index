@@ -222,8 +222,8 @@ ${this.testFiles.map(file => `• \`${path.basename(file)}\``).join('\n')}
   }
 }
 
-// Run the  audit
-if (require.main === module) {
+// Run the audit
+if (import.meta.url === `file://${process.argv[1]}`) {
   const audit = new Audit();
   audit.runAudit().catch(error => {
     console.error('Audit failed:', error);

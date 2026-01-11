@@ -27,7 +27,7 @@ export async function sendTelegramMessage(text: string) {
 }
 
 // Allow running directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     const message = process.argv[2] || "🧪 *Test Message from Monitoring Script*";
     sendTelegramMessage(message);
 }

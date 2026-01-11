@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "audit": "ts-node monitoring/audit.ts",
-    "audit:ci": "ts-node monitoring/enhanced-audit.ts",
+    "audit": "npx tsx monitoring/audit.ts",
+    "audit:ci": "npx tsx monitoring/enhanced-audit.ts",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report audit-reports",
@@ -49,5 +49,8 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "wrangler": "^4.56.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
