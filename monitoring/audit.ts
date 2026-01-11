@@ -77,21 +77,29 @@ class Audit {
     try {
       console.log(`Running Playwright tests on generated files...`);
       
-      const { stdout, stderr } = await execAsync(
-        `npx playwright test ${this.testFiles.join(' ')} --reporter=line`,
-        {
-          env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
-          maxBuffer: 1024 * 1024 * 10,
-          timeout: 300000
-        }
-      );
+      let allOutput = '';
+      
+      // Run tests individually for better error handling
+      for (const testFile of this.testFiles) {
+        console.log(`Running ${testFile}...`);
+        const { stdout, stderr } = await execAsync(
+          `npx playwright test ${testFile} --reporter=line`,
+          {
+            env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
+            maxBuffer: 1024 * 1024 * 10,
+            timeout: 300000
+          }
+        );
+        console.log(stdout);
+        allOutput += stdout + '\n';
+      }
 
       testResult.success = true;
-      testResult.output = stdout;
+      testResult.output = allOutput;
       testResult.duration = Date.now() - startTime;
       
       console.log(`✅ Attempt ${attempt} completed successfully`);
-      console.log(stdout);
+      console.log(allOutput);
 
     } catch (error: any) {
       testResult.success = false;
