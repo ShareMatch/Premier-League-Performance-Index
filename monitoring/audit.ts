@@ -117,6 +117,8 @@ class Audit {
 
       console.log(`❌ ${testFile} failed`);
       console.error(`Error: ${testResult.error}`);
+      console.error(`Stdout: ${error.stdout || 'No stdout'}`);
+      console.error(`Stderr: ${error.stderr || 'No stderr'}`);
     }
 
     this.results.push(testResult);
