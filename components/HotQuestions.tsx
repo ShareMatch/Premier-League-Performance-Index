@@ -3,6 +3,7 @@ import { Team, League } from '../types';
 import { TrendingUp, Trophy, Flag, Activity, Zap } from 'lucide-react';
 import InfoPopup from './InfoPopup';
 import { getMarketInfo } from '../lib/marketInfo';
+import { getIndexAvatarUrl } from '../lib/logoHelper';
 
 interface HotQuestionsProps {
   teams: Team[];
@@ -79,12 +80,12 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
     };
 
     // Generate for all markets
-    if (markets.EPL.length > 0) addQuestions(markets.EPL, 'EPL', <Trophy className="w-5 h-5 text-purple-400" />, 'from-purple-500/20 to-blue-500/20', 'group-hover:border-purple-500/50');
-    if (markets.F1.length > 0) addQuestions(markets.F1, 'F1', <Flag className="w-5 h-5 text-red-400" />, 'from-red-500/20 to-orange-500/20', 'group-hover:border-red-500/50');
-    if (markets.SPL.length > 0) addQuestions(markets.SPL, 'SPL', <Activity className="w-5 h-5 text-green-400" />, 'from-green-500/20 to-emerald-500/20', 'group-hover:border-green-500/50');
-    if (markets.UCL.length > 0) addQuestions(markets.UCL, 'UCL', <Trophy className="w-5 h-5 text-blue-400" />, 'from-blue-600/20 to-indigo-600/20', 'group-hover:border-blue-500/50');
-    if (markets.NBA.length > 0) addQuestions(markets.NBA, 'NBA', <Activity className="w-5 h-5 text-orange-400" />, 'from-orange-500/20 to-amber-500/20', 'group-hover:border-orange-500/50');
-    if (markets.NFL.length > 0) addQuestions(markets.NFL, 'NFL', <Trophy className="w-5 h-5 text-blue-800" />, 'from-blue-800/20 to-blue-900/20', 'group-hover:border-blue-800/50');
+    if (markets.EPL.length > 0) addQuestions(markets.EPL, 'EPL', null, 'from-purple-500/20 to-blue-500/20', 'group-hover:border-purple-500/50');
+    if (markets.F1.length > 0) addQuestions(markets.F1, 'F1', null, 'from-red-500/20 to-orange-500/20', 'group-hover:border-red-500/50');
+    if (markets.SPL.length > 0) addQuestions(markets.SPL, 'SPL', null, 'from-green-500/20 to-emerald-500/20', 'group-hover:border-green-500/50');
+    if (markets.UCL.length > 0) addQuestions(markets.UCL, 'UCL', null, 'from-blue-600/20 to-indigo-600/20', 'group-hover:border-blue-500/50');
+    if (markets.NBA.length > 0) addQuestions(markets.NBA, 'NBA', null, 'from-orange-500/20 to-amber-500/20', 'group-hover:border-orange-500/50');
+    if (markets.NFL.length > 0) addQuestions(markets.NFL, 'NFL', null, 'from-blue-800/20 to-blue-900/20', 'group-hover:border-blue-800/50');
 
     // Shuffle full pool
     return generated.sort(() => 0.5 - Math.random());
@@ -183,8 +184,19 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({ teams, onNavigate, onViewAs
                 {/* Header - horizontal layout on mobile */}
                 <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
                   <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-1.5 sm:gap-2 bg-gray-900/60 rounded-full px-2 sm:px-3 py-1 border border-gray-700/50">
-                      {q.icon}
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const indexAvatarUrl = getIndexAvatarUrl(q.market);
+                        return indexAvatarUrl ? (
+                          <img
+                            src={indexAvatarUrl}
+                            alt={`${q.market} Index`}
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded object-contain"
+                          />
+                        ) : (
+                          q.icon
+                        );
+                      })()}
                       <span className="text-[10px] sm:text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
                     </div>
                     <span className="text-[10px] sm:text-xs text-gray-500 font-mono pl-1">Vol: {q.volume}</span>
