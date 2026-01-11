@@ -35,7 +35,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Tests with Retry Logic & Generate Audit
-        run: npx ts-node --esm monitoring/audit.ts
+        run: npx tsx monitoring/audit.ts
         continue-on-error: true
 
       - name: Upload Test Results
