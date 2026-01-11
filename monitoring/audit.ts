@@ -6,322 +6,303 @@ import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-// Ensure audit-reports directory exists
+/* ---------------------------------------------
+   Helpers
+--------------------------------------------- */
+
+function getCommitMessage(): string {
+  if (process.env.GITHUB_EVENT_HEAD_COMMIT_MESSAGE) {
+    return process.env.GITHUB_EVENT_HEAD_COMMIT_MESSAGE.split('\n')[0];
+  }
+  return process.env.GITHUB_COMMIT_MESSAGE || 'N/A';
+}
+
+/* ---------------------------------------------
+   Setup
+--------------------------------------------- */
+
 const AUDIT_DIR = 'audit-reports';
 if (!fs.existsSync(AUDIT_DIR)) {
   fs.mkdirSync(AUDIT_DIR, { recursive: true });
 }
 
+interface TestCaseResult {
+  name: string;
+  status: 'passed' | 'failed' | 'unknown';
+}
+
 interface TestResult {
+  testFile: string;
   attempt: number;
   success: boolean;
   duration: number;
-  output: string;
-  error?: string;
+  stdout: string;
+  stderr?: string;
+  testCases: TestCaseResult[];
   failedTests: string[];
+  summaryText?: string;
 }
 
 interface AuditReport {
   status: 'PASS' | 'FAIL';
-  totalDuration: number;
-  attempts: TestResult[];
+  totalDurationMs: number;
+  attemptsByFile: Map<string, TestResult[]>;
   summary: string;
   persistentFailures: string[];
   flakyTests: string[];
-  fileResults: Map<string, TestResult[]>;
 }
+
+/* ---------------------------------------------
+   Audit Runner
+--------------------------------------------- */
 
 class Audit {
   private testFiles = [
     'tests/generated/home-page.spec.ts',
-    'tests/generated/login-flow.spec.ts', 
+    'tests/generated/login-flow.spec.ts',
     'tests/generated/signup-flow.spec.ts'
   ];
 
   private maxRetries = 3;
-  private results: TestResult[] = [];
+  private resultsByFile: Map<string, TestResult[]> = new Map();
 
   async runAudit(): Promise<void> {
-    console.log("🚀 Starting  CI/CD Audit...");
+    console.log('Starting CI/CD Audit...');
     const startTime = Date.now();
 
-    // Run each test file individually with retry logic
     for (const testFile of this.testFiles) {
-      console.log(`\n📋 Testing: ${testFile}`);
-      
-      let fileSuccess = false;
-      let attempts = 0;
-      
-      while (!fileSuccess && attempts < this.maxRetries) {
-        attempts++;
-        console.log(`Attempt ${attempts}/${this.maxRetries} for ${testFile}`);
-        
-        const success = await this.runSingleTest(testFile, attempts);
-        
-        if (success) {
-          fileSuccess = true;
-          if (attempts === 1) {
-            console.log(`✅ ${testFile} passed on first attempt`);
-          } else {
-            console.log(`✅ ${testFile} passed after ${attempts} attempts`);
-          }
+      this.resultsByFile.set(testFile, []);
+      console.log(`\nTesting: ${testFile}`);
+
+      let passed = false;
+
+      for (let attempt = 1; attempt <= this.maxRetries && !passed; attempt++) {
+        console.log(`Attempt ${attempt}/${this.maxRetries}`);
+        const result = await this.runSingleTest(testFile, attempt);
+        this.resultsByFile.get(testFile)!.push(result);
+
+        if (result.success) {
+          passed = true;
+          console.log(`${path.basename(testFile)} passed on attempt ${attempt}`);
         } else {
-          console.log(`❌ ${testFile} failed on attempt ${attempts}`);
+          console.log(`${path.basename(testFile)} failed on attempt ${attempt}`);
         }
       }
     }
 
     const report = this.generateReport(Date.now() - startTime);
-    await this.sendAuditReport(report);
+    await this.writeAndSendReport(report);
 
-    if (report.status === 'FAIL') {
-      process.exit(1);
-    }
+    if (report.status === 'FAIL') process.exit(1);
   }
 
-  private async runSingleTest(testFile: string, attempt: number): Promise<boolean> {
-    const testResult: TestResult = {
-      attempt,
-      success: false,
-      duration: 0,
-      output: '',
-      failedTests: []
-    };
+  /* ---------------------------------------------
+     Single Test Execution
+  --------------------------------------------- */
 
-    const startTime = Date.now();
+  private async runSingleTest(testFile: string, attempt: number): Promise<TestResult> {
+    const start = Date.now();
+    const env = { ...process.env, CI: 'true', ATTEMPT: attempt.toString() };
 
     try {
-      console.log(`Running ${testFile}...`);
-      
       const { stdout, stderr } = await execAsync(
         `npx playwright test ${testFile} --reporter=line`,
-        {
-          env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
-          maxBuffer: 1024 * 1024 * 10,
-          timeout: 300000
-        }
+        { env, maxBuffer: 1024 * 1024 * 10, timeout: 300000 }
       );
 
-      testResult.success = true;
-      testResult.output = stdout;
-      testResult.duration = Date.now() - startTime;
-      
-      console.log(`✅ ${testFile} completed successfully`);
-      console.log(stdout);
+      const parsed = this.parseOutput(stdout + (stderr ? '\n' + stderr : ''));
 
-    } catch (error: any) {
-      testResult.success = false;
-      testResult.error = error.stderr || error.message || 'Unknown error';
-      testResult.output = error.stdout || '';
-      testResult.duration = Date.now() - startTime;
-      testResult.failedTests = this.parseFailedTests(error.stdout || error.stderr || '');
+      return {
+        testFile,
+        attempt,
+        success: parsed.failedCount === 0,
+        duration: Date.now() - start,
+        stdout,
+        stderr,
+        testCases: parsed.testCases,
+        failedTests: parsed.failedTests,
+        summaryText: parsed.summaryText
+      };
+    } catch (err: any) {
+      const stdout = err.stdout || '';
+      const stderr = err.stderr || err.message || '';
+      const parsed = this.parseOutput(stdout + '\n' + stderr);
 
-      console.log(`❌ ${testFile} failed`);
-      console.error(`Error: ${testResult.error}`);
-      console.error(`Stdout: ${error.stdout || 'No stdout'}`);
-      console.error(`Stderr: ${error.stderr || 'No stderr'}`);
+      return {
+        testFile,
+        attempt,
+        success: false,
+        duration: Date.now() - start,
+        stdout,
+        stderr,
+        testCases: parsed.testCases,
+        failedTests: parsed.failedTests,
+        summaryText: parsed.summaryText
+      };
     }
-
-    this.results.push(testResult);
-    return testResult.success;
   }
 
-  private parseFailedTests(output: string): string[] {
+  /* ---------------------------------------------
+     Playwright Output Parser
+  --------------------------------------------- */
+
+  private parseOutput(raw: string) {
+    const lines = raw.split('\n');
+    const testCases: TestCaseResult[] = [];
     const failedTests: string[] = [];
-    const lines = output.split('\n');
+
+    let failedCount = 0;
+    let summaryText: string | undefined;
+
+    const testLine = /^\[\d+\/\d+\].*›.*›\s(.+)$/;
 
     for (const line of lines) {
-      // Parse Playwright test failures
-      if (line.includes('✗') || line.includes('failed')) {
-        const match = line.match(/(\w+\s+>\s+.+)/);
-        if (match) {
-          failedTests.push(match[1].trim());
+      const trimmed = line.trim();
+
+      const testMatch = line.match(testLine);
+      if (testMatch) {
+        const name = testMatch[1].trim();
+        if (!testCases.find(t => t.name === name)) {
+          testCases.push({ name, status: 'unknown' });
         }
       }
 
-      // Parse specific error patterns
-      if (line.includes('Error:') || line.includes('Timeout:') || line.includes('AssertionError:')) {
-        failedTests.push(line.trim());
+      if (trimmed.startsWith('✗') || trimmed.includes('failed')) {
+        const name = trimmed.replace(/^✗/, '').trim();
+        failedTests.push(name);
+      }
+
+      if (trimmed.match(/\d+\s+passed/) || trimmed.match(/\d+\s+failed/)) {
+        summaryText = trimmed;
+        const failedMatch = trimmed.match(/(\d+)\s+failed/);
+        failedCount = failedMatch ? Number(failedMatch[1]) : 0;
       }
     }
 
-    return failedTests;
-  }
-
-  private generateReport(totalDuration: number): AuditReport {
-    // Group results by test file
-    const fileResults = new Map<string, TestResult[]>();
-    
-    this.results.forEach(result => {
-      const testFile = this.testFiles[result.attempt - 1];
-      if (!fileResults.has(testFile)) {
-        fileResults.set(testFile, []);
-      }
-      fileResults.get(testFile)!.push(result);
+    // Assign statuses
+    testCases.forEach(tc => {
+      tc.status = failedTests.some(f => f.includes(tc.name))
+        ? 'failed'
+        : 'passed';
     });
-
-    // Determine overall status and summary
-    const successfulFiles = Array.from(fileResults.entries())
-      .filter(([_, results]) => results.some(r => r.success))
-      .map(([file, _]) => file);
-
-    const status = successfulFiles.length > 0 ? 'PASS' : 'FAIL';
-    
-    // Find persistent failures (failed in all attempts)
-    const allFailures = this.results.flatMap(r => r.failedTests);
-    const failureCounts = new Map<string, number>();
-    
-    allFailures.forEach(failure => {
-      failureCounts.set(failure, (failureCounts.get(failure) || 0) + 1);
-    });
-
-    const persistentFailures = Array.from(failureCounts.entries())
-      .filter(([_, count]) => count === this.maxRetries)
-      .map(([failure, _]) => failure);
-
-    const flakyTests = Array.from(failureCounts.entries())
-      .filter(([_, count]) => count > 0 && count < this.maxRetries)
-      .map(([failure, _]) => failure);
-
-    const summary = status === 'PASS' 
-      ? `${successfulFiles.length}/${this.testFiles.length} test files passed. ${flakyTests.length} flaky tests detected.`
-      : `All ${this.testFiles.length} test files failed. ${persistentFailures.length} persistent failures detected.`;
 
     return {
-      status,
-      totalDuration,
-      attempts: this.results,
-      summary,
-      persistentFailures,
-      flakyTests,
-      fileResults
+      testCases,
+      failedTests: Array.from(new Set(failedTests)),
+      failedCount,
+      summaryText
     };
   }
 
-  private async sendAuditReport(report: AuditReport): Promise<void> {
-    const duration = (report.totalDuration / 1000).toFixed(2);
-    const status = report.status === 'PASS' ? '✅ PASS' : '❌ FAIL';
-    const statusEmoji = report.status === 'PASS' ? '🟢' : '🚨';
+  /* ---------------------------------------------
+     Report Aggregation
+  --------------------------------------------- */
 
-    // Generate Markdown report for GitHub Actions
-    let markdownReport = `# ${statusEmoji} CI/CD Audit Report
+  private generateReport(totalDurationMs: number): AuditReport {
+    const persistentFailures: string[] = [];
+    const flakyTests: string[] = [];
 
-**Status:** ${status}  
-**Total Duration:** ${duration}s  
-**Attempts:** ${this.results.length}  
-**Branch:** \`${process.env.GITHUB_REF_NAME || 'local'}\`  
-**Commit:** \`${process.env.GITHUB_SHA?.substring(0, 7) || 'N/A'}\`
+    for (const [file, attempts] of this.resultsByFile.entries()) {
+      const failures = new Map<string, number>();
 
-## Summary
-${report.summary}
-
-## Test Files Status
-${this.testFiles.map(file => {
-  const results = report.fileResults.get(file) || [];
-  const success = results.some(r => r.success);
-  const status = success ? '✅' : '❌';
-  const fileName = path.basename(file);
-  return `${status} ${fileName}`;
-}).join('\n')}
-
-## Attempt Results
-`;
-
-    this.results.forEach((result) => {
-      const attemptStatus = result.success ? '✅' : '❌';
-      const attemptDuration = (result.duration / 1000).toFixed(2);
-      markdownReport += `\n### ${attemptStatus} Attempt ${result.attempt} (${attemptDuration}s)\n`;
-      
-      if (!result.success && result.failedTests.length > 0) {
-        markdownReport += `\n**Failed Tests:**\n`;
-        result.failedTests.slice(0, 10).forEach(failure => {
-          markdownReport += `- \`${failure}\`\n`;
+      attempts.forEach(a => {
+        a.testCases.forEach(tc => {
+          if (tc.status === 'failed') {
+            failures.set(tc.name, (failures.get(tc.name) || 0) + 1);
+          }
         });
-        if (result.failedTests.length > 10) {
-          markdownReport += `- ... and ${result.failedTests.length - 10} more\n`;
+      });
+
+      failures.forEach((count, testName) => {
+        if (count === this.maxRetries) {
+          persistentFailures.push(`${path.basename(file)}: ${testName}`);
+        } else {
+          flakyTests.push(`${path.basename(file)}: ${testName}`);
         }
-      }
-    });
-
-    if (report.persistentFailures.length > 0) {
-      markdownReport += `\n## 🔴 Persistent Failures (all ${this.maxRetries} attempts)\n`;
-      report.persistentFailures.slice(0, 10).forEach(failure => {
-        markdownReport += `- \`${failure}\`\n`;
       });
     }
 
-    if (report.flakyTests.length > 0) {
-      markdownReport += `\n## 🟡 Flaky Tests (intermittent)\n`;
-      report.flakyTests.slice(0, 5).forEach(test => {
-        markdownReport += `- \`${test}\`\n`;
-      });
-    }
+    const allFilesPassed = Array.from(this.resultsByFile.values())
+      .every(attempts => attempts.some(a => a.success));
 
-    // Save markdown report to file
-    const summaryPath = path.join(AUDIT_DIR, 'summary.md');
-    fs.writeFileSync(summaryPath, markdownReport, 'utf-8');
-    console.log(`📄 Audit report saved to: ${summaryPath}`);
-
-    // Save JSON report for programmatic access
-    const jsonReport = {
-      timestamp: new Date().toISOString(),
-      status: report.status,
-      duration: report.totalDuration,
-      attempts: this.results,
-      persistentFailures: report.persistentFailures,
-      flakyTests: report.flakyTests,
-      branch: process.env.GITHUB_REF_NAME || 'local',
-      commit: process.env.GITHUB_SHA?.substring(0, 7) || 'N/A',
+    return {
+      status: allFilesPassed ? 'PASS' : 'FAIL',
+      totalDurationMs,
+      attemptsByFile: this.resultsByFile,
+      summary: `${this.resultsByFile.size}/${this.testFiles.length} test files executed`,
+      persistentFailures,
+      flakyTests
     };
-    fs.writeFileSync(
-      path.join(AUDIT_DIR, 'results.json'),
-      JSON.stringify(jsonReport, null, 2),
-      'utf-8'
-    );
+  }
 
-    // Generate Telegram message (shorter format)
-    let telegramText = `
-${statusEmoji} *ShareMatch CI/CD Audit Report*
+  /* ---------------------------------------------
+     Output & Notifications
+  --------------------------------------------- */
 
-*Status:* ${status}
-*Duration:* ${duration}s
-*Attempts:* ${this.results.length}
+  private async writeAndSendReport(report: AuditReport): Promise<void> {
+    const durationSec = (report.totalDurationMs / 1000).toFixed(2);
 
-*Summary:* ${report.summary}
+    let md = `CI/CD Audit Report
 
-*Test Files:*
-${this.testFiles.map(file => `• \`${path.basename(file)}\``).join('\n')}
+Status: ${report.status}
+Duration: ${durationSec}s
+Branch: ${process.env.GITHUB_REF_NAME || 'local'}
+Commit Message: ${getCommitMessage()}
+
 `;
 
-    this.results.forEach((result) => {
-      const attemptStatus = result.success ? '✅' : '❌';
-      const attemptDuration = (result.duration / 1000).toFixed(2);
-      telegramText += `\n${attemptStatus} *Attempt ${result.attempt}* (${attemptDuration}s)`;
-    });
+    for (const [file, attempts] of report.attemptsByFile.entries()) {
+      md += `## ${path.basename(file)}\n`;
 
-    if (report.persistentFailures.length > 0) {
-      telegramText += `\n\n*🔴 Persistent Failures:*\n`;
-      report.persistentFailures.slice(0, 3).forEach(failure => {
-        telegramText += `• \`${failure.substring(0, 50)}...\`\n`;
+      for (const a of attempts) {
+        md += `Attempt ${a.attempt}: ${a.success ? 'PASS' : 'FAIL'} (${(a.duration / 1000).toFixed(2)}s)\n`;
+        if (a.summaryText) md += `Summary: ${a.summaryText}\n`;
+
+        a.testCases.forEach(tc => {
+          md += `- [${tc.status.toUpperCase()}] ${tc.name}\n`;
+        });
+
+        md += '\n';
+      }
+    }
+
+    if (report.persistentFailures.length) {
+      md += `Persistent Failures:\n`;
+      report.persistentFailures.forEach(f => md += `- ${f}\n`);
+    }
+
+    fs.writeFileSync(path.join(AUDIT_DIR, 'summary.md'), md, 'utf-8');
+
+    let telegram = `ShareMatch CI/CD Audit Report
+
+Status: ${report.status}
+Duration: ${durationSec}s
+Commit Message: ${getCommitMessage()}
+
+`;
+
+    for (const [file, attempts] of report.attemptsByFile.entries()) {
+      telegram += `${path.basename(file)}\n`;
+      attempts.forEach(a => {
+        telegram += `Attempt ${a.attempt}: ${a.success ? 'PASS' : 'FAIL'} (${(a.duration / 1000).toFixed(2)}s)\n`;
+        if (a.failedTests.length) {
+          telegram += `Failed tests: ${a.failedTests.slice(0, 5).join(', ')}\n`;
+        }
       });
+      telegram += '\n';
     }
 
-    telegramText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\``;
-    telegramText += `\n*Commit:* \`${process.env.GITHUB_SHA?.substring(0, 7) || 'N/A'}\``;
-
-    console.log("📤 Sending audit report to Telegram...");
-    const sent = await sendTelegramMessage(telegramText);
-    if (sent) {
-      console.log("✅ Audit report sent successfully.");
-    }
+    await sendTelegramMessage(telegram);
   }
 }
 
-// Run the audit
+/* ---------------------------------------------
+   Entrypoint
+--------------------------------------------- */
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const audit = new Audit();
-  audit.runAudit().catch(error => {
-    console.error('Audit failed:', error);
+  new Audit().runAudit().catch(err => {
+    console.error('Audit failed:', err);
     process.exit(1);
   });
 }

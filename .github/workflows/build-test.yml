@@ -49,6 +49,10 @@ jobs:
           if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "✅ VITE_SUPABASE_ANON_KEY is set"; else echo "❌ VITE_SUPABASE_ANON_KEY is NOT set"; fi
           if [ -n "$TELEGRAM_BOT_TOKEN" ]; then echo "✅ TELEGRAM_BOT_TOKEN is set"; else echo "⚠️ TELEGRAM_BOT_TOKEN is NOT set (notifications disabled)"; fi
 
+      - name: Export commit message
+        run: |
+          echo "GITHUB_EVENT_HEAD_COMMIT_MESSAGE=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
+
       - name: Run Tests with Retry Logic & Generate Audit
         run: |
           echo "🔍 Debug: Environment variables"
