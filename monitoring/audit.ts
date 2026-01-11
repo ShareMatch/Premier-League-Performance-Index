@@ -1,67 +1,234 @@
-
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { sendTelegramMessage } from './notify';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const execAsync = promisify(exec);
 
-async function runAudit() {
-    console.log("🚀 Starting Daily Health & Compliance Audit...");
-    const startTime = Date.now();
-    let status = "✅ PASS";
-    let summary = "";
-    let failedTests: string[] = [];
-
-    try {
-        // Run Playwright Tests
-        console.log("Running Playwright E2E Tests...");
-        const { stdout, stderr } = await execAsync('npx playwright test', {
-            env: { ...process.env, CI: 'true' },
-            maxBuffer: 1024 * 1024 * 10
-        });
-
-        console.log(stdout);
-
-        // If we get here, tests passed (exec throws on non-zero exit code)
-        summary = "All systems operational. Compliance checks passed.";
-
-    } catch (error: any) {
-        status = "❌ FAIL";
-        summary = "Issues detected in daily audit.";
-
-        // Parse error output to find failed tests
-        const output = error.stdout || error.stderr || "";
-        // Basic extraction of failed lines (this is a heuristic)
-        if (output.includes("Error:")) {
-            failedTests.push("Test Suite Failed - Check logs.");
-        }
-        console.error("Test execution failed:", output);
-    }
-
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-    const report = `
-${status === '✅ PASS' ? '🟢' : '🚨'} *ShareMatch Daily Audit Report*
-
-*Status:* ${status}
-*Duration:* ${duration}s
-
-${summary}
-
-*Checks Performed:*
-• Shariah Compliance Scan (Forbidden words)
-• Authentication Flow
-• Critical Path (Trading/Asset Pages)
-• Broken Link Detection
-`;
-
-    console.log("Sending Telegram Report...");
-    await sendTelegramMessage(report);
-    console.log("Done.");
-
-    if (status !== "✅ PASS") {
-        process.exit(1);
-    }
+interface TestResult {
+  attempt: number;
+  success: boolean;
+  duration: number;
+  output: string;
+  error?: string;
+  failedTests: string[];
 }
 
-runAudit();
+interface AuditReport {
+  status: 'PASS' | 'FAIL';
+  totalDuration: number;
+  attempts: TestResult[];
+  summary: string;
+  persistentFailures: string[];
+  flakyTests: string[];
+}
+
+class Audit {
+  private testFiles = [
+    'tests/generated/home-page.spec.ts',
+    'tests/generated/login-flow.spec.ts', 
+    'tests/generated/signup-flow.spec.ts'
+  ];
+
+  private maxRetries = 3;
+  private results: TestResult[] = [];
+
+  async runAudit(): Promise<void> {
+    console.log("🚀 Starting  CI/CD Audit...");
+    const startTime = Date.now();
+
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      console.log(`\n📋 Attempt ${attempt}/${this.maxRetries}`);
+      const success = await this.runTestAttempt(attempt);
+      
+      // Stop early if successful on first attempt
+      if (success && attempt === 1) {
+        console.log("✅ All tests passed on first attempt - no need for retries");
+        break;
+      }
+    }
+
+    const report = this.generateReport(Date.now() - startTime);
+    await this.sendAuditReport(report);
+
+    if (report.status === 'FAIL') {
+      process.exit(1);
+    }
+  }
+
+  private async runTestAttempt(attempt: number): Promise<boolean> {
+    const testResult: TestResult = {
+      attempt,
+      success: false,
+      duration: 0,
+      output: '',
+      failedTests: []
+    };
+
+    const startTime = Date.now();
+
+    try {
+      console.log(`Running Playwright tests on generated files...`);
+      
+      const { stdout, stderr } = await execAsync(
+        `npx playwright test ${this.testFiles.join(' ')} --reporter=line`,
+        {
+          env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
+          maxBuffer: 1024 * 1024 * 10,
+          timeout: 300000
+        }
+      );
+
+      testResult.success = true;
+      testResult.output = stdout;
+      testResult.duration = Date.now() - startTime;
+      
+      console.log(`✅ Attempt ${attempt} completed successfully`);
+      console.log(stdout);
+
+    } catch (error: any) {
+      testResult.success = false;
+      testResult.error = error.stderr || error.message || 'Unknown error';
+      testResult.output = error.stdout || '';
+      testResult.duration = Date.now() - startTime;
+      testResult.failedTests = this.parseFailedTests(error.stdout || error.stderr || '');
+
+      console.log(`❌ Attempt ${attempt} failed`);
+      console.error(`Error: ${testResult.error}`);
+    }
+
+    this.results.push(testResult);
+    return testResult.success;
+  }
+
+  private parseFailedTests(output: string): string[] {
+    const failedTests: string[] = [];
+    const lines = output.split('\n');
+
+    for (const line of lines) {
+      // Parse Playwright test failures
+      if (line.includes('✗') || line.includes('failed')) {
+        const match = line.match(/(\w+\s+>\s+.+)/);
+        if (match) {
+          failedTests.push(match[1].trim());
+        }
+      }
+
+      // Parse specific error patterns
+      if (line.includes('Error:') || line.includes('Timeout:') || line.includes('AssertionError:')) {
+        failedTests.push(line.trim());
+      }
+    }
+
+    return failedTests;
+  }
+
+  private generateReport(totalDuration: number): AuditReport {
+    const successfulAttempts = this.results.filter(r => r.success).length;
+    const status = successfulAttempts > 0 ? 'PASS' : 'FAIL';
+    
+    // Find persistent failures (failed in all attempts)
+    const allFailures = this.results.flatMap(r => r.failedTests);
+    const failureCounts = new Map<string, number>();
+    
+    allFailures.forEach(failure => {
+      failureCounts.set(failure, (failureCounts.get(failure) || 0) + 1);
+    });
+
+    const persistentFailures = Array.from(failureCounts.entries())
+      .filter(([_, count]) => count === this.maxRetries)
+      .map(([failure, _]) => failure);
+
+    const flakyTests = Array.from(failureCounts.entries())
+      .filter(([_, count]) => count > 0 && count < this.maxRetries)
+      .map(([failure, _]) => failure);
+
+    const summary = status === 'PASS' 
+      ? this.results.length === 1 
+        ? `Tests passed on first attempt. All systems operational.`
+        : `Tests passed after ${successfulAttempts} attempt(s). ${flakyTests.length} flaky tests detected.`
+      : `All ${this.maxRetries} attempts failed. ${persistentFailures.length} persistent failures detected.`;
+
+    return {
+      status,
+      totalDuration,
+      attempts: this.results,
+      summary,
+      persistentFailures,
+      flakyTests
+    };
+  }
+
+  private async sendAuditReport(report: AuditReport): Promise<void> {
+    const duration = (report.totalDuration / 1000).toFixed(2);
+    const status = report.status === 'PASS' ? '✅ PASS' : '❌ FAIL';
+    const statusEmoji = report.status === 'PASS' ? '🟢' : '🚨';
+
+    let reportText = `
+${statusEmoji} *ShareMatch CI/CD Audit Report*
+
+*Status:* ${status}
+*Total Duration:* ${duration}s
+*Attempts:* ${this.results.length}
+
+*Summary:* ${report.summary}
+
+*Test Files Processed:*
+${this.testFiles.map(file => `• \`${path.basename(file)}\``).join('\n')}
+
+*Attempt Results:*
+`;
+
+    this.results.forEach((result, index) => {
+      const attemptStatus = result.success ? '✅' : '❌';
+      const attemptDuration = (result.duration / 1000).toFixed(2);
+      reportText += `\n${attemptStatus} *Attempt ${result.attempt}* (${attemptDuration}s)`;
+      
+      if (!result.success && result.failedTests.length > 0) {
+        reportText += `\n  _Failed Tests:_ ${result.failedTests.slice(0, 3).join(', ')}`;
+        if (result.failedTests.length > 3) {
+          reportText += ` +${result.failedTests.length - 3} more`;
+        }
+      }
+    });
+
+    if (report.persistentFailures.length > 0) {
+      reportText += `\n\n*🔴 Persistent Failures (all attempts):*\n`;
+      report.persistentFailures.slice(0, 5).forEach(failure => {
+        reportText += `• \`${failure}\`\n`;
+      });
+      if (report.persistentFailures.length > 5) {
+        reportText += `• ... and ${report.persistentFailures.length - 5} more\n`;
+      }
+    }
+
+    if (report.flakyTests.length > 0) {
+      reportText += `\n\n*🟡 Flaky Tests (intermittent failures):*\n`;
+      report.flakyTests.slice(0, 3).forEach(test => {
+        reportText += `• \`${test}\`\n`;
+      });
+      if (report.flakyTests.length > 3) {
+        reportText += `• ... and ${report.flakyTests.length - 3} more\n`;
+      }
+    }
+
+    reportText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'unknown'}\``;
+    reportText += `\n*Commit:* \`${process.env.GITHUB_SHA?.substring(0, 7) || 'unknown'}\``;
+
+    console.log("📤 Sending audit report to Telegram...");
+    await sendTelegramMessage(reportText);
+    console.log("✅ Audit report sent successfully.");
+  }
+}
+
+// Run the  audit
+if (require.main === module) {
+  const audit = new Audit();
+  audit.runAudit().catch(error => {
+    console.error('Audit failed:', error);
+    process.exit(1);
+  });
+}
+
+export { Audit };

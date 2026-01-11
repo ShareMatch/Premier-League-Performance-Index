@@ -20,7 +20,7 @@ import { getKnowledgeStore } from './knowledge-store';
 dotenv.config();
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 export interface GeneratedTest {
   filename: string;
@@ -90,7 +90,7 @@ async function callGroq(prompt: string): Promise<string> {
       model: GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
-      max_tokens: 4000,
+      max_tokens: 8000, // Increased to generate more complete test code
     }),
   });
 

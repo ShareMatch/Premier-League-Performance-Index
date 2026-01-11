@@ -20,7 +20,7 @@ import { KnowledgeStore, getKnowledgeStore } from './knowledge-store';
 dotenv.config();
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Types for test plans
 export interface TestStep {
@@ -65,6 +65,8 @@ export interface TestPlan {
 export interface PlannerOptions {
   /** Features/modals to exclude from test generation (already tested separately) */
   excludeFeatures?: string[];
+  /** Minimum number of scenarios to generate */
+  minScenarioCount?: number;
 }
 
 /**
@@ -87,7 +89,7 @@ async function callGroq(prompt: string): Promise<string> {
       model: GROQ_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      max_tokens: 3000,
+      max_tokens: 8000, // Increased to avoid JSON truncation
     }),
   });
 
@@ -156,15 +158,24 @@ export class TestPlanner {
       if (removedCount > 0) {
         console.log(`   🗑️  Removed ${removedCount} excluded scenarios`);
       }
-      
-      // If ALL scenarios were filtered, generate fallback scenarios based on exploration
-      if (scenarios.length === 0 && explorationState) {
-        console.log(`   ⚠️  All scenarios filtered! Generating from exploration data...`);
-        scenarios = this.generateScenariosFromExploration(
-          riskAssessment.featureName,
-          explorationState,
-          options.excludeFeatures
-        );
+    }
+
+    // If scenarios are insufficient, generate more from exploration data
+    const minScenarios = options?.minScenarioCount || riskAssessment.testingRecommendations.scenarioCount || 5;
+    if (scenarios.length < minScenarios && explorationState) {
+      console.log(`   ⚠️  Only ${scenarios.length} scenarios, need ${minScenarios}. Generating from exploration...`);
+      const explorationScenarios = this.generateScenariosFromExploration(
+        riskAssessment.featureName,
+        explorationState,
+        options?.excludeFeatures || []
+      );
+      // Add exploration scenarios that don't duplicate existing ones
+      const existingIds = new Set(scenarios.map(s => s.id));
+      for (const scenario of explorationScenarios) {
+        if (!existingIds.has(scenario.id) && scenarios.length < minScenarios) {
+          scenarios.push(scenario);
+          existingIds.add(scenario.id);
+        }
       }
     }
 
@@ -274,8 +285,13 @@ export class TestPlanner {
       excludePatterns.add('register');
     }
     
-    // Group elements by type for scenario generation
-    const buttons: string[] = [];
+    // Group elements by type and category for scenario generation
+    const navButtons: string[] = [];
+    const actionButtons: string[] = [];
+    const buyButtons: string[] = [];
+    const sellButtons: string[] = [];
+    const teamButtons: string[] = [];
+    const sportButtons: string[] = [];
     const inputs: string[] = [];
     const links: string[] = [];
     
@@ -293,79 +309,248 @@ export class TestPlanner {
       }
       if (isExcluded) continue;
       
+      const text = info.description || selector;
+      
       if (info.elementType === 'button') {
-        buttons.push(info.description || selector);
+        // Categorize buttons
+        if (/buy|purchase/i.test(text)) {
+          buyButtons.push(text);
+        } else if (/sell/i.test(text)) {
+          sellButtons.push(text);
+        } else if (/home|sports|football|basketball|motorsport|cricket|golf|events|help/i.test(text)) {
+          navButtons.push(text);
+        } else if (/arsenal|man city|bayern|thunder|nuggets|rockets|villa|league/i.test(text)) {
+          teamButtons.push(text);
+        } else if (/premier league|champions league|world cup|pro league|super league/i.test(text)) {
+          sportButtons.push(text);
+        } else {
+          actionButtons.push(text);
+        }
       } else if (info.elementType === 'input') {
-        inputs.push(info.description || selector);
+        inputs.push(text);
       } else if (info.elementType === 'link') {
-        links.push(info.description || selector);
+        links.push(text);
       }
     }
     
-    // Generate navigation test
+    // 1. Page load test
     scenarios.push({
-      id: 'nav-1',
-      name: `Navigate to ${featureName}`,
+      id: 'page-load',
+      name: `${featureName} loads successfully`,
       type: 'happy_path',
       priority: 1,
-      preconditions: ['User is not logged in'],
+      preconditions: [],
       steps: [
         { order: 1, action: 'navigate', target: '/', description: `Navigate to ${featureName}` },
         { order: 2, action: 'wait', description: 'Wait for page to load' },
       ],
       assertions: [
-        { type: 'visible', target: 'body', expected: 'true', description: 'Page loads successfully' },
+        { type: 'visible', target: 'body', expected: 'true', description: 'Page content is visible' },
       ],
       testData: {},
       cleanup: [],
-      tags: ['navigation', 'smoke'],
+      tags: ['smoke', 'navigation'],
     });
     
-    // Generate button interaction tests (limit to top 5)
-    const topButtons = buttons.slice(0, 5);
-    for (let i = 0; i < topButtons.length; i++) {
+    // 2. Navigation buttons test
+    if (navButtons.length > 0) {
+      for (let i = 0; i < Math.min(navButtons.length, 10); i++) {
+        scenarios.push({
+          id: `nav-${i + 1}`,
+          name: `Navigate via ${navButtons[i]} button`,
+          type: 'happy_path',
+          priority: 2,
+          preconditions: ['User is on home page'],
+          steps: [
+            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+            { order: 2, action: 'click', target: navButtons[i], description: `Click ${navButtons[i]}` },
+            { order: 3, action: 'wait', description: 'Wait for navigation' },
+          ],
+          assertions: [
+            { type: 'visible', target: 'body', expected: 'true', description: 'Page loads after navigation' },
+          ],
+          testData: {},
+          cleanup: [],
+          tags: ['navigation', 'menu'],
+        });
+      }
+    }
+    
+    // 3. Sport/League selection tests
+    if (sportButtons.length > 0) {
+      for (let i = 0; i < Math.min(sportButtons.length, 5); i++) {
+        scenarios.push({
+          id: `sport-${i + 1}`,
+          name: `Select ${sportButtons[i]}`,
+          type: 'happy_path',
+          priority: 2,
+          preconditions: ['User is on home page'],
+          steps: [
+            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+            { order: 2, action: 'click', target: sportButtons[i], description: `Click ${sportButtons[i]}` },
+            { order: 3, action: 'wait', description: 'Wait for content to update' },
+          ],
+          assertions: [
+            { type: 'visible', target: 'body', expected: 'true', description: 'League content loads' },
+          ],
+          testData: {},
+          cleanup: [],
+          tags: ['sports', 'selection'],
+        });
+      }
+    }
+    
+    // 4. Team selection tests
+    if (teamButtons.length > 0) {
+      for (let i = 0; i < Math.min(teamButtons.length, 5); i++) {
+        scenarios.push({
+          id: `team-${i + 1}`,
+          name: `View ${teamButtons[i]} details`,
+          type: 'happy_path',
+          priority: 2,
+          preconditions: ['User is on home page'],
+          steps: [
+            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+            { order: 2, action: 'click', target: teamButtons[i], description: `Click ${teamButtons[i]}` },
+            { order: 3, action: 'wait', description: 'Wait for team details' },
+          ],
+          assertions: [
+            { type: 'visible', target: 'body', expected: 'true', description: 'Team details visible' },
+          ],
+          testData: {},
+          cleanup: [],
+          tags: ['team', 'details'],
+        });
+      }
+    }
+    
+    // 5. Buy button tests
+    if (buyButtons.length > 0) {
       scenarios.push({
-        id: `btn-${i + 1}`,
-        name: `Click ${topButtons[i]} button`,
+        id: 'buy-flow',
+        name: 'Buy button interaction',
+        type: 'happy_path',
+        priority: 1,
+        preconditions: ['User is on home page'],
+        steps: [
+          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+          { order: 2, action: 'click', target: buyButtons[0], description: `Click ${buyButtons[0]}` },
+          { order: 3, action: 'wait', description: 'Wait for buy modal/action' },
+        ],
+        assertions: [
+          { type: 'visible', target: 'body', expected: 'true', description: 'Buy action triggers' },
+        ],
+        testData: {},
+        cleanup: [],
+        tags: ['trading', 'buy'],
+      });
+    }
+    
+    // 6. Sell button tests
+    if (sellButtons.length > 0) {
+      scenarios.push({
+        id: 'sell-flow',
+        name: 'Sell button interaction',
+        type: 'happy_path',
+        priority: 1,
+        preconditions: ['User is on home page'],
+        steps: [
+          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+          { order: 2, action: 'click', target: sellButtons[0], description: `Click ${sellButtons[0]}` },
+          { order: 3, action: 'wait', description: 'Wait for sell modal/action' },
+        ],
+        assertions: [
+          { type: 'visible', target: 'body', expected: 'true', description: 'Sell action triggers' },
+        ],
+        testData: {},
+        cleanup: [],
+        tags: ['trading', 'sell'],
+      });
+    }
+    
+    // 7. View All test
+    const viewAllButton = actionButtons.find(b => /view all/i.test(b));
+    if (viewAllButton) {
+      scenarios.push({
+        id: 'view-all',
+        name: 'View All expands content',
         type: 'happy_path',
         priority: 2,
         preconditions: ['User is on home page'],
         steps: [
           { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'click', target: topButtons[i], description: `Click ${topButtons[i]} button` },
-          { order: 3, action: 'wait', description: 'Wait for response' },
+          { order: 2, action: 'click', target: viewAllButton, description: 'Click View All' },
+          { order: 3, action: 'wait', description: 'Wait for expanded content' },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'Page remains stable' },
+          { type: 'visible', target: 'body', expected: 'true', description: 'More content visible' },
         ],
         testData: {},
         cleanup: [],
-        tags: ['interaction', 'button'],
+        tags: ['navigation', 'content'],
       });
     }
     
-    // Generate search test if search input exists
+    // 8. Responsive test
+    scenarios.push({
+      id: 'responsive',
+      name: `${featureName} is responsive`,
+      type: 'edge_case',
+      priority: 3,
+      preconditions: [],
+      steps: [
+        { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+        { order: 2, action: 'wait', description: 'Check mobile viewport' },
+      ],
+      assertions: [
+        { type: 'visible', target: 'body', expected: 'true', description: 'Page renders on mobile' },
+      ],
+      testData: { viewport: '375x667' },
+      cleanup: [],
+      tags: ['responsive', 'mobile'],
+    });
+    
+    // 9. Search test if input exists
     const searchInput = inputs.find(i => i.toLowerCase().includes('search') || i.toLowerCase().includes('find'));
     if (searchInput) {
       scenarios.push({
-        id: 'search-1',
+        id: 'search',
         name: 'Search functionality',
         type: 'happy_path',
         priority: 2,
         preconditions: ['User is on home page'],
         steps: [
           { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'fill', target: searchInput, value: 'test search', description: 'Enter search term' },
+          { order: 2, action: 'fill', target: searchInput, value: 'Arsenal', description: 'Enter search term' },
           { order: 3, action: 'wait', description: 'Wait for search results' },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'Search completes' },
+          { type: 'visible', target: 'body', expected: 'true', description: 'Search results displayed' },
         ],
-        testData: { searchTerm: 'test search' },
+        testData: { searchTerm: 'Arsenal' },
         cleanup: [],
         tags: ['search', 'input'],
       });
     }
+    
+    // 10. Negative test - disabled buttons
+    scenarios.push({
+      id: 'disabled-buttons',
+      name: 'Disabled buttons are not clickable',
+      type: 'negative',
+      priority: 3,
+      preconditions: ['User is on home page'],
+      steps: [
+        { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
+        { order: 2, action: 'verify', target: 'button:disabled', description: 'Find disabled buttons' },
+      ],
+      assertions: [
+        { type: 'visible', target: 'button:disabled', expected: 'true', description: 'Disabled buttons exist' },
+      ],
+      testData: {},
+      cleanup: [],
+      tags: ['negative', 'ui'],
+    });
     
     console.log(`   ✅ Generated ${scenarios.length} scenarios from exploration data`);
     return scenarios;
@@ -555,8 +740,49 @@ Respond ONLY with valid JSON:
       const jsonMatch = response.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed.scenarios || [];
+        let jsonStr = jsonMatch[0];
+        
+        // Try to fix common JSON issues from LLM
+        try {
+          const parsed = JSON.parse(jsonStr);
+          return parsed.scenarios || [];
+        } catch (parseError) {
+          console.log(`   [LLM] JSON parse error, attempting recovery...`);
+          
+          // Try to extract just the scenarios array
+          const scenariosMatch = jsonStr.match(/"scenarios"\s*:\s*\[([\s\S]*?)\](?=\s*[,}]|$)/);
+          if (scenariosMatch) {
+            try {
+              // Clean up truncated JSON by finding valid objects
+              const scenariosContent = scenariosMatch[1];
+              const validScenarios: TestScenario[] = [];
+              
+              // Split by },{ and try to parse each scenario
+              const scenarioParts = scenariosContent.split(/\}\s*,\s*\{/);
+              for (let i = 0; i < scenarioParts.length; i++) {
+                let part = scenarioParts[i].trim();
+                if (!part.startsWith('{')) part = '{' + part;
+                if (!part.endsWith('}')) part = part + '}';
+                
+                try {
+                  const scenario = JSON.parse(part);
+                  if (scenario.id && scenario.name) {
+                    validScenarios.push(scenario);
+                  }
+                } catch {
+                  // Skip invalid scenario
+                }
+              }
+              
+              if (validScenarios.length > 0) {
+                console.log(`   [LLM] Recovered ${validScenarios.length} scenarios from malformed JSON`);
+                return validScenarios;
+              }
+            } catch {
+              // Fall through to fallback
+            }
+          }
+        }
       }
     } catch (e: any) {
       console.log(`   [LLM] Planning failed: ${e.message}`);
