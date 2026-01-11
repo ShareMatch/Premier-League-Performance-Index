@@ -1,6 +1,7 @@
 import React from 'react';
 import InfoPopup from './InfoPopup';
 import { getMarketInfo } from '../lib/marketInfo';
+import { getIndexAvatarUrl } from '../lib/logoHelper';
 
 interface HeaderProps {
   title: string;
@@ -9,15 +10,29 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ title, market }) => {
   const marketInfo = getMarketInfo(market);
+  const indexAvatarUrl = getIndexAvatarUrl(market);
 
   return (
     <div className="flex items-center justify-between py-3 sm:py-4">
       {/* Left: Title & Subtitle */}
-      <div className="flex flex-col">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-          {title.replace(/ Performance Index$/i, '')} <span className="text-emerald-500">Performance Index</span>
-        </h1>
-        <p className="text-gray-400 text-xs sm:text-sm">Tokenised Asset Marketplace</p>
+      <div className="flex items-center gap-3">
+        {/* Index Avatar */}
+        {indexAvatarUrl && (
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center flex-shrink-0">
+            <img
+              src={indexAvatarUrl}
+              alt={`${market} Index Avatar`}
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
+        )}
+
+        <div className="flex flex-col">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+            {title.replace(/ Performance Index$/i, '')} <span className="text-emerald-500">Performance Index</span>
+          </h1>
+          <p className="text-gray-400 text-xs sm:text-sm">Tokenised Asset Marketplace</p>
+        </div>
       </div>
 
       {/* Right: Market Status & Info Icon */}
