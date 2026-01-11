@@ -14,20 +14,15 @@ jobs:
     timeout-minutes: 30
 
     env:
-      # Telegram notifications (optional - workflow continues if not set)
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      
-      # App URL (defaults to production if not set)
-      APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
-      
-      # Supabase configuration
+      APP_BASE_URL: https://stg-rwa.sharematch.me/
+
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       
-      # CI environment
       CI: true
 
     steps:
@@ -55,7 +50,11 @@ jobs:
           if [ -n "$TELEGRAM_BOT_TOKEN" ]; then echo "✅ TELEGRAM_BOT_TOKEN is set"; else echo "⚠️ TELEGRAM_BOT_TOKEN is NOT set (notifications disabled)"; fi
 
       - name: Run Tests with Retry Logic & Generate Audit
-        run: npx tsx monitoring/audit.ts
+        run: |
+          echo "🔍 Debug: Environment variables"
+          echo "APP_BASE_URL: $APP_BASE_URL"
+          echo "SUPABASE_URL: $SUPABASE_URL"
+          npx tsx monitoring/audit.ts
         continue-on-error: true
 
       - name: Upload Playwright Report
