@@ -28,6 +28,7 @@ interface AuditReport {
   summary: string;
   persistentFailures: string[];
   flakyTests: string[];
+  fileResults: Map<string, TestResult[]>;
 }
 
 class Audit {
@@ -148,8 +149,23 @@ class Audit {
   }
 
   private generateReport(totalDuration: number): AuditReport {
-    const successfulAttempts = this.results.filter(r => r.success).length;
-    const status = successfulAttempts > 0 ? 'PASS' : 'FAIL';
+    // Group results by test file
+    const fileResults = new Map<string, TestResult[]>();
+    
+    this.results.forEach(result => {
+      const testFile = this.testFiles[result.attempt - 1];
+      if (!fileResults.has(testFile)) {
+        fileResults.set(testFile, []);
+      }
+      fileResults.get(testFile)!.push(result);
+    });
+
+    // Determine overall status and summary
+    const successfulFiles = Array.from(fileResults.entries())
+      .filter(([_, results]) => results.some(r => r.success))
+      .map(([file, _]) => file);
+
+    const status = successfulFiles.length > 0 ? 'PASS' : 'FAIL';
     
     // Find persistent failures (failed in all attempts)
     const allFailures = this.results.flatMap(r => r.failedTests);
@@ -168,10 +184,8 @@ class Audit {
       .map(([failure, _]) => failure);
 
     const summary = status === 'PASS' 
-      ? this.results.length === 1 
-        ? `Tests passed on first attempt. All systems operational.`
-        : `Tests passed after ${successfulAttempts} attempt(s). ${flakyTests.length} flaky tests detected.`
-      : `All ${this.maxRetries} attempts failed. ${persistentFailures.length} persistent failures detected.`;
+      ? `${successfulFiles.length}/${this.testFiles.length} test files passed. ${flakyTests.length} flaky tests detected.`
+      : `All ${this.testFiles.length} test files failed. ${persistentFailures.length} persistent failures detected.`;
 
     return {
       status,
@@ -179,7 +193,8 @@ class Audit {
       attempts: this.results,
       summary,
       persistentFailures,
-      flakyTests
+      flakyTests,
+      fileResults
     };
   }
 
@@ -200,8 +215,14 @@ class Audit {
 ## Summary
 ${report.summary}
 
-## Test Files
-${this.testFiles.map(file => `- \`${path.basename(file)}\``).join('\n')}
+## Test Files Status
+${this.testFiles.map(file => {
+  const results = report.fileResults.get(file) || [];
+  const success = results.some(r => r.success);
+  const status = success ? '✅' : '❌';
+  const fileName = path.basename(file);
+  return `${status} ${fileName}`;
+}).join('\n')}
 
 ## Attempt Results
 `;
