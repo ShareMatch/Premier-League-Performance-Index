@@ -1,31 +1,77 @@
-import React from 'react';
-import NewsFeed from './NewsFeed';
-import HotQuestions from './HotQuestions';
-import type { Team, League } from '../types';
+import React from "react";
+import NewsFeed from "./NewsFeed";
+import HotQuestions from "./HotQuestions";
+import type { Team, League } from "../types";
+import type { SeasonDates } from "../lib/api";
+// import LiveActivity from "./LiveActivity";
+import TopPerformers from "./TopPerformers";
+import TrendingCarousel from "./TrendingCarousel";
+import RecentlyViewed from "./RecentlyViewed";
+import AllMarketsWidget from "./AllMarketsWidget";
+import { ChevronRight } from "lucide-react";
 
 interface HomeDashboardProps {
-    onNavigate: (league: League) => void;
-    teams: Team[];
-    onViewAsset?: (asset: Team) => void;
+  onNavigate: (league: League) => void;
+  teams: Team[];
+  onViewAsset?: (asset: Team) => void;
+  seasonDatesMap?: Map<string, SeasonDates>;
 }
 
-const HomeDashboard: React.FC<HomeDashboardProps> = ({ onNavigate, teams, onViewAsset }) => {
-    return (
-        <div className="flex flex-col gap-8 h-full overflow-y-auto pb-8 scrollbar-hide">
-            {/* Top Section: Hot Questions */}
-            <div className="flex-shrink-0">
-                <HotQuestions teams={teams} onNavigate={onNavigate} />
-            </div>
-
-            {/* Bottom Section: News Feed */}
-            <div className="flex-shrink-0">
-                <div className="mb-4">
-                    <h2 className="text-xl font-bold text-gray-200">ShareMatch News Wire</h2>
-                </div>
-                <NewsFeed topic="Global" showHeader={false} />
-            </div>
+const HomeDashboard: React.FC<HomeDashboardProps> = ({
+  onNavigate,
+  teams,
+  onViewAsset,
+  seasonDatesMap,
+}) => {
+  return (
+    <div
+      data-testid="home-dashboard"
+      className="flex flex-col gap-8 h-full overflow-y-auto pb-8 scrollbar-hide"
+    >
+      {/* Top Section: Trending Markets */}
+      <div className="flex-shrink-0 space-y-4">
+        <TrendingCarousel
+          teams={teams}
+          seasonDatesMap={seasonDatesMap}
+          onViewAsset={onViewAsset}
+        />
+        <HotQuestions
+          teams={teams}
+          onNavigate={onNavigate}
+          seasonDatesMap={seasonDatesMap}
+        />
+        {/* View All button aligned to the right */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => onNavigate("NEW_MARKETS")}
+            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+          >
+            View All <ChevronRight className="w-3 h-3" />
+          </button>
         </div>
-    );
+
+        <RecentlyViewed onNavigate={onNavigate} onViewAsset={onViewAsset} />
+
+        <AllMarketsWidget
+          teams={teams}
+          onNavigate={onNavigate}
+          onViewAsset={onViewAsset}
+        />
+      </div>
+      <div className="flex-shrink-0"></div>
+
+      <div className="flex-shrink-0"></div>
+
+      {/* LiveActivity replaced by RecentlyViewed as per user request */}
+      {/* <div className="flex-shrink-0">
+        <LiveActivity />
+      </div> */}
+
+      {/* <div className="flex-shrink-0">
+        <TopPerformers onNavigate={onNavigate} />
+      </div> */}
+    </div>
+  );
 };
 
 export default HomeDashboard;

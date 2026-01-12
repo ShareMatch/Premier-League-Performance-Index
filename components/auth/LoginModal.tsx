@@ -268,6 +268,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       {/* Modal Content - Matching SignUp theme */}
       <div
+        data-testid="login-modal"
         className="relative w-full flex flex-col md:flex-row items-stretch overflow-hidden my-4 bg-[#005430] rounded-modal z-[101]"
         style={{
           maxWidth: "min(90vw, 850px)",
@@ -278,6 +279,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-30"
+          data-testid="login-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -339,6 +341,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                data-testid="login-email-input"
               />
 
               <PasswordField
@@ -347,6 +350,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                data-testid="login-password-input"
               />
 
               <div className="flex justify-between items-center">
@@ -356,6 +360,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     type="button"
                     onClick={onSwitchToSignUp}
                     className="underline transition-colors hover:text-gray-300"
+                    data-testid="login-switch-to-signup"
                   >
                     Sign up
                   </button>
@@ -364,6 +369,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   type="button"
                   onClick={onForgotPassword}
                   className="text-white underline transition-colors hover:text-gray-300 font-sans text-xs"
+                  data-testid="login-forgot-password"
                 >
                   Forgot password?
                 </button>
@@ -392,6 +398,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       isButtonHovered && canSubmit ? "opacity-90" : ""
                     } !disabled:opacity-100 disabled:cursor-not-allowed`}
                     variant="white"
+                    data-testid="login-submit-button"
                   >
                     {loading ? "Logging in..." : "Login"}
                     {!loading && (

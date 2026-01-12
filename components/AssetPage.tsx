@@ -49,13 +49,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     };
 
     return (
-        <div className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
+        <div data-testid="asset-page" className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
             {/* Mobile Header - Compact */}
             <div className="lg:hidden sticky top-0 z-30 bg-[#0B1221] border-b border-gray-800">
                 <div className="flex items-center justify-between p-2 gap-1">
                     <button
                         onClick={onBack}
                         className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
+                        data-testid="asset-page-back-mobile"
                     >
                         <ArrowLeft className="w-4 h-4" />
                     </button>
@@ -128,12 +129,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                         <button
                             onClick={() => onSelectOrder?.(asset, 'sell')}
                                 className="flex-1 px-3 py-2 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-xs"
+                            data-testid="asset-page-sell-mobile"
                         >
                             Sell
                         </button>
                         <button
                             onClick={() => onSelectOrder?.(asset, 'buy')}
                                 className="flex-1 px-3 py-2 bg-[#005430] text-white font-bold rounded-lg transition-colors text-xs"
+                            data-testid="asset-page-buy-mobile"
                         >
                             Buy
                         </button>
@@ -148,6 +151,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <button
                         onClick={onBack}
                         className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        data-testid="asset-page-back-desktop"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -204,12 +208,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                         <button
                             onClick={() => onSelectOrder?.(asset, 'sell')}
                             className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
+                            data-testid="asset-page-sell-desktop"
                         >
                             Sell
                         </button>
                         <button
                             onClick={() => onSelectOrder?.(asset, 'buy')}
                             className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
+                            data-testid="asset-page-buy-desktop"
                         >
                             Buy
                         </button>

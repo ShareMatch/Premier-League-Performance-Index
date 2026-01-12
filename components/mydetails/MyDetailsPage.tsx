@@ -800,13 +800,14 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   }
 
   return (
-    <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
+    <div data-testid="my-details-page" className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
       {/* Header - Sticky on scroll */}
       <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+            data-testid="my-details-close-button"
           >
             <X className="w-4 h-4" />
           </button>

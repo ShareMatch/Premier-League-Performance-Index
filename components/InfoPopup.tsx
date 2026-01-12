@@ -45,7 +45,9 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
       let percentage = (elapsed / totalDuration) * 100;
       percentage = Math.max(0, Math.min(100, percentage)); // Clamp between 0 and 100
 
-      return { percentage, startStr, endStr };
+      const daysRemaining = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      return { percentage, startStr, endStr, daysRemaining };
     } catch (e) {
       return null;
     }
@@ -61,6 +63,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
         e.stopPropagation();
         closeModal();
       }}
+      data-testid="info-popup-overlay"
     >
       <div 
         className="max-w-[85vw] sm:max-w-sm md:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 scrollbar-hide rounded-lg md:rounded-xl max-h-[90vh] overflow-y-auto"
@@ -70,6 +73,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           WebkitBackdropFilter: 'blur(40px)',
         }}
         onClick={(e) => e.stopPropagation()}
+        data-testid="info-popup"
       >
         {/* Header */}
         <div 
@@ -96,6 +100,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
             <button 
               onClick={closeModal} 
               className="text-gray-400 hover:text-white transition-colors p-0.5"
+              data-testid="info-popup-close-button"
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             </button>
@@ -113,9 +118,20 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
               </div>
               <div className="h-1.5 sm:h-2 bg-gray-700/50 rounded-full overflow-hidden relative">
                 <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#005430] to-emerald-500 rounded-full transition-all duration-1000 ease-out"
-                  style={{ width: `${progressInfo.percentage}%` }}
+                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
+                  style={{ 
+                    width: `${progressInfo.percentage}%`,
+                    background: 'linear-gradient(90deg, #005430 0%, #10b981 100%)',
+                  }}
                 />
+              </div>
+              <div className="text-center mt-2">
+                <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-300">
+                  {progressInfo.daysRemaining > 0 
+                    ? `${progressInfo.daysRemaining} day${progressInfo.daysRemaining !== 1 ? 's' : ''} remaining`
+                    : 'Season ended'
+                  }
+                </span>
               </div>
             </div>
           )}
@@ -138,6 +154,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
         }}
         className={`${iconClassName} w-6 h-6 rounded-full bg-[#005430] hover:bg-[#006035] flex items-center justify-center transition-all shadow-sm border border-emerald-800/20 group/info`}
         aria-label="More information"
+        data-testid="info-popup-trigger"
       >
         <span className="text-white font-serif italic text-sm font-bold antialiased pr-[1px]">i</span>
       </button>

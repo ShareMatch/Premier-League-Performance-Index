@@ -15,6 +15,12 @@ import AIAnalysis from "./components/AIAnalysis";
 const AIAnalyticsPage = React.lazy(
   () => import("./components/AIAnalyticsPage")
 );
+const AllMarketsPage = React.lazy(
+  () => import("./components/AllMarketsPage")
+);
+const NewMarketsPage = React.lazy(
+  () => import("./components/NewMarketsPage")
+);
 import {
   fetchWallet,
   fetchPortfolio,
@@ -31,6 +37,8 @@ import {
   getKycUserStatus,
   KycStatus,
   needsKycVerification,
+  fetchSeasonDates,
+  SeasonDates,
 } from "./lib/api";
 import { getLogoUrl } from "./lib/logoHelper";
 import { useAuth } from "./components/auth/AuthProvider";
@@ -53,7 +61,9 @@ const App: React.FC = () => {
   const [activeLeague, setActiveLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'asset'>('dashboard');
+  const [currentView, setCurrentView] = useState<"dashboard" | "asset">(
+    "dashboard"
+  );
   const [viewAsset, setViewAsset] = useState<Team | null>(null);
 
   // Supabase State
@@ -93,32 +103,37 @@ const App: React.FC = () => {
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
 
+  // Season dates from market_index_seasons table (for InfoPopup)
+  const [seasonDatesMap, setSeasonDatesMap] = useState<
+    Map<string, SeasonDates>
+  >(new Map());
+
   // Lock body scroll when mobile panel is open (prevents iOS Safari scroll issues)
   useEffect(() => {
     if (showRightPanel) {
       // Lock scroll on body
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
       document.body.style.top = `-${window.scrollY}px`;
     } else {
       // Restore scroll
       const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
       }
     }
-    
+
     return () => {
       // Cleanup on unmount
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.top = "";
     };
   }, [showRightPanel]);
 
@@ -185,91 +200,159 @@ const App: React.FC = () => {
   // Fetch Assets
   const loadAssets = useCallback(async () => {
     try {
-      // Fetch static asset data, active trading data, and settled assets in parallel
-      const [staticAssets, tradingAssets, settledAssets] = await Promise.all([
-        fetchAssets(),
-        fetchTradingAssets(),
-        fetchSettledAssets()
-      ]);
+      // Fetch static asset data, active trading data, settled assets, and season dates in parallel
+      const [staticAssets, tradingAssets, settledAssets, seasonDates] =
+        await Promise.all([
+          fetchAssets(),
+          fetchTradingAssets(),
+          fetchSettledAssets(),
+          fetchSeasonDates(),
+        ]);
+
+      // Store season dates for use in Header/InfoPopup
+      setSeasonDatesMap(seasonDates);
 
       // Create a map of static assets by ID for quick lookup
-      const assetMap = new Map(staticAssets.map(asset => [asset.id, asset]));
+      const assetMap = new Map(staticAssets.map((asset) => [asset.id, asset]));
 
       // Combine active and settled trading assets
       const allTradingAssets = [...tradingAssets, ...settledAssets];
 
       // Map trading assets to Team interface with merged data
-      const mappedAssets: Team[] = allTradingAssets.map((ta: any) => {
-        const staticAsset = assetMap.get(ta.asset_id);
-        if (!staticAsset) {
-          console.warn(`Missing static asset data for asset_id: ${ta.asset_id}`, ta);
-          return null;
-        }
-
-
-        // Determine market from the hierarchy
-        const marketGroup = ta.market_index_seasons.market_indexes.markets.market_sub_groups.market_groups.name;
-        const marketSubGroup = ta.market_index_seasons.market_indexes.markets.market_sub_groups.name;
-        const marketToken = ta.market_index_seasons.market_indexes.markets.market_token;
-
-        // Map to legacy market names used in the app
-        let market: string;
-        if (marketToken) {
-          market = marketToken;
-        } else {
-          // Fallback mapping based on names
-          const marketName = ta.market_index_seasons.market_indexes.markets.name;
-          switch (marketName) {
-            case 'England Premier League': market = 'EPL'; break;
-            case 'UEFA Champions League': market = 'UCL'; break;
-            case 'FIFA World Cup': market = 'WC'; break;
-            case 'Saudi Pro League': market = 'SPL'; break;
-            case 'Indonesia Super League': market = 'ISL'; break;
-            case 'Formula 1': market = 'F1'; break;
-            case 'NBA': market = 'NBA'; break;
-            case 'NFL': market = 'NFL'; break;
-            case 'T20 World Cup': market = 'T20'; break;
-            case 'Eurovision': market = 'Eurovision'; break;
-            default: market = 'HOME'; break;
+      const mappedAssets: Team[] = allTradingAssets
+        .map((ta: any) => {
+          const staticAsset = assetMap.get(ta.asset_id);
+          if (!staticAsset) {
+            console.warn(
+              `Missing static asset data for asset_id: ${ta.asset_id}`,
+              ta
+            );
+            return null;
           }
-        }
 
-        // Map category based on market sub-group or market name
-        let category: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'global_events' | 'other';
-        switch (marketSubGroup) {
-          case 'Football': category = 'football'; break;
-          case 'Motorsport': category = 'f1'; break;
-          case 'Basketball': category = 'basketball'; break;
-          case 'American Football': category = 'american_football'; break;
-          case 'Cricket': category = 'cricket'; break;
-          case 'Eurovision': category = 'global_events'; break;
-          default: category = 'other'; break;
-        }
+          // Determine market from the hierarchy
+          const marketGroup =
+            ta.market_index_seasons.market_indexes.markets.market_sub_groups
+              .market_groups.name;
+          const marketSubGroup =
+            ta.market_index_seasons.market_indexes.markets.market_sub_groups
+              .name;
+          const marketToken =
+            ta.market_index_seasons.market_indexes.markets.market_token;
 
-        return {
-          id: ta.id, // Use trading asset ID as the primary ID
-          asset_id: ta.asset_id, // Keep reference to static asset
-          name: staticAsset.name,
-          team: staticAsset.team,
-          bid: Number(ta.sell), // Sell price is bid
-          offer: Number(ta.buy), // Buy price is offer
-          lastChange: 'none' as const, // TODO: Calculate from price history
-          color: staticAsset.color,
-          logo_url: getLogoUrl(staticAsset.name, category, ta.id) || staticAsset.logo_url,
-          category: category,
-          market: market,
-          market_trading_asset_id: ta.id,
-          is_settled: ta.market_index_seasons.is_settled,
-          settled_date: ta.market_index_seasons.settled_at ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined,
-          // Additional fields for richer data
-          market_group: marketGroup,
-          market_sub_group: marketSubGroup,
-          index_name: ta.market_index_seasons.market_indexes.name,
-          index_token: ta.market_index_seasons.market_indexes.token,
-          season_status: ta.market_index_seasons.status,
-          units: Number(ta.units)
-        };
-      }).filter(Boolean) as Team[];
+          // Map to legacy market names used in the app
+          let market: string;
+          if (marketToken) {
+            market = marketToken;
+          } else {
+            // Fallback mapping based on names
+            const marketName =
+              ta.market_index_seasons.market_indexes.markets.name;
+            switch (marketName) {
+              case "England Premier League":
+                market = "EPL";
+                break;
+              case "UEFA Champions League":
+                market = "UCL";
+                break;
+              case "FIFA World Cup":
+                market = "WC";
+                break;
+              case "Saudi Pro League":
+                market = "SPL";
+                break;
+              case "Indonesia Super League":
+                market = "ISL";
+                break;
+              case "Formula 1":
+                market = "F1";
+                break;
+              case "NBA":
+                market = "NBA";
+                break;
+              case "NFL":
+                market = "NFL";
+                break;
+              case "T20 World Cup":
+                market = "T20";
+                break;
+              case "Eurovision":
+                market = "Eurovision";
+                break;
+              default:
+                market = "HOME";
+                break;
+            }
+          }
+
+          // Map category based on market sub-group or market name
+          let category:
+            | "football"
+            | "f1"
+            | "basketball"
+            | "american_football"
+            | "cricket"
+            | "global_events"
+            | "other";
+          switch (marketSubGroup) {
+            case "Football":
+              category = "football";
+              break;
+            case "Motorsport":
+              category = "f1";
+              break;
+            case "Basketball":
+              category = "basketball";
+              break;
+            case "American Football":
+              category = "american_football";
+              break;
+            case "Cricket":
+              category = "cricket";
+              break;
+            case "Eurovision":
+              category = "global_events";
+              break;
+            default:
+              category = "other";
+              break;
+          }
+
+          return {
+            id: ta.id, // Use trading asset ID as the primary ID
+            asset_id: ta.asset_id, // Keep reference to static asset
+            name: staticAsset.name,
+            team: staticAsset.team,
+            bid: Number(ta.sell), // Sell price is bid
+            offer: Number(ta.buy), // Buy price is offer
+            lastChange: "none" as const, // TODO: Calculate from price history
+            color: staticAsset.color,
+            logo_url:
+              getLogoUrl(staticAsset.name, category, ta.id) ||
+              staticAsset.logo_url,
+            category: category,
+            market: market,
+            market_trading_asset_id: ta.id,
+            is_settled: ta.market_index_seasons.is_settled,
+            settled_date: ta.market_index_seasons.settled_at
+              ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
+                "en-US",
+                { month: "short", day: "numeric", year: "numeric" }
+              )
+              : undefined,
+            // Additional fields for richer data
+            market_group: marketGroup,
+            market_sub_group: marketSubGroup,
+            index_name: ta.market_index_seasons.market_indexes.name,
+            index_token: ta.market_index_seasons.market_indexes.token,
+            season_status: ta.market_index_seasons.status,
+            season_start_date: ta.market_index_seasons.start_date,
+            season_end_date: ta.market_index_seasons.end_date,
+            season_stage: ta.market_index_seasons.stage,
+            units: Number(ta.units),
+          };
+        })
+        .filter(Boolean) as Team[];
       setAllAssets(mappedAssets);
     } catch (error) {
       console.error("Error loading assets:", error);
@@ -341,16 +424,19 @@ const App: React.FC = () => {
     // The modal will be hidden next time they open the app if approved
   };
 
-
-
   const handleViewAsset = (asset: Team) => {
     setSelectedOrder(null); // Close trade slip when viewing an asset page
     setViewAsset(asset);
-    setCurrentView('asset');
+    setCurrentView("asset");
     // Sync sidebar active league with the asset's market if available
     if (asset.market) {
       setActiveLeague(asset.market as League);
     }
+    // Save to recently viewed
+    import("./utils/recentlyViewed").then(({ saveRecentlyViewed }) => {
+      saveRecentlyViewed(asset);
+    });
+
     setIsMobileMenuOpen(false); // Close menu if open
     // Scroll to top
     window.scrollTo(0, 0);
@@ -419,10 +505,70 @@ const App: React.FC = () => {
 
   // Filter teams when league changes or assets update
   useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "App.tsx:filter-effect",
+        message: "Filter effect running",
+        data: {
+          activeLeague,
+          allAssetsCount: allAssets.length,
+          sampleMarkets: allAssets.slice(0, 3).map((a) => a.market),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "H1-H2",
+      }),
+    }).catch(() => { });
+    // #endregion
     if (activeLeague === "HOME") {
       setTeams([]);
     } else {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "App.tsx:filter-result",
+            message: "Filtered teams result",
+            data: {
+              activeLeague,
+              filteredCount: filtered.length,
+              firstTeamSeasonData: filtered[0]
+                ? {
+                  start: filtered[0].season_start_date,
+                  end: filtered[0].season_end_date,
+                  stage: filtered[0].season_stage,
+                }
+                : null,
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            hypothesisId: "H1",
+          }),
+        }
+      ).catch(() => { });
+      // #endregion
+      // Debug: Log filtered teams
+      console.log(
+        "[DEBUG] Filtered teams for",
+        activeLeague,
+        ":",
+        filtered.length,
+        "teams"
+      );
+      if (filtered.length > 0) {
+        console.log("[DEBUG] First team season data:", {
+          season_start_date: filtered[0]?.season_start_date,
+          season_end_date: filtered[0]?.season_end_date,
+          season_stage: filtered[0]?.season_stage,
+        });
+      }
       setTeams(filtered);
     }
   }, [activeLeague, allAssets]);
@@ -435,10 +581,10 @@ const App: React.FC = () => {
 
   const handleNavigate = (league: League) => {
     // Reset view to dashboard when navigating
-    setCurrentView('dashboard');
+    setCurrentView("dashboard");
     setViewAsset(null);
     setIsMobileMenuOpen(false);
-    
+
     // Explicitly close trade slip when navigating (replacing the useEffect)
     // This allows other functions (like Portfolio row click) to open it immediately after navigation
     if (activeLeague !== league) {
@@ -468,16 +614,16 @@ const App: React.FC = () => {
       return;
     }
 
-    console.log('handleSelectOrder Debug:', {
+    console.log("handleSelectOrder Debug:", {
       teamName: team.name,
       teamMarketTradingAssetId: team.market_trading_asset_id,
       type,
       portfolioLength: portfolio.length,
-      portfolioItems: portfolio.map(p => ({
+      portfolioItems: portfolio.map((p) => ({
         id: p.id,
         market_trading_asset_id: p.market_trading_asset_id,
-        quantity: p.quantity
-      }))
+        quantity: p.quantity,
+      })),
     });
 
     // Check if user is logged in
@@ -499,10 +645,19 @@ const App: React.FC = () => {
     if (type === "buy" && wallet) {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
     } else if (type === "sell") {
-      const position = portfolio.find((p) => p.market_trading_asset_id === team.market_trading_asset_id);
-      console.log('Position lookup result:', position, 'team.market_trading_asset_id:', team.market_trading_asset_id, 'position.market_trading_asset_id:', position?.market_trading_asset_id);
+      const position = portfolio.find(
+        (p) => p.market_trading_asset_id === team.market_trading_asset_id
+      );
+      console.log(
+        "Position lookup result:",
+        position,
+        "team.market_trading_asset_id:",
+        team.market_trading_asset_id,
+        "position.market_trading_asset_id:",
+        position?.market_trading_asset_id
+      );
       maxQuantity = position ? Number(position.quantity) : 0;
-      console.log('maxQuantity calculated:', maxQuantity);
+      console.log("maxQuantity calculated:", maxQuantity);
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
@@ -513,7 +668,14 @@ const App: React.FC = () => {
     }
 
     const holdingValue = type === "sell" ? maxQuantity : 0;
-    console.log('Creating Order with holding:', holdingValue, 'maxQuantity:', maxQuantity, 'type:', type);
+    console.log(
+      "Creating Order with holding:",
+      holdingValue,
+      "maxQuantity:",
+      maxQuantity,
+      "type:",
+      type
+    );
 
     const orderObject = {
       team,
@@ -523,7 +685,7 @@ const App: React.FC = () => {
       maxQuantity,
       holding: holdingValue, // Current holdings for sell orders
     };
-    console.log('Order object being created:', orderObject);
+    console.log("Order object being created:", orderObject);
 
     // Create a completely new object to prevent mutations
     setSelectedOrder({ ...orderObject });
@@ -591,6 +753,10 @@ const App: React.FC = () => {
         return "Home Dashboard";
       case "AI_ANALYTICS":
         return "AI Analytics Engine";
+      case "ALL_MARKETS":
+        return "All Markets";
+      case "NEW_MARKETS":
+        return "New Markets";
       default:
         return "ShareMatch Pro";
     }
@@ -623,7 +789,10 @@ const App: React.FC = () => {
       warningCountdown={SESSION_CONFIG.WARNING_COUNTDOWN_SECONDS}
       enabled={FEATURES.INACTIVITY_TIMEOUT_ENABLED && !!user}
     >
-      <div className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none">
+      <div
+        data-testid="app-container"
+        className="flex flex-col h-screen h-[100dvh] bg-gray-900 text-gray-200 font-sans overflow-hidden overscroll-none"
+      >
         {/* Top Bar - Full Width */}
         <TopBar
           wallet={wallet}
@@ -671,175 +840,241 @@ const App: React.FC = () => {
             {/* Center Content */}
             <div className="flex-1 flex flex-col min-w-0 relative">
               <div className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto">
-                
                 <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                   {/* Main content wrapper - grows to fill space */}
                   <div className="flex-1">
-                  {currentView === 'asset' && viewAsset ? (
+                    {/* #region agent log */}
+                    {(() => {
+                      fetch(
+                        "http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de",
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            location: "App.tsx:render-branch",
+                            message: "Checking render branch",
+                            data: {
+                              currentView,
+                              hasViewAsset: !!viewAsset,
+                              activeLeague,
+                              teamsLength: teams.length,
+                              firstTeamSeasonStart: teams[0]?.season_start_date,
+                            },
+                            timestamp: Date.now(),
+                            sessionId: "debug-session",
+                            hypothesisId: "H3",
+                          }),
+                        }
+                      ).catch(() => { });
+                      return null;
+                    })()}
+                    {/* #endregion */}
+                    {currentView === "asset" && viewAsset ? (
                       <AssetPage
                         asset={viewAsset}
                         onBack={() => {
-                          setCurrentView('dashboard');
+                          setCurrentView("dashboard");
                           setViewAsset(null);
                           setSelectedOrder(null); // Close trade slip when going back
                         }}
                         onSelectOrder={handleSelectOrder}
                       />
-                  ) : activeLeague === "HOME" ? (
-                    <HomeDashboard
-                      onNavigate={handleNavigate}
-                      teams={allAssets}
-                      onViewAsset={handleViewAsset}
-                    />
-                  ) : activeLeague === "AI_ANALYTICS" ? (
-                    <React.Suspense
-                      fallback={
-                        <div className="h-full flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
-                        </div>
-                      }
-                    >
-                      <AIAnalyticsPage teams={allAssets} />
-                    </React.Suspense>
-                  ) : (
-                    /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
-                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
-                      {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
-                      <div className="w-full lg:flex-[2] flex flex-col">
-                        {/* Header aligned with order book */}
-                        <div className="flex-shrink-0">
-                          <Header
-                            title={getLeagueTitle(activeLeague)}
-                            market={activeLeague}
-                          />
-                        </div>
-
-                        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-                        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
-                          {/* Fixed Header - Responsive padding and text */}
-                          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-                            <div className="text-left">Asset</div>
-                            <div>Sell</div>
-                            <div>Buy</div>
+                    ) : activeLeague === "HOME" ? (
+                      <HomeDashboard
+                        onNavigate={handleNavigate}
+                        teams={allAssets}
+                        onViewAsset={handleViewAsset}
+                        seasonDatesMap={seasonDatesMap}
+                      />
+                    ) : activeLeague === "AI_ANALYTICS" ? (
+                      <React.Suspense
+                        fallback={
+                          <div className="h-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                          </div>
+                        }
+                      >
+                        <AIAnalyticsPage teams={allAssets} />
+                      </React.Suspense>
+                    ) : activeLeague === "ALL_MARKETS" ? (
+                      <React.Suspense
+                        fallback={
+                          <div className="h-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                          </div>
+                        }
+                      >
+                        <AllMarketsPage
+                          teams={allAssets}
+                          onNavigate={handleNavigate}
+                          onViewAsset={handleViewAsset}
+                        />
+                      </React.Suspense>
+                    ) : activeLeague === "NEW_MARKETS" ? (
+                      <React.Suspense
+                        fallback={
+                          <div className="h-full flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+                          </div>
+                        }
+                      >
+                        <NewMarketsPage
+                          teams={allAssets}
+                          onNavigate={handleNavigate}
+                          onViewAsset={handleViewAsset}
+                          seasonDatesMap={seasonDatesMap}
+                        />
+                      </React.Suspense>
+                    ) : (
+                      /* Mobile: Vertical stack (scrollable) | Desktop: Side by side with matching heights */
+                      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
+                        {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
+                        <div className="w-full lg:flex-[2] flex flex-col">
+                          {/* Header aligned with order book */}
+                          <div className="flex-shrink-0">
+                            <Header
+                              title={getLeagueTitle(activeLeague)}
+                              market={activeLeague}
+                              seasonStartDate={
+                                seasonDatesMap.get(activeLeague)?.start_date
+                              }
+                              seasonEndDate={
+                                seasonDatesMap.get(activeLeague)?.end_date
+                              }
+                              seasonStage={
+                                seasonDatesMap.get(activeLeague)?.stage ||
+                                undefined
+                              }
+                            />
                           </div>
 
-                          {/* Scrollable List */}
-                          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-                            {sortedTeams.map((team) => (
-                              <OrderBookRow
-                                key={team.id}
-                                team={team}
-                                onSelectOrder={handleSelectOrder}
-                                onViewAsset={handleViewAsset}
-                              />
-                            ))}
+                          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+                          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
+                            {/* Fixed Header - Responsive padding and text */}
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+                              <div className="text-left">Asset</div>
+                              <div>Sell</div>
+                              <div>Buy</div>
+                            </div>
+
+                            {/* Scrollable List */}
+                            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+                              {sortedTeams.map((team) => (
+                                <OrderBookRow
+                                  key={team.id}
+                                  team={team}
+                                  onSelectOrder={handleSelectOrder}
+                                  onViewAsset={handleViewAsset}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
+                        <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
+                          {/* AI Analysis */}
+                          <div className="flex-shrink-0">
+                            <AIAnalysis
+                              teams={teams}
+                              leagueName={getLeagueTitle(activeLeague)}
+                            />
+                          </div>
+
+                          {/* Did You Know (Index/League Context) */}
+                          <div className="flex-shrink-0">
+                            <DidYouKnow
+                              assetName={getLeagueTitle(activeLeague)}
+                              market={activeLeague}
+                            />
+                          </div>
+
+                          {/* On This Day (Index/League Context) */}
+                          <div className="flex-shrink-0">
+                            <OnThisDay
+                              assetName={getLeagueTitle(activeLeague)}
+                              market={activeLeague}
+                            />
+                          </div>
+
+                          {/* News Feed */}
+                          <div className="flex-shrink-0 pb-4 xl:pb-0">
+                            <NewsFeed topic={activeLeague as any} />
                           </div>
                         </div>
                       </div>
+                    )}
 
-                      {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-                      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
-                        {/* AI Analysis */}
-                        <div className="flex-shrink-0">
-                          <AIAnalysis
-                            teams={teams}
-                            leagueName={getLeagueTitle(activeLeague)}
-                          />
-                        </div>
-
-                        {/* Did You Know (Index/League Context) */}
-                        <div className="flex-shrink-0">
-                          <DidYouKnow
-                            assetName={getLeagueTitle(activeLeague)}
-                            market={activeLeague}
-                          />
-                        </div>
-
-                        {/* On This Day (Index/League Context) */}
-                        <div className="flex-shrink-0">
-                          <OnThisDay
-                            assetName={getLeagueTitle(activeLeague)}
-                            market={activeLeague}
-                          />
-                        </div>
-
-                        {/* News Feed */}
-                        <div className="flex-shrink-0 pb-4 xl:pb-0">
-                          <NewsFeed topic={activeLeague as any} />
-                        </div>
+                    {activeLeague !== "HOME" && (
+                      <div className="mt-8 flex-shrink-0">
+                        <Footer />
                       </div>
-                    </div>
-                  )}
-
-                  {activeLeague !== "HOME" && (
-                    <div className="mt-8 flex-shrink-0">
-                      <Footer />
-                    </div>
-                  )}
+                    )}
                   </div>
                   {/* End of main content wrapper */}
-
-                  {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
-                  <div className="mt-auto pt-6 flex-shrink-0">
-                    <Ticker onNavigate={handleNavigate} teams={allAssets} />
-                  </div>
                 </div>
+              </div>
+              {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
+              <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
+                <Ticker onNavigate={handleNavigate} onViewAsset={handleViewAsset} teams={allAssets} />
               </div>
             </div>
 
             {/* Right Panel - Hidden on smaller screens/150% zoom, visible on 2xl+ */}
             {/* Desktop: Always visible at 1280px+ (xl) */}
-            <div className="hidden xl:block h-full">
-              <RightPanel
-                portfolio={portfolio}
-                transactions={transactions}
-                selectedOrder={selectedOrder}
-                onCloseTradeSlip={() => setSelectedOrder(null)}
-                onConfirmTrade={handleConfirmTrade}
-                allAssets={allAssets}
-                onNavigate={handleNavigate}
-                onSelectOrder={handleSelectOrder}
-                leagueName={
-                  selectedOrder && selectedOrder.team.market
-                    ? getLeagueTitle(selectedOrder.team.market)
-                    : getLeagueTitle(activeLeague)
-                }
-                walletBalance={wallet?.balance || 0}
-              />
-            </div>
-
+            {user && (
+              <div className="hidden xl:block h-full">
+                <RightPanel
+                  portfolio={portfolio}
+                  transactions={transactions}
+                  selectedOrder={selectedOrder}
+                  onCloseTradeSlip={() => setSelectedOrder(null)}
+                  onConfirmTrade={handleConfirmTrade}
+                  allAssets={allAssets}
+                  onNavigate={handleNavigate}
+                  onSelectOrder={handleSelectOrder}
+                  leagueName={
+                    selectedOrder && selectedOrder.team.market
+                      ? getLeagueTitle(selectedOrder.team.market)
+                      : getLeagueTitle(activeLeague)
+                  }
+                  walletBalance={wallet?.balance || 0}
+                />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Mobile/Tablet: Slide-out panel (visible below 2xl/1536px) */}
         {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
-        <div
-          className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
-            showRightPanel ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <RightPanel
-            portfolio={portfolio}
-            transactions={transactions}
-            selectedOrder={selectedOrder}
-            onCloseTradeSlip={() => setSelectedOrder(null)}
-            onConfirmTrade={handleConfirmTrade}
-            allAssets={allAssets}
-            onNavigate={handleNavigate}
-            onSelectOrder={handleSelectOrder}
-            leagueName={
-              selectedOrder && selectedOrder.team.market
-                ? getLeagueTitle(selectedOrder.team.market)
-                : getLeagueTitle(activeLeague)
-            }
-            walletBalance={wallet?.balance || 0}
-            onClose={() => {
-              setShowRightPanel(false);
-              setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
-            }}
-            isMobile={true}
-          />
-        </div>
+        {user && (
+          <div
+            className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"
+              }`}
+          >
+            <RightPanel
+              portfolio={portfolio}
+              transactions={transactions}
+              selectedOrder={selectedOrder}
+              onCloseTradeSlip={() => setSelectedOrder(null)}
+              onConfirmTrade={handleConfirmTrade}
+              allAssets={allAssets}
+              onNavigate={handleNavigate}
+              onSelectOrder={handleSelectOrder}
+              leagueName={
+                selectedOrder && selectedOrder.team.market
+                  ? getLeagueTitle(selectedOrder.team.market)
+                  : getLeagueTitle(activeLeague)
+              }
+              walletBalance={wallet?.balance || 0}
+              onClose={() => {
+                setShowRightPanel(false);
+                setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
+              }}
+              isMobile={true}
+            />
+          </div>
+        )}
 
         {/* Overlay for mobile menu */}
         {isMobileMenuOpen && (
