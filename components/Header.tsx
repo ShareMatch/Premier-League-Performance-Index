@@ -6,6 +6,9 @@ import { getIndexAvatarUrl } from '../lib/logoHelper';
 interface HeaderProps {
   title: string;
   market: string; // e.g., 'EPL', 'F1', 'UCL', etc.
+  seasonStartDate?: string; // From Supabase market_index_seasons.start_date
+  seasonEndDate?: string;   // From Supabase market_index_seasons.end_date
+  seasonStage?: string;     // 'open' | 'closed' | 'settled'
 }
 
 const Header: React.FC<HeaderProps> = ({ title, market }) => {

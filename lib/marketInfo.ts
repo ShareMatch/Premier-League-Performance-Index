@@ -25,7 +25,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '16 March 2025 - 7 December 2025',
+    seasonDates: '', // Loaded from Supabase
     isOpen: false,
   },
 
@@ -45,7 +45,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '16 August 2025 - 24 May 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -65,7 +65,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '17 September 2025 - 30 May 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -85,7 +85,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '22 August 2025 - 30 May 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -105,7 +105,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '1 July 2025 - 30 May 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -125,7 +125,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '11 June 2026 - 19 July 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -145,7 +145,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '22 October 2026 - 21 June 2027',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -165,7 +165,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '4 September 2026 - 8 February 2027',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -185,7 +185,7 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the World Cup winner) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '1 June 2026 - 29 June 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 
@@ -205,17 +205,70 @@ Market Closure & Settlement: Trading is permitted until the clearly displayed cl
 
 The with profits token (i.e., the contest winner) settles at its defined maximum value of $100.0.
 All other tokens settle at their defined minimum value of $0.1.`,
-    seasonDates: '13 May 2026 - 17 May 2026',
+    seasonDates: '', // Loaded from Supabase
     isOpen: true,
   },
 };
 
+// Helper to format date from YYYY-MM-DD to readable format
+const formatSeasonDate = (dateStr: string): string => {
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 // Helper function to get market info with fallback
-export const getMarketInfo = (market: string): MarketInfo => {
-  return marketInfoData[market] || {
+// Now accepts optional dynamic season data from Supabase
+// IMPORTANT: Markets without Supabase season data default to CLOSED
+export const getMarketInfo = (
+  market: string, 
+  seasonStartDate?: string, 
+  seasonEndDate?: string,
+  seasonStage?: string
+): MarketInfo => {
+  const baseInfo = marketInfoData[market] || {
     title: 'Market Information',
     content: 'Information about this market is not available yet.',
     seasonDates: '',
+    isOpen: false,
+  };
+
+  // If we have dynamic season dates from Supabase, use them to determine if open
+  if (seasonStartDate && seasonEndDate) {
+    const formattedDates = `${formatSeasonDate(seasonStartDate)} - ${formatSeasonDate(seasonEndDate)}`;
+    // Determine if market is open based on date range AND stage
+    const now = new Date();
+    const startDate = new Date(seasonStartDate);
+    const endDate = new Date(seasonEndDate);
+    
+    // Market is ONLY open if:
+    // 1. Current date is within the season date range
+    // 2. AND stage is EXPLICITLY 'open' (null, undefined, 'closed', 'settled' = closed)
+    const isWithinRange = now >= startDate && now <= endDate;
+    const hasSeasonEnded = now > endDate;
+    const isStageOpen = seasonStage === 'open'; // Must be explicitly 'open'
+    
+    // If season has ended, market is always closed
+    const isOpen = !hasSeasonEnded && isWithinRange && isStageOpen;
+    
+    return {
+      ...baseInfo,
+      seasonDates: formattedDates,
+      isOpen: isOpen,
+    };
+  }
+
+  // No season data from Supabase = market is CLOSED by default
+  // This ensures only markets with proper Supabase configuration are shown as open
+  return {
+    ...baseInfo,
     isOpen: false,
   };
 };

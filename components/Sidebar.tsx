@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
 
 
   const menuItems = [
-    { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME' },
+    { icon: Home, label: 'Home', id: 'HOME', active: activeLeague === 'HOME', testId: 'sidebar-home' },
     {
       icon: Trophy,
       label: 'Sports',
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
       )}
 
       {/* Sidebar - Hidden below lg (1024px), visible on desktop */}
-      <div className={`
+      <div data-testid="sidebar" className={`
         fixed lg:static inset-y-0 left-0 z-50
         w-64 lg:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
@@ -209,6 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
               <button
                 onClick={onHelpCenterClick}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
+                data-testid="sidebar-help-center"
               >
                 <HelpCircle className="w-5 h-5" />
                 <span>Help Center</span>

@@ -205,7 +205,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700">
+    <div data-testid="trade-slip" className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg text-gray-200">Transaction Slip</h2>
       </div>
@@ -219,6 +219,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
             : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
             }`}
+          data-testid="trade-slip-buy-tab"
         >
           Buy
         </button>
@@ -232,6 +233,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
               ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               : "text-gray-600 cursor-not-allowed"
             } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
+          data-testid="trade-slip-sell-tab"
         >
           Sell
         </button>
@@ -313,6 +315,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           placeholder="Enter Number"
           className="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-[#005430] focus:outline-none"
           min="0"
+          data-testid="trade-slip-quantity-input"
         />
       </div>
 
@@ -333,18 +336,21 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
         <button
           onClick={() => addShares(10)}
           className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 text-sm transition-colors"
+          data-testid="trade-slip-add-10"
         >
           + 10
         </button>
         <button
           onClick={() => addShares(50)}
           className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 text-sm transition-colors"
+          data-testid="trade-slip-add-50"
         >
           + 50
         </button>
         <button
           onClick={() => addShares(100)}
           className="bg-gray-700 hover:bg-gray-600 rounded-md p-2 text-sm transition-colors"
+          data-testid="trade-slip-add-100"
         >
           + 100
         </button>
@@ -465,6 +471,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
               ? "bg-[#1C7D83] text-gray-300 cursor-wait"
               : "bg-[#005430] hover:bg-[#005430]/90 text-white"
             }`}
+          data-testid="trade-slip-confirm-button"
         >
           {countdown !== null ? (
             <>

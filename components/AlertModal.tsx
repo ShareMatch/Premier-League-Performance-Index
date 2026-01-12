@@ -73,6 +73,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
         e.stopPropagation();
         onClose();
       }}
+      data-testid="alert-modal-overlay"
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
@@ -81,6 +82,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
       <div 
         className="relative bg-[#0B1221] border border-[#005430] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
+        data-testid="alert-modal"
       >
         {/* Header Enhancement */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005430] via-[#00A651] to-[#005430]" />
@@ -89,6 +91,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
           aria-label="Close"
+          data-testid="alert-modal-close-button"
         >
           <X className="w-5 h-5" />
         </button>
@@ -113,6 +116,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
           <button
             onClick={onClose}
             className="w-full py-3.5 px-6 bg-[#005430] hover:bg-[#006838] active:bg-[#004225] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-[#005430]/50 transform hover:-translate-y-0.5"
+            data-testid="alert-modal-ok-button"
           >
             {confirmLabel}
           </button>
