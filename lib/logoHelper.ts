@@ -93,15 +93,15 @@ export const getLogoUrl = (name: string, market: string, tradingAssetId?: string
  * Index avatar mappings for league/market icons
  */
 const INDEX_AVATARS: Record<string, string> = {
-    'EPL': '/index-avatars/epl.png',
-    'UCL': '/index-avatars/ucl.png',
-    'SPL': '/index-avatars/spl.png',
-    'F1': '/index-avatars/f1.png',
-    'WC': '/index-avatars/wc.png',
-    'NBA': '/index-avatars/nba.png',
-    'NFL': '/index-avatars/nfl.png',
-    'T20': '/index-avatars/t20.png',
-    'ISL': '/index-avatars/isl.png',
+    'EPL': '/index-avatars/epl.svg',
+    'UCL': '/index-avatars/ucl.svg',
+    'SPL': '/index-avatars/spl.svg',
+    'F1': '/index-avatars/f1.svg',
+    'WC': '/index-avatars/wc.svg',
+    'NBA': '/index-avatars/nba.svg',
+    'NFL': '/index-avatars/nfl.svg',
+    'T20': '/index-avatars/t20.svg',
+    'ISL': '/index-avatars/isl.svg',
 };
 
 /**

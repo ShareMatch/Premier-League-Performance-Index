@@ -21,11 +21,11 @@ const Header: React.FC<HeaderProps> = ({ title, market }) => {
       <div className="flex items-center gap-3">
         {/* Index Avatar */}
         {indexAvatarUrl && (
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="w-[64px] h-[64px] sm:w-[80px] sm:h-[80px] rounded-xl flex items-center justify-center flex-shrink-0 overflow-visible">
             <img
               src={indexAvatarUrl}
               alt={`${market} Index Avatar`}
-              className="w-full h-full object-contain rounded-xl"
+              className="w-full h-full object-contain block"
             />
           </div>
         )}

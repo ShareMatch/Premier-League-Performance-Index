@@ -270,7 +270,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         </h2>
       </div>
 
-      <div className="relative bg-slate-900 rounded-2xl border border-gray-800 overflow-hidden">
+      <div className="relative bg-slate-900 rounded-2xl border border-gray-800 overflow-x-hidden overflow-y-visible">
         <div
           className="flex w-full transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -288,14 +288,14 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                       <div className="relative z-10 flex flex-col h-full space-y-3">
                         <div className="flex justify-between items-start gap-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 overflow-visible">
                             {(() => {
                               const indexAvatarUrl = getIndexAvatarUrl(question.market);
                               return indexAvatarUrl ? (
                                 <img
                                   src={indexAvatarUrl}
                                   alt={`${question.market} Index`}
-                                  className="w-6 h-6 rounded object-contain"
+                                  className="w-10 h-10 block"
                                 />
                               ) : (
                                 question.icon
@@ -410,8 +410,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                         <Tooltip
                           contentStyle={{ backgroundColor: "#1a2332", border: "1px solid #374151", borderRadius: "8px", color: "#fff" }}
                           formatter={(value, name) => {
-                            const tokenIdx = parseInt(name.toString().replace("token", ""));
-                            const tokenName = question.topTokens[tokenIdx]?.name || name;
+                            const key = typeof name === "string" ? name : String(name ?? "");
+                            const tokenIdx = parseInt(key.replace("token", ""));
+                            const tokenName = question.topTokens[tokenIdx]?.name || key;
                             return [`${Number(value).toFixed(1)}`, tokenName];
                           }}
                         />

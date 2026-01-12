@@ -1,0 +1,116 @@
+<svg
+  width="200"
+  height="200"
+  viewBox="0 -80 300 330"
+  xmlns="http://www.w3.org/2000/svg"
+  overflow="visible"
+>
+
+  <defs>
+    <filter id="ballGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10"
+        flood-color="#ff2d55" flood-opacity="0.35">
+        <animate attributeName="stdDeviation"
+          values="8;25;8"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+        <animate attributeName="flood-opacity"
+          values="0.3;0.95;0.3"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+    </filter>
+
+    <filter id="boltGlowPulsing" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="0" stdDeviation="14"
+        flood-color="#00ff9c" flood-opacity="1">
+        <animate attributeName="stdDeviation"
+          values="5;25;5"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+      <feDropShadow dx="0" dy="0" stdDeviation="28"
+        flood-color="#00ff9c" flood-opacity="0.6">
+         <animate attributeName="stdDeviation"
+          values="15;50;15"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+         <animate attributeName="flood-opacity"
+          values="0.3;0.9;0.3"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+    </filter>
+  </defs>
+
+  <rect x="20" y="24" width="250" height="200" rx="18" fill="#133A75"/>
+
+  <rect x="20" y="200" width="250" height="14" rx="3" fill="#DA2C5A"/>
+  <rect x="20" y="190" width="250" height="14" rx="3" fill="#02A7D1"/>
+
+  <g filter="url(#ballGlow)"
+     transform="translate(150 78) scale(0.40) translate(-232.5 -780)">
+
+    <path
+      fill="#c4161c"
+      d="M396.7,608.16c-43.9-43.7-102.2-67.8-164.2-67.8
+         c-62.5,0-120.9,24.1-164.7,67.8
+         C24.1,651.86,0,710.36,0,772.86
+         c0,62,24.1,120.3,67.8,164.2
+         c43.9,44,102.4,68.3,164.7,68.3
+         c61.9,0,120.2-24.3,164.2-68.3
+         s68.3-102.4,68.3-164.2
+         C465,710.56,440.7,652.06,396.7,608.16z"/>
+
+    <circle cx="232.5" cy="772.86" r="220.5"
+      fill="none" stroke="#ffffff" stroke-width="6"/>
+
+    <path d="M38.7 871.46 L331.1 579.06"
+      stroke="#ffffff" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M132.3 965.86 L425.5 672.66"
+      stroke="#ffffff" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+    <g fill="#ffffff">
+      <rect x="287.32" y="734.124" transform="rotate(-135 294.82 751.724)" width="15" height="35.2"/>
+      <rect x="95.693" y="842.467" transform="rotate(-135 103.193 860.067)" width="15" height="35.2"/>
+      <rect x="132.844" y="804.948" transform="rotate(45 140.344 822.548)" width="15" height="35.2"/>
+      <rect x="207.692" y="730.454" transform="rotate(45 215.192 748.054)" width="15" height="35.2"/>
+      <rect x="170.342" y="767.733" transform="rotate(45 177.842 785.333)" width="15" height="35.2"/>
+      <rect x="244.844" y="692.963" transform="rotate(45 252.344 710.563)" width="15" height="35.2"/>
+      <rect x="282.335" y="655.712" transform="rotate(45 289.835 673.312)" width="15" height="35.2"/>
+      <rect x="319.557" y="618.292" transform="rotate(45 327.057 635.892)" width="15" height="35.2"/>
+
+      <rect x="137.964" y="883.536" transform="rotate(-135 145.464 901.136)" width="15" height="35.2"/>
+      <rect x="175.328" y="846.13" transform="rotate(-135 182.828 863.73)" width="15" height="35.2"/>
+      <rect x="249.97" y="771.53" transform="rotate(-135 257.47 789.13)" width="15" height="35.2"/>
+      <rect x="212.677" y="808.865" transform="rotate(-135 220.177 826.465)" width="15" height="35.2"/>
+      <rect x="324.683" y="696.859" transform="rotate(-135 332.183 714.459)" width="15" height="35.2"/>
+      <rect x="361.962" y="659.524" transform="rotate(-135 369.462 677.124)" width="15" height="35.2"/>
+    </g>
+  </g>
+
+  <g filter="url(#boltGlowPulsing)"
+     transform="translate(150 92) scale(0.25) translate(-512 -569)">
+    <path
+      fill="#035531"
+      stroke="#ffffff"
+      stroke-width="22"
+      stroke-linejoin="round"
+      d="
+      M 537.56 444.67
+      Q 617.34 444.87 717.35 444.88
+      C 729.31 449.11 728.91 458.82 725.35 463.36
+      C 648.18 561.91 556.92 677.88 480.98 775.23
+      C 477.36 779.87 469.98 780.84 467.12 774.79
+      C 465.99 772.40 465.89 768.32 466.31 765.40
+      Q 478.98 656.06 487.15 584.19
+      Q 487.33 580.40 306.71 580.00
+      Q 293.45 575.68 294.03 569.55
+      Q 324.33 529.26 444.34 376.83
+      Q 540.12 255.37 557.82 249.16
+      Q 556.28 276.65 544.53 380.90
+      Q 541.13 410.01 537.56 444.67 Z"
+    />
+  </g>
+
+</svg>

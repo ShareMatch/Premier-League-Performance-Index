@@ -1,0 +1,104 @@
+<svg
+  width="200"
+  height="200"
+  viewBox="0 -80 300 330"
+  xmlns="http://www.w3.org/2000/svg"
+  overflow="visible"
+>
+
+  <defs>
+    <filter id="ballGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10"
+        flood-color="#ffffff" flood-opacity="0.5">
+        <animate attributeName="stdDeviation"
+          values="8;20;8"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+        <animate attributeName="flood-opacity"
+          values="0.3;0.8;0.3"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+    </filter>
+
+    <filter id="boltGlowPulsing" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="0" stdDeviation="14"
+        flood-color="#00ff9c" flood-opacity="1">
+        <animate attributeName="stdDeviation"
+          values="5;25;5"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+      <feDropShadow dx="0" dy="0" stdDeviation="28"
+        flood-color="#00ff9c" flood-opacity="0.6">
+         <animate attributeName="stdDeviation"
+          values="15;50;15"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+         <animate attributeName="flood-opacity"
+          values="0.3;0.9;0.3"
+          dur="1.5s"
+          repeatCount="indefinite"/>
+      </feDropShadow>
+    </filter>
+  </defs>
+
+  <rect x="20" y="24" width="250" height="200" rx="18" fill="#121824"/>
+
+  <rect x="20" y="200" width="250" height="14" rx="3" fill="#D4AF37"/>
+  <rect x="20" y="190" width="250" height="14" rx="3" fill="#006D5D"/>
+
+  <g filter="url(#ballGlow)" transform="translate(150 64) scale(0.95) translate(-97 -97)">
+    <circle cx="97" cy="97" r="97" fill="#000000"/>
+    <path fill="#FFFFFF" d="
+      m 94,9.2 a 88,88 0 0 0 -55,21.8 l 27,0 28,-14.4 0,-7.4 z
+      m 6,0 0,7.4 28,14.4 27,0 a 88,88 0 0 0 -55,-21.8 z
+      m -67.2,27.8 a 88,88 0 0 0 -20,34.2 l 16,27.6 23,-3.6
+      21,-36.2 -8.4,-22 -31.6,0 z
+      m 96.8,0 -8.4,22 21,36.2 23,3.6 15.8,-27.4
+      a 88,88 0 0 0 -19.8,-34.4 l -31.6,0 z
+      m -50,26 -20.2,35.2 17.8,30.8 39.6,0
+      17.8,-30.8 -20.2,-35.2 -34.8,0 z
+      m -68.8,16.6 a 88,88 0 0 0 -1.8,17.4
+      88,88 0 0 0 10.4,41.4 l 7.4,-4.4
+      -1.4,-29 -14.6,-25.4 z
+      m 172.4,0.2 -14.6,25.2 -1.4,29
+      7.4,4.4 a 88,88 0 0 0 10.4,-41.4
+      88,88 0 0 0 -1.8,-17.2 z
+      m -106,57.2 -15.4,19 15.4,26.6
+      a 88,88 0 0 0 19.8,2.4
+      88,88 0 0 0 19.8,-2.4
+      l 15.4,-26.6 -15.4,-19 -39.6,0 z
+      m -47.8,2.6 -7,4
+      A 88,88 0 0 0 68.8,180.4
+      l -14,-24.6 -25.4,-16.2 z
+      m 135.2,0 -25.4,16.2 -14,24.4
+      a 88,88 0 0 0 46.4,-36.6 l -7,-4 z
+    "/>
+  </g>
+
+  <g filter="url(#boltGlowPulsing)"
+     transform="translate(150 92) scale(0.25) translate(-512 -597)">
+    <path
+      fill="#035531"
+      stroke="#ffffff"
+      stroke-width="22"
+      stroke-linejoin="round"
+      d="
+      M 537.56 444.67
+      Q 617.34 444.87 717.35 444.88
+      C 729.31 449.11 728.91 458.82 725.35 463.36
+      C 648.18 561.91 556.92 677.88 480.98 775.23
+      C 477.36 779.87 469.98 780.84 467.12 774.79
+      C 465.99 772.40 465.89 768.32 466.31 765.40
+      Q 478.98 656.06 487.15 584.19
+      Q 487.33 580.40 306.71 580.00
+      Q 293.45 575.68 294.03 569.55
+      Q 324.33 529.26 444.34 376.83
+      Q 540.12 255.37 557.82 249.16
+      Q 556.28 276.65 544.53 380.90
+      Q 541.13 410.01 537.56 444.67 Z"
+    />
+  </g>
+
+</svg>

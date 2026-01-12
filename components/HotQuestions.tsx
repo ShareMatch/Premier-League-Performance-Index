@@ -4,6 +4,7 @@ import { TrendingUp, Trophy, Flag, Activity, Zap } from 'lucide-react';
 import InfoPopup from './InfoPopup';
 import { getMarketInfo } from '../lib/marketInfo';
 import { getIndexAvatarUrl } from '../lib/logoHelper';
+import type { SeasonDates } from '../lib/api';
 
 interface HotQuestionsProps {
   teams: Team[];
@@ -234,14 +235,14 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 {/* Header - horizontal layout on mobile */}
                 <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
                   <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 overflow-visible">
                       {(() => {
                         const indexAvatarUrl = getIndexAvatarUrl(q.market);
                         return indexAvatarUrl ? (
                           <img
                             src={indexAvatarUrl}
                             alt={`${q.market} Index`}
-                            className="w-6 h-6 sm:w-7 sm:h-7 rounded object-contain"
+                            className="w-10 h-10 sm:w-11 sm:h-11 block"
                           />
                         ) : (
                           q.icon
