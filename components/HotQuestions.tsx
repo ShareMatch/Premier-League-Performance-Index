@@ -10,6 +10,7 @@ interface HotQuestionsProps {
   teams: Team[];
   onNavigate: (league: League) => void;
   onViewAsset?: (asset: Team) => void;
+  onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
   seasonDatesMap?: Map<string, SeasonDates>;
   limit?: number;
   showHeader?: boolean;
@@ -34,6 +35,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   teams,
   onNavigate,
   onViewAsset,
+  onSelectOrder,
   seasonDatesMap,
   limit = 3,
   showHeader = true,
@@ -232,28 +234,35 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
               />
 
               <div className="relative z-10 flex flex-col h-full">
-                {/* Header - horizontal layout on mobile */}
-                <div className="flex flex-wrap justify-between items-start gap-2 mb-3 sm:mb-4">
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <div className="flex items-center gap-2 overflow-visible">
-                      {(() => {
-                        const indexAvatarUrl = getIndexAvatarUrl(q.market);
-                        return indexAvatarUrl ? (
-                          <img
-                            src={indexAvatarUrl}
-                            alt={`${q.market} Index`}
-                            className="w-10 h-10 sm:w-11 sm:h-11 block"
-                          />
-                        ) : (
-                          q.icon
-                        );
-                      })()}
-                      <span className="text-[10px] sm:text-xs font-medium text-gray-300 whitespace-nowrap">{q.market}</span>
-                    </div>
-                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono pl-1">
+                {/* Header - Avatar + Question + Info */}
+                <div className="flex items-start gap-3 mb-3 sm:mb-4">
+                  {/* Larger Avatar */}
+                  {(() => {
+                    const indexAvatarUrl = getIndexAvatarUrl(q.market);
+                    return indexAvatarUrl ? (
+                      <img
+                        src={indexAvatarUrl}
+                        alt={`${q.market} Index`}
+                        className="w-14 h-14 sm:w-16 sm:h-16 block flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-700/50 rounded-lg flex-shrink-0">
+                        {q.icon}
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Question Text + Volume */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-100 group-hover:text-white transition-colors leading-snug line-clamp-2 mb-1">
+                      {q.question}
+                    </h3>
+                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono">
                       Vol: {q.volume}
                     </span>
                   </div>
+
+                  {/* Info Button */}
                   {(() => {
                     const seasonData = seasonDatesMap?.get(q.market);
                     const info = getMarketInfo(
@@ -262,27 +271,34 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       seasonData?.end_date,
                       seasonData?.stage || undefined,
                     );
+                    const seasonDatesStr = seasonData
+                      ? `${new Date(seasonData.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(seasonData.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                      : undefined;
                     return (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* <span
-                          className={`px-1 sm:px-1.5 py-0.5 text-[8px] font-bold rounded border whitespace-nowrap ${info.isOpen
-                            ? "bg-[#005430] text-white border-[#005430] shadow-[0_0_10px_rgba(0,166,81,0.4)] animate-pulse"
-                            : "bg-amber-500/10 text-amber-500 border-amber-500/30"
-                            }`}
-                        >
-                          {info.isOpen ? "OPEN" : "CLOSED"}
-                        </span> */}
+                      <div className="flex-shrink-0">
+                        <InfoPopup
+                          title={`${q.market} Index`}
+                          content={info.content}
+                          seasonDates={seasonDatesStr}
+                          isMarketOpen={info.isOpen}
+                          iconSize={14}
+                        />
                       </div>
                     );
                   })()}
                 </div>
 
-                <h3 className="text-xs sm:text-sm font-semibold text-gray-100 mb-2 sm:mb-3 group-hover:text-white transition-colors leading-snug line-clamp-2">
-                  {q.question}
-                </h3>
-
+                {/* Buy/Sell Buttons */}
                 <div className="mt-auto grid grid-cols-2 gap-1.5 sm:gap-2">
-                  <button className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1 sm:p-1.5 transition-all group/btn shadow-lg shadow-black/20">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSelectOrder) {
+                        onSelectOrder(q.team, "buy");
+                      }
+                    }}
+                    className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1 sm:p-1.5 transition-all group/btn shadow-lg shadow-black/20"
+                  >
                     <span className="text-[8px] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">
                       Buy
                     </span>
@@ -290,7 +306,15 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       ${q.yesPrice.toFixed(2)}
                     </span>
                   </button>
-                  <button className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1 sm:p-1.5 transition-all group/btn">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSelectOrder) {
+                        onSelectOrder(q.team, "sell");
+                      }
+                    }}
+                    className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1 sm:p-1.5 transition-all group/btn"
+                  >
                     <span className="text-[8px] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">
                       Sell
                     </span>

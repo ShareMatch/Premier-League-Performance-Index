@@ -8,12 +8,14 @@ interface AllMarketsWidgetProps {
     teams: Team[];
     onNavigate: (league: League) => void;
     onViewAsset?: (asset: Team) => void;
+    onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
 }
 
 const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
     teams,
     onNavigate,
     onViewAsset,
+    onSelectOrder,
 }) => {
     // Show top 3 teams (you might want to verify sorting, here we toggle first 3)
     // Assuming teams are passed in a reasonable order or we just take the first few
@@ -76,20 +78,36 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                             </div>
 
                             {/* Right: Pricing (Ticker Style) - Fixed widths for perfect alignment */}
-                            <div className="flex items-center gap-2 sm:gap-4">
+                            <div className="flex items-center gap-6">
                                 {/* Sell Section */}
-                                <div className="flex items-center w-[85px] sm:w-[95px]">
-                                    <span className="text-[10px] font-black text-red-500 uppercase tracking-tighter w-8 shrink-0">Sell</span>
-                                    <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
+                                <div className="flex items-center gap-1.5 w-[100px] justify-end">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onSelectOrder) onSelectOrder(team, "sell");
+                                        }}
+                                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded transition-all uppercase tracking-wider shrink-0"
+                                    >
+                                        Sell
+                                    </button>
+                                    <span className="text-sm font-bold text-gray-200 min-w-[50px] text-right">
                                         ${team.bid.toFixed(2)}
                                     </span>
                                     <FaCaretDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
                                 </div>
 
                                 {/* Buy Section */}
-                                <div className="flex items-center w-[85px] sm:w-[95px]">
-                                    <span className="text-[10px] font-black text-[#00A651] uppercase tracking-tighter w-8 shrink-0">Buy</span>
-                                    <span className="text-sm font-bold text-gray-200 flex-1 text-right pr-1">
+                                <div className="flex items-center gap-1.5 w-[100px] justify-end">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onSelectOrder) onSelectOrder(team, "buy");
+                                        }}
+                                        className="bg-[#005430] hover:bg-[#006035] text-white text-[10px] font-bold px-2 py-0.5 rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
+                                    >
+                                        Buy
+                                    </button>
+                                    <span className="text-sm font-bold text-gray-200 min-w-[50px] text-right">
                                         ${team.offer.toFixed(2)}
                                     </span>
                                     <FaCaretUp className="w-3.5 h-3.5 text-[#00A651] shrink-0" />

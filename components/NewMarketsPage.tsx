@@ -7,7 +7,8 @@ import HotQuestions from "./HotQuestions";
 interface NewMarketsPageProps {
   teams: Team[];
   onNavigate: (league: League) => void;
-  onViewAsset: (asset: Team) => void; // Optional if you want to support clicking to view asset
+  onViewAsset: (asset: Team) => void;
+  onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
   seasonDatesMap?: Map<string, SeasonDates>;
 }
 
@@ -15,6 +16,7 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
   teams,
   onNavigate,
   onViewAsset,
+  onSelectOrder,
   seasonDatesMap,
 }) => {
   // No extra loading state needed, HotQuestions handles its own skeleton if needed via props or check
@@ -58,6 +60,7 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
           teams={teams}
           onNavigate={onNavigate}
           onViewAsset={onViewAsset}
+          onSelectOrder={onSelectOrder}
           seasonDatesMap={seasonDatesMap}
           limit={0} // Show all
           showHeader={false}

@@ -13,14 +13,10 @@ import Footer from "./components/Footer";
 import AIAnalysis from "./components/AIAnalysis";
 // Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
 const AIAnalyticsPage = React.lazy(
-  () => import("./components/AIAnalyticsPage")
+  () => import("./components/AIAnalyticsPage"),
 );
-const AllMarketsPage = React.lazy(
-  () => import("./components/AllMarketsPage")
-);
-const NewMarketsPage = React.lazy(
-  () => import("./components/NewMarketsPage")
-);
+const AllMarketsPage = React.lazy(() => import("./components/AllMarketsPage"));
+const NewMarketsPage = React.lazy(() => import("./components/NewMarketsPage"));
 import {
   fetchWallet,
   fetchPortfolio,
@@ -59,10 +55,11 @@ import HelpCenterModal from "./components/HelpCenterModal";
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
   const [activeLeague, setActiveLeague] = useState<League>("HOME");
+  const [previousLeague, setPreviousLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentView, setCurrentView] = useState<"dashboard" | "asset">(
-    "dashboard"
+    "dashboard",
   );
   const [viewAsset, setViewAsset] = useState<Team | null>(null);
 
@@ -225,7 +222,7 @@ const App: React.FC = () => {
           if (!staticAsset) {
             console.warn(
               `Missing static asset data for asset_id: ${ta.asset_id}`,
-              ta
+              ta,
             );
             return null;
           }
@@ -336,9 +333,9 @@ const App: React.FC = () => {
             is_settled: ta.market_index_seasons.is_settled,
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                "en-US",
-                { month: "short", day: "numeric", year: "numeric" }
-              )
+                  "en-US",
+                  { month: "short", day: "numeric", year: "numeric" },
+                )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -426,6 +423,7 @@ const App: React.FC = () => {
 
   const handleViewAsset = (asset: Team) => {
     setSelectedOrder(null); // Close trade slip when viewing an asset page
+    setPreviousLeague(activeLeague);
     setViewAsset(asset);
     setCurrentView("asset");
     // Sync sidebar active league with the asset's market if available
@@ -477,7 +475,7 @@ const App: React.FC = () => {
         if (userRef.current && publicUserIdRef.current) {
           setWallet(updatedWallet);
         }
-      }
+      },
     );
 
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
@@ -521,7 +519,7 @@ const App: React.FC = () => {
         sessionId: "debug-session",
         hypothesisId: "H1-H2",
       }),
-    }).catch(() => { });
+    }).catch(() => {});
     // #endregion
     if (activeLeague === "HOME") {
       setTeams([]);
@@ -541,18 +539,18 @@ const App: React.FC = () => {
               filteredCount: filtered.length,
               firstTeamSeasonData: filtered[0]
                 ? {
-                  start: filtered[0].season_start_date,
-                  end: filtered[0].season_end_date,
-                  stage: filtered[0].season_stage,
-                }
+                    start: filtered[0].season_start_date,
+                    end: filtered[0].season_end_date,
+                    stage: filtered[0].season_stage,
+                  }
                 : null,
             },
             timestamp: Date.now(),
             sessionId: "debug-session",
             hypothesisId: "H1",
           }),
-        }
-      ).catch(() => { });
+        },
+      ).catch(() => {});
       // #endregion
       // Debug: Log filtered teams
       console.log(
@@ -560,7 +558,7 @@ const App: React.FC = () => {
         activeLeague,
         ":",
         filtered.length,
-        "teams"
+        "teams",
       );
       if (filtered.length > 0) {
         console.log("[DEBUG] First team season data:", {
@@ -599,7 +597,7 @@ const App: React.FC = () => {
       }
       if (!portfolio || portfolio.length === 0) {
         setAlertMessage(
-          "Exclusive Access: The AI Analytics Engine is available only to token holders."
+          "Exclusive Access: The AI Analytics Engine is available only to token holders.",
         );
         setAlertOpen(true);
         return;
@@ -646,7 +644,7 @@ const App: React.FC = () => {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
     } else if (type === "sell") {
       const position = portfolio.find(
-        (p) => p.market_trading_asset_id === team.market_trading_asset_id
+        (p) => p.market_trading_asset_id === team.market_trading_asset_id,
       );
       console.log(
         "Position lookup result:",
@@ -654,7 +652,7 @@ const App: React.FC = () => {
         "team.market_trading_asset_id:",
         team.market_trading_asset_id,
         "position.market_trading_asset_id:",
-        position?.market_trading_asset_id
+        position?.market_trading_asset_id,
       );
       maxQuantity = position ? Number(position.quantity) : 0;
       console.log("maxQuantity calculated:", maxQuantity);
@@ -674,7 +672,7 @@ const App: React.FC = () => {
       "maxQuantity:",
       maxQuantity,
       "type:",
-      type
+      type,
     );
 
     const orderObject = {
@@ -707,7 +705,7 @@ const App: React.FC = () => {
         team.market_trading_asset_id || team.id,
         side,
         priceForSide,
-        quantity
+        quantity,
       );
 
       // Refresh portfolio and wallet after trade
@@ -767,7 +765,7 @@ const App: React.FC = () => {
     return portfolio.reduce((total, position) => {
       // Find current asset data to get price
       const asset = allAssets.find(
-        (a) => a.market_trading_asset_id === position.market_trading_asset_id
+        (a) => a.market_trading_asset_id === position.market_trading_asset_id,
       );
       // Value at bid price (like Portfolio component)
       const price = asset ? asset.bid : 0;
@@ -864,8 +862,8 @@ const App: React.FC = () => {
                             sessionId: "debug-session",
                             hypothesisId: "H3",
                           }),
-                        }
-                      ).catch(() => { });
+                        },
+                      ).catch(() => {});
                       return null;
                     })()}
                     {/* #endregion */}
@@ -876,6 +874,7 @@ const App: React.FC = () => {
                           setCurrentView("dashboard");
                           setViewAsset(null);
                           setSelectedOrder(null); // Close trade slip when going back
+                          setActiveLeague(previousLeague);
                         }}
                         onSelectOrder={handleSelectOrder}
                       />
@@ -909,6 +908,7 @@ const App: React.FC = () => {
                           teams={allAssets}
                           onNavigate={handleNavigate}
                           onViewAsset={handleViewAsset}
+                          onSelectOrder={handleSelectOrder}
                         />
                       </React.Suspense>
                     ) : activeLeague === "NEW_MARKETS" ? (
@@ -923,6 +923,7 @@ const App: React.FC = () => {
                           teams={allAssets}
                           onNavigate={handleNavigate}
                           onViewAsset={handleViewAsset}
+                          onSelectOrder={handleSelectOrder}
                           seasonDatesMap={seasonDatesMap}
                         />
                       </React.Suspense>
@@ -1017,7 +1018,11 @@ const App: React.FC = () => {
               </div>
               {/* Ticker - pushed to bottom when content is short, scrolls with content when long */}
               <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
-                <Ticker onNavigate={handleNavigate} onViewAsset={handleViewAsset} teams={allAssets} />
+                <Ticker
+                  onNavigate={handleNavigate}
+                  onViewAsset={handleViewAsset}
+                  teams={allAssets}
+                />
               </div>
             </div>
 
@@ -1050,8 +1055,9 @@ const App: React.FC = () => {
         {/* Moved outside content containers for proper fixed positioning on mobile Safari */}
         {user && (
           <div
-            className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"
-              }`}
+            className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${
+              showRightPanel ? "translate-x-0" : "translate-x-full"
+            }`}
           >
             <RightPanel
               portfolio={portfolio}
@@ -1121,22 +1127,22 @@ const App: React.FC = () => {
               userData={
                 user
                   ? {
-                    name: user.user_metadata?.full_name || "",
-                    email: user.email || "",
-                    phone: user.user_metadata?.phone || "",
-                    whatsapp: user.user_metadata?.whatsapp_phone || "",
-                    address: user.user_metadata?.address_line || "",
-                    // address2: user.user_metadata?.address_line_2 || '',
-                    city: user.user_metadata?.city || "",
-                    state: user.user_metadata?.region || "",
-                    country: user.user_metadata?.country || "",
-                    postCode: user.user_metadata?.postal_code || "",
-                    accountName: "",
-                    accountNumber: "",
-                    iban: "",
-                    swiftBic: "",
-                    bankName: "",
-                  }
+                      name: user.user_metadata?.full_name || "",
+                      email: user.email || "",
+                      phone: user.user_metadata?.phone || "",
+                      whatsapp: user.user_metadata?.whatsapp_phone || "",
+                      address: user.user_metadata?.address_line || "",
+                      // address2: user.user_metadata?.address_line_2 || '',
+                      city: user.user_metadata?.city || "",
+                      state: user.user_metadata?.region || "",
+                      country: user.user_metadata?.country || "",
+                      postCode: user.user_metadata?.postal_code || "",
+                      accountName: "",
+                      accountNumber: "",
+                      iban: "",
+                      swiftBic: "",
+                      bankName: "",
+                    }
                   : undefined
               }
               onSignOut={async () => {
