@@ -21,6 +21,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { getMarketInfo } from "../lib/marketInfo";
+import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { SeasonDates } from "../lib/api";
 
 interface IndexToken {
@@ -287,9 +288,20 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                       <div className="relative z-10 flex flex-col h-full space-y-3">
                         <div className="flex justify-between items-start gap-2">
-                          <div className="flex items-center gap-1.5 bg-gray-900/60 rounded-full px-2 py-1 border border-gray-700/50">
-                            {question.icon}
-                            <span className="text-xs font-medium text-gray-300">{question.market}</span>
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const indexAvatarUrl = getIndexAvatarUrl(question.market);
+                              return indexAvatarUrl ? (
+                                <img
+                                  src={indexAvatarUrl}
+                                  alt={`${question.market} Index`}
+                                  className="w-6 h-6 rounded object-contain"
+                                />
+                              ) : (
+                                question.icon
+                              );
+                            })()}
+                            <span className="text-sm font-medium text-gray-300">{question.market}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded border border-green-500/20">
