@@ -1,0 +1,93 @@
+name: Staging Testing & Audit
+
+on:
+  push:
+    branches: [staging]
+  pull_request:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  test-and-audit:
+    name: Run Tests & Generate Audit Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      APP_BASE_URL: ${{ secrets.APP_STAGING_URL }}
+
+      SUPABASE_URL: ${{ secrets.SUPABASE_STG_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY}}
+      VITE_SUPABASE_URL: ${{ secrets.APP_STAGING_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_STAGING_ANON_KEY }}
+      
+      CI: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Debug - Check Environment Variables
+        run: |
+          echo "Checking if secrets are set..."
+          if [ -n "$SUPABASE_URL" ]; then echo "✅ SUPABASE_URL is set"; else echo "❌ SUPABASE_URL is NOT set"; fi
+          if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "✅ SUPABASE_SERVICE_ROLE_KEY is set"; else echo "❌ SUPABASE_SERVICE_ROLE_KEY is NOT set"; fi
+          if [ -n "$VITE_SUPABASE_ANON_KEY" ]; then echo "✅ VITE_SUPABASE_ANON_KEY is set"; else echo "❌ VITE_SUPABASE_ANON_KEY is NOT set"; fi
+          if [ -n "$TELEGRAM_BOT_TOKEN" ]; then echo "✅ TELEGRAM_BOT_TOKEN is set"; else echo "⚠️ TELEGRAM_BOT_TOKEN is NOT set (notifications disabled)"; fi
+
+      - name: Export commit message
+        run: |
+          echo "GITHUB_EVENT_HEAD_COMMIT_MESSAGE=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
+
+      - name: Run Tests with Retry Logic & Generate Audit
+        run: |
+          echo "🔍 Debug: Environment variables"
+          echo "APP_BASE_URL: $APP_BASE_URL"
+          echo "SUPABASE_URL: $SUPABASE_URL"
+          npx tsx monitoring/audit.ts
+        continue-on-error: true
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            audit-reports/
+          retention-days: 15
+          if-no-files-found: warn
+
+      - name: Upload Test Screenshots & Traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-${{ github.run_number }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Post Summary to GitHub
+        if: always()
+        run: |
+          echo "## 🎭 Test Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f "audit-reports/summary.md" ]; then
+            cat audit-reports/summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No audit summary generated. Check test logs above." >> $GITHUB_STEP_SUMMARY
+          fi

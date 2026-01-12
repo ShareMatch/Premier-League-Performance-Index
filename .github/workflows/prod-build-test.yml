@@ -1,10 +1,10 @@
-name: Automated Testing & Audit
+name: Production Testing & Audit
 
 on:
   push:
-    branches: [staging, main]
+    branches: [main]
   pull_request:
-    branches: [staging, main]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -16,12 +16,12 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-      APP_BASE_URL: https://stg-rwa.sharematch.me/
+      APP_BASE_URL: ${{secrets.APP_MAIN_URL}}
 
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
       
       CI: true
 
@@ -65,7 +65,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ github.run_number }}
+          name: playwright-report-prod-${{ github.run_number }}
           path: |
             playwright-report/
             audit-reports/
@@ -76,7 +76,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-artifacts-${{ github.run_number }}
+          name: test-artifacts-prod-${{ github.run_number }}
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore
@@ -84,7 +84,7 @@ jobs:
       - name: Post Summary to GitHub
         if: always()
         run: |
-          echo "## 🎭 Test Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎭 Production Test Audit Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "audit-reports/summary.md" ]; then
             cat audit-reports/summary.md >> $GITHUB_STEP_SUMMARY
