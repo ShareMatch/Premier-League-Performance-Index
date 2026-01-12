@@ -14,6 +14,7 @@ interface HomeDashboardProps {
   onNavigate: (league: League) => void;
   teams: Team[];
   onViewAsset?: (asset: Team) => void;
+  onSelectOrder?: (team: Team, type: 'buy' | 'sell') => void;
   seasonDatesMap?: Map<string, SeasonDates>;
 }
 
@@ -21,6 +22,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onNavigate,
   teams,
   onViewAsset,
+  onSelectOrder,
   seasonDatesMap,
 }) => {
   return (
@@ -34,6 +36,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
           teams={teams}
           seasonDatesMap={seasonDatesMap}
           onViewAsset={onViewAsset}
+          onSelectOrder={onSelectOrder}
         />
         <HotQuestions
           teams={teams}

@@ -884,6 +884,7 @@ const App: React.FC = () => {
                         onNavigate={handleNavigate}
                         teams={allAssets}
                         onViewAsset={handleViewAsset}
+                        onSelectOrder={handleSelectOrder}
                         seasonDatesMap={seasonDatesMap}
                       />
                     ) : activeLeague === "AI_ANALYTICS" ? (
