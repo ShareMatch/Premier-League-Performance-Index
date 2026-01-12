@@ -9,7 +9,7 @@ import { test as supabaseTest } from './supabase';
 
 // Merge all fixtures into a single test object
 // This allows tests to use: { page, sumsub, supabaseAdapter }
-type SumsubFixtures = Parameters<Parameters<typeof sumsubTest.extend>[0]['sumsub']>[0] extends { sumsub: infer T } ? never : 
+type SumsubFixtures = Parameters<Parameters<typeof sumsubTest.extend>[0]['sumsub']>[0] extends { sumsub: infer T } ? never :
   { sumsub: Awaited<ReturnType<Exclude<Parameters<typeof sumsubTest['_fixtures']['sumsub']>, undefined>>> };
 
 // Simple combined test with both fixtures
@@ -30,7 +30,7 @@ export const test = base.extend<{
   };
 }>({
   // Inherit sumsub fixture
-  sumsub: async ({}, use) => {
+  sumsub: async ({ }, use) => {
     // Re-use the sumsub fixture logic
     const { test: innerTest } = await import('./sumsub');
     // For simplicity, we'll create the tools inline
@@ -101,7 +101,7 @@ export const test = base.extend<{
   },
 
   // Inherit supabaseAdapter fixture
-  supabaseAdapter: async ({}, use) => {
+  supabaseAdapter: async ({ }, use) => {
     const { createClient } = await import('@supabase/supabase-js');
     const dotenv = await import('dotenv');
     dotenv.config();

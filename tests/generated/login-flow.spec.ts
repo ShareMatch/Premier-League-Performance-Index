@@ -109,76 +109,76 @@ test.describe("Login Flow", () => {
   });
 
   test("Login with cross-site scripting attempt", async ({
-  page,
-  supabaseAdapter,
-}) => {
-  console.log("[Test] Starting...");
-  await page.goto("/?action=login");
-  const modal = page.locator('[data-testid="login-modal"]');
-  await modal.waitFor({ timeout: 5000 });
-  
-  await page.locator("#login-email").fill(TEST_USER.email);
-  await page.locator("#login-password").fill('<script>alert("XSS")</script>');
-  await page.locator('[data-testid="login-submit-button"]').click();
-  await expect(modal.locator(".text-red-400").first()).toBeVisible({ timeout: 10000 });
-  
-  console.log("[Test] Completed");
-});
+    page,
+    supabaseAdapter,
+  }) => {
+    console.log("[Test] Starting...");
+    await page.goto("/?action=login");
+    const modal = page.locator('[data-testid="login-modal"]');
+    await modal.waitFor({ timeout: 5000 });
+
+    await page.locator("#login-email").fill(TEST_USER.email);
+    await page.locator("#login-password").fill('<script>alert("XSS")</script>');
+    await page.locator('[data-testid="login-submit-button"]').click();
+    await expect(modal.locator(".text-red-400").first()).toBeVisible({ timeout: 10000 });
+
+    console.log("[Test] Completed");
+  });
 
   test("Login with brute force attempt", async ({ page, supabaseAdapter }) => {
-  console.log("[Test] Starting...");
-  await page.goto("/?action=login");
-  const modal = page.locator('[data-testid="login-modal"]');
-  await modal.waitFor({ timeout: 5000 });
-  
-  await page.locator("#login-email").fill(TEST_USER.email);
-  await page.locator("#login-password").fill(TEST_USER.password);
-  await page.locator('[data-testid="login-submit-button"]').click();
-  await page.waitForTimeout(5000); 
-  
-  const verificationModal = page.locator('[data-testid="verification-modal"]');
-  
-  const isLoginModalHidden = await modal.isHidden().catch(() => false);
-  const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+    console.log("[Test] Starting...");
+    await page.goto("/?action=login");
+    const modal = page.locator('[data-testid="login-modal"]');
+    await modal.waitFor({ timeout: 5000 });
 
-  if (!isLoginModalHidden && !isVerificationModalVisible) {
-    await page.waitForTimeout(3000);
-    const isLoginModalHiddenRetry = await modal.isHidden().catch(() => false);
-    const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
-    expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
-  } else {
-    expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
-  }
-  
-  console.log("[Test] Completed");
-});
+    await page.locator("#login-email").fill(TEST_USER.email);
+    await page.locator("#login-password").fill(TEST_USER.password);
+    await page.locator('[data-testid="login-submit-button"]').click();
+    await page.waitForTimeout(5000);
+
+    const verificationModal = page.locator('[data-testid="verification-modal"]');
+
+    const isLoginModalHidden = await modal.isHidden().catch(() => false);
+    const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+
+    if (!isLoginModalHidden && !isVerificationModalVisible) {
+      await page.waitForTimeout(3000);
+      const isLoginModalHiddenRetry = await modal.isHidden().catch(() => false);
+      const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
+      expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
+    } else {
+      expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
+    }
+
+    console.log("[Test] Completed");
+  });
 
   test("Login with valid email and password", async ({
-  page,
-  supabaseAdapter,
-}) => {
-  await page.goto("/?action=login");
-  await page
-    .locator('[data-testid="login-modal"]')
-    .waitFor({ timeout: 5000 });
-  
-  await page.locator("#login-email").fill(TEST_USER.email);
-  await page.locator("#login-password").fill(TEST_USER.password);
-  await page.locator('[data-testid="login-submit-button"]').click();
-  await page.waitForTimeout(5000);
-  
-  const loginModal = page.locator('[data-testid="login-modal"]');
-  const verificationModal = page.locator('[data-testid="verification-modal"]');
-  const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
-  const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
-  
-  if (!isLoginModalHidden && !isVerificationModalVisible) {
-    await page.waitForTimeout(3000);
-    const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
-    const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
-    expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
-  } else {
-    expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
-  }
-});
+    page,
+    supabaseAdapter,
+  }) => {
+    await page.goto("/?action=login");
+    await page
+      .locator('[data-testid="login-modal"]')
+      .waitFor({ timeout: 5000 });
+
+    await page.locator("#login-email").fill(TEST_USER.email);
+    await page.locator("#login-password").fill(TEST_USER.password);
+    await page.locator('[data-testid="login-submit-button"]').click();
+    await page.waitForTimeout(5000);
+
+    const loginModal = page.locator('[data-testid="login-modal"]');
+    const verificationModal = page.locator('[data-testid="verification-modal"]');
+    const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
+    const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+
+    if (!isLoginModalHidden && !isVerificationModalVisible) {
+      await page.waitForTimeout(3000);
+      const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
+      const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
+      expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
+    } else {
+      expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
+    }
+  });
 });

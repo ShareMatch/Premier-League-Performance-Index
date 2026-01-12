@@ -29,12 +29,12 @@ const TEST_USER = {
 };
 
 test.describe('Signup Flow', () => {
-  
+
   test.beforeEach(async ({ supabaseAdapter }) => {
     console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
     await supabaseAdapter.deleteTestUser(TEST_USER.email);
   });
-  
+
   test.afterEach(async ({ supabaseAdapter }) => {
     await supabaseAdapter.deleteTestUser(TEST_USER.email);
   });
@@ -43,12 +43,12 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
+
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -57,33 +57,33 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
-    
+
+
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('invalid_email');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
-    
-    
+
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
     await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
-    
+
+
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -92,32 +92,32 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('DifferentPassword');
-    
-    
+
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
     await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
-    
+
+
     await expect(page.locator('.text-red-400').first()).toBeVisible();
     console.log('[Test] Completed');
   });
@@ -126,30 +126,30 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123! OR 1=1');
     await page.locator('#confirmPassword').fill('Password123! OR 1=1');
-    
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
     await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
+
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed - SQL injection properly handled as text');
   });
@@ -158,31 +158,31 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('#fullName').fill('<script>alert(\'XSS\')</script>');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
-    
-    
+
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
     await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
+
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed - XSS properly handled');
   });
@@ -191,31 +191,31 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
     await page.locator('input[name="referralCode"]').fill('REFERRAL_CODE');
-    
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(300);
     const selects = signupModal.locator('select');
     await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
+
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed');
   });
@@ -224,44 +224,44 @@ test.describe('Signup Flow', () => {
     console.log('[Test] Starting...');
     await page.locator('body').waitFor({ timeout: 5000 });
     await page.goto('/?action=signup');
-    
+
     const signupModal = page.getByTestId('signup-modal');
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-    
+
     await page.locator('#fullName').fill('John Doe');
     await page.locator('input[name="email"]').fill('john@example.com');
     await page.locator('#password').fill('Password123!');
     await page.locator('#confirmPassword').fill('Password123!');
-    
-    
+
+
     await page.locator('button:has-text("Select date of birth")').click();
-    
-    
+
+
     await expect(signupModal.locator('select').first()).toBeVisible();
-    
-    
+
+
     const selects = signupModal.locator('select');
-    await selects.first().selectOption('0'); 
+    await selects.first().selectOption('0');
     await selects.last().selectOption('1990');
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: '15' }).first().click();
-    
-    
+
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(300);
     await page.locator('input[placeholder*="Search"]').first().fill('United Arab');
     await page.waitForTimeout(200);
     await page.getByText('United Arab Emirates').first().click();
-    
+
     await page.locator('[data-testid="signup-continue-button"]').click();
-    
-    
+
+
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Test] Completed');
   });
 
   test('Complete signup with email and whatsapp verification', async ({ page, supabaseAdapter }) => {
     test.setTimeout(180000);
-    
+
     console.log('========================================');
     console.log('COMPLETE SIGNUP TEST WITH VERIFICATION');
     console.log(`Email: ${TEST_USER.email}`);
@@ -278,23 +278,23 @@ test.describe('Signup Flow', () => {
     // ============ STEP 1: Personal Info ============
     console.log('[Step 1] Filling personal info...');
 
-    
+
     await signupModal.locator('#fullName').fill(TEST_USER.fullName);
     console.log('  - Filled full name');
 
-    
+
     await signupModal.locator('input[name="email"]').fill(TEST_USER.email);
     console.log('  - Filled email');
 
-    
+
     await signupModal.locator('#password').fill(TEST_USER.password);
     console.log('  - Filled password');
 
-    
+
     await signupModal.locator('#confirmPassword').fill(TEST_USER.password);
     console.log('  - Filled confirm password');
 
-    
+
     await signupModal.getByText('Select date of birth').click();
     await page.waitForTimeout(500);
     console.log('  - Opened date picker');
@@ -307,7 +307,7 @@ test.describe('Signup Flow', () => {
     await signupModal.locator('.grid.grid-cols-7 button').filter({ hasText: TEST_USER.dob.day }).first().click();
     console.log('  - Selected day');
 
-    
+
     await signupModal.getByText('Select country').click();
     await page.waitForTimeout(500);
     console.log('  - Opened country dropdown');
@@ -321,7 +321,7 @@ test.describe('Signup Flow', () => {
     await page.getByText('United Arab Emirates').first().click();
     console.log('  - Selected country');
 
-    
+
     const continueButton = signupModal.getByTestId('signup-continue-button');
     await expect(continueButton).toBeVisible();
     await continueButton.click();
@@ -331,7 +331,7 @@ test.describe('Signup Flow', () => {
     await expect(signupModal.getByText('Security & Verification')).toBeVisible({ timeout: 10000 });
     console.log('[Step 2] Security & Verification visible');
 
-    
+
     const phoneCountryButton = signupModal.locator('input[name="phone"]').locator('..').locator('button').first();
     await phoneCountryButton.click();
     await page.waitForTimeout(300);
@@ -366,26 +366,26 @@ test.describe('Signup Flow', () => {
 
     // ============ STEP 3: Email Verification ============
     console.log('[Step 3] Waiting for Email Verification modal...');
-    
+
     await page.screenshot({ path: 'test-results/after-create-account.png' });
-    
+
     const emailVerificationTitle = page.getByText('Email Verification');
     await emailVerificationTitle.waitFor({ timeout: 15000 });
     console.log('  - Email Verification modal visible');
-    
+
     // Wait for OTP to be generated
     await page.waitForTimeout(2000);
-    
+
     // Fetch email OTP from database
     console.log('  - Fetching email OTP from database...');
     const emailOtp = await supabaseAdapter.getEmailOtp(TEST_USER.email);
-    
+
     if (emailOtp) {
       console.log(`  - Got email OTP: ${emailOtp}`);
-      
+
       const otpInputs = page.locator('input[maxlength="1"]');
       const inputCount = await otpInputs.count();
-      
+
       if (inputCount === 6) {
         for (let i = 0; i < 6; i++) {
           await otpInputs.nth(i).click();
@@ -393,17 +393,17 @@ test.describe('Signup Flow', () => {
           await page.waitForTimeout(100);
         }
         console.log('  - Filled email OTP');
-        
+
         await page.waitForTimeout(500);
-        
+
         const verifyButton = page.getByRole('button', { name: /verify/i }).first();
         const isButtonEnabled = await verifyButton.isEnabled();
-        
+
         if (isButtonEnabled) {
           await verifyButton.click();
           console.log('  - Clicked Verify for email');
         }
-        
+
         await Promise.race([
           page.getByText('Email verified successfully').waitFor({ timeout: 10000 }),
           page.getByText('WhatsApp Verification').waitFor({ timeout: 10000 }),
@@ -414,20 +414,20 @@ test.describe('Signup Flow', () => {
 
     // ============ STEP 4: WhatsApp Verification ============
     console.log('[Step 4] Waiting for WhatsApp Verification modal...');
-    
+
     await page.waitForTimeout(3000);
-    
+
     const whatsappVerificationTitle = page.getByText('WhatsApp Verification');
     const whatsappVisible = await whatsappVerificationTitle.isVisible({ timeout: 10000 }).catch(() => false);
-    
+
     if (whatsappVisible) {
       console.log('  - WhatsApp Verification modal visible');
-      
+
       // Poll for WhatsApp OTP
       let whatsappOtp: string | null = null;
       let attempts = 0;
       const maxAttempts = 10;
-      
+
       console.log('  - Waiting for WhatsApp OTP to be generated...');
       while (!whatsappOtp && attempts < maxAttempts) {
         await page.waitForTimeout(2000);
@@ -437,31 +437,31 @@ test.describe('Signup Flow', () => {
           console.log(`  - Attempt ${attempts}/${maxAttempts}: OTP not ready yet...`);
         }
       }
-      
+
       if (whatsappOtp) {
         console.log(`  - Got WhatsApp OTP: ${whatsappOtp}`);
-        
+
         const otpInputs = page.locator('input[maxlength="1"]');
         const inputCount = await otpInputs.count();
-        
+
         if (inputCount === 6) {
           for (let i = 0; i < 6; i++) {
             await otpInputs.nth(i).fill(whatsappOtp[i]);
           }
           console.log('  - Filled WhatsApp OTP');
         }
-        
+
         await page.waitForTimeout(1000);
-        
+
         const verifyButton = page.getByRole('button', { name: /verify/i }).first();
         const isButtonVisible = await verifyButton.isVisible().catch(() => false);
         const isButtonEnabled = await verifyButton.isEnabled().catch(() => false);
-        
+
         if (isButtonVisible && isButtonEnabled) {
           await verifyButton.click();
           console.log('  - Clicked Verify for WhatsApp');
         }
-        
+
         await page.waitForTimeout(3000);
         console.log('[Step 4] WhatsApp verification completed');
       }
@@ -470,16 +470,16 @@ test.describe('Signup Flow', () => {
     // ============ VERIFY USER IN DATABASE ============
     console.log('[Verify] Checking user in database...');
     const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
-    
+
     if (user) {
       console.log('  ✅ User found in database!');
       console.log(`     - ID: ${user.id}`);
       console.log(`     - Email: ${user.email}`);
-      
+
       const verificationStatus = await supabaseAdapter.isUserVerified(TEST_USER.email);
       console.log(`     - Email Verified: ${verificationStatus.email}`);
       console.log(`     - WhatsApp Verified: ${verificationStatus.whatsapp}`);
-      
+
       // Assertions
       expect(user).toBeTruthy();
       expect(user.email).toBe(TEST_USER.email);
