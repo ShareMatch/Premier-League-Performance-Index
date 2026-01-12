@@ -37,11 +37,11 @@ interface AuditReport {
 class Audit {
   private testFiles = [
     'tests/generated/home-page.spec.ts',
-    'tests/generated/login-flow.spec.ts', 
+    'tests/generated/login-flow.spec.ts',
     'tests/generated/signup-flow.spec.ts'
   ];
 
-  private maxRetries = 3;
+  private maxRetries = 1;
   private results: TestResult[] = [];
 
   async runAudit(): Promise<void> {
@@ -51,16 +51,16 @@ class Audit {
     // Run each test file individually with retry logic
     for (const testFile of this.testFiles) {
       console.log(`\n📋 Testing: ${testFile}`);
-      
+
       let fileSuccess = false;
       let attempts = 0;
-      
+
       while (!fileSuccess && attempts < this.maxRetries) {
         attempts++;
         console.log(`Attempt ${attempts}/${this.maxRetries} for ${testFile}`);
-        
+
         const success = await this.runSingleTest(testFile, attempts);
-        
+
         if (success) {
           fileSuccess = true;
           if (attempts === 1) {
@@ -99,7 +99,7 @@ class Audit {
 
     try {
       console.log(`Running ${testFile}...`);
-      
+
       const { stdout, stderr } = await execAsync(
         `npx playwright test ${testFile} --reporter=line`,
         {
@@ -112,12 +112,12 @@ class Audit {
       testResult.success = true;
       testResult.output = stdout;
       testResult.duration = Date.now() - startTime;
-      
+
       // Parse passed tests
       const testInfo = this.parseTestResults(stdout, stderr);
       testResult.passedTests = testInfo.passedTests;
       testResult.totalTests = testInfo.totalTests;
-      
+
       console.log(`✅ ${testFile} completed successfully`);
       console.log(stdout);
 
@@ -126,7 +126,7 @@ class Audit {
       testResult.error = error.stderr || error.message || 'Unknown error';
       testResult.output = error.stdout || '';
       testResult.duration = Date.now() - startTime;
-      
+
       // Parse test results from output
       const combinedOutput = (error.stdout || '') + '\n' + (error.stderr || '');
       const testInfo = this.parseTestResults(error.stdout || '', error.stderr || '');
@@ -144,10 +144,10 @@ class Audit {
     return testResult.success;
   }
 
-  private parseTestResults(stdout: string, stderr: string): { 
-    failedTests: string[], 
+  private parseTestResults(stdout: string, stderr: string): {
+    failedTests: string[],
     passedTests: string[],
-    totalTests: number 
+    totalTests: number
   } {
     const failedTests: string[] = [];
     const passedTests: string[] = [];
@@ -186,7 +186,7 @@ class Audit {
             failedTests.push(testName);
           }
         }
-        
+
         // Stop at the "passed" line
         if (line.match(/^\s*\d+\s+passed/)) {
           break;
@@ -198,7 +198,7 @@ class Audit {
     const summaryMatch = combinedOutput.match(/(\d+)\s+passed(?:,?\s+(\d+)\s+failed)?/);
     let passedCount = 0;
     let failedCount = 0;
-    
+
     if (summaryMatch) {
       passedCount = parseInt(summaryMatch[1]);
       failedCount = summaryMatch[2] ? parseInt(summaryMatch[2]) : 0;
@@ -219,7 +219,7 @@ class Audit {
   private generateReport(totalDuration: number): AuditReport {
     // Group results by test file
     const fileResults = new Map<string, TestResult[]>();
-    
+
     this.results.forEach(result => {
       if (!fileResults.has(result.testFile)) {
         fileResults.set(result.testFile, []);
@@ -233,11 +233,11 @@ class Audit {
       .map(([file, _]) => file);
 
     const status = successfulFiles.length === this.testFiles.length ? 'PASS' : 'FAIL';
-    
+
     // Find persistent failures (failed in all attempts)
     const allFailures = this.results.flatMap(r => r.failedTests);
     const failureCounts = new Map<string, number>();
-    
+
     allFailures.forEach(failure => {
       failureCounts.set(failure, (failureCounts.get(failure) || 0) + 1);
     });
@@ -250,7 +250,7 @@ class Audit {
       .filter(([_, count]) => count > 0 && count < this.maxRetries)
       .map(([failure, _]) => failure);
 
-    const summary = status === 'PASS' 
+    const summary = status === 'PASS'
       ? `${successfulFiles.length}/${this.testFiles.length} test files passed. ${flakyTests.length} flaky tests detected.`
       : `${successfulFiles.length}/${this.testFiles.length} test files passed. ${persistentFailures.length} persistent failures detected.`;
 
@@ -295,12 +295,12 @@ ${report.summary}
 
 ## Test Files Status
 ${this.testFiles.map(file => {
-  const results = report.fileResults.get(file) || [];
-  const success = results.some(r => r.success);
-  const status = success ? '✅' : '❌';
-  const fileName = path.basename(file);
-  return `${status} ${fileName}`;
-}).join('\n')}
+      const results = report.fileResults.get(file) || [];
+      const success = results.some(r => r.success);
+      const status = success ? '✅' : '❌';
+      const fileName = path.basename(file);
+      return `${status} ${fileName}`;
+    }).join('\n')}
 
 ## Detailed Results
 `;
@@ -309,19 +309,19 @@ ${this.testFiles.map(file => {
     for (const [testFile, fileResults] of report.fileResults.entries()) {
       const fileName = path.basename(testFile);
       markdownReport += `\n### ${fileName}\n`;
-      
+
       fileResults.forEach((result) => {
         const attemptStatus = result.success ? '✅' : '❌';
         const attemptDuration = (result.duration / 1000).toFixed(2);
         markdownReport += `\n#### ${attemptStatus} Attempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
-        
+
         if (result.success && result.passedTests.length > 0) {
           markdownReport += `\n**Passed Tests:**\n`;
           result.passedTests.forEach(test => {
             markdownReport += `- ✅ ${test}\n`;
           });
         }
-        
+
         if (!result.success && result.failedTests.length > 0) {
           markdownReport += `\n**Failed Tests:**\n`;
           result.failedTests.forEach(test => {
@@ -382,13 +382,13 @@ ${this.testFiles.map(file => {
     // Add detailed results for each test file
     for (const [testFile, fileResults] of report.fileResults.entries()) {
       const fileName = path.basename(testFile).replace('.spec.ts', '');
-      
+
       fileResults.forEach((result) => {
         const attemptStatus = result.success ? '✅' : '❌';
         const attemptDuration = (result.duration / 1000).toFixed(2);
-        
+
         telegramText += `${attemptStatus} *${fileName}*\nAttempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
-        
+
         // Show failed tests if any
         if (!result.success && result.failedTests.length > 0) {
           telegramText += `*Failed:*\n`;
