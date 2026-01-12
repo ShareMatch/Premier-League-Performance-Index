@@ -22,6 +22,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   LabelList,
+  ReferenceDot,
 } from "recharts";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { SeasonDates } from "../lib/api";
@@ -53,7 +54,7 @@ type TimeRange = "1D" | "1W" | "1M" | "ALL";
 const generateTriplePriceHistory = (
   tokens: IndexToken[],
   range: TimeRange = "1W",
-  seasonData?: SeasonDates,
+  seasonData?: SeasonDates
 ) => {
   const now = new Date();
   const data = [];
@@ -65,17 +66,24 @@ const generateTriplePriceHistory = (
     if (seasonData?.start_date) {
       const start = new Date(seasonData.start_date);
       const diffDays = Math.ceil(
-        Math.abs(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+        Math.abs(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
       );
       points = Math.min(30, Math.max(10, Math.floor(diffDays / 5)));
     } else {
       points = 24;
     }
   }
-  let prices = tokens.map((t) => t.price * 0.92);
+
+  // Start prices at a lower point to allow for dramatic swings
+  let prices = tokens.map((t) => t.price * (0.7 + Math.random() * 0.4));
+
+  // Track momentum for each token to create trends with sharp reversals
+  let momentum = tokens.map(() => (Math.random() > 0.5 ? 1 : -1));
+
   for (let i = 0; i < points; i++) {
     let dateStr = "";
     const date = new Date(now);
+
     if (range === "1D") {
       date.setHours(now.getHours() - (points - 1 - i) * 2);
       const hours = date.getHours();
@@ -98,11 +106,11 @@ const generateTriplePriceHistory = (
       if (seasonData?.start_date) {
         const start = new Date(seasonData.start_date);
         const diffDays = Math.ceil(
-          Math.abs(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+          Math.abs(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
         );
         date.setDate(
           now.getDate() -
-            Math.floor((diffDays / (points - 1)) * (points - 1 - i)),
+            Math.floor((diffDays / (points - 1)) * (points - 1 - i))
         );
       } else {
         date.setDate(now.getDate() - (points - 1 - i) * 7);
@@ -112,16 +120,44 @@ const generateTriplePriceHistory = (
         month: "short",
       });
     }
+
     const dataPoint: any = { date: dateStr };
+
     prices = prices.map((price, idx) => {
-      const volatility = Math.random() * 0.06 - 0.02;
-      return Math.max(10, Math.min(100, price * (1 + volatility)));
+      // 20% chance of dramatic momentum shift (sharp reversal)
+      if (Math.random() < 0.2) {
+        momentum[idx] *= -1;
+      }
+
+      // Base volatility: much higher swings (-15% to +15%)
+      const baseVolatility = (Math.random() * 0.3 - 0.15) * momentum[idx];
+
+      // Occasional spike/crash (10% chance of extreme move)
+      const extremeMove =
+        Math.random() < 0.1 ? (Math.random() > 0.5 ? 0.25 : -0.25) : 0;
+
+      // Random walk with drift toward current token price
+      const driftTowardsTarget = (tokens[idx].price - price) * 0.05;
+
+      // Combine all factors
+      const totalChange = baseVolatility + extremeMove + driftTowardsTarget;
+
+      // Apply change with wider bounds to allow for bigger swings
+      let newPrice = price * (1 + totalChange);
+
+      // Keep prices in reasonable range but allow for bigger swings
+      newPrice = Math.max(5, Math.min(tokens[idx].price * 1.8, newPrice));
+
+      return newPrice;
     });
+
     tokens.forEach((token, idx) => {
       dataPoint[`token${idx}`] = parseFloat(prices[idx].toFixed(1));
     });
     data.push(dataPoint);
   }
+
+  // Make sure the final point matches current prices
   const finalPoint = data[data.length - 1];
   finalPoint.date =
     range === "1D"
@@ -130,12 +166,13 @@ const generateTriplePriceHistory = (
   tokens.forEach((token, idx) => {
     finalPoint[`token${idx}`] = token.price;
   });
+
   return data;
 };
 
 const generateQuestions = (
   teams: Team[],
-  seasonDatesMap?: Map<string, SeasonDates>,
+  seasonDatesMap?: Map<string, SeasonDates>
 ): Question[] => {
   const activeTeams = teams.filter((t) => {
     if (t.is_settled) return false;
@@ -145,7 +182,7 @@ const generateQuestions = (
       t.market as League,
       seasonData?.start_date,
       seasonData?.end_date,
-      seasonData?.stage || undefined,
+      seasonData?.stage || undefined
     );
     return marketInfo.isOpen;
   });
@@ -243,6 +280,17 @@ const generateQuestions = (
   teamsByMarket.forEach((marketTeams, market) => {
     const top3Teams = marketTeams.sort((a, b) => b.offer - a.offer).slice(0, 3);
     if (top3Teams.length === 0) return;
+
+    // Check if the market itself is open before adding the question
+    const seasonData = seasonDatesMap?.get(market);
+    const marketInfo = getMarketInfo(
+      market as League,
+      seasonData?.start_date,
+      seasonData?.end_date,
+      seasonData?.stage || undefined
+    );
+    if (!marketInfo.isOpen) return;
+
     const config = getMarketConfig(market);
     const totalVolume = top3Teams.reduce((sum, team) => {
       const validId = parseInt(team.id) || team.name.length;
@@ -298,11 +346,12 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
   const [activeHover, setActiveHover] = useState<{
     chartId: string;
     index: number;
+    coordX?: number;
   } | null>(null);
 
   const questionPool = useMemo(
     () => generateQuestions(teams, seasonDatesMap),
-    [teams, seasonDatesMap],
+    [teams, seasonDatesMap]
   );
 
   const chartDataMap = useMemo(() => {
@@ -314,46 +363,137 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         generateTriplePriceHistory(
           question.topTokens,
           timeRange,
-          question.seasonData,
-        ),
+          question.seasonData
+        )
       );
     });
     return map;
   }, [questionPool, timeRange]);
 
-  const CustomHoverLabels = ({
-    chartData,
-    tokens,
-    activeIndex,
-    xAxisMap,
-    yAxisMap,
-    defaultColors,
-  }: any) => {
-    if (activeIndex == null) return null;
-    const xAxis = xAxisMap?.[0];
-    const yAxis = yAxisMap?.[0];
+  const HoverLabelsComponent = (props: any) => {
+    console.log("=== HoverLabelsComponent ALL PROPS ===", Object.keys(props));
+
+    const {
+      chartData,
+      tokens,
+      activeIndex,
+      coordX,
+      defaultColors,
+      xAxisMap,
+      yAxisMap,
+    } = props;
+
+    console.log("HoverLabelsComponent values:", {
+      activeIndex,
+      coordX,
+      chartDataLength: chartData?.length,
+      tokensLength: tokens?.length,
+      xAxisMap,
+      yAxisMap,
+      xAxisMapKeys: xAxisMap ? Object.keys(xAxisMap) : "none",
+      yAxisMapKeys: yAxisMap ? Object.keys(yAxisMap) : "none",
+    });
+
+    if (activeIndex == null || coordX == null) {
+      console.log("Early return: no activeIndex or coordX");
+      return null;
+    }
+
+    if (!chartData || !tokens) {
+      console.log("Early return: no chartData or tokens");
+      return null;
+    }
+
+    // Try to access xAxisMap and yAxisMap in different ways
+    let xAxis = null;
+    let yAxis = null;
+
+    if (xAxisMap) {
+      // Try different keys
+      xAxis = xAxisMap[0] || xAxisMap["0"] || Object.values(xAxisMap)[0];
+      console.log("xAxis found:", !!xAxis);
+    }
+
+    if (yAxisMap) {
+      yAxis = yAxisMap[0] || yAxisMap["0"] || Object.values(yAxisMap)[0];
+      console.log("yAxis found:", !!yAxis);
+    }
+
+    if (!xAxis || !yAxis) {
+      console.log("Missing axis - xAxis:", !!xAxis, "yAxis:", !!yAxis);
+      return null;
+    }
+
+    // Get the x position of the data point
+    const date = chartData[activeIndex]?.date;
+    if (!date) {
+      console.log("No date at activeIndex:", activeIndex);
+      return null;
+    }
+
+    console.log("Trying to scale date:", date);
+    const dataPointX = xAxis.scale(date) + (xAxis.bandwidth || 0) / 2;
+    console.log("dataPointX:", dataPointX);
+
+    // Determine if labels should be on left or right
+    const showOnRight = coordX < dataPointX;
+    const xOffset = showOnRight ? 10 : -10;
+    const textAnchor = showOnRight ? "start" : "end";
+
+    console.log("Rendering labels - showOnRight:", showOnRight);
 
     return (
-      <g>
-        {tokens.map((token: IndexToken, idx: number) => {
+      <g className="recharts-hover-labels">
+        {tokens.map((token: any, idx: number) => {
           const value = chartData[activeIndex][`token${idx}`];
+          if (value === undefined) {
+            console.log("No value for token", idx);
+            return null;
+          }
+
           const color =
             token.color || defaultColors[idx % defaultColors.length];
-          const x = xAxis
-            ? xAxis.scale(chartData[activeIndex].date) + xAxis.bandwidth / 2
-            : 50 + idx * 50;
-          const y = yAxis ? yAxis.scale(value) : 160 - (value / 100) * 160;
+
+          // Get Y position from the actual data point using the yAxis scale
+          const y = yAxis.scale(value);
+          const x = dataPointX;
+
+          console.log(`Token ${token.name}: x=${x}, y=${y}, value=${value}`);
+
           return (
-            <g key={token.id} transform={`translate(${x}, ${y})`}>
-              <text dy={-5} fill={color} fontSize={9} fontWeight="700">
+            <g key={token.id}>
+              {/* Draw a dot at the data point */}
+              <circle
+                cx={x}
+                cy={y}
+                r={6}
+                fill={color}
+                stroke="#fff"
+                strokeWidth={2}
+              />
+
+              {/* Team name */}
+              <text
+                x={x + xOffset}
+                y={y - 8}
+                fill={color}
+                fontSize={11}
+                fontWeight="700"
+                textAnchor={textAnchor}
+                style={{ textTransform: "uppercase" }}
+              >
                 {token.name}
               </text>
+
+              {/* Price value */}
               <text
-                dy={12}
+                x={x + xOffset}
+                y={y + 6}
                 fill={color}
-                fontSize={12}
+                fontSize={14}
                 fontWeight="800"
                 fontFamily="monospace"
+                textAnchor={textAnchor}
               >
                 ${Number(value).toFixed(2)}
               </text>
@@ -376,7 +516,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     if (!isAnimating && questionPool.length > 0) {
       setIsAnimating(true);
       setCurrentIndex(
-        (prev) => (prev - 1 + questionPool.length) % questionPool.length,
+        (prev) => (prev - 1 + questionPool.length) % questionPool.length
       );
       setTimeout(() => setIsAnimating(false), 500);
     }
@@ -438,7 +578,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <div className="flex items-center gap-2 overflow-visible">
                             {(() => {
                               const indexAvatarUrl = getIndexAvatarUrl(
-                                question.market,
+                                question.market
                               );
                               return indexAvatarUrl ? (
                                 <img
@@ -457,16 +597,28 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <div className="flex items-center gap-2">
                             {(() => {
                               const seasonData = seasonDatesMap?.get(
-                                question.market,
+                                question.market
                               );
                               const info = getMarketInfo(
                                 question.market as League,
                                 seasonData?.start_date,
                                 seasonData?.end_date,
-                                seasonData?.stage || undefined,
+                                seasonData?.stage || undefined
                               );
                               const seasonDatesStr = seasonData
-                                ? `${new Date(seasonData.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} - ${new Date(seasonData.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                                ? `${new Date(
+                                    seasonData.start_date
+                                  ).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })} - ${new Date(
+                                    seasonData.end_date
+                                  ).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}`
                                 : undefined;
                               return (
                                 <InfoPopup
@@ -516,7 +668,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                       <FaCaretDown className="w-2.5 h-2.5 text-red-400" />
                                     )}
                                     <span
-                                      className={`text-[10px] font-bold ${token.change >= 0 ? "text-green-400" : "text-red-400"}`}
+                                      className={`text-[10px] font-bold ${
+                                        token.change >= 0
+                                          ? "text-green-400"
+                                          : "text-red-400"
+                                      }`}
                                     >
                                       ${token.changeDisplay}
                                     </span>
@@ -529,7 +685,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     const asset = teams.find(
-                                      (t) => t.id === token.id,
+                                      (t) => t.id === token.id
                                     );
                                     if (asset && onSelectOrder)
                                       onSelectOrder(asset, "buy");
@@ -554,7 +710,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <span className="text-gray-600">Start:</span>
                           <span className="text-gray-400">
                             {new Date(
-                              question.seasonData.start_date,
+                              question.seasonData.start_date
                             ).toLocaleDateString("en-GB", {
                               day: "numeric",
                               month: "short",
@@ -567,7 +723,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <span className="text-gray-600">End:</span>
                           <span className="text-gray-400">
                             {new Date(
-                              question.seasonData.end_date,
+                              question.seasonData.end_date
                             ).toLocaleDateString("en-GB", {
                               day: "numeric",
                               month: "short",
@@ -624,66 +780,22 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                   </div>
                   <div className="flex-1 h-[200px] relative">
                     {" "}
-                    {/* Fixed height here */}
-                    {activeHover?.chartId === question.id &&
-                      chartData[activeHover.index] && (
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-50 bg-gray-950/95 backdrop-blur-md rounded-xl border border-green-500/50 p-3 shadow-2xl min-w-[140px]">
-                          <div className="text-[10px] text-green-400 mb-2 font-bold border-b border-gray-700 pb-1">
-                            📅 {chartData[activeHover.index].date}
-                          </div>
-                          <div className="space-y-1.5">
-                            {question.topTokens.map((token, idx) => {
-                              const value =
-                                chartData[activeHover.index][`token${idx}`];
-                              const color =
-                                token.color ||
-                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
-                              return (
-                                <div
-                                  key={token.id}
-                                  className="flex items-center justify-between gap-4"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="w-2.5 h-2.5 rounded-full ring-1 ring-white/20"
-                                      style={{ backgroundColor: color }}
-                                    />
-                                    <span className="text-[11px] text-gray-200 font-semibold">
-                                      {token.name}
-                                    </span>
-                                  </div>
-                                  <span
-                                    className="text-sm font-black font-mono"
-                                    style={{ color }}
-                                  >
-                                    ${Number(value).toFixed(2)}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     <ResponsiveContainer width="100%" height={200}>
                       {" "}
                       {/* Fixed height here */}
                       <LineChart
                         data={chartData}
                         margin={{ top: 20, right: 0, left: 0, bottom: 20 }}
-                        onMouseMove={(e) => {
+                        onMouseMove={(e: any) => {
                           if (e.isTooltipActive) {
                             setActiveHover({
                               chartId: question.id,
                               index: e.activeTooltipIndex,
-                              coordX: e.activeCoordinate?.x, // pass these down
-                              coordY: e.activeCoordinate?.y,
+                              coordX: e.activeCoordinate?.x,
                             });
                           }
                         }}
                         onMouseLeave={() => {
-                          console.log(
-                            "[LineChart onMouseLeave] Clearing activeHover",
-                          );
                           setActiveHover(null);
                         }}
                       >
@@ -719,16 +831,74 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           wrapperStyle={{ display: "none" }}
                           cursor={{ stroke: "#6B7280", strokeDasharray: "3 3" }}
                         />
-                        <CustomHoverLabels
-                          activeIndex={
-                            activeHover?.chartId === question.id
-                              ? activeHover.index
-                              : null
-                          }
-                          chartData={chartData}
-                          tokens={question.topTokens}
-                          defaultColors={DEFAULT_COLORS}
-                        />
+                        {/* Render hover labels using ReferenceDot with custom label */}
+                        {activeHover?.chartId === question.id &&
+                          chartData[activeHover.index] &&
+                          question.topTokens.map((token, idx) => {
+                            const value =
+                              chartData[activeHover.index][`token${idx}`];
+                            if (value === undefined) return null;
+
+                            const color =
+                              token.color ||
+                              DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+
+                            return (
+                              <ReferenceDot
+                                key={token.id}
+                                x={chartData[activeHover.index].date}
+                                y={value}
+                                r={4}
+                                fill={color}
+                                stroke="#000"
+                                strokeWidth={2}
+                                label={(props: any) => {
+                                  const { viewBox } = props;
+                                  if (!viewBox) return null;
+
+                                  const { x, y } = viewBox;
+                                  const coordX = activeHover.coordX || 0;
+
+                                  // Determine if labels should be on left or right
+                                  const showOnRight = coordX < x;
+                                  const xOffset = showOnRight ? 10 : -10;
+                                  const textAnchor = showOnRight
+                                    ? "start"
+                                    : "end";
+
+                                  return (
+                                    <g>
+                                      {/* Team name */}
+                                      <text
+                                        x={x + xOffset}
+                                        y={y - 8}
+                                        fill={color}
+                                        fontSize={9}
+                                        fontWeight="700"
+                                        textAnchor={textAnchor}
+                                        style={{ textTransform: "uppercase" }}
+                                      >
+                                        {token.name}
+                                      </text>
+
+                                      {/* Price value */}
+                                      <text
+                                        x={x + xOffset}
+                                        y={y + 6}
+                                        fill={color}
+                                        fontSize={12}
+                                        fontWeight="800"
+                                        fontFamily="monospace"
+                                        textAnchor={textAnchor}
+                                      >
+                                        ${Number(value).toFixed(2)}
+                                      </text>
+                                    </g>
+                                  );
+                                }}
+                              />
+                            );
+                          })}
                         {(() => {
                           const lastPoint = chartData[chartData.length - 1];
                           const sortedTokens = question.topTokens
@@ -743,7 +913,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               token.color ||
                               DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
                             const rank = sortedTokens.findIndex(
-                              (s) => s.originalIdx === idx,
+                              (s) => s.originalIdx === idx
                             );
                             const yShift = (rank - 1) * 24;
                             return (

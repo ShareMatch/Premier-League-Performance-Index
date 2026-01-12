@@ -1,10 +1,10 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Team, League } from '../types';
-import { TrendingUp, Trophy, Flag, Activity, Zap } from 'lucide-react';
-import InfoPopup from './InfoPopup';
-import { getMarketInfo } from '../lib/marketInfo';
-import { getIndexAvatarUrl } from '../lib/logoHelper';
-import type { SeasonDates } from '../lib/api';
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { Team, League } from "../types";
+import { TrendingUp, Trophy, Flag, Activity, Zap } from "lucide-react";
+import InfoPopup from "./InfoPopup";
+import { getMarketInfo } from "../lib/marketInfo";
+import { getIndexAvatarUrl } from "../lib/logoHelper";
+import type { SeasonDates } from "../lib/api";
 
 interface HotQuestionsProps {
   teams: Team[];
@@ -59,7 +59,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         t.market as League,
         seasonData?.start_date,
         seasonData?.end_date,
-        seasonData?.stage || undefined,
+        seasonData?.stage || undefined
       );
       return marketInfo.isOpen;
     });
@@ -82,8 +82,18 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
       market: League,
       icon: React.ReactNode,
       color: string,
-      border: string,
+      border: string
     ) => {
+      // Check if market is open before adding questions
+      const seasonData = seasonDatesMap?.get(market);
+      const marketInfo = getMarketInfo(
+        market,
+        seasonData?.start_date,
+        seasonData?.end_date,
+        seasonData?.stage || undefined
+      );
+      if (!marketInfo.isOpen) return;
+
       const sorted = [...leagueTeams]
         .sort((a, b) => b.offer - a.offer)
         .slice(0, 5);
@@ -112,12 +122,54 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     };
 
     // Generate for all markets
-    if (markets.EPL.length > 0) addQuestions(markets.EPL, 'EPL', null, 'from-purple-500/20 to-blue-500/20', 'group-hover:border-purple-500/50');
-    if (markets.F1.length > 0) addQuestions(markets.F1, 'F1', null, 'from-red-500/20 to-orange-500/20', 'group-hover:border-red-500/50');
-    if (markets.SPL.length > 0) addQuestions(markets.SPL, 'SPL', null, 'from-green-500/20 to-emerald-500/20', 'group-hover:border-green-500/50');
-    if (markets.UCL.length > 0) addQuestions(markets.UCL, 'UCL', null, 'from-blue-600/20 to-indigo-600/20', 'group-hover:border-blue-500/50');
-    if (markets.NBA.length > 0) addQuestions(markets.NBA, 'NBA', null, 'from-orange-500/20 to-amber-500/20', 'group-hover:border-orange-500/50');
-    if (markets.NFL.length > 0) addQuestions(markets.NFL, 'NFL', null, 'from-blue-800/20 to-blue-900/20', 'group-hover:border-blue-800/50');
+    if (markets.EPL.length > 0)
+      addQuestions(
+        markets.EPL,
+        "EPL",
+        null,
+        "from-purple-500/20 to-blue-500/20",
+        "group-hover:border-purple-500/50"
+      );
+    if (markets.F1.length > 0)
+      addQuestions(
+        markets.F1,
+        "F1",
+        null,
+        "from-red-500/20 to-orange-500/20",
+        "group-hover:border-red-500/50"
+      );
+    if (markets.SPL.length > 0)
+      addQuestions(
+        markets.SPL,
+        "SPL",
+        null,
+        "from-green-500/20 to-emerald-500/20",
+        "group-hover:border-green-500/50"
+      );
+    if (markets.UCL.length > 0)
+      addQuestions(
+        markets.UCL,
+        "UCL",
+        null,
+        "from-blue-600/20 to-indigo-600/20",
+        "group-hover:border-blue-500/50"
+      );
+    if (markets.NBA.length > 0)
+      addQuestions(
+        markets.NBA,
+        "NBA",
+        null,
+        "from-orange-500/20 to-amber-500/20",
+        "group-hover:border-orange-500/50"
+      );
+    if (markets.NFL.length > 0)
+      addQuestions(
+        markets.NFL,
+        "NFL",
+        null,
+        "from-blue-800/20 to-blue-900/20",
+        "group-hover:border-blue-800/50"
+      );
 
     // Shuffle full pool
     return generated.sort(() => 0.5 - Math.random());
@@ -144,7 +196,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         const slotToUpdate = Math.floor(Math.random() * limit);
         const currentIds = displayedQuestions.map((q) => q?.id);
         const available = questionPool.filter(
-          (q) => !currentIds.includes(q.id),
+          (q) => !currentIds.includes(q.id)
         );
 
         if (available.length > 0) {
@@ -251,7 +303,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       </div>
                     );
                   })()}
-                  
+
                   {/* Question Text + Volume */}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xs sm:text-sm font-semibold text-gray-100 group-hover:text-white transition-colors leading-snug line-clamp-2 mb-1">
@@ -269,10 +321,16 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       q.market,
                       seasonData?.start_date,
                       seasonData?.end_date,
-                      seasonData?.stage || undefined,
+                      seasonData?.stage || undefined
                     );
                     const seasonDatesStr = seasonData
-                      ? `${new Date(seasonData.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(seasonData.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                      ? `${new Date(seasonData.start_date).toLocaleDateString(
+                          "en-US",
+                          { month: "short", day: "numeric", year: "numeric" }
+                        )} - ${new Date(seasonData.end_date).toLocaleDateString(
+                          "en-US",
+                          { month: "short", day: "numeric", year: "numeric" }
+                        )}`
                       : undefined;
                     return (
                       <div className="flex-shrink-0">
@@ -290,7 +348,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
                 {/* Buy/Sell Buttons */}
                 <div className="mt-auto grid grid-cols-2 gap-1.5 sm:gap-2">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onSelectOrder) {
@@ -306,7 +364,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                       ${q.yesPrice.toFixed(2)}
                     </span>
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onSelectOrder) {
