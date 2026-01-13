@@ -26,8 +26,29 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   iconClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const closeTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const closeModal = () => setIsOpen(false);
+  const handleMouseEnter = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimerRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
+
+  const closeModal = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setIsOpen(false);
+  };
 
   // Helper to parse dates and calculate progress
   const getProgress = (dateRange: string) => {
@@ -57,26 +78,28 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
   // Modal content - rendered via portal to document.body
   const modalContent = isOpen ? (
-    <div 
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 animate-in fade-in duration-200"
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-3 md:p-4 animate-in fade-in duration-200 pointer-events-none"
       onClick={(e) => {
         e.stopPropagation();
         closeModal();
       }}
       data-testid="info-popup-overlay"
     >
-      <div 
-        className="max-w-[85vw] sm:max-w-sm md:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 scrollbar-hide rounded-lg md:rounded-xl max-h-[90vh] overflow-y-auto"
+      <div
+        className="max-w-[85vw] sm:max-w-sm md:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 scrollbar-hide rounded-lg md:rounded-xl max-h-[90vh] overflow-y-auto pointer-events-auto"
         style={{
           background: 'rgba(4, 34, 34, 0.92)',
           backdropFilter: 'blur(40px)',
           WebkitBackdropFilter: 'blur(40px)',
         }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={(e) => e.stopPropagation()}
         data-testid="info-popup"
       >
         {/* Header */}
-        <div 
+        <div
           className="px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2.5 md:py-3 flex justify-between items-center sticky top-0 z-10"
           style={{
             background: '#021A1A',
@@ -89,16 +112,15 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           </h3>
           <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
             {isMarketOpen !== undefined && (
-              <span className={`px-1 sm:px-1.5 md:px-2 py-0.5 md:py-1 text-[8px] sm:text-[9px] md:text-[10px] font-bold rounded whitespace-nowrap ${
-                isMarketOpen 
-                  ? 'bg-[#005430] text-white animate-pulse' 
-                  : 'bg-amber-500/20 text-amber-500'
-              }`}>
+              <span className={`px-1 sm:px-1.5 md:px-2 py-0.5 md:py-1 text-[8px] sm:text-[9px] md:text-[10px] font-bold rounded whitespace-nowrap ${isMarketOpen
+                ? 'bg-[#005430] text-white animate-pulse'
+                : 'bg-amber-500/20 text-amber-500'
+                }`}>
                 {isMarketOpen ? 'Market Open' : 'Market Closed'}
               </span>
             )}
-            <button 
-              onClick={closeModal} 
+            <button
+              onClick={closeModal}
               className="text-gray-400 hover:text-white transition-colors p-0.5"
               data-testid="info-popup-close-button"
             >
@@ -119,7 +141,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
               <div className="h-1.5 sm:h-2 bg-gray-700/50 rounded-full overflow-hidden relative">
                 <div
                   className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                  style={{ 
+                  style={{
                     width: `${progressInfo.percentage}%`,
                     background: 'linear-gradient(90deg, #005430 0%, #10b981 100%)',
                   }}
@@ -127,7 +149,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
               </div>
               <div className="text-center mt-2">
                 <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-300">
-                  {progressInfo.daysRemaining > 0 
+                  {progressInfo.daysRemaining > 0
                     ? `${progressInfo.daysRemaining} day${progressInfo.daysRemaining !== 1 ? 's' : ''} remaining`
                     : 'Season ended'
                   }
@@ -148,9 +170,11 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   return (
     <>
       <button
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onClick={(e) => {
-          e.stopPropagation(); // Prevent click from bubbling to parent
-          setIsOpen(true);
+          e.stopPropagation();
+          setIsOpen(!isOpen);
         }}
         className={`${iconClassName} w-6 h-6 rounded-full bg-[#005430] hover:bg-[#006035] flex items-center justify-center transition-all shadow-sm border border-emerald-800/20 group/info`}
         aria-label="More information"

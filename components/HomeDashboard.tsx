@@ -30,28 +30,31 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
             data-testid="home-dashboard"
             className="flex flex-col gap-8 h-full overflow-y-auto pb-8 scrollbar-hide"
         >
-            {/* Top Section: Trending Markets */}
-            <div className="flex-shrink-0 space-y-4">
+            {/* Main Content with Consistent Spacing */}
+            <div className="flex-shrink-0 space-y-6">
                 <TrendingCarousel
                     teams={teams}
                     seasonDatesMap={seasonDatesMap}
                     onViewAsset={onViewAsset}
                     onSelectOrder={onSelectOrder}
                 />
-                <HotQuestions
-                    teams={teams}
-                    onNavigate={onNavigate}
-                    onSelectOrder={onSelectOrder}
-                    seasonDatesMap={seasonDatesMap}
-                />
-                {/* View All button aligned to the right */}
-                <div className="flex justify-end">
-                    <button
-                        onClick={() => onNavigate("NEW_MARKETS")}
-                        className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
-                    >
-                        View All <ChevronRight className="w-3 h-3" />
-                    </button>
+
+                <div className="space-y-2">
+                    <HotQuestions
+                        teams={teams}
+                        onNavigate={onNavigate}
+                        onSelectOrder={onSelectOrder}
+                        seasonDatesMap={seasonDatesMap}
+                    />
+                    {/* View All button aligned to the right - Linked to HotQuestions */}
+                    <div className="flex justify-end px-2">
+                        <button
+                            onClick={() => onNavigate("NEW_MARKETS")}
+                            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+                        >
+                            View All <ChevronRight className="w-3 h-3" />
+                        </button>
+                    </div>
                 </div>
 
                 <RecentlyViewed onNavigate={onNavigate} onViewAsset={onViewAsset} />

@@ -28,13 +28,13 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
     return (
         <div className="flex flex-col gap-4">
             {/* Widget Header */}
-            <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-brand-primary" />
-                    <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-sans">
+            <div className="flex items-center justify-between">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                         All Index Tokens
-                    </h2>
-                </div>
+                    </span>
+                </h2>
             </div>
 
             {/* Rows */}
@@ -93,7 +93,6 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                                     <span className="text-sm font-bold text-gray-200 min-w-[50px] text-right">
                                         ${team.bid.toFixed(2)}
                                     </span>
-                                    <FaCaretDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
                                 </div>
 
                                 {/* Buy Section */}
@@ -110,7 +109,6 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                                     <span className="text-sm font-bold text-gray-200 min-w-[50px] text-right">
                                         ${team.offer.toFixed(2)}
                                     </span>
-                                    <FaCaretUp className="w-3.5 h-3.5 text-[#00A651] shrink-0" />
                                 </div>
                             </div>
                         </div>

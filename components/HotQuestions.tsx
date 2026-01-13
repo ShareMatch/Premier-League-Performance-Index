@@ -273,10 +273,9 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${
-                  animatingCard === index
-                    ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
-                    : ""
+                ${animatingCard === index
+                  ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
+                  : ""
                 }
               `}
             >
@@ -286,64 +285,66 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
               />
 
               <div className="relative z-10 flex flex-col h-full">
-                {/* Header - Avatar + Question + Info */}
-                <div className="flex items-start gap-3 mb-3 sm:mb-4">
-                  {/* Larger Avatar */}
-                  {(() => {
-                    const indexAvatarUrl = getIndexAvatarUrl(q.market);
-                    return indexAvatarUrl ? (
-                      <img
-                        src={indexAvatarUrl}
-                        alt={`${q.market} Index`}
-                        className="w-14 h-14 sm:w-16 sm:h-16 block flex-shrink-0"
+                {/* Info Button - Top Right */}
+                {(() => {
+                  const seasonData = seasonDatesMap?.get(q.market);
+                  const info = getMarketInfo(
+                    q.market,
+                    seasonData?.start_date,
+                    seasonData?.end_date,
+                    seasonData?.stage || undefined
+                  );
+                  const seasonDatesStr = seasonData
+                    ? `${new Date(seasonData.start_date).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric", year: "numeric" }
+                    )} - ${new Date(seasonData.end_date).toLocaleDateString(
+                      "en-US",
+                      { month: "short", day: "numeric", year: "numeric" }
+                    )}`
+                    : undefined;
+                  return (
+                    <div className="absolute top-0 right-0">
+                      <InfoPopup
+                        title={`${q.market} Index`}
+                        content={info.content}
+                        seasonDates={seasonDatesStr}
+                        isMarketOpen={info.isOpen}
+                        iconSize={14}
                       />
-                    ) : (
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-700/50 rounded-lg flex-shrink-0">
-                        {q.icon}
-                      </div>
-                    );
-                  })()}
+                    </div>
+                  );
+                })()}
 
-                  {/* Question Text + Volume */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs sm:text-sm font-semibold text-gray-100 group-hover:text-white transition-colors leading-snug line-clamp-2 mb-1">
-                      {q.question}
-                    </h3>
-                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono">
+                {/* Header - Avatar + Question */}
+                <div className="flex items-center gap-2 mb-3 sm:mb-4 pr-6">
+                  {/* Avatar with Volume underneath */}
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    {(() => {
+                      const indexAvatarUrl = getIndexAvatarUrl(q.market);
+                      return indexAvatarUrl ? (
+                        <img
+                          src={indexAvatarUrl}
+                          alt={`${q.market} Index`}
+                          className="w-14 h-14 sm:w-16 sm:h-16 block"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-gray-700/50 rounded-lg">
+                          {q.icon}
+                        </div>
+                      );
+                    })()}
+                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono mt-1">
                       Vol: {q.volume}
                     </span>
                   </div>
 
-                  {/* Info Button */}
-                  {(() => {
-                    const seasonData = seasonDatesMap?.get(q.market);
-                    const info = getMarketInfo(
-                      q.market,
-                      seasonData?.start_date,
-                      seasonData?.end_date,
-                      seasonData?.stage || undefined
-                    );
-                    const seasonDatesStr = seasonData
-                      ? `${new Date(seasonData.start_date).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )} - ${new Date(seasonData.end_date).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )}`
-                      : undefined;
-                    return (
-                      <div className="flex-shrink-0">
-                        <InfoPopup
-                          title={`${q.market} Index`}
-                          content={info.content}
-                          seasonDates={seasonDatesStr}
-                          isMarketOpen={info.isOpen}
-                          iconSize={14}
-                        />
-                      </div>
-                    );
-                  })()}
+                  {/* Question Text Only */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-center mb-7">
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-100 group-hover:text-white transition-colors leading-snug">
+                      {q.question}
+                    </h3>
+                  </div>
                 </div>
 
                 {/* Buy/Sell Buttons */}

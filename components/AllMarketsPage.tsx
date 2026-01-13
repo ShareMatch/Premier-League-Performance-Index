@@ -14,8 +14,7 @@ import {
   Activity,
   Zap,
 } from "lucide-react";
-import { FaCaretDown } from "react-icons/fa";
-import { FaCaretUp, FaCheck } from "react-icons/fa6";
+import { FaCheck } from "react-icons/fa6";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 interface AllMarketsPageProps {
@@ -444,7 +443,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <span className="text-sm font-bold text-gray-200 min-w-[55px] text-right">
                         ${team.bid.toFixed(2)}
                       </span>
-                      <FaCaretDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
+
                     </div>
 
                     {/* Buy Section */}
@@ -461,7 +460,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <span className="text-sm font-bold text-gray-200 min-w-[55px] text-right">
                         ${team.offer.toFixed(2)}
                       </span>
-                      <FaCaretUp className="w-3.5 h-3.5 text-[#00A651] shrink-0" />
                     </div>
                   </div>
                 </div>

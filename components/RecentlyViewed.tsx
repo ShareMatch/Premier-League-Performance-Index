@@ -52,10 +52,12 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 px-1">
-                <Clock className="w-4 h-4 text-brand-primary" />
-                <h2 className="text-sm font-bold text-gray-200 uppercase tracking-wider font-sans">
-                    Recently Viewed
+            <div className="flex items-center justify-between">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                        Recently Viewed
+                    </span>
                 </h2>
             </div>
 
