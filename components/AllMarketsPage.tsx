@@ -34,32 +34,32 @@ const CATEGORIES = [
       { id: "SPL", label: "Saudi Pro League" },
       { id: "UCL", label: "Champions League" },
       { id: "FIFA", label: "FIFA World Cup" },
-    ]
+    ],
   },
   {
     id: "f1",
     label: "Motorsport",
-    markets: [{ id: "F1", label: "Formula 1" }]
+    markets: [{ id: "F1", label: "Formula 1" }],
   },
   {
     id: "basketball",
     label: "Basketball",
-    markets: [{ id: "NBA", label: "NBA" }]
+    markets: [{ id: "NBA", label: "NBA" }],
   },
   {
     id: "american_football",
     label: "American Football",
-    markets: [{ id: "NFL", label: "NFL" }]
+    markets: [{ id: "NFL", label: "NFL" }],
   },
   {
     id: "cricket",
     label: "Cricket",
-    markets: [{ id: "T20", label: "T20 World Cup" }]
+    markets: [{ id: "T20", label: "T20 World Cup" }],
   },
   {
     id: "global_events",
     label: "Global Events",
-    markets: [{ id: "EUROVISION", label: "Eurovision" }]
+    markets: [{ id: "EUROVISION", label: "Eurovision" }],
   },
 ];
 
@@ -80,20 +80,24 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
 
   const ITEMS_PER_PAGE = 10;
 
-  const handleSelectMarket = (categoryId: string, filterId: string, isFromDropdown = false) => {
+  const handleSelectMarket = (
+    categoryId: string,
+    filterId: string,
+    isFromDropdown = false
+  ) => {
     setActiveCategory(categoryId);
 
     if (filterId === "ALL") {
       setActiveFilters(["ALL"]);
     } else {
-      setActiveFilters(prev => {
+      setActiveFilters((prev) => {
         // If we were in ALL, start a new list
-        const current = prev.filter(f => f !== "ALL");
+        const current = prev.filter((f) => f !== "ALL");
         const exists = current.includes(filterId);
 
         let next;
         if (exists) {
-          next = current.filter(f => f !== filterId);
+          next = current.filter((f) => f !== filterId);
         } else {
           next = [...current, filterId];
         }
@@ -110,7 +114,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     let result = teams.filter((t) => {
       // Basic settled/closed checks
       if (t.is_settled) return false;
-      if (t.season_stage === "settled" || t.season_stage === "closed") return false;
+      if (t.season_stage === "settled" || t.season_stage === "closed")
+        return false;
 
       // Price-based visibility (settled system usually sets prices to $100 or $0.1)
       // We still show them if they aren't explicitly settled, but here we can be more strict if needed.
@@ -125,7 +130,9 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       // If specific markets are selected, they take priority
       result = result.filter((t) => {
         const marketMatch = activeFilters.includes(t.market || "");
-        const fifaMatch = activeFilters.includes("FIFA") && (t.market === "WC" || t.market === "FIFA");
+        const fifaMatch =
+          activeFilters.includes("FIFA") &&
+          (t.market === "WC" || t.market === "FIFA");
         return marketMatch || fifaMatch;
       });
     } else if (activeCategory !== "ALL") {
@@ -140,7 +147,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         (t) =>
           t.name.toLowerCase().includes(query) ||
           t.team?.toLowerCase().includes(query) ||
-          t.market?.toLowerCase().includes(query),
+          t.market?.toLowerCase().includes(query)
       );
     }
 
@@ -152,14 +159,15 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     // Check which categories have at least one active team
     const activeTeams = teams.filter((t) => {
       if (t.is_settled) return false;
-      if (t.season_stage === "settled" || t.season_stage === "closed") return false;
+      if (t.season_stage === "settled" || t.season_stage === "closed")
+        return false;
       if (t.offer === 100 || t.offer === 0.1) return false;
       return true;
     });
 
-    const activeCatIds = new Set(activeTeams.map(t => t.category));
+    const activeCatIds = new Set(activeTeams.map((t) => t.category));
 
-    return CATEGORIES.filter(cat => {
+    return CATEGORIES.filter((cat) => {
       if (cat.id === "ALL") return true; // Always show "All"
       return activeCatIds.has(cat.id as any);
     });
@@ -286,19 +294,19 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             const pillButton = (
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
-                  ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
-                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
-                  }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
+                  isActive
+                    ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
+                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
+                }`}
               >
                 <span>{cat.label}</span>
-                {hasMarkets && (
-                  openDropdown === cat.id ? (
+                {hasMarkets &&
+                  (openDropdown === cat.id ? (
                     <ChevronDown className="w-3.5 h-3.5 opacity-50" />
                   ) : (
                     <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                  )
-                )}
+                  ))}
               </button>
             );
 
@@ -331,10 +339,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       return (
                         <DropdownMenu.CheckboxItem
                           key={m.id}
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
-                            ? "bg-brand-primary text-white"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${
+                            isSelected
+                              ? "bg-brand-primary text-white"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
+                          }`}
                           checked={isSelected}
                           onSelect={(e) => {
                             e.preventDefault(); // Keep dropdown open for multi-select
@@ -427,37 +436,36 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Right: Pricing (Ticker Style) - Fixed widths for alignment */}
-                  <div className="flex items-center gap-4">
+                  {/* Right: Pricing (Ticker Style) - Responsive with clamp */}
+                  <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)]">
                     {/* Sell Section */}
-                    <div className="flex items-center gap-1.5 w-[110px] justify-end">
+                    <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(80px,18vw,130px)] justify-end">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onSelectOrder) onSelectOrder(team, "sell");
                         }}
-                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded transition-all uppercase tracking-wider shrink-0"
+                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[clamp(0.625rem,0.9vw,0.75rem)] font-bold px-[clamp(0.375rem,0.75vw,0.625rem)] py-[clamp(0.125rem,0.35vw,0.375rem)] rounded transition-all uppercase tracking-wider shrink-0"
                       >
                         Sell
                       </button>
-                      <span className="text-sm font-bold text-gray-200 min-w-[55px] text-right">
+                      <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(40px,10vw,70px)] text-right">
                         ${team.bid.toFixed(2)}
                       </span>
-
                     </div>
 
                     {/* Buy Section */}
-                    <div className="flex items-center gap-1.5 w-[110px] justify-end">
+                    <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(80px,18vw,130px)] justify-end">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onSelectOrder) onSelectOrder(team, "buy");
                         }}
-                        className="bg-[#005430] hover:bg-[#006035] text-white text-[10px] font-bold px-2 py-0.5 rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
+                        className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.625rem,0.9vw,0.75rem)] font-bold px-[clamp(0.375rem,0.75vw,0.625rem)] py-[clamp(0.125rem,0.35vw,0.375rem)] rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
                       >
                         Buy
                       </button>
-                      <span className="text-sm font-bold text-gray-200 min-w-[55px] text-right">
+                      <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(40px,10vw,70px)] text-right">
                         ${team.offer.toFixed(2)}
                       </span>
                     </div>
@@ -481,10 +489,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
-                  }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  currentPage === 1
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
+                }`}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -500,10 +509,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <button
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
-                          ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
-                          : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
-                          }`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${
+                          currentPage === page
+                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
+                            : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                        }`}
                       >
                         {page}
                       </button>
@@ -516,10 +526,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
-                  }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  currentPage === totalPages
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
+                }`}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

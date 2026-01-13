@@ -25,8 +25,6 @@ import {
 import InfoPopup from "./InfoPopup";
 import { getMarketInfo } from "../lib/marketInfo";
 
-
-
 interface IndexToken {
   id: string;
   name: string;
@@ -36,7 +34,6 @@ interface IndexToken {
   color?: string;
   team: Team;
 }
-
 
 type TimeRange = "1D" | "1W" | "1M" | "ALL";
 
@@ -50,15 +47,15 @@ interface HistoryPoint {
 // Helper to get index avatar URL
 const getIndexAvatarUrl = (market: string): string | null => {
   const INDEX_AVATARS: Record<string, string> = {
-    'EPL': '/index-avatars/epl.svg',
-    'UCL': '/index-avatars/ucl.svg',
-    'SPL': '/index-avatars/spl.svg',
-    'F1': '/index-avatars/f1.svg',
-    'WC': '/index-avatars/wc.svg',
-    'NBA': '/index-avatars/nba.svg',
-    'NFL': '/index-avatars/nfl.svg',
-    'T20': '/index-avatars/t20.svg',
-    'ISL': '/index-avatars/isl.svg',
+    EPL: "/index-avatars/epl.svg",
+    UCL: "/index-avatars/ucl.svg",
+    SPL: "/index-avatars/spl.svg",
+    F1: "/index-avatars/f1.svg",
+    WC: "/index-avatars/wc.svg",
+    NBA: "/index-avatars/nba.svg",
+    NFL: "/index-avatars/nfl.svg",
+    T20: "/index-avatars/t20.svg",
+    ISL: "/index-avatars/isl.svg",
   };
   if (!market) return null;
   return INDEX_AVATARS[market.toUpperCase()] || null;
@@ -67,7 +64,7 @@ const getIndexAvatarUrl = (market: string): string | null => {
 // Generate asset history using the same logic as AssetPage
 const generateAssetHistory = (
   basePrice: number,
-  period: '1h' | '24h' | '7d' | '1M' | 'All' = '24h',
+  period: "1h" | "24h" | "7d" | "1M" | "All" = "24h",
   assetName?: string,
   startDate?: Date
 ): HistoryPoint[] => {
@@ -79,30 +76,32 @@ const generateAssetHistory = (
   let volatility = 0.02;
 
   switch (period) {
-    case '1h':
+    case "1h":
       interval = 1 * 60 * 1000;
       points = 60;
       volatility = 0.005;
       break;
-    case '24h':
+    case "24h":
       interval = 15 * 60 * 1000;
       points = 96;
       volatility = 0.02;
       break;
-    case '7d':
+    case "7d":
       interval = 4 * 60 * 60 * 1000;
       points = 42;
       volatility = 0.05;
       break;
-    case '1M':
+    case "1M":
       interval = 8 * 60 * 60 * 1000; // 8 hours
       points = 90; // About 30 days
       volatility = 0.08;
       break;
-    case 'All':
+    case "All":
       interval = 24 * 60 * 60 * 1000;
       if (startDate) {
-        const daysSinceStart = Math.ceil((now.getTime() - startDate.getTime()) / interval);
+        const daysSinceStart = Math.ceil(
+          (now.getTime() - startDate.getTime()) / interval
+        );
         points = Math.max(1, daysSinceStart);
       } else {
         points = 180;
@@ -122,20 +121,26 @@ const generateAssetHistory = (
     const baseVolume = 1000 + Math.random() * 5000;
     const volume = isSpike ? baseVolume * (2 + Math.random() * 3) : baseVolume;
 
-    let timeLabel = '';
-    if (period === '1h' || period === '24h') {
-      timeLabel = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (period === 'All') {
-      timeLabel = time.toLocaleDateString([], { month: 'short' });
+    let timeLabel = "";
+    if (period === "1h" || period === "24h") {
+      timeLabel = time.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else if (period === "All") {
+      timeLabel = time.toLocaleDateString([], { month: "short" });
     } else {
-      timeLabel = time.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      timeLabel = time.toLocaleDateString([], {
+        day: "numeric",
+        month: "short",
+      });
     }
 
     data.unshift({
       time: timeLabel,
       price: Number(currentPrice.toFixed(3)),
       volume: Math.floor(volume),
-      timestamp: time.getTime()
+      timestamp: time.getTime(),
     });
   }
 
@@ -147,24 +152,42 @@ const generateAssetHistory = (
 };
 
 // Convert TimeRange to period format
-const convertTimeRangeToPeriod = (range: TimeRange): '1h' | '24h' | '7d' | '1M' | 'All' => {
+const convertTimeRangeToPeriod = (
+  range: TimeRange
+): "1h" | "24h" | "7d" | "1M" | "All" => {
   switch (range) {
-    case '1D': return '24h';
-    case '1W': return '7d';
-    case '1M': return '1M';
-    case 'ALL': return 'All';
-    default: return '24h';
+    case "1D":
+      return "24h";
+    case "1W":
+      return "7d";
+    case "1M":
+      return "1M";
+    case "ALL":
+      return "All";
+    default:
+      return "24h";
   }
 };
 
 // Generate combined data for all tokens
-const generateMultiTokenHistory = (tokens: IndexToken[], range: TimeRange, startDate?: Date) => {
+const generateMultiTokenHistory = (
+  tokens: IndexToken[],
+  range: TimeRange,
+  startDate?: Date
+) => {
   const period = convertTimeRangeToPeriod(range);
 
-  const baseHistory = generateAssetHistory(tokens[0].price, period, tokens[0].name, startDate);
-  const otherHistories = tokens.slice(1).map(token =>
-    generateAssetHistory(token.price, period, token.name, startDate)
+  const baseHistory = generateAssetHistory(
+    tokens[0].price,
+    period,
+    tokens[0].name,
+    startDate
   );
+  const otherHistories = tokens
+    .slice(1)
+    .map((token) =>
+      generateAssetHistory(token.price, period, token.name, startDate)
+    );
 
   return baseHistory.map((point, idx) => {
     const dataPoint: any = {
@@ -184,15 +207,19 @@ const generateMultiTokenHistory = (tokens: IndexToken[], range: TimeRange, start
   });
 };
 
-
 interface TrendingCarouselProps {
   teams?: Team[]; // Make optional to avoid breaking other usages initially, though we should pass it
   seasonDatesMap?: Map<string, SeasonDates>;
   onViewAsset?: (asset: Team) => void;
-  onSelectOrder?: (team: Team, type: 'buy' | 'sell') => void;
+  onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
 }
 
-const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonDatesMap, onViewAsset, onSelectOrder }) => {
+const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
+  teams = [],
+  seasonDatesMap,
+  onViewAsset,
+  onSelectOrder,
+}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("1W");
@@ -208,7 +235,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
     // Helper to get top 3 teams for a market
     const getTopTeams = (marketId: string) => {
       return teams
-        .filter(t => t.market === marketId)
+        .filter((t) => t.market === marketId)
         .sort((a, b) => b.offer - a.offer)
         .slice(0, 3)
         .map((t, idx) => ({
@@ -218,7 +245,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
           change: Math.random() * 5 * (Math.random() > 0.4 ? 1 : -1), // Mock change
           changeDisplay: (Math.random() * 5).toFixed(2), // Mock display
           color: DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
-          team: t
+          team: t,
         }));
     };
 
@@ -258,12 +285,12 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
         icon: <Trophy className="w-3 h-3 text-blue-800" />,
         color: "from-blue-800/20 to-blue-900/20",
         borderColor: "group-hover:border-blue-800/50",
-      }
+      },
     ];
 
     // Map markets to Question format, filtering out closed markets and those with no teams
     return markets
-      .filter(m => {
+      .filter((m) => {
         const seasonData = seasonDatesMap?.get(m.market);
         const info = getMarketInfo(
           m.market as League,
@@ -273,7 +300,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
         );
         return info.isOpen;
       })
-      .map(m => {
+      .map((m) => {
         const topTokens = getTopTeams(m.market);
         const topTeam = topTokens[0];
 
@@ -283,20 +310,20 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
           const teamObj = topTeam.team;
           const validId = parseInt(teamObj.id) || teamObj.name.length;
           const volNum = (teamObj.offer * (10000 + validId * 100)) / 1000;
-          volStr = volNum > 1000
-            ? `$${(volNum / 1000).toFixed(1)}M`
-            : `$${volNum.toFixed(0)}K`;
+          volStr =
+            volNum > 1000
+              ? `$${(volNum / 1000).toFixed(1)}M`
+              : `$${volNum.toFixed(0)}K`;
         }
 
         return {
           ...m,
           topTokens,
           question: `Will ${topTeam?.name} top the ${m.fullName} Index?`,
-          volume: volStr
+          volume: volStr,
         };
       })
-      .filter(q => q.topTokens.length > 0);
-
+      .filter((q) => q.topTokens.length > 0);
   }, [teams]);
 
   const chartDataMap = useMemo(() => {
@@ -304,8 +331,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
     questionPool.forEach((question) => {
       const key = `${question.id}-${timeRange}`;
       const seasonData = seasonDatesMap?.get(question.market);
-      const startDate = seasonData ? new Date(seasonData.start_date) : undefined;
-      map.set(key, generateMultiTokenHistory(question.topTokens, timeRange, startDate));
+      const startDate = seasonData
+        ? new Date(seasonData.start_date)
+        : undefined;
+      map.set(
+        key,
+        generateMultiTokenHistory(question.topTokens, timeRange, startDate)
+      );
     });
     return map;
   }, [questionPool, timeRange, seasonDatesMap]);
@@ -321,7 +353,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
   const handlePrev = () => {
     if (!isAnimating && questionPool.length > 0) {
       setIsAnimating(true);
-      setCurrentIndex((prev) => (prev - 1 + questionPool.length) % questionPool.length);
+      setCurrentIndex(
+        (prev) => (prev - 1 + questionPool.length) % questionPool.length
+      );
       setTimeout(() => setIsAnimating(false), 500);
     }
   };
@@ -333,7 +367,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
           <p className="text-gray-400 mb-2">{label}</p>
           <div className="flex flex-col gap-1">
             {payload.map((entry: any, index: number) => {
-              const tokenIndex = parseInt(entry.dataKey.replace('token', ''));
+              const tokenIndex = parseInt(entry.dataKey.replace("token", ""));
               const token = questionPool[currentIndex].topTokens[tokenIndex];
               if (!token) return null;
 
@@ -362,65 +396,78 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
 
   if (questionPool.length === 0) return null;
 
-
-
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+    <div className="space-y-2 sm:space-y-3 md:space-y-4">
+      <div className="flex items-center justify-between px-1 sm:px-2">
+        <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white flex items-center gap-1 sm:gap-2 flex-wrap">
+          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500 flex-shrink-0" />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
             Trending Markets
           </span>
-          <Zap className="w-3 h-3 text-yellow-400 animate-pulse ml-1" fill="currentColor" />
+          <Zap
+            className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400 animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
+            fill="currentColor"
+          />
         </h2>
       </div>
 
-      <div className="relative bg-slate-900 rounded-2xl border border-gray-800 overflow-hidden">
+      <div className="relative bg-slate-900 rounded-lg sm:rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden max-w-7xl mx-auto">
         <div
           className="flex w-full transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {questionPool.map((question) => {
-            const chartData = chartDataMap.get(`${question.id}-${timeRange}`) || [];
+            const chartData =
+              chartDataMap.get(`${question.id}-${timeRange}`) || [];
 
             return (
-              <div key={question.id} className="w-full flex-shrink-0 grid grid-cols-1 lg:grid-cols-2">
+              <div
+                key={question.id}
+                className="w-full flex-shrink-0 grid grid-cols-1 lg:grid-cols-2"
+              >
                 {/* Left Column - Question Card */}
-                <div className="p-4 flex bg-[#0b1221]">
+                <div className="p-[clamp(0.375rem,1.2vw,2rem)] flex bg-[#0b1221]">
                   <div className="w-full">
-                    <div className={`group relative bg-[#0b1221] rounded-xl border p-4 transition-all duration-300 hover:bg-gray-800/10 hover:shadow-xl ${question.borderColor} border-gray-800 h-full flex flex-col justify-between`}>
-                      <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`} />
+                    <div
+                      className={`group relative bg-[#0b1221] rounded-lg sm:rounded-xl border p-[clamp(0.375rem,0.9vw,0.75rem)] transition-all duration-300 hover:bg-gray-800/10 hover:shadow-xl ${question.borderColor} border-gray-800 h-full flex flex-col justify-between`}
+                    >
+                      <div
+                        className={`absolute inset-0 rounded-xl bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}
+                      />
                       <div className="relative z-10 flex flex-col h-full justify-between">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex justify-between items-center gap-2">
-                            <div className="flex items-center gap-3 overflow-visible">
+                        <div className="flex flex-col gap-1.5 sm:gap-2 md:gap-2 lg:gap-1.5">
+                          <div className="flex justify-between items-center gap-1.5 sm:gap-2">
+                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 overflow-visible min-w-0">
                               {(() => {
-                                const indexAvatarUrl = getIndexAvatarUrl(question.market);
+                                const indexAvatarUrl = getIndexAvatarUrl(
+                                  question.market
+                                );
                                 return indexAvatarUrl ? (
                                   <img
                                     src={indexAvatarUrl}
                                     alt={`${question.market} Index`}
-                                    className="w-16 h-16 block flex-shrink-0"
+                                    className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 block flex-shrink-0"
                                   />
                                 ) : (
-                                  <div className="w-16 h-16 flex items-center justify-center bg-gray-800/50 rounded-lg flex-shrink-0">
+                                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-gray-800/50 rounded-lg flex-shrink-0">
                                     {question.icon}
                                   </div>
                                 );
                               })()}
 
-                              <div className="flex-1 min-w-0 flex flex-col justify-center mb-3">
-                                <h2 className="text-xs sm:text-sm font-bold text-white tracking-tight leading-tight whitespace-nowrap">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center mb-2">
+                                <h2 className="text-[10px] sm:text-xs md:text-sm font-bold text-white tracking-tight leading-tight line-clamp-2 sm:whitespace-nowrap">
                                   {question.fullName} Performance Index
                                 </h2>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2 flex-shrink-0 mb-3">
+                            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 mb-2">
                               {/* Info Popup */}
                               {(() => {
-                                const seasonData = seasonDatesMap?.get(question.market);
+                                const seasonData = seasonDatesMap?.get(
+                                  question.market
+                                );
                                 const marketInfo = getMarketInfo(
                                   question.market as any,
                                   seasonData?.start_date,
@@ -429,15 +476,19 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                 );
 
                                 const seasonDatesStr = seasonData
-                                  ? `${new Date(seasonData.start_date).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })} - ${new Date(seasonData.end_date).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}`
+                                  ? `${new Date(
+                                      seasonData.start_date
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })} - ${new Date(
+                                      seasonData.end_date
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })}`
                                   : undefined;
 
                                 return (
@@ -452,44 +503,56 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                               })()}
 
                               {/* Live Badge */}
-                              <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/10 rounded border border-green-500/20">
+                              <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
                                 <div className="relative">
-                                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                  <div className="absolute inset-0 w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
+                                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full" />
+                                  <div className="absolute inset-0 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-ping" />
                                 </div>
-                                <span className="text-[10px] text-green-500 font-bold uppercase tracking-wide">
+                                <span className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 font-bold uppercase tracking-wide">
                                   Live
                                 </span>
                               </div>
                             </div>
                           </div>
-                          <h3 className="text-base font-bold text-gray-100 group-hover:text-white transition-colors leading-tight">
+                          <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-100 group-hover:text-white transition-colors leading-tight">
                             {question.question}
                           </h3>
-                          <div className="text-[10px] text-gray-500 font-mono uppercase tracking-wider">
+                          <div className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-500 font-mono uppercase tracking-wider">
                             Vol: {question.volume}
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-1.5 lg:gap-1">
                           {question.topTokens.map((token) => (
                             <div
                               key={token.id}
-                              className="flex items-center justify-between bg-gray-900/40 border border-gray-800/50 rounded-lg py-1.5 px-3 hover:bg-gray-800/60 transition-all cursor-pointer group/row"
+                              className="flex items-center justify-between bg-gray-900/40 border border-gray-800/50 rounded-lg py-1 sm:py-1.5 px-2 sm:px-3 hover:bg-gray-800/60 transition-all cursor-pointer group/row text-xs sm:text-sm"
                             >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="text-xs font-bold text-gray-200 truncate group-hover/row:text-brand-primary transition-colors">
+                              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                                <span className="text-[9px] sm:text-xs md:text-xs font-bold text-gray-200 truncate group-hover/row:text-brand-primary transition-colors">
                                   {token.name}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-[10px] font-bold flex items-center gap-0.5 ${token.change >= 0 ? "text-green-400" : "text-red-400"}`}>
-                                    {token.change >= 0 ? <FaCaretUp className="w-3 h-3" /> : <FaCaretDown className="w-3 h-3" />}
+                              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+                                <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
+                                  <span
+                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${
+                                      token.change >= 0
+                                        ? "text-green-400"
+                                        : "text-red-400"
+                                    }`}
+                                  >
+                                    {token.change >= 0 ? (
+                                      <FaCaretUp className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
+                                    ) : (
+                                      <FaCaretDown className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
+                                    )}
                                     ${token.changeDisplay}
-                                    <span className="ml-1">({timeRange})</span>
+                                    <span className="ml-0.5">
+                                      ({timeRange})
+                                    </span>
                                   </span>
-                                  <span className="text-sm font-black text-gray-100 min-w-[50px] text-right">
+                                  <span className="text-[9px] sm:text-xs md:text-sm font-black text-gray-100 min-w-[40px] sm:min-w-[50px] text-right">
                                     ${token.price.toFixed(2)}
                                   </span>
                                 </div>
@@ -497,10 +560,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (onSelectOrder) {
-                                      onSelectOrder(token.team, 'buy');
+                                      onSelectOrder(token.team, "buy");
                                     }
                                   }}
-                                  className="bg-[#005430] hover:bg-[#006035] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all shadow-lg shadow-black/20 uppercase tracking-wider">
+                                  className="bg-[#005430] hover:bg-[#006035] text-white text-[7px] sm:text-[8px] md:text-[10px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all shadow-lg shadow-black/20 uppercase tracking-wider flex-shrink-0"
+                                >
                                   Buy
                                 </button>
                               </div>
@@ -513,41 +577,41 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                 </div>
 
                 {/* Right Column - Chart */}
-                <div className="p-4 flex bg-[#0b1221]">
-                  <div className="w-full bg-[#0b1221] rounded-xl border border-gray-800 p-4 h-full flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-4">
-                      {/* Left Side: Time Range (Top) + Legend (Bottom) */}
-                      <div className="flex flex-col gap-2">
-                        {/* Time Range Buttons */}
-                        <div className="flex items-center gap-1">
-                          {(["1D", "1W", "1M", "ALL"] as const).map((r) => (
-                            <button
-                              key={r}
-                              onClick={() => setTimeRange(r)}
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${timeRange === r
+                <div className="flex bg-[#0b1221] p-[clamp(0.375rem,1.2vw,2rem)]">
+                  <div className="w-full bg-[#0b1221] border border-gray-800 h-full flex flex-col justify-between p-[clamp(0.375rem,1.2vw,0.75rem)] rounded-[clamp(0.375rem,0.75vw,0.5rem)]">
+                    <div className="flex items-center justify-between gap-[clamp(0.375rem,1.5vw,1rem)] mb-[clamp(0.375rem,1vw,0.75rem)]">
+                      {/* Left Side: Time Range Buttons */}
+                      <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.375rem)]">
+                        {(["1D", "1W", "1M", "ALL"] as const).map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => setTimeRange(r)}
+                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${
+                              timeRange === r
                                 ? "bg-[#005430] text-white"
                                 : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                                }`}
-                            >
-                              {r}
-                            </button>
-                          ))}
-                        </div>
+                            }`}
+                          >
+                            {r}
+                          </button>
+                        ))}
                       </div>
 
-                      <div className="flex">
+                      <div className="flex items-center gap-[clamp(0.375rem,1vw,0.75rem)]">
                         {(() => {
-                          const seasonData = seasonDatesMap?.get(question.market);
+                          const seasonData = seasonDatesMap?.get(
+                            question.market
+                          );
                           if (!seasonData) return null;
 
                           const startDate = new Date(seasonData.start_date);
                           const endDate = new Date(seasonData.end_date);
 
                           return (
-                            <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-400">
-                              <div className="flex items-center gap-1">
+                            <div className="flex items-center uppercase tracking-wider text-gray-400 gap-[clamp(0.25rem,0.75vw,0.5rem)] text-[clamp(0.5rem,0.75vw,0.625rem)]">
+                              <div className="flex items-center gap-[clamp(0.125rem,0.25vw,0.25rem)]">
                                 <span className="text-gray-600">Start:</span>
-                                <span className="text-gray-400">
+                                <span className="text-gray-400 whitespace-nowrap">
                                   {startDate.toLocaleDateString("en-GB", {
                                     day: "numeric",
                                     month: "short",
@@ -555,10 +619,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                   })}
                                 </span>
                               </div>
-                              <div className="w-1 h-1 bg-gray-600 rounded-full" />
-                              <div className="flex items-center gap-1">
+                              <div className="bg-gray-600 rounded-full w-[clamp(0.125rem,0.25vw,0.25rem)] h-[clamp(0.125rem,0.25vw,0.25rem)]" />
+                              <div className="flex items-center gap-[clamp(0.125rem,0.25vw,0.25rem)]">
                                 <span className="text-gray-600">End:</span>
-                                <span className="text-gray-400">
+                                <span className="text-gray-400 whitespace-nowrap">
                                   {endDate.toLocaleDateString("en-GB", {
                                     day: "numeric",
                                     month: "short",
@@ -572,21 +636,21 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                       </div>
 
                       {/* Logo on Right */}
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-shrink-0">
                         <img
                           src="/logos/white_icon_on_black-removebg-preview.png"
                           alt="Logo"
-                          className="w-10 h-10 object-contain ml-2"
+                          className="object-contain w-[clamp(1rem,2.5vw,2.5rem)] h-[clamp(1rem,2.5vw,2.5rem)]"
                         />
                       </div>
                     </div>
 
                     {/* Chart */}
-                    <div className="w-full h-[190px] relative">
+                    <div className="w-full h-40 sm:h-48 md:h-52 lg:h-56 relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           data={chartData}
-                          margin={{ top: 15, right: 0, left: 0, bottom: 25 }}
+                          margin={{ top: 10, right: 5, left: 0, bottom: 20 }}
                           onMouseMove={(e: any) => {
                             if (e.activeTooltipIndex !== undefined) {
                               setActiveHover({
@@ -602,45 +666,106 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                         >
                           <defs>
                             {question.topTokens.map((token, idx) => (
-                              <linearGradient key={token.id} id={`colorToken${idx}-${question.id}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor={token.color || DEFAULT_COLORS[idx]} stopOpacity={0.8} />
-                                <stop offset="95%" stopColor={token.color || DEFAULT_COLORS[idx]} stopOpacity={0} />
+                              <linearGradient
+                                key={token.id}
+                                id={`colorToken${idx}-${question.id}`}
+                                x1="0"
+                                y1="0"
+                                x2="0"
+                                y2="1"
+                              >
+                                <stop
+                                  offset="5%"
+                                  stopColor={token.color || DEFAULT_COLORS[idx]}
+                                  stopOpacity={0.8}
+                                />
+                                <stop
+                                  offset="95%"
+                                  stopColor={token.color || DEFAULT_COLORS[idx]}
+                                  stopOpacity={0}
+                                />
                               </linearGradient>
                             ))}
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#1f2937"
+                            vertical={false}
+                          />
                           <XAxis
                             dataKey="time"
-                            tick={{ fill: "#6b7280", fontSize: 10 }}
+                            tick={{
+                              fill: "#6b7280",
+                              fontSize:
+                                window.innerWidth < 640
+                                  ? 8
+                                  : window.innerWidth < 1024
+                                  ? 9
+                                  : 10,
+                            }}
                             axisLine={false}
                             tickLine={false}
-                            minTickGap={30}
-                            padding={{ left: 20, right: 70 }}
+                            minTickGap={
+                              window.innerWidth < 640
+                                ? 20
+                                : window.innerWidth < 1024
+                                ? 25
+                                : 30
+                            }
+                            padding={{
+                              left: window.innerWidth < 640 ? 10 : 20,
+                              right: window.innerWidth < 640 ? 40 : 70,
+                            }}
                           />
                           <YAxis
                             yAxisId="right"
                             orientation="right"
                             domain={[
                               (dataMin: number) => Math.max(0, dataMin - 20),
-                              (dataMax: number) => dataMax + 20
+                              (dataMax: number) => dataMax + 20,
                             ]}
-                            tickCount={6}
-                            tick={{ fill: "#9ca3af", fontSize: 11 }}
+                            tickCount={window.innerWidth < 640 ? 4 : 6}
+                            tick={{
+                              fill: "#9ca3af",
+                              fontSize:
+                                window.innerWidth < 640
+                                  ? 8
+                                  : window.innerWidth < 1024
+                                  ? 9
+                                  : 11,
+                            }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(val: number | string) => `$${Number(val).toFixed(1)}`}
-                            width={50}
+                            tickFormatter={(val: number | string) =>
+                              `$${Number(val).toFixed(1)}`
+                            }
+                            width={
+                              window.innerWidth < 640
+                                ? 35
+                                : window.innerWidth < 1024
+                                ? 40
+                                : 50
+                            }
                           />
-                          <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#4b5563", strokeDasharray: "3 3" }} />
+                          <Tooltip
+                            content={<CustomTooltip />}
+                            cursor={{
+                              stroke: "#4b5563",
+                              strokeDasharray: "3 3",
+                            }}
+                          />
 
                           {/* Render hover labels using ReferenceDot with custom label */}
                           {activeHover?.chartId === question.id &&
                             chartData[activeHover.index] &&
                             question.topTokens.map((token, idx) => {
-                              const value = chartData[activeHover.index][`token${idx}`];
+                              const value =
+                                chartData[activeHover.index][`token${idx}`];
                               if (value === undefined) return null;
 
-                              const color = token.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+                              const color =
+                                token.color ||
+                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
 
                               return (
                                 <ReferenceDot
@@ -662,7 +787,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                     // Determine if labels should be on left or right
                                     const showOnRight = coordX < x;
                                     const xOffset = showOnRight ? 10 : -10;
-                                    const textAnchor = showOnRight ? "start" : "end";
+                                    const textAnchor = showOnRight
+                                      ? "start"
+                                      : "end";
 
                                     return (
                                       <g>
@@ -707,8 +834,12 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                               .sort((a, b) => b.val - a.val);
 
                             return question.topTokens.map((token, idx) => {
-                              const color = token.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
-                              const rank = sortedTokens.findIndex((s) => s.originalIdx === idx);
+                              const color =
+                                token.color ||
+                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+                              const rank = sortedTokens.findIndex(
+                                (s) => s.originalIdx === idx
+                              );
                               const yShift = (rank - 1) * 18;
 
                               return (
@@ -728,7 +859,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                       dataKey={`token${idx}`}
                                       content={(props: any) => {
                                         const { x, y, index, value } = props;
-                                        if (index !== chartData.length - 1) return null;
+                                        if (index !== chartData.length - 1)
+                                          return null;
 
                                         return (
                                           <g>
@@ -738,7 +870,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                                               fill={color}
                                               fontSize={9}
                                               fontWeight="700"
-                                              style={{ textTransform: "uppercase" }}
+                                              style={{
+                                                textTransform: "uppercase",
+                                              }}
                                             >
                                               {token.name}
                                             </text>
@@ -764,8 +898,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
-
-
                   </div>
                 </div>
               </div>
@@ -774,15 +906,15 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between px-4 py-2 bg-[#0b1221]">
+        <div className="flex items-center justify-between px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#0b1221]">
           <button
             onClick={handlePrev}
             disabled={isAnimating}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm"
+            className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 px-2">
             {questionPool.map((_, idx) => (
               <button
                 key={idx}
@@ -793,17 +925,20 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({ teams = [], seasonD
                     setTimeout(() => setIsAnimating(false), 500);
                   }
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex ? "w-8 bg-green-500" : "w-1.5 bg-gray-600 hover:bg-gray-500"
-                  }`}
+                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${
+                  idx === currentIndex
+                    ? "w-6 sm:w-8 bg-green-500"
+                    : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
+                }`}
               />
             ))}
           </div>
           <button
             onClick={handleNext}
             disabled={isAnimating}
-            className="p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm"
+            className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>
