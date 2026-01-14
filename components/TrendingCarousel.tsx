@@ -436,10 +436,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                       <div
                         className={`absolute inset-0 rounded-xl bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}
                       />
-                      <div className="relative z-10 flex flex-col h-full justify-between">
+                      <div className="relative z-10 flex flex-col h-full gap-8">
                         <div className="flex flex-col gap-1.5 sm:gap-2 md:gap-2 lg:gap-1.5">
                           <div className="flex justify-between items-center gap-1.5 sm:gap-2">
-                            <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] md:gap-3 overflow-visible min-w-0 min-h-0 flex-1 mt-[clamp(0.75rem,2vw,1.25rem)] ml-[clamp(0.25rem,1vw,0.5rem)]">
+                            <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] md:gap-3 overflow-visible min-w-0 min-h-0 flex-1 ml-[clamp(0.25rem,1vw,0.5rem)]">
                               {(() => {
                                 const indexAvatarUrl = getIndexAvatarUrl(
                                   question.market
@@ -466,38 +466,44 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                   Vol: {question.volume}
                                 </div>
                               </div>
-                            </div>
 
-                            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-start mt-1">
-                              {/* Info Tooltip */}
-                              <InfoTooltip
-                                text={tooltipText}
-                              />
+                              <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                                {/* Info Tooltip */}
+                                <InfoTooltip
+                                  text={tooltipText}
+                                />
 
-                              {/* Live Badge */}
-                              <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
-                                <div className="relative">
-                                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full" />
-                                  <div className="absolute inset-0 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-ping" />
+                                {/* Live Badge */}
+                                <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
+                                  <div className="relative">
+                                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full" />
+                                    <div className="absolute inset-0 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-ping" />
+                                  </div>
+                                  <span className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 font-bold uppercase tracking-wide">
+                                    Live
+                                  </span>
                                 </div>
-                                <span className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 font-bold uppercase tracking-wide">
-                                  Live
-                                </span>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-1 sm:gap-1.5 md:gap-1.5 lg:gap-1">
+                        <div className="flex flex-col gap-[clamp(0.1rem,1.5vw,0.5rem)]">
                           {question.topTokens.map((token) => (
                             <div
                               key={token.id}
                               className="flex items-center justify-between bg-gray-900/40 border border-gray-800/50 rounded-lg py-1 sm:py-1.5 px-2 sm:px-3 hover:bg-gray-800/60 transition-all cursor-pointer group/row text-xs sm:text-sm"
                             >
                               <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-                                <span className="text-[9px] sm:text-xs md:text-xs font-bold text-gray-200 truncate group-hover/row:text-brand-primary transition-colors">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onViewAsset) onViewAsset(token.team);
+                                  }}
+                                  className="text-[9px] sm:text-xs md:text-xs font-bold text-gray-200 truncate hover:text-brand-primary hover:underline transition-all text-left"
+                                >
                                   {token.name}
-                                </span>
+                                </button>
                               </div>
                               <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
                                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
