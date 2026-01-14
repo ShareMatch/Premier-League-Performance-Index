@@ -1,6 +1,6 @@
 import React from "react";
 import { Team, League } from "../types";
-import { ArrowLeft, TrendingUp, Zap } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { SeasonDates } from "../lib/api";
 import HotQuestions from "./HotQuestions";
 
@@ -45,11 +45,13 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                 Trending Markets
               </span>
-              <Zap
-                className="w-3 h-3 text-yellow-400 animate-pulse ml-1"
-                fill="currentColor"
+              <img
+                src="/logos/white_icon_on_black-removebg-preview.png"
+                alt="Zap"
+                className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
               />
             </h2>
+
           </div>
         </div>
       </div>
