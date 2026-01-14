@@ -11,200 +11,110 @@ export interface MarketInfo {
 export const marketInfoData: Record<string, MarketInfo> = {
   F1: {
     title: "F1 Drivers Performance Index",
-    content: `The F1 Drivers Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The F1 Drivers League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: false,
   },
 
   EPL: {
     title: "Premier League Performance Index",
-    content: `The Premier League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The Premier League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official Premier League statistics.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   UCL: {
     title: "Champions League Performance Index",
-    content: `The UEFA Champions League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The Champions League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official UEFA statistics and coefficient rankings.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club tournament performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   SPL: {
     title: "Saudi Pro League Performance Index",
-    content: `The Saudi Pro League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The Saudi Pro League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from the Saudi Arabian Football Federation.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club performance in the Roshn Saudi League.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   ISL: {
     title: "Indonesia Super League",
-    content: `The Indonesia Super League Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The Indonesia Super League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official Indonesia Super League statistics.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing club performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   WC: {
     title: "FIFA World Cup Performance Index",
-    content: `The FIFA World Cup Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The FIFA World Cup Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official FIFA rankings and tournament history.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing national team tournament performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   NBA: {
     title: "NBA Performance Index",
-    content: `The NBA Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The NBA Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official NBA statistics and standings.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing franchise performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   NFL: {
     title: "NFL Performance Index",
-    content: `The NFL Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The NFL Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official NFL statistics and power rankings.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing franchise performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the token at the top of the index) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   T20: {
     title: "T20 World Cup Performance Index",
-    content: `The T20 World Cup Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The T20 World Cup Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official ICC rankings and tournament history.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing national team tournament performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the World Cup winner) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   Eurovision: {
     title: "Eurovision Song Contest Performance Index",
-    content: `The Eurovision Song Contest Performance Index is a close-ended digital market that reflects the current price of the performance tokens offered. This index operates under the principles of Haqq Mali to ensure an ethical and transparent trading environment.
+    content: `The Eurovision Song Contest Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
 
-Initial Price Setting: Before the market opens, ShareMatch creates the initial price for each token based on historical oracle-based data from official contest rankings and odds.
+Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
 
-Token Status: While the index itself is a series of close-ended markets, the underlying digital tokens are perpetual assets representing country performance.
-
-Secondary Market Trading: Once the index is open, a secondary market becomes available, allowing users to trade their tokens on the platform. This secondary market activity does not alter the original terms of the smart contract.
-
-Transparent Pricing: The pricing in the secondary market is solely determined by user supply and demand, ensuring a free and honest market with no interference or third-party data influence from the issuer (ShareMatch). Liquidity within the markets is provided by ShareMatch.
-
-Market Closure & Settlement: Trading is permitted until the clearly displayed closure of the market. At this point, the smart contract settles all positions with a defined value:
-
-The with profits token (i.e., the contest winner) settles at its defined maximum value of $100.0.
-All other tokens settle at their defined minimum value of $0.1.`,
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
