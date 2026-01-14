@@ -2,8 +2,8 @@
 // Simple profile update function - NO OTP sending
 // Used after verification is complete to just update user data
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,23 +40,14 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-    // Validate required env vars
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase environment variables");
+    const authContext = await requireAuthUser(req);
+    if (authContext.error) {
       return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Initialize Supabase client with service role
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    const supabase = authContext.supabase;
 
     // Parse request body
     const body: EditPayload = await req.json();
@@ -73,11 +64,17 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get user by current email
+    if (authContext.publicUser.email !== currentEmail) {
+      return new Response(
+        JSON.stringify({ error: "Current email does not match the logged-in user." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: user, error: fetchErr } = await supabase
       .from("users")
       .select("id, auth_user_id, full_name, email, whatsapp_phone_e164")
-      .eq("email", currentEmail)
+      .eq("id", authContext.publicUser.id)
       .single();
 
     if (fetchErr || !user) {

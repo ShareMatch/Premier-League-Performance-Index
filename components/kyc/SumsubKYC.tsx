@@ -4,15 +4,20 @@ import React, { useState, useEffect, useCallback, useRef, Suspense, lazy } from 
 const SumsubWebSdk = lazy(() => import('@sumsub/websdk-react'));
 
 // Supabase configuration - use the same values as lib/supabase.ts
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../lib/config';
+import { SUPABASE_URL } from '../../lib/config';
+import { supabase } from '../../lib/supabase';
 
 // Helper to call Supabase Edge Functions
 const callEdgeFunction = async (functionName: string, body?: any) => {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) {
+    throw new Error('No active session available');
+  }
   const response = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Authorization': `Bearer ${session.access_token}`,
     },
     body: body ? JSON.stringify(body) : undefined,
   });

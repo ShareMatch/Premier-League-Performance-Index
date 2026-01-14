@@ -383,7 +383,11 @@ const App: React.FC = () => {
     // Load user data only when both user and publicUserId exist
     loadUserData();
 
-    // Set up Real-Time Subscriptions - only when we have the public user ID
+    // Set up Real-Time Subscriptions - only when we have authenticated user and public user ID
+    if (!user || !publicUserId) {
+      return; // Don't set up subscriptions if not authenticated
+    }
+
     const walletSubscription = subscribeToWallet(
       publicUserId,
       (updatedWallet) => {
@@ -397,16 +401,22 @@ const App: React.FC = () => {
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
       // Guard: only update if user is still logged in (check refs for current state)
       if (userRef.current && publicUserIdRef.current) {
-        fetchPortfolio(publicUserIdRef.current).then(setPortfolio);
+        fetchPortfolio(publicUserIdRef.current).then(setPortfolio).catch((error) => {
+          console.error('Error updating portfolio via subscription:', error);
+        });
       }
     });
 
     const assetsSubscription = subscribeToAssets(() => {
-      loadAssets();
+      loadAssets().catch((error) => {
+        console.error('Error updating assets via subscription:', error);
+      });
     });
 
     const tradingAssetsSubscription = subscribeToTradingAssets(() => {
-      loadAssets();
+      loadAssets().catch((error) => {
+        console.error('Error updating trading assets via subscription:', error);
+      });
     });
 
     return () => {

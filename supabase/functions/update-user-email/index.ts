@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,10 +45,15 @@ serve(async (req: Request) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    const authContext = await requireAuthUser(req);
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabase = authContext.supabase;
 
     // Parse request body
     const body = await req.json() as { currentEmail: string; newEmail: string };
@@ -71,11 +76,17 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get user by current email
+    if (currentEmail !== authContext.publicUser.email) {
+      return new Response(
+        JSON.stringify({ error: "Authenticated user does not match the provided email." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: user, error: fetchErr } = await supabase
       .from("users")
       .select("id, auth_user_id, full_name, email_verified_at, email_otp_attempts, email_update_attempts")
-      .eq("email", currentEmail)
+      .eq("id", authContext.publicUser.id)
       .single();
 
     if (fetchErr || !user) {

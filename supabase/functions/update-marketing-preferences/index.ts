@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -28,6 +29,14 @@ serve(async (req: Request) => {
     }
 
     try {
+        const authContext = await requireAuthUser(req);
+        if (authContext.error) {
+            return new Response(
+                JSON.stringify({ error: authContext.error.message }),
+                { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -36,6 +45,14 @@ serve(async (req: Request) => {
 
         const body: UpdatePreferencesPayload = await req.json();
         const { email, preferences } = body;
+
+        const normalizedEmail = email?.toLowerCase().trim();
+        if (normalizedEmail !== authContext.publicUser.email) {
+            return new Response(
+                JSON.stringify({ error: "Email mismatch" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         if (!email) {
             return new Response(
@@ -67,6 +84,12 @@ serve(async (req: Request) => {
         }
 
         const userId = user.id;
+        if (userId !== authContext.publicUser.id) {
+            return new Response(
+                JSON.stringify({ error: "Forbidden" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         // Upsert each preference that was provided
         const upsertPromises: Promise<any>[] = [];

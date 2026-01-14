@@ -720,6 +720,20 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     currentPassword: string,
     newPassword: string
   ) => {
+    // Input validation
+    if (!currentPassword?.trim()) {
+      throw new Error("Current password is required");
+    }
+    if (!newPassword?.trim()) {
+      throw new Error("New password is required");
+    }
+    if (newPassword.length < 8) {
+      throw new Error("New password must be at least 8 characters long");
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      throw new Error("New password must contain at least one uppercase letter, one lowercase letter, and one number");
+    }
+
     // Get current user
     const {
       data: { user: authUser },
@@ -736,7 +750,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     if (verifyError) {
       // Check for specific error messages
       if (verifyError.message.includes("Invalid login credentials")) {
-        throw new Error("Current password is incorrect");
+        throw new Error("The current password you entered is incorrect.");
       }
       throw new Error("Failed to verify current password");
     }
