@@ -16,6 +16,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
+const requireAuthUser = async (
+  req: Request
+): Promise<{ authUserId: string | null; error?: Response }> => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { authUserId: null, error: { status: 401, message: "Unauthorized" } };
+  }
+
+  const token = authHeader.split(" ")[1];
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { authUserId: null, error: { status: 500, message: "Missing Supabase credentials" } };
+  }
+
+  const authClient = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { persistSession: false },
+  });
+
+  const { data: userData, error } = await authClient.auth.getUser(token);
+  if (error || !userData?.user) {
+    return { authUserId: null, error: { status: 401, message: "Invalid session" } };
+  }
+
+  return { authUserId: userData.user.id };
+};
+
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === "OPTIONS") {
@@ -30,6 +57,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authCheck = await requireAuthUser(req);
+    if (authCheck.error) {
+      return new Response(
+        JSON.stringify({ error: authCheck.error.message }),
+        { status: authCheck.error.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { user_id, limit = 5 } = await req.json();
 
     if (!user_id) {
@@ -52,6 +87,19 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
     });
+
+    const { data: ownerUser, error: ownerError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_user_id", authCheck.authUserId)
+      .maybeSingle();
+
+    if (ownerError || !ownerUser || ownerUser.id !== user_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Query login history using the helper function
     const { data: loginHistory, error } = await supabase.rpc("get_user_login_history", {

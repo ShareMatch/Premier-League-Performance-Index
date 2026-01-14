@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +38,14 @@ serve(async (req: Request) => {
   }
 
   try {
+    const authContext = await requireAuthUser(req);
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -68,6 +77,13 @@ serve(async (req: Request) => {
     // Normalize the phone number
     const whatsappPhone = normalizePhone(rawPhone);
     console.log("Checking WhatsApp status for:", whatsappPhone);
+
+    if (whatsappPhone !== authContext.publicUser.whatsapp_phone_e164) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Find user by WhatsApp phone, optionally excluding a user ID (for edit scenarios)
     let query = supabase

@@ -14,6 +14,13 @@ export interface Wallet {
 
 
 export const fetchWallet = async (userId: string) => {
+    // Get the current session to include auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const { data, error } = await supabase
         .from('wallets')
         .select('*')
@@ -31,6 +38,13 @@ export const fetchWallet = async (userId: string) => {
 };
 
 export const fetchPortfolio = async (userId: string) => {
+    // Get the current session to include auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const { data, error } = await supabase
         .from('positions')
         .select('*')
@@ -41,6 +55,13 @@ export const fetchPortfolio = async (userId: string) => {
 };
 
 export const fetchTransactions = async (userId: string) => {
+    // Get the current session to include auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -654,11 +675,16 @@ export interface UpdateEmailResponse {
  * Updates in both auth.users and public.users, then sends new OTP
  */
 export const updateUserEmail = async (currentEmail: string, newEmail: string): Promise<UpdateEmailResponse> => {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (!session || sessionError) {
+        throw new Error('No active session');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-email`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ currentEmail, newEmail }),
     });
@@ -687,11 +713,16 @@ export interface UpdateWhatsAppResponse {
  * Updates in public.users, then sends new OTP
  */
 export const updateUserWhatsApp = async (email: string, newWhatsappPhone: string): Promise<UpdateWhatsAppResponse> => {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (!session || sessionError) {
+        throw new Error('No active session');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-whatsapp`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ email, newWhatsappPhone }),
     });
@@ -741,11 +772,16 @@ export interface UpdateProfileResponse {
  * Handles email/phone changes with verification reset
  */
 export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<UpdateProfileResponse> => {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (!session || sessionError) {
+        throw new Error('No active session');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-profile`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(payload),
     });
@@ -797,11 +833,16 @@ export interface EditProfileResponse {
  * Use this after verification is complete to just update the database
  */
 export const editUserProfile = async (payload: EditProfilePayload): Promise<EditProfileResponse> => {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (!session || sessionError) {
+        throw new Error('No active session');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/edit-user-profile`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(payload),
     });
@@ -1007,11 +1048,20 @@ export interface KycCheckStatusResponse {
  * This is the primary method to check if user needs to do KYC
  */
 export const getKycUserStatus = async (userId: string): Promise<KycUserStatusResponse> => {
+    const {
+        data: { session },
+        error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-user-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ user_id: userId }),
     });
@@ -1030,11 +1080,20 @@ export const getKycUserStatus = async (userId: string): Promise<KycUserStatusRes
  * Use this for real-time status checks or when webhook might be delayed
  */
 export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResponse> => {
+    const {
+        data: { session },
+        error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-check-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ user_id: userId }),
     });
@@ -1059,11 +1118,20 @@ export interface ResetKycResponse {
 }
 
 export const resetKycApplicant = async (userId: string): Promise<ResetKycResponse> => {
+    const {
+        data: { session },
+        error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-reset-applicant`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ user_id: userId }),
     });
@@ -1201,6 +1269,14 @@ export interface UserDetails {
  * Fetch user details from the public.users table
  */
 export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
+    // Get the current session to include auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        console.error('No active session when fetching user details');
+        return null;
+    }
+
     const { data, error } = await supabase
         .from('users')
         .select('id, full_name, display_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
@@ -1279,11 +1355,16 @@ export const fetchAuthUserData = async () => {
  */
 export const fetchLoginHistory = async (userId: string, limit: number = 5) => {
     try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (!session || sessionError) {
+            throw new Error('No active session available');
+        }
+
         const response = await fetch(`${SUPABASE_URL}/functions/v1/get-login-history`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Authorization': `Bearer ${session.access_token}`,
             },
             body: JSON.stringify({
                 user_id: userId,

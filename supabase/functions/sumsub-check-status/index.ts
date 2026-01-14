@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
+import { requireAuthUser } from "../_shared/require-auth.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,14 @@ serve(async (req) => {
   }
 
   try {
+    const authContext = await requireAuthUser(req)
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { user_id } = await req.json()
 
     if (!user_id) {
@@ -46,6 +55,13 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    if (authContext.publicUser.id !== user_id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // Get user's applicant ID and KYC status from compliance table
     const { data: compliance, error: complianceError } = await supabase

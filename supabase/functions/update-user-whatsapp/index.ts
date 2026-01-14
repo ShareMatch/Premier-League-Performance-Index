@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,16 +23,19 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
-    const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
+    const authContext = await requireAuthUser(req);
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Validate required env vars
+    const supabase = authContext.supabase;
+
+    const wabaProfileId = Deno.env.get("WABA_PROFILE_ID");
+    const wabaApiKey = Deno.env.get("WABA_API_KEY");
     const missingVars: string[] = [];
-    if (!supabaseUrl) missingVars.push("SUPABASE_URL");
-    if (!supabaseServiceKey) missingVars.push("SUPABASE_SERVICE_ROLE_KEY");
     if (!wabaProfileId) missingVars.push("WABA_PROFILE_ID");
     if (!wabaApiKey) missingVars.push("WABA_API_KEY");
 
@@ -43,11 +46,6 @@ serve(async (req: Request) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
 
     // Parse request body - identify user by email
     const body = await req.json() as { email: string; newWhatsappPhone: string };
@@ -70,11 +68,17 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get user by email
+    if (email !== authContext.publicUser.email) {
+      return new Response(
+        JSON.stringify({ error: "Authenticated user does not match provided email." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: user, error: fetchErr } = await supabase
       .from("users")
       .select("id, whatsapp_phone_e164, whatsapp_phone_verified_at, whatsapp_otp_attempts, whatsapp_update_attempts, email_verified_at")
-      .eq("email", email)
+      .eq("id", authContext.publicUser.id)
       .single();
 
     if (fetchErr || !user) {

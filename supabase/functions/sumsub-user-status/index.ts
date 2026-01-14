@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
+import { requireAuthUser } from "../_shared/require-auth.ts"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,14 @@ serve(async (req) => {
     }
 
     try {
+        const authContext = await requireAuthUser(req)
+        if (authContext.error) {
+            return new Response(
+                JSON.stringify({ error: authContext.error.message }),
+                { status: authContext.error.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
         let user_id: string | null = null
         
         const url = new URL(req.url)
@@ -71,6 +80,13 @@ serve(async (req) => {
             )
         }
         user = { ...userData[0] };
+
+        if (user.auth_user_id !== authContext.authUserId) {
+            return new Response(
+                JSON.stringify({ error: 'Forbidden' }),
+                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
 
         // Fetch Compliance Data (from the user_compliance table)
         const { data: complianceData, error: complianceError } = await supabase
