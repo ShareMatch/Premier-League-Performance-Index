@@ -67,46 +67,46 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
                 </div>
 
                 {/* Name & Market */}
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-200 group-hover:text-brand-primary transition-colors">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] font-bold text-gray-200 group-hover:text-brand-primary transition-colors leading-tight truncate">
                     {team.name}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium">
-                    {team.market || "Unknown Market"}
+                  <span className="text-[10px] text-gray-500 font-medium">
+                    {team.market || "Unknown"}
                   </span>
                 </div>
               </div>
 
               {/* Right: Pricing (Ticker Style) - Responsive with clamp */}
-              <div className="flex items-center gap-[clamp(0.75rem,2.5vw,1.5rem)]">
+              <div className="flex items-center gap-[clamp(0.4rem,2vw,1.5rem)] ml-1">
                 {/* Sell Section */}
-                <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(75px,16vw,120px)] justify-end">
+                <div className="flex items-center gap-[clamp(0.15rem,0.5vw,0.375rem)] w-[clamp(65px,14vw,120px)] justify-end">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onSelectOrder) onSelectOrder(team, "sell");
                     }}
-                    className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[clamp(0.625rem,0.85vw,0.75rem)] font-bold px-[clamp(0.375rem,0.7vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all uppercase tracking-wider shrink-0"
+                    className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[clamp(0.55rem,0.8vw,0.75rem)] font-bold px-[clamp(0.25rem,0.6vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all uppercase tracking-wider shrink-0"
                   >
                     Sell
                   </button>
-                  <span className="text-[clamp(0.75rem,1.15vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(38px,9vw,65px)] text-right">
+                  <span className="text-[clamp(0.7rem,1.1vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(35px,8vw,65px)] text-right">
                     ${team.bid.toFixed(2)}
                   </span>
                 </div>
 
                 {/* Buy Section */}
-                <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(75px,16vw,120px)] justify-end">
+                <div className="flex items-center gap-[clamp(0.15rem,0.5vw,0.375rem)] w-[clamp(65px,14vw,120px)] justify-end">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onSelectOrder) onSelectOrder(team, "buy");
                     }}
-                    className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.625rem,0.85vw,0.75rem)] font-bold px-[clamp(0.375rem,0.7vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
+                    className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.55rem,0.8vw,0.75rem)] font-bold px-[clamp(0.25rem,0.6vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
                   >
                     Buy
                   </button>
-                  <span className="text-[clamp(0.75rem,1.15vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(38px,9vw,65px)] text-right">
+                  <span className="text-[clamp(0.7rem,1.1vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(35px,8vw,65px)] text-right">
                     ${team.offer.toFixed(2)}
                   </span>
                 </div>

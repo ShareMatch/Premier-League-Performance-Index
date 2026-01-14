@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Team, League } from "../types";
 import { TrendingUp, Trophy, Flag, Activity, Zap } from "lucide-react";
-import InfoPopup from "./InfoPopup";
+import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
+import tooltipText from "../resources/ToolTip.txt?raw";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import type { SeasonDates } from "../lib/api";
 
@@ -286,40 +287,16 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
               <div className="relative z-10 flex flex-col h-full">
                 {/* Info Button - Top Right */}
-                {(() => {
-                  const seasonData = seasonDatesMap?.get(q.market);
-                  const info = getMarketInfo(
-                    q.market,
-                    seasonData?.start_date,
-                    seasonData?.end_date,
-                    seasonData?.stage || undefined
-                  );
-                  const seasonDatesStr = seasonData
-                    ? `${new Date(seasonData.start_date).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric", year: "numeric" }
-                    )} - ${new Date(seasonData.end_date).toLocaleDateString(
-                      "en-US",
-                      { month: "short", day: "numeric", year: "numeric" }
-                    )}`
-                    : undefined;
-                  return (
-                    <div className="absolute top-0 right-0">
-                      <InfoPopup
-                        title={`${q.market} Index`}
-                        content={info.content}
-                        seasonDates={seasonDatesStr}
-                        isMarketOpen={info.isOpen}
-                        iconSize={14}
-                      />
-                    </div>
-                  );
-                })()}
+                <div className="absolute top-0 right-0">
+                  <InfoTooltip
+                    text={tooltipText}
+                  />
+                </div>
 
                 {/* Header - Avatar + Question */}
                 <div className="flex items-center gap-2 mb-3 sm:mb-4 pr-6">
                   {/* Avatar with Volume underneath */}
-                  <div className="flex flex-col items-center flex-shrink-0">
+                  <div className="flex flex-col items-center flex-shrink-0 gap-1">
                     {(() => {
                       const indexAvatarUrl = getIndexAvatarUrl(q.market);
                       return indexAvatarUrl ? (
@@ -334,13 +311,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                         </div>
                       );
                     })()}
-                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono mt-1">
+                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-mono">
                       Vol: {q.volume}
                     </span>
                   </div>
 
                   {/* Question Text Only */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-center mb-7">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
                     <h3 className="text-xs sm:text-sm font-semibold text-gray-100 group-hover:text-white transition-colors leading-snug">
                       {q.question}
                     </h3>

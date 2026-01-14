@@ -76,7 +76,9 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pageCache, setPageCache] = useState<Record<number, Team[]>>({});
+  const [isDragging, setIsDragging] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -281,11 +283,30 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         </div>
       </div>
 
-      {/* Filters */}
       <div className="p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-[73px] z-10">
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1"
+          onPointerDown={(e) => {
+            pointerStartRef.current = { x: e.clientX, y: e.clientY };
+            setIsDragging(false);
+          }}
+          onPointerMove={(e) => {
+            if (!pointerStartRef.current) return;
+            const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+            const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+            if (dx > 5 || dy > 5) {
+              setIsDragging(true);
+            }
+          }}
+          onPointerUp={() => {
+            pointerStartRef.current = null;
+            setTimeout(() => setIsDragging(false), 100);
+          }}
+          onPointerCancel={() => {
+            pointerStartRef.current = null;
+            setIsDragging(false);
+          }}
+          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 touch-pan-x select-none"
         >
           {visibleCategories.map((cat) => {
             const hasMarkets = cat.markets && cat.markets.length > 0;
@@ -294,11 +315,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             const pillButton = (
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
-                  isActive
-                    ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
-                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
+                  ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
+                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
+                  }`}
               >
                 <span>{cat.label}</span>
                 {hasMarkets &&
@@ -315,10 +335,18 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             return (
               <DropdownMenu.Root
                 key={cat.id}
-                onOpenChange={(open) => setOpenDropdown(open ? cat.id : null)}
+                onOpenChange={(open) => {
+                  if (isDragging && open) return;
+                  setOpenDropdown(open ? cat.id : null);
+                }}
+                open={openDropdown === cat.id}
               >
                 <DropdownMenu.Trigger asChild>
-                  {pillButton}
+                  <div
+                    className={isDragging ? "pointer-events-none" : "cursor-pointer"}
+                  >
+                    {pillButton}
+                  </div>
                 </DropdownMenu.Trigger>
 
                 <DropdownMenu.Portal>
@@ -339,11 +367,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       return (
                         <DropdownMenu.CheckboxItem
                           key={m.id}
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${
-                            isSelected
-                              ? "bg-brand-primary text-white"
-                              : "text-gray-400 hover:text-white hover:bg-white/5"
-                          }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
+                            ? "bg-brand-primary text-white"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                            }`}
                           checked={isSelected}
                           onSelect={(e) => {
                             e.preventDefault(); // Keep dropdown open for multi-select
@@ -419,8 +446,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                     </div>
 
                     {/* Info */}
-                    <div>
-                      <h3 className="font-bold text-gray-200 text-sm group-hover:text-brand-primary transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-200 text-[clamp(0.75rem,2.5vw,0.875rem)] group-hover:text-brand-primary transition-colors leading-tight">
                         {team.name}
                       </h3>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -437,35 +464,35 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                   </div>
 
                   {/* Right: Pricing (Ticker Style) - Responsive with clamp */}
-                  <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)]">
+                  <div className="flex items-center gap-[clamp(0.4rem,1.5vw,1rem)] ml-1">
                     {/* Sell Section */}
-                    <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(80px,18vw,130px)] justify-end">
+                    <div className="flex items-center gap-[clamp(0.15rem,0.5vw,0.375rem)] w-[clamp(68px,15vw,130px)] justify-end">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onSelectOrder) onSelectOrder(team, "sell");
                         }}
-                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[clamp(0.625rem,0.9vw,0.75rem)] font-bold px-[clamp(0.375rem,0.75vw,0.625rem)] py-[clamp(0.125rem,0.35vw,0.375rem)] rounded transition-all uppercase tracking-wider shrink-0"
+                        className="bg-red-900/30 hover:bg-red-900/50 text-red-400 text-[clamp(0.55rem,0.85vw,0.75rem)] font-bold px-[clamp(0.25rem,0.6vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all uppercase tracking-wider shrink-0"
                       >
                         Sell
                       </button>
-                      <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(40px,10vw,70px)] text-right">
+                      <span className="text-[clamp(0.7rem,1.15vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(35px,8vw,70px)] text-right">
                         ${team.bid.toFixed(2)}
                       </span>
                     </div>
 
                     {/* Buy Section */}
-                    <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] w-[clamp(80px,18vw,130px)] justify-end">
+                    <div className="flex items-center gap-[clamp(0.15rem,0.5vw,0.375rem)] w-[clamp(68px,15vw,130px)] justify-end">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onSelectOrder) onSelectOrder(team, "buy");
                         }}
-                        className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.625rem,0.9vw,0.75rem)] font-bold px-[clamp(0.375rem,0.75vw,0.625rem)] py-[clamp(0.125rem,0.35vw,0.375rem)] rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
+                        className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.55rem,0.85vw,0.75rem)] font-bold px-[clamp(0.25rem,0.6vw,0.625rem)] py-[clamp(0.125rem,0.3vw,0.375rem)] rounded transition-all shadow-sm uppercase tracking-wider shrink-0"
                       >
                         Buy
                       </button>
-                      <span className="text-[clamp(0.75rem,1.2vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(40px,10vw,70px)] text-right">
+                      <span className="text-[clamp(0.7rem,1.15vw,0.875rem)] font-bold text-gray-200 min-w-[clamp(35px,8vw,70px)] text-right">
                         ${team.offer.toFixed(2)}
                       </span>
                     </div>
@@ -489,11 +516,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === 1
-                    ? "text-gray-600 cursor-not-allowed"
-                    : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
+                  ? "text-gray-600 cursor-not-allowed"
+                  : "text-brand-primary hover:bg-gray-700/50"
+                  }`}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -509,11 +535,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <button
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${
-                          currentPage === page
-                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
-                            : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
-                        }`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
+                          ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
+                          : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                          }`}
                       >
                         {page}
                       </button>
@@ -526,11 +551,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === totalPages
-                    ? "text-gray-600 cursor-not-allowed"
-                    : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
+                  ? "text-gray-600 cursor-not-allowed"
+                  : "text-brand-primary hover:bg-gray-700/50"
+                  }`}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

@@ -22,8 +22,9 @@ import {
   LabelList,
   ReferenceDot,
 } from "recharts";
-import InfoPopup from "./InfoPopup";
+import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
+import tooltipText from "../resources/ToolTip.txt?raw";
 
 interface IndexToken {
   id: string;
@@ -229,7 +230,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     coordX?: number;
   } | null>(null);
 
-  const DEFAULT_COLORS = ["#E24A3F", "#17B76E", "#1693F8"];
+  const DEFAULT_COLORS = ["#17B76E", "#FFBF00", "#E24A3F"];
 
   const questionPool = useMemo(() => {
     // Helper to get top 3 teams for a market
@@ -398,15 +399,16 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
   return (
     <div className="space-y-2 sm:space-y-3 md:space-y-4">
-      <div className="flex items-center justify-between px-1 sm:px-2">
+      <div className="flex items-center justify-between px-1 sm:px-1">
         <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white flex items-center gap-1 sm:gap-2 flex-wrap">
           <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500 flex-shrink-0" />
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
             Trending Markets
           </span>
-          <Zap
-            className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400 animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
-            fill="currentColor"
+          <img
+            src="/logos/white_icon_on_black-removebg-preview.png"
+            alt="Zap"
+            className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
           />
         </h2>
       </div>
@@ -437,70 +439,40 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                       <div className="relative z-10 flex flex-col h-full justify-between">
                         <div className="flex flex-col gap-1.5 sm:gap-2 md:gap-2 lg:gap-1.5">
                           <div className="flex justify-between items-center gap-1.5 sm:gap-2">
-                            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 overflow-visible min-w-0">
+                            <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] md:gap-3 overflow-visible min-w-0 min-h-0 flex-1 mt-[clamp(0.75rem,2vw,1.25rem)] ml-[clamp(0.25rem,1vw,0.5rem)]">
                               {(() => {
                                 const indexAvatarUrl = getIndexAvatarUrl(
                                   question.market
                                 );
+                                const avatarSizeClass = "w-[clamp(3.5rem,10vw,5rem)] h-[clamp(3.5rem,10vw,5rem)] flex-shrink-0";
                                 return indexAvatarUrl ? (
                                   <img
                                     src={indexAvatarUrl}
                                     alt={`${question.market} Index`}
-                                    className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 block flex-shrink-0"
+                                    className={`${avatarSizeClass}`}
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-gray-800/50 rounded-lg flex-shrink-0">
+                                  <div className={`${avatarSizeClass} flex items-center justify-center bg-gray-800/50 rounded-lg`}>
                                     {question.icon}
                                   </div>
                                 );
                               })()}
 
-                              <div className="flex-1 min-w-0 flex flex-col justify-center mb-2">
-                                <h2 className="text-[10px] sm:text-xs md:text-sm font-bold text-white tracking-tight leading-tight line-clamp-2 sm:whitespace-nowrap">
-                                  {question.fullName} Performance Index
-                                </h2>
+                              <div className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.75rem,2vw,1.25rem)]">
+                                <h3 className="text-[clamp(0.75rem,2.5vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                                  {question.question}
+                                </h3>
+                                <div className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 font-mono uppercase tracking-wider mt-1">
+                                  Vol: {question.volume}
+                                </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 mb-2">
-                              {/* Info Popup */}
-                              {(() => {
-                                const seasonData = seasonDatesMap?.get(
-                                  question.market
-                                );
-                                const marketInfo = getMarketInfo(
-                                  question.market as any,
-                                  seasonData?.start_date,
-                                  seasonData?.end_date,
-                                  seasonData?.stage || undefined
-                                );
-
-                                const seasonDatesStr = seasonData
-                                  ? `${new Date(
-                                      seasonData.start_date
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })} - ${new Date(
-                                      seasonData.end_date
-                                    ).toLocaleDateString("en-US", {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    })}`
-                                  : undefined;
-
-                                return (
-                                  <InfoPopup
-                                    title={`${question.market} Index`}
-                                    content={marketInfo.content}
-                                    seasonDates={seasonDatesStr}
-                                    isMarketOpen={marketInfo.isOpen}
-                                    iconSize={14}
-                                  />
-                                );
-                              })()}
+                            <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-start mt-1">
+                              {/* Info Tooltip */}
+                              <InfoTooltip
+                                text={tooltipText}
+                              />
 
                               {/* Live Badge */}
                               <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
@@ -513,12 +485,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 </span>
                               </div>
                             </div>
-                          </div>
-                          <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-100 group-hover:text-white transition-colors leading-tight">
-                            {question.question}
-                          </h3>
-                          <div className="text-[8px] sm:text-[9px] md:text-[10px] text-gray-500 font-mono uppercase tracking-wider">
-                            Vol: {question.volume}
                           </div>
                         </div>
 
@@ -536,11 +502,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
                                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
                                   <span
-                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${
-                                      token.change >= 0
-                                        ? "text-green-400"
-                                        : "text-red-400"
-                                    }`}
+                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${token.change >= 0
+                                      ? "text-green-400"
+                                      : "text-red-400"
+                                      }`}
                                   >
                                     {token.change >= 0 ? (
                                       <FaCaretUp className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
@@ -586,11 +551,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <button
                             key={r}
                             onClick={() => setTimeRange(r)}
-                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${
-                              timeRange === r
-                                ? "bg-[#005430] text-white"
-                                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                            }`}
+                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${timeRange === r
+                              ? "bg-[#005430] text-white"
+                              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                              }`}
                           >
                             {r}
                           </button>
@@ -700,8 +664,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 window.innerWidth < 640
                                   ? 8
                                   : window.innerWidth < 1024
-                                  ? 9
-                                  : 10,
+                                    ? 9
+                                    : 10,
                             }}
                             axisLine={false}
                             tickLine={false}
@@ -709,8 +673,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               window.innerWidth < 640
                                 ? 20
                                 : window.innerWidth < 1024
-                                ? 25
-                                : 30
+                                  ? 25
+                                  : 30
                             }
                             padding={{
                               left: window.innerWidth < 640 ? 10 : 20,
@@ -731,8 +695,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 window.innerWidth < 640
                                   ? 8
                                   : window.innerWidth < 1024
-                                  ? 9
-                                  : 11,
+                                    ? 9
+                                    : 11,
                             }}
                             axisLine={false}
                             tickLine={false}
@@ -743,8 +707,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               window.innerWidth < 640
                                 ? 35
                                 : window.innerWidth < 1024
-                                ? 40
-                                : 50
+                                  ? 40
+                                  : 50
                             }
                           />
                           <Tooltip
@@ -925,11 +889,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     setTimeout(() => setIsAnimating(false), 500);
                   }
                 }}
-                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${
-                  idx === currentIndex
-                    ? "w-6 sm:w-8 bg-green-500"
-                    : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
-                }`}
+                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
+                  ? "w-6 sm:w-8 bg-green-500"
+                  : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
+                  }`}
               />
             ))}
           </div>
