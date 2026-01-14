@@ -79,6 +79,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pageCache, setPageCache] = useState<Record<number, Team[]>>({});
   const [isDragging, setIsDragging] = useState(false);
+  // const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
   const ITEMS_PER_PAGE = 10;
 
@@ -190,6 +192,39 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     setCurrentPage(1);
   }, [activeCategory, activeFilters, searchQuery]);
 
+
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      setIsDragging(true);
+
+      // cancel previous timer
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // start a new timer to reset dragging after 50ms
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsDragging(false);
+        scrollTimeoutRef.current = null;
+      }, 50);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    };
+  }, []);
+
+
+
+
   // Pagination loading and caching logic
   useEffect(() => {
     // If page is already in cache, don't show loading
@@ -197,6 +232,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       setIsLoading(false);
       return;
     }
+
+
 
     // Otherwise, simulate a fetch/load for the new page
     setIsLoading(true);
@@ -286,6 +323,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       <div className="p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-[73px] z-10">
         <div
           ref={scrollContainerRef}
+          className={`flex items-center gap-2 pb-1 scrollbar-hide select-none
+        ${openDropdown ? "overflow-x-hidden touch-none" : "overflow-x-auto touch-pan-x"}`}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
             setIsDragging(false);
@@ -294,7 +333,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             if (!pointerStartRef.current) return;
             const dx = Math.abs(e.clientX - pointerStartRef.current.x);
             const dy = Math.abs(e.clientY - pointerStartRef.current.y);
-            if (dx > 5 || dy > 5) {
+            if (dx > 10 || dy > 10) {
               setIsDragging(true);
             }
           }}
@@ -338,6 +377,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                 onOpenChange={(open) => {
                   if (isDragging && open) return;
                   setOpenDropdown(open ? cat.id : null);
+                  setIsDragging(false);
                 }}
                 open={openDropdown === cat.id}
               >
