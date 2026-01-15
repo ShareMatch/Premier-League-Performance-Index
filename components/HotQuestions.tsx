@@ -17,6 +17,7 @@ interface HotQuestionsProps {
   showHeader?: boolean;
   enableAnimation?: boolean;
   isLoading?: boolean;
+  excludeTeamIds?: string[]; // NEW: IDs of teams to exclude (from TrendingCarousel)
 }
 
 interface Question {
@@ -42,15 +43,29 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
   showHeader = true,
   enableAnimation = true,
   isLoading = false,
+  excludeTeamIds = [], // NEW: default to empty array
 }) => {
   const [displayedQuestions, setDisplayedQuestions] = useState<Question[]>([]);
   const [animatingCard, setAnimatingCard] = useState<number | null>(null);
-
-  // ... (useMemo logic is unchanged, skipping for brevity in replacement if possible, but safer to replace block)
+  const prevExcludeIdsRef = useRef<string>("");
+  const stableQuestionPoolRef = useRef<Question[]>([]);
 
   // Create a pool of ALL valid questions
   const questionPool = useMemo(() => {
-    // 1. Filter active teams, price > $5.00, and OPEN markets
+    // Only regenerate if teams, seasonDatesMap changed, or excludeTeamIds actually changed
+    const excludeIdsKey = excludeTeamIds.sort().join(",");
+    const hasExcludeChanged = prevExcludeIdsRef.current !== excludeIdsKey;
+
+    // If we have a stable pool and excludeTeamIds didn't change, just filter it
+    if (stableQuestionPoolRef.current.length > 0 && !hasExcludeChanged) {
+      return stableQuestionPoolRef.current.filter(
+        (q) => !excludeTeamIds.includes(q.team.id)
+      );
+    }
+
+    prevExcludeIdsRef.current = excludeIdsKey;
+
+    // 1. Filter active teams, price > $5.00, OPEN markets, and NOT in excludeTeamIds
     const activeTeams = teams.filter((t) => {
       if (t.is_settled) return false;
       if (t.offer <= 5.0) return false;
@@ -76,6 +91,20 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     };
 
     const generated: Question[] = [];
+
+    // Helper to get full market name
+    const getFullMarketName = (market: League): string => {
+      const names: Record<string, string> = {
+        EPL: "England Premier League",
+        UCL: "Champions League",
+        SPL: "Saudi Pro League",
+        F1: "Formula 1",
+        WC: "World Cup",
+        NBA: "NBA",
+        NFL: "NFL",
+      };
+      return names[market] || market;
+    };
 
     // Helper to generate questions
     const addQuestions = (
@@ -107,10 +136,12 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
             ? `$${(volNum / 1000).toFixed(1)}M`
             : `$${volNum.toFixed(0)}K`;
 
+        // NEW: Use TrendingCarousel's question format
+        const fullMarketName = getFullMarketName(market);
         generated.push({
           id: `${market.toLowerCase()}-${team.id}`,
           market: market,
-          question: `Will ${team.name} Top the ${market} Index?`,
+          question: `Will ${team.name} top the ${fullMarketName} Index?`,
           yesPrice: team.offer,
           noPrice: team.bid,
           volume: volStr,
@@ -172,9 +203,13 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         "group-hover:border-blue-800/50"
       );
 
-    // Shuffle full pool
-    return generated.sort(() => 0.5 - Math.random());
-  }, [teams, seasonDatesMap]);
+    // Shuffle full pool ONCE and store it
+    const shuffled = generated.sort(() => 0.5 - Math.random());
+    stableQuestionPoolRef.current = shuffled;
+
+    // Filter out excluded teams
+    return shuffled.filter((q) => !excludeTeamIds.includes(q.team.id));
+  }, [teams, seasonDatesMap]); // Removed excludeTeamIds from dependencies
 
   // Initial load
   useEffect(() => {
@@ -191,28 +226,31 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     if (!enableAnimation || !limit || questionPool.length <= limit) return;
 
     const scheduleNextUpdate = () => {
-      const delay = Math.floor(Math.random() * 2000) + 3000;
+      const delay = Math.floor(Math.random() * 5000) + 8000; // 8-13 seconds
 
       return setTimeout(() => {
-        const slotToUpdate = Math.floor(Math.random() * limit);
-        const currentIds = displayedQuestions.map((q) => q?.id);
-        const available = questionPool.filter(
-          (q) => !currentIds.includes(q.id)
-        );
+        setDisplayedQuestions((prev) => {
+          const slotToUpdate = Math.floor(Math.random() * limit);
+          const currentIds = prev.map((q) => q?.id);
+          const available = questionPool.filter(
+            (q) => !currentIds.includes(q.id)
+          );
 
-        if (available.length > 0) {
-          const nextQuestion =
-            available[Math.floor(Math.random() * available.length)];
-          setAnimatingCard(slotToUpdate);
+          if (available.length > 0) {
+            const nextQuestion =
+              available[Math.floor(Math.random() * available.length)];
+            setAnimatingCard(slotToUpdate);
 
-          setDisplayedQuestions((prev) => {
             const next = [...prev];
             next[slotToUpdate] = nextQuestion;
-            return next;
-          });
 
-          setTimeout(() => setAnimatingCard(null), 600);
-        }
+            setTimeout(() => setAnimatingCard(null), 600);
+
+            return next;
+          }
+
+          return prev;
+        });
 
         timerRef.current = scheduleNextUpdate();
       }, delay);
@@ -220,7 +258,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
 
     let timerRef = { current: scheduleNextUpdate() };
     return () => clearTimeout(timerRef.current);
-  }, [questionPool, displayedQuestions, enableAnimation, limit]);
+  }, [questionPool, enableAnimation, limit]);
 
   if (isLoading) {
     return (
