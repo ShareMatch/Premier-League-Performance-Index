@@ -318,7 +318,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
           />
         </div>
       </div>
-      {/* 
+
       <div className="p-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-[73px] z-10">
         <div
           ref={scrollContainerRef}
@@ -432,7 +432,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
           })}
         </div>
       </div>
- */}
+
       {/* List Content */}
       <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-3">
