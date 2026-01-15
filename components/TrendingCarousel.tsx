@@ -380,26 +380,78 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     }
   };
 
+  const CustomCursor = (props: any) => {
+    const { points, width, height } = props;
+    if (!points) return null;
+
+    const x = points[0].x; // this is EXACT x of active dot
+    return (
+      <g>
+        <line
+          x1={x}
+          x2={x}
+          y1={0}
+          y2={height}
+          stroke="#4b5563"
+          strokeDasharray="3 3"
+        />
+      </g>
+    );
+  };
+
+
+
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0B1221] border border-[#005430] p-3 rounded shadow-xl text-xs">
-          <p className="text-gray-400 mb-2">{label}</p>
-          <div className="flex flex-col gap-1">
+        <div
+          className="bg-[#0B1221] border border-[#005430] rounded shadow-xl"
+          style={{
+            padding: "clamp(4px, 1vw, 12px)", // smaller padding on mobile
+            fontSize: "clamp(10px, 2vw, 14px)", // responsive text size
+            maxWidth: "clamp(120px, 40vw, 220px)", // limit width on mobile
+            lineHeight: "1.2",
+          }}
+        >
+          <p
+            style={{
+              color: "#9ca3af",
+              marginBottom: "clamp(2px, 0.5vw, 6px)",
+              fontSize: "clamp(9px, 1.5vw, 12px)",
+            }}
+          >
+            {label}
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "clamp(2px, 0.5vw, 6px)",
+            }}
+          >
             {payload.map((entry: any, index: number) => {
               const tokenIndex = parseInt(entry.dataKey.replace("token", ""));
               const token = questionPool[currentIndex].topTokens[tokenIndex];
               if (!token) return null;
 
               return (
-                <p key={index} className="flex justify-between gap-4">
-                  <span style={{ color: entry.color }} className="font-bold">
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "clamp(4px, 1vw, 10px)",
+                    fontSize: "clamp(8px, 1.5vw, 12px)",
+                    fontWeight: 700,
+                    color: entry.color,
+                  }}
+                >
+                  <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                     {token.name}:
                   </span>
-                  <span style={{ color: entry.color }} className="font-bold">
-                    ${Number(entry.value).toFixed(2)}
-                  </span>
-                </p>
+                  <span>${Number(entry.value).toFixed(2)}</span>
+                </div>
               );
             })}
           </div>
@@ -408,6 +460,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     }
     return null;
   };
+
 
   useEffect(() => {
     if (questionPool.length > 0) {
@@ -657,252 +710,256 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                     {/* Chart */}
                     <div className="w-full h-40 sm:h-48 md:h-52 lg:h-56 relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart
-                          data={chartData}
-                          margin={{ top: 10, right: 5, left: 0, bottom: 20 }}
-                          onMouseMove={(e: any) => handleHover(e, question.id)}
-                          onTouchStart={(e: any) => handleHover(e, question.id)}
-                          onTouchMove={(e: any) => handleHover(e, question.id)}
-                          onMouseLeave={() => setActiveHover(null)}
-                          onTouchEnd={() => setActiveHover(null)}
-                        >
-                          <defs>
-                            {question.topTokens.map((token, idx) => (
-                              <linearGradient
-                                key={token.id}
-                                id={`colorToken${idx}-${question.id}`}
-                                x1="0"
-                                y1="0"
-                                x2="0"
-                                y2="1"
-                              >
-                                <stop
-                                  offset="5%"
-                                  stopColor={token.color || DEFAULT_COLORS[idx]}
-                                  stopOpacity={0.8}
-                                />
-                                <stop
-                                  offset="95%"
-                                  stopColor={token.color || DEFAULT_COLORS[idx]}
-                                  stopOpacity={0}
-                                />
-                              </linearGradient>
-                            ))}
-                          </defs>
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="#1f2937"
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="time"
-                            tick={{
-                              fill: "#6b7280",
-                              fontSize:
-                                window.innerWidth < 640
-                                  ? 8
-                                  : window.innerWidth < 1024
-                                    ? 9
-                                    : 10,
-                            }}
-                            axisLine={false}
-                            tickLine={false}
-                            minTickGap={
-                              window.innerWidth < 640
-                                ? 20
-                                : window.innerWidth < 1024
-                                  ? 25
-                                  : 30
-                            }
-                            padding={{
-                              left: window.innerWidth < 640 ? 10 : 20,
-                              right: xAxisRightPadding,
-                            }}
-                          />
-                          <YAxis
-                            yAxisId="right"
-                            orientation="right"
-                            domain={[
-                              (dataMin: number) => Math.max(0, dataMin - 20),
-                              (dataMax: number) => dataMax + 20,
-                            ]}
-                            tickCount={window.innerWidth < 640 ? 4 : 6}
-                            tick={{
-                              fill: "#9ca3af",
-                              fontSize:
-                                window.innerWidth < 640
-                                  ? 8
-                                  : window.innerWidth < 1024
-                                    ? 9
-                                    : 11,
-                            }}
-                            axisLine={false}
-                            tickLine={false}
-                            tickFormatter={(val: number | string) =>
-                              `$${Number(val).toFixed(1)}`
-                            }
-                            width={
-                              window.innerWidth < 640
-                                ? 35
-                                : window.innerWidth < 1024
-                                  ? 40
-                                  : 50
-                            }
-                          />
-                          <Tooltip
-                            content={<CustomTooltip />}
-                            cursor={{
-                              stroke: "#4b5563",
-                              strokeDasharray: "3 3",
-                            }}
-                          />
-
-                          {/* Render hover labels using ReferenceDot with custom label */}
-                          {activeHover?.chartId === question.id &&
-                            chartData[activeHover.index] &&
-                            question.topTokens.map((token, idx) => {
-                              const value =
-                                chartData[activeHover.index][`token${idx}`];
-                              if (value === undefined) return null;
-
-                              const color =
-                                token.color ||
-                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
-
-                              return (
-                                <ReferenceDot
+                      <div
+                        style={{ width: "100%", height: "100%" }}
+                        onPointerMove={(e) => handleHover(e, question.id)}
+                        onPointerLeave={() => setActiveHover(null)}
+                        onPointerUp={() => setActiveHover(null)}
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart
+                            data={chartData}
+                            margin={{ top: 10, right: 5, left: 0, bottom: 20 }}
+                            syncMethod="value"
+                          >
+                            <defs>
+                              {question.topTokens.map((token, idx) => (
+                                <linearGradient
                                   key={token.id}
-                                  yAxisId="right"
-                                  x={chartData[activeHover.index].time}
-                                  y={value}
-                                  r={4}
-                                  fill={color}
-                                  stroke="#000"
-                                  strokeWidth={2}
-                                  label={(props: any) => {
-                                    const { viewBox } = props;
-                                    if (!viewBox) return null;
-
-                                    const { x, y } = viewBox;
-                                    const coordX = activeHover.coordX || 0;
-
-                                    // Determine if labels should be on left or right
-                                    const showOnRight = coordX < x;
-                                    const xOffset = showOnRight ? 10 : -10;
-                                    const textAnchor = showOnRight
-                                      ? "start"
-                                      : "end";
-
-                                    return (
-                                      <g>
-                                        <text
-                                          x={x + xOffset}
-                                          y={y - 12}
-                                          fill={color}
-                                          fontSize={9}
-                                          fontWeight="700"
-                                          textAnchor={textAnchor}
-                                          style={{ textTransform: "uppercase" }}
-                                        >
-                                          {token.name}
-                                        </text>
-                                        <text
-                                          x={x + xOffset}
-                                          y={y + 4}
-                                          fill={color}
-                                          fontSize={12}
-                                          fontWeight="800"
-                                          fontFamily="monospace"
-                                          textAnchor={textAnchor}
-                                        >
-                                          ${Number(value).toFixed(2)}
-                                        </text>
-                                      </g>
-                                    );
-                                  }}
-                                />
-                              );
-                            })}
-
-                          {/* Lines for each token */}
-                          {(() => {
-                            const lastPoint = chartData[chartData.length - 1];
-                            const sortedTokens = question.topTokens
-                              .map((t, i) => ({
-                                ...t,
-                                val: lastPoint?.[`token${i}`] as number,
-                                originalIdx: i,
-                              }))
-                              .sort((a, b) => b.val - a.val);
-
-                            return question.topTokens.map((token, idx) => {
-                              const color =
-                                token.color ||
-                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
-                              const rank = sortedTokens.findIndex(
-                                (s) => s.originalIdx === idx
-                              );
-                              const yShift = (rank - 1) * 18;
-
-                              return (
-                                <Line
-                                  key={token.id}
-                                  yAxisId="right"
-                                  type="monotone"
-                                  dataKey={`token${idx}`}
-                                  stroke={color}
-                                  strokeWidth={2}
-                                  dot={false}
-                                  activeDot={{ r: 4, strokeWidth: 0 }}
-                                  animationDuration={500}
+                                  id={`colorToken${idx}-${question.id}`}
+                                  x1="0"
+                                  y1="0"
+                                  x2="0"
+                                  y2="1"
                                 >
-                                  {!activeHover && (
-                                    <LabelList
-                                      dataKey={`token${idx}`}
-                                      content={(props: any) => {
-                                        const { x, y, index, value } = props;
-                                        if (index !== chartData.length - 1) return null;
+                                  <stop
+                                    offset="5%"
+                                    stopColor={token.color || DEFAULT_COLORS[idx]}
+                                    stopOpacity={0.8}
+                                  />
+                                  <stop
+                                    offset="95%"
+                                    stopColor={token.color || DEFAULT_COLORS[idx]}
+                                    stopOpacity={0}
+                                  />
+                                </linearGradient>
+                              ))}
+                            </defs>
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#1f2937"
+                              vertical={false}
+                            />
+                            <XAxis
+                              dataKey="time"
+                              tick={{
+                                fill: "#6b7280",
+                                fontSize:
+                                  window.innerWidth < 640
+                                    ? 8
+                                    : window.innerWidth < 1024
+                                      ? 9
+                                      : 10,
+                              }}
+                              type="category"
+                              axisLine={false}
+                              tickLine={false}
+                              minTickGap={
+                                window.innerWidth < 640
+                                  ? 20
+                                  : window.innerWidth < 1024
+                                    ? 25
+                                    : 30
+                              }
+                              padding={{
+                                left: window.innerWidth < 640 ? 10 : 20,
+                                right: xAxisRightPadding,
+                              }}
+                            />
+                            <YAxis
+                              yAxisId="right"
+                              orientation="right"
+                              domain={[
+                                (dataMin: number) => Math.max(0, dataMin - 20),
+                                (dataMax: number) => dataMax + 20,
+                              ]}
+                              tickCount={window.innerWidth < 640 ? 4 : 6}
+                              tick={{
+                                fill: "#9ca3af",
+                                fontSize:
+                                  window.innerWidth < 640
+                                    ? 8
+                                    : window.innerWidth < 1024
+                                      ? 9
+                                      : 11,
+                              }}
+                              axisLine={false}
+                              tickLine={false}
+                              tickFormatter={(val: number | string) =>
+                                `$${Number(val).toFixed(1)}`
+                              }
+                              width={
+                                window.innerWidth < 640
+                                  ? 35
+                                  : window.innerWidth < 1024
+                                    ? 40
+                                    : 50
+                              }
+                            />
+                            <Tooltip
+                              content={<CustomTooltip />}
+                              cursor={<CustomCursor />}
+                            />
 
-                                        // responsive font sizes
-                                        const nameFontSize =
-                                          window.innerWidth < 640 ? 6 : window.innerWidth < 1024 ? 8 : 9;
-                                        const valueFontSize =
-                                          window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 10 : 12;
+                            {/* Render hover labels using ReferenceDot with custom label */}
+                            {activeHover?.chartId === question.id &&
+                              chartData[activeHover.index] &&
+                              question.topTokens.map((token, idx) => {
+                                const value =
+                                  chartData[activeHover.index][`token${idx}`];
+                                if (value === undefined) return null;
 
-                                        return (
-                                          <g>
-                                            <text
-                                              x={x + 5}
-                                              y={y + yShift - 6}
-                                              fill={color}
-                                              fontSize={nameFontSize}
-                                              fontWeight="700"
-                                              style={{ textTransform: "uppercase" }}
-                                            >
-                                              {token.name}
-                                            </text>
-                                            <text
-                                              x={x + 5}
-                                              y={y + yShift + 6}
-                                              fill={color}
-                                              fontSize={valueFontSize}
-                                              fontWeight="800"
-                                              fontFamily="monospace"
-                                            >
-                                              ${Number(value).toFixed(2)}
-                                            </text>
-                                          </g>
-                                        );
-                                      }}
-                                    />
-                                  )}
-                                </Line>
-                              );
-                            });
-                          })()}
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                                const color =
+                                  token.color ||
+                                  DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+
+                                return (
+                                  <ReferenceDot
+                                    key={token.id}
+                                    yAxisId="right"
+                                    x={chartData[activeHover.index].time}
+                                    y={value}
+                                    r={window.innerWidth < 640 ? 3 : 4} // smaller dot on mobile
+                                    fill={color}
+                                    stroke="#000"
+                                    strokeWidth={1.5}
+                                    label={(props: any) => {
+                                      const { viewBox } = props;
+                                      if (!viewBox) return null;
+
+                                      const { x, y } = viewBox;
+                                      const coordX = activeHover.coordX || 0;
+
+                                      // show label on left or right
+                                      const showOnRight = coordX < x;
+                                      const xOffset = showOnRight ? (window.innerWidth < 640 ? 6 : 10) : (window.innerWidth < 640 ? -6 : -10);
+                                      const textAnchor = showOnRight ? "start" : "end";
+
+                                      // responsive font sizes
+                                      const nameFontSize = `clamp(6px, 1vw, 9px)`; // min 6px, max 9px
+                                      const valueFontSize = `clamp(8px, 1.2vw, 12px)`; // min 8px, max 12px
+
+                                      return (
+                                        <g>
+                                          <text
+                                            x={x + xOffset}
+                                            y={y - 12}
+                                            fill={color}
+                                            fontSize={nameFontSize}
+                                            fontWeight="700"
+                                            textAnchor={textAnchor}
+                                            style={{ textTransform: "uppercase" }}
+                                          >
+                                            {token.name}
+                                          </text>
+                                          <text
+                                            x={x + xOffset}
+                                            y={y + 4}
+                                            fill={color}
+                                            fontSize={valueFontSize}
+                                            fontWeight="800"
+                                            fontFamily="monospace"
+                                            textAnchor={textAnchor}
+                                          >
+                                            ${Number(value).toFixed(2)}
+                                          </text>
+                                        </g>
+                                      );
+                                    }}
+                                  />
+
+                                );
+                              })}
+
+                            {/* Lines for each token */}
+                            {(() => {
+                              const lastPoint = chartData[chartData.length - 1];
+                              const sortedTokens = question.topTokens
+                                .map((t, i) => ({
+                                  ...t,
+                                  val: lastPoint?.[`token${i}`] as number,
+                                  originalIdx: i,
+                                }))
+                                .sort((a, b) => b.val - a.val);
+
+                              return question.topTokens.map((token, idx) => {
+                                const color =
+                                  token.color ||
+                                  DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
+                                const rank = sortedTokens.findIndex(
+                                  (s) => s.originalIdx === idx
+                                );
+                                const yShift = (rank - 1) * 18;
+
+                                return (
+                                  <Line
+                                    key={token.id}
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey={`token${idx}`}
+                                    stroke={color}
+                                    strokeWidth={2}
+                                    dot={false}
+                                    activeDot={{ r: 0, strokeWidth: 0 }}
+                                    animationDuration={500}
+                                  >
+                                    {!activeHover && (
+                                      <LabelList
+                                        dataKey={`token${idx}`}
+                                        content={(props: any) => {
+                                          const { x, y, index, value } = props;
+                                          if (index !== chartData.length - 1) return null;
+
+                                          // responsive font sizes
+                                          const nameFontSize =
+                                            window.innerWidth < 640 ? 6 : window.innerWidth < 1024 ? 8 : 9;
+                                          const valueFontSize =
+                                            window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 10 : 12;
+
+                                          return (
+                                            <g>
+                                              <text
+                                                x={x + 5}
+                                                y={y + yShift - 6}
+                                                fill={color}
+                                                fontSize={nameFontSize}
+                                                fontWeight="700"
+                                                style={{ textTransform: "uppercase" }}
+                                              >
+                                                {token.name}
+                                              </text>
+                                              <text
+                                                x={x + 5}
+                                                y={y + yShift + 6}
+                                                fill={color}
+                                                fontSize={valueFontSize}
+                                                fontWeight="800"
+                                                fontFamily="monospace"
+                                              >
+                                                ${Number(value).toFixed(2)}
+                                              </text>
+                                            </g>
+                                          );
+                                        }}
+                                      />
+                                    )}
+                                  </Line>
+                                );
+                              });
+                            })()}
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 </div>
