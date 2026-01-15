@@ -1,10 +1,3 @@
-/**
- * Intelligent Test Orchestrator with LangGraph
- *
- * Uses the IntelligentDeepExplorer instead of rule-based DeepExplorer.
- * All decisions are made by LLM and traced in LangSmith.
- */
-
 import { Page } from "@playwright/test";
 import {
   IntelligentDeepExplorer,
@@ -31,9 +24,7 @@ export interface OrchestratorConfig {
   maxExplorationDepth?: number;
   skipExploration?: boolean;
   skipQualityCheck?: boolean;
-  /** Modal IDs to skip exploring (e.g., ['login-modal', 'signup-modal']) */
   skipModals?: string[];
-  /** Minimum number of test scenarios to generate (overrides risk-based default) */
   minScenarioCount?: number;
 }
 
@@ -65,16 +56,12 @@ export interface FullRunResult {
   };
 }
 
-/**
- * Intelligent Test Orchestrator - Coordinates all agents with LangGraph
- */
 export class IntelligentOrchestrator {
   private page: Page;
   private config: OrchestratorConfig;
   private knowledgeStore: KnowledgeStore | null = null;
 
-  // Agents
-  private explorer: IntelligentDeepExplorer | null = null; // LangGraph-powered
+  private explorer: IntelligentDeepExplorer | null = null;
   private riskAssessor: RiskAssessor;
   private planner: TestPlanner;
   private generator: CodeGenerator;
@@ -110,14 +97,12 @@ export class IntelligentOrchestrator {
 
     this.knowledgeStore = await getKnowledgeStore();
 
-    // Initialize intelligent explorer with modal skip list
     this.explorer = createIntelligentDeepExplorer(this.page, {
       maxDepth: this.config.maxExplorationDepth,
       skipModals: this.config.skipModals,
     });
     await this.explorer.init();
 
-    // Log which modals are being skipped
     if (this.config.skipModals && this.config.skipModals.length > 0) {
       console.log(
         `   ⏭️  Skipping modals: ${this.config.skipModals.join(", ")}`
@@ -190,7 +175,7 @@ export class IntelligentOrchestrator {
     const testPlan = await this.planner.createPlan(
       riskAssessment,
       exploration,
-      { 
+      {
         excludeFeatures,
         minScenarioCount: this.config.minScenarioCount
       }
@@ -306,7 +291,7 @@ export class IntelligentOrchestrator {
     const avgScore =
       results.length > 0
         ? results.reduce((sum, r) => sum + r.qualityReport.overallScore, 0) /
-          results.length
+        results.length
         : 0;
 
     const fullResult: FullRunResult = {

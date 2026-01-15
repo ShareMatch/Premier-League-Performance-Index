@@ -271,7 +271,7 @@ test.describe("Single Feature Generation", () => {
 
     const orchestrator = createOrchestrator(page, {
       qualityThreshold: 0.5,
-      maxExplorationDepth: 50, 
+      maxExplorationDepth: 50,
       skipModals: ["login-modal", "signup-modal", "login", "signup"],
       minScenarioCount: 20,
     });
@@ -312,6 +312,58 @@ test.describe("Single Feature Generation", () => {
       `   Elements explored: ${result.exploration?.exploredElements.size || 0}`
     );
   });
+
+  test("generate Forgot Password tests Only", async ({ page }) => {
+    test.setTimeout(1800000); // 30 minutes
+
+    const orchestrator = createOrchestrator(page, {
+      qualityThreshold: 0.5,
+      maxExplorationDepth: 50,
+      skipModals: ["login-modal", "signup-modal", "login", "signup"],
+      minScenarioCount: 20,
+    });
+
+    await orchestrator.init();
+
+    const result = await orchestrator.run("/?action=forgot-password", "Forgot Password");
+
+    expect(result.generatedTest.code).toContain("test(");
+    expect(result.qualityReport.overallScore).toBeGreaterThan(50);
+
+    const hasLoginScenario = result.testPlan.scenarios.some(
+      (s) =>
+        s.name.toLowerCase().includes("login") ||
+        s.name.toLowerCase().includes("sign in")
+    );
+    const hasSignupScenario = result.testPlan.scenarios.some(
+      (s) =>
+        s.name.toLowerCase().includes("signup") ||
+        s.name.toLowerCase().includes("sign up") ||
+        s.name.toLowerCase().includes("register")
+    );
+
+    if (hasLoginScenario || hasSignupScenario) {
+      console.log(
+        "⚠️  Warning: Login/Signup scenarios were generated despite skipModals"
+      );
+    } else {
+      console.log("✅ No login/signup scenarios generated (as expected)");
+    }
+
+    console.log(`\n✅ Generated: ${result.generatedTest.filename}`);
+    console.log(
+      `   Quality: ${result.qualityReport.grade} (${result.qualityReport.overallScore})`
+    );
+    console.log(`   Scenarios: ${result.testPlan.scenarios.length}`);
+    console.log(
+      `   Elements explored: ${result.exploration?.exploredElements.size || 0}`
+    );
+
+  });
+
+
+
+
 });
 
 test.describe("Knowledge Store Verification", () => {

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Minus } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretUp } from "react-icons/fa6";
 import { Team, League } from "../types";
@@ -12,6 +13,7 @@ interface TickerProps {
 }
 
 const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
+  const navigate = useNavigate();
   const tickerItems = useMemo(() => {
     // Filter out teams from closed markets
     const activeTeams = teams.filter((t) => {
@@ -60,18 +62,24 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
       return;
     }
 
-    // Determine league based on market field or ID ranges
     if (team.market) {
-      onNavigate(team.market as any);
+      navigate(`/market/${team.market}`);
     } else {
       // Fallback to ID-based detection
       const id = Number(team.id);
-      if (id >= 1 && id <= 100) onNavigate("EPL");
-      else if (id >= 101 && id <= 200) onNavigate("UCL");
-      else if (id >= 201 && id <= 300) onNavigate("WC");
-      else if (id >= 301 && id <= 400) onNavigate("SPL");
-      else if (id >= 401 && id <= 500) onNavigate("F1");
-      else if (id >= 501 && id <= 600) onNavigate("ISL");
+      let league = "";
+      if (id >= 1 && id <= 100) league = "EPL";
+      else if (id >= 101 && id <= 200) league = "UCL";
+      else if (id >= 201 && id <= 300) league = "WC";
+      else if (id >= 301 && id <= 400) league = "SPL";
+      else if (id >= 401 && id <= 500) league = "F1";
+      else if (id >= 501 && id <= 600) league = "ISL";
+
+      if (league) navigate(`/market/${league}`);
+    }
+
+    if (onNavigate && team.market) {
+      onNavigate(team.market as any);
     }
   };
 

@@ -359,6 +359,17 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     }
   };
 
+  const handleHover = (e: any, chartId: string) => {
+    if (e && e.activeTooltipIndex !== undefined) {
+      setActiveHover({
+        chartId,
+        index: e.activeTooltipIndex,
+        coordX: e.activeCoordinate?.x,
+      });
+    }
+  };
+
+
   const handlePrev = () => {
     if (!isAnimating && questionPool.length > 0) {
       setIsAnimating(true);
@@ -436,6 +447,20 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           {questionPool.map((question) => {
             const chartData =
               chartDataMap.get(`${question.id}-${timeRange}`) || [];
+
+            // Calculate right padding for XAxis dynamically
+            const xAxisRightPadding = (() => {
+              if (chartData.length === 0) return 40;
+              const fontSize = window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10;
+              const font = `${fontSize}px sans-serif`;
+              const canvas = document.createElement("canvas");
+              const context = canvas.getContext("2d");
+              if (!context) return 40;
+
+              context.font = font;
+              const maxWidth = Math.max(...chartData.map((d) => context.measureText(d.time).width));
+              return Math.ceil(maxWidth) + 45; // add extra padding
+            })();
 
             return (
               <div
@@ -636,18 +661,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                         <ComposedChart
                           data={chartData}
                           margin={{ top: 10, right: 5, left: 0, bottom: 20 }}
-                          onMouseMove={(e: any) => {
-                            if (e.activeTooltipIndex !== undefined) {
-                              setActiveHover({
-                                chartId: question.id,
-                                index: e.activeTooltipIndex,
-                                coordX: e.activeCoordinate?.x,
-                              });
-                            }
-                          }}
-                          onMouseLeave={() => {
-                            setActiveHover(null);
-                          }}
+                          onMouseMove={(e: any) => handleHover(e, question.id)}
+                          onTouchStart={(e: any) => handleHover(e, question.id)}
+                          onTouchMove={(e: any) => handleHover(e, question.id)}
+                          onMouseLeave={() => setActiveHover(null)}
+                          onTouchEnd={() => setActiveHover(null)}
                         >
                           <defs>
                             {question.topTokens.map((token, idx) => (
@@ -699,7 +717,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                             }
                             padding={{
                               left: window.innerWidth < 640 ? 10 : 20,
-                              right: window.innerWidth < 640 ? 40 : 70,
+                              right: xAxisRightPadding,
                             }}
                           />
                           <YAxis
@@ -844,8 +862,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                       dataKey={`token${idx}`}
                                       content={(props: any) => {
                                         const { x, y, index, value } = props;
-                                        if (index !== chartData.length - 1)
-                                          return null;
+                                        if (index !== chartData.length - 1) return null;
+
+                                        // responsive font sizes
+                                        const nameFontSize =
+                                          window.innerWidth < 640 ? 6 : window.innerWidth < 1024 ? 8 : 9;
+                                        const valueFontSize =
+                                          window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 10 : 12;
 
                                         return (
                                           <g>
@@ -853,11 +876,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                               x={x + 5}
                                               y={y + yShift - 6}
                                               fill={color}
-                                              fontSize={9}
+                                              fontSize={nameFontSize}
                                               fontWeight="700"
-                                              style={{
-                                                textTransform: "uppercase",
-                                              }}
+                                              style={{ textTransform: "uppercase" }}
                                             >
                                               {token.name}
                                             </text>
@@ -865,7 +886,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                               x={x + 5}
                                               y={y + yShift + 6}
                                               fill={color}
-                                              fontSize={12}
+                                              fontSize={valueFontSize}
                                               fontWeight="800"
                                               fontFamily="monospace"
                                             >
