@@ -297,7 +297,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
   // Build user object from fetched data or fallback to props/defaults
   const user = {
-    name:  userDetails?.display_name || "N/A",
+    name: userDetails?.display_name || "N/A",
     email: userDetails?.email || userData?.email || "N/A",
     phone: userDetails?.phone_e164 || userData?.phone || "N/A",
     whatsapp: userDetails?.whatsapp_phone_e164 || userData?.whatsapp || "N/A",
@@ -334,7 +334,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     const newEmail = updatedFields.email || "";
     const newWhatsApp = updatedFields.whatsapp || "";
     const newDisplayName = updatedFields.name;
-    
+
 
     const emailChanged = newEmail !== currentEmail && newEmail !== "";
     const whatsappChanged =
@@ -408,12 +408,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     }
 
     // No verification needed - just update phone and/or display name via edge function
-    console.log("📝 Sending to editUserProfile:", { 
-      currentEmail, 
-      phone: updatedFields.phone, 
-      displayName: newDisplayName 
+    console.log("📝 Sending to editUserProfile:", {
+      currentEmail,
+      phone: updatedFields.phone,
+      displayName: newDisplayName
     });
-    
+
     await editUserProfile({
       currentEmail: currentEmail,
       phone: updatedFields.phone,
@@ -774,39 +774,109 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
         {/* Header - Sticky on scroll */}
         <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 max-w-7xl mx-auto w-full">
             <button
               onClick={onBack}
               className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
-            <h1 className="text-lg sm:text-xl font-bold font-sans">
-              My Details
-            </h1>
+            <h1 className="text-lg sm:text-xl font-bold font-sans">My Details</h1>
           </div>
         </div>
-        {/* Loading Spinner */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-400 text-sm font-sans">
-              Loading your details...
-            </p>
-          </div>
+
+        {/* Skeleton content */}
+        <div className="flex-1 overflow-y-auto w-full bg-gray-900/50">
+          <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Profile Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-4 h-[320px]">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="h-6 w-24 bg-gray-700 rounded" />
+                  <div className="h-4 w-12 bg-gray-700 rounded" />
+                </div>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-3 w-16 bg-gray-800 rounded" />
+                    <div className="h-4 w-full bg-gray-700/50 rounded" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Address Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-4 h-[320px]">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="h-6 w-24 bg-gray-700 rounded" />
+                  <div className="h-4 w-12 bg-gray-700 rounded" />
+                </div>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-3 w-16 bg-gray-800 rounded" />
+                    <div className="h-4 w-full bg-gray-700/50 rounded" />
+                  </div>
+                ))}
+              </div>
+
+              {/* KYC Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-6 h-[320px] flex flex-col">
+                <div className="h-6 w-32 bg-gray-700 rounded mb-4" />
+                <div className="space-y-4 flex-1">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-gray-700 rounded-full" />
+                      <div className="flex-1 h-4 bg-gray-700/50 rounded" />
+                    </div>
+                  ))}
+                </div>
+                <div className="h-10 w-full bg-brand-primary/20 rounded-xl" />
+              </div>
+
+              {/* Marketing Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-4 h-[320px]">
+                <div className="h-6 w-40 bg-gray-700 rounded mb-6" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="h-4 w-16 bg-gray-700/50 rounded" />
+                    <div className="h-5 w-10 bg-gray-800 rounded-full" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Payment Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-4 h-[320px]">
+                <div className="h-6 w-32 bg-gray-700 rounded mb-6" />
+                <div className="h-12 w-full bg-gray-700/50 rounded-xl" />
+              </div>
+
+              {/* Account Actions Card Skeleton */}
+              <div className="bg-gray-800/40 rounded-2xl border border-gray-700/50 p-6 space-y-4 h-[320px]">
+                <div className="h-6 w-32 bg-gray-700 rounded mb-6" />
+                <div className="h-10 w-full bg-gray-700/50 rounded-xl" />
+                <div className="h-10 w-full bg-red-900/20 rounded-xl" />
+              </div>
+            </div>
+
+            {/* Bottom Links Skeleton */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-8 border-t border-gray-800">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-4 w-24 bg-gray-800 rounded" />
+              ))}
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
+    <div data-testid="my-details-page" className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
       {/* Header - Sticky on scroll */}
       <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
           <button
             onClick={onBack}
             className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors"
+            data-testid="my-details-close-button"
           >
             <X className="w-4 h-4" />
           </button>
