@@ -344,7 +344,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             pointerStartRef.current = null;
             setIsDragging(false);
           }}
-          className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 touch-pan-x select-none"
         >
           {visibleCategories.map((cat) => {
             const hasMarkets = cat.markets && cat.markets.length > 0;

@@ -6,6 +6,7 @@ interface PortfolioProps {
   allAssets: Team[];
   onNavigate: (league: "EPL" | "UCL" | "WC" | "SPL" | "F1") => void;
   onSelectAsset: (team: Team, type: "buy" | "sell") => void;
+  onViewAsset?: (asset: Team) => void;
 }
 
 const Portfolio: React.FC<PortfolioProps> = ({
@@ -13,6 +14,7 @@ const Portfolio: React.FC<PortfolioProps> = ({
   allAssets,
   onNavigate,
   onSelectAsset,
+  onViewAsset,
 }) => {
   const getMarketName = (market: string): string => {
     const marketNames: Record<string, string> = {
@@ -46,14 +48,22 @@ const Portfolio: React.FC<PortfolioProps> = ({
   }, [portfolio, allAssets]);
 
   const handleRowClick = (holding: any) => {
-    // 1. Navigate to the market
-    if (holding.market && holding.market !== "Unknown") {
-      onNavigate(holding.market as any);
-    }
-
-    // 2. Open the Transaction Slip (Default to Buy)
-    if (holding.asset) {
+    // Navigate to the Asset Page if onViewAsset is provided
+    if (onViewAsset && holding.asset) {
+      onViewAsset(holding.asset);
+      // Also open the transaction slip (default to Buy)
       onSelectAsset(holding.asset, "buy");
+    } else {
+      // Fallback to old behavior if onViewAsset is not provided
+      // 1. Navigate to the market
+      if (holding.market && holding.market !== "Unknown") {
+        onNavigate(holding.market as any);
+      }
+
+      // 2. Open the Transaction Slip (Default to Buy)
+      if (holding.asset) {
+        onSelectAsset(holding.asset, "buy");
+      }
     }
   };
 
@@ -78,11 +88,11 @@ const Portfolio: React.FC<PortfolioProps> = ({
           {/* Avatar Block */}
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30">
             {holding.asset?.logo_url ? (
-               <img 
-                 src={holding.asset.logo_url} 
-                 alt={holding.asset.name} 
-                 className="w-full h-full object-contain"
-               />
+              <img
+                src={holding.asset.logo_url}
+                alt={holding.asset.name}
+                className="w-full h-full object-contain"
+              />
             ) : (
               <span className="text-[10px] text-gray-400 font-bold">
                 {holding.asset?.name?.substring(0, 2) || "??"}

@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
         },
       ]
     },
-    { icon: Gamepad2, label: 'E-Sports', badge: 'SOON' },
+    { icon: Gamepad2, label: 'E-Sports' },
 
     {
       icon: Globe,
@@ -131,6 +131,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
                       ? <ChevronDown className="w-4 h-4" />
                       : <ChevronRight className="w-4 h-4" />
                     }
+                  </button>
+                ) : !item.id ? (
+                  <button
+                    onClick={(e) => e.preventDefault()}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-800 text-gray-500 rounded border border-gray-700">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                   </button>
                 ) : (
                   <Link
@@ -268,8 +283,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeLeague, onLe
               </button>
             </div>
           )}
-        </nav>
-      </div>
+        </nav >
+      </div >
     </>
   );
 };
