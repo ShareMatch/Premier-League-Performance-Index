@@ -31,12 +31,14 @@
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.12.0",
     "recharts": "^3.6.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/node": "^22.19.5",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
