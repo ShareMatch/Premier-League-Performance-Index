@@ -290,7 +290,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     ];
 
     // Map markets to Question format, filtering out closed markets and those with no teams
-    return markets
+    const results = markets
       .filter((m) => {
         const seasonData = seasonDatesMap?.get(m.market);
         const info = getMarketInfo(
@@ -325,7 +325,15 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         };
       })
       .filter((q) => q.topTokens.length > 0);
-  }, [teams]);
+
+    // Randomize the order of the pool
+    for (let i = results.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [results[i], results[j]] = [results[j], results[i]];
+    }
+
+    return results;
+  }, [teams, seasonDatesMap]);
 
   const chartDataMap = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -391,9 +399,16 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
   };
 
   useEffect(() => {
+    if (questionPool.length > 0) {
+      const randomIndex = Math.floor(Math.random() * questionPool.length);
+      setCurrentIndex(randomIndex);
+    }
+  }, [questionPool.length]);
+
+  useEffect(() => {
     const interval = setInterval(handleNext, 8000);
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, [currentIndex, questionPool.length]);
 
   if (questionPool.length === 0) return null;
 
