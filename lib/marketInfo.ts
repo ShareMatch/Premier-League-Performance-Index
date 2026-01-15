@@ -1,5 +1,6 @@
 // Market-specific information for InfoPopup
 // Each market has its own description and relevant dates
+import InfoPopup from "../resources/InfoPopup.txt?raw";
 
 export interface MarketInfo {
   title: string;
@@ -11,110 +12,70 @@ export interface MarketInfo {
 export const marketInfoData: Record<string, MarketInfo> = {
   F1: {
     title: "F1 Drivers Performance Index",
-    content: `The F1 Drivers League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: false,
   },
 
   EPL: {
     title: "Premier League Performance Index",
-    content: `The Premier League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   UCL: {
     title: "Champions League Performance Index",
-    content: `The Champions League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   SPL: {
     title: "Saudi Pro League Performance Index",
-    content: `The Saudi Pro League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   ISL: {
     title: "Indonesia Super League",
-    content: `The Indonesia Super League Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   WC: {
     title: "FIFA World Cup Performance Index",
-    content: `The FIFA World Cup Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   NBA: {
     title: "NBA Performance Index",
-    content: `The NBA Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   NFL: {
     title: "NFL Performance Index",
-    content: `The NFL Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   T20: {
     title: "T20 World Cup Performance Index",
-    content: `The T20 World Cup Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },
 
   Eurovision: {
     title: "Eurovision Song Contest Performance Index",
-    content: `The Eurovision Song Contest Performance Index is a close-ended digital market composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
-
-Initial IAOT prices are set using verified historical oracle data; live market prices are determined by user supply and demand.
-
-IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.`,
+    content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
     isOpen: true,
   },

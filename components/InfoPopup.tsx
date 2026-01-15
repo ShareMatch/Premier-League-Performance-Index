@@ -68,7 +68,20 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
 
       const daysRemaining = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-      return { percentage, startStr, endStr, daysRemaining };
+      const formatShortDate = (d: Date) => {
+        return d.toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+      };
+
+      return {
+        percentage,
+        startStr: formatShortDate(start),
+        endStr: formatShortDate(end),
+        daysRemaining
+      };
     } catch (e) {
       return null;
     }
@@ -87,12 +100,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
       data-testid="info-popup-overlay"
     >
       <div
-        className="max-w-[85vw] sm:max-w-sm md:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 scrollbar-hide rounded-lg md:rounded-xl max-h-[90vh] overflow-y-auto pointer-events-auto"
-        style={{
-          background: 'rgba(4, 34, 34, 0.92)',
-          backdropFilter: 'blur(40px)',
-          WebkitBackdropFilter: 'blur(40px)',
-        }}
+        className="max-w-[85vw] sm:max-w-sm md:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 scrollbar-hide rounded-lg md:rounded-xl max-h-[90vh] overflow-y-auto pointer-events-auto bg-[#042222]/90 backdrop-blur-[40px]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={(e) => e.stopPropagation()}
@@ -100,11 +108,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
       >
         {/* Header */}
         <div
-          className="px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2.5 md:py-3 flex justify-between items-center sticky top-0 z-10"
-          style={{
-            background: '#021A1A',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
+          className="px-2.5 sm:px-4 md:px-5 py-1.5 sm:py-2.5 md:py-3 flex justify-between items-center sticky top-0 z-10 bg-[#021A1A] border-b border-white/10"
         >
           <h3 className="font-bold text-white flex items-center gap-1 sm:gap-1.5 md:gap-2 text-[11px] sm:text-xs md:text-sm truncate mr-2">
             <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-[#005430] flex-shrink-0" />
@@ -133,22 +137,19 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
         <div className="px-2.5 sm:px-4 md:px-5 py-2 sm:py-3 md:py-5">
           {/* Season Progress Bar */}
           {progressInfo && (
-            <div className="mb-3 sm:mb-5 pb-3 sm:pb-5 border-b border-white/10">
-              <div className="flex justify-between items-center text-[8px] sm:text-[10px] uppercase font-bold text-gray-400 mb-2">
+            <div className="mb-2 sm:mb-3 pb-0">
+              <div className="flex justify-between items-center text-[clamp(0.5rem,1.5vw,0.625rem)] uppercase font-bold text-emerald-500 mb-[clamp(0.5rem,1.5vw,0.5rem)]">
                 <span>Start: {progressInfo.startStr}</span>
                 <span>End: {progressInfo.endStr}</span>
               </div>
-              <div className="h-1.5 sm:h-2 bg-gray-700/50 rounded-full overflow-hidden relative">
+              <div className="h-[clamp(0.1rem,1vw,0.1rem)] bg-gray-700/50 rounded-full overflow-hidden relative">
                 <div
-                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                  style={{
-                    width: `${progressInfo.percentage}%`,
-                    background: 'linear-gradient(90deg, #005430 0%, #10b981 100%)',
-                  }}
+                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out animate-pulse bg-amber-500"
+                  style={{ width: `${progressInfo.percentage}%` }}
                 />
               </div>
-              <div className="text-center mt-2">
-                <span className="text-[9px] sm:text-[10px] md:text-xs font-bold text-gray-300">
+              <div className="text-center mt-1.5">
+                <span className="text-[clamp(0.5rem,1.5vw,0.625rem)] font-bold text-gray-300">
                   {progressInfo.daysRemaining > 0
                     ? `${progressInfo.daysRemaining} day${progressInfo.daysRemaining !== 1 ? 's' : ''} remaining`
                     : 'Season ended'
@@ -159,7 +160,7 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
           )}
 
           {/* Description */}
-          <p className="text-gray-200 text-[10px] sm:text-[11px] md:text-xs leading-relaxed whitespace-pre-line">
+          <p className="text-gray-200 text-[clamp(0.625rem,1.5vw,0.75rem)] leading-relaxed whitespace-pre-line">
             {content}
           </p>
         </div>
