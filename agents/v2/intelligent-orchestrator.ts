@@ -26,6 +26,7 @@ export interface OrchestratorConfig {
   skipQualityCheck?: boolean;
   skipModals?: string[];
   minScenarioCount?: number;
+  autoLogin?: boolean;
 }
 
 export interface OrchestratorResult {
@@ -131,6 +132,17 @@ export class IntelligentOrchestrator {
 
     if (!this.explorer) {
       await this.init();
+    }
+
+    // Step 0: Authentication (if requested)
+    if (this.config.autoLogin) {
+      console.log("\n🔐 Step 0: Authenticating before exploration...");
+      const success = await this.performLogin();
+      if (!success) {
+        console.log("   ❌ Authentication failed, continuing as guest...");
+      } else {
+        console.log("   ✅ Authenticated successfully");
+      }
     }
 
     // Step 1: Intelligent Exploration (LangGraph)
@@ -459,6 +471,53 @@ export class IntelligentOrchestrator {
     }
 
     return [...new Set(selectors)];
+  }
+
+  /**
+   * Perform automatic login using test credentials
+   */
+  async performLogin(): Promise<boolean> {
+    try {
+      // Hardcoded test credentials as requested
+      const TEST_USER = {
+        email: "affan@sharematch.me",
+        password: "Affan@1234",
+      };
+
+      console.log(`   🔑 Logging in as: ${TEST_USER.email}`);
+
+      // Navigate to login
+      await this.page.goto("/?action=login");
+
+      // Wait for modal
+      const loginModal = this.page.locator('[data-testid="login-modal"]');
+      await loginModal.waitFor({ timeout: 10000 });
+
+      // Fill and submit
+      await this.page.locator("#login-email").fill(TEST_USER.email);
+      await this.page.locator("#login-password").fill(TEST_USER.password);
+      await this.page.locator('[data-testid="login-submit-button"]').click();
+
+      // Wait for navigation or modal to close
+      // We expect either the login modal to disappear or a verification modal to appear
+      await this.page.waitForTimeout(5000);
+
+      const verificationModal = this.page.locator('[data-testid="verification-modal"]');
+
+      const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
+      const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+
+      if (isLoginModalHidden || isVerificationModalVisible) {
+        return true;
+      }
+
+      // Retry check
+      await this.page.waitForTimeout(5000);
+      return (await loginModal.isHidden()) || (await verificationModal.isVisible());
+    } catch (error: any) {
+      console.error(`   ❌ Login error: ${error.message}`);
+      return false;
+    }
   }
 }
 

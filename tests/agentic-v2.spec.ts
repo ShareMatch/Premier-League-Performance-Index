@@ -361,6 +361,39 @@ test.describe("Single Feature Generation", () => {
 
   });
 
+  test("generate Index Page tests only", async ({ page }) => {
+    // Long timeout for deep exploration (depth: 50) + LLM calls
+    test.setTimeout(1800000); // 30 minutes
+
+    const orchestrator = createOrchestrator(page, {
+      qualityThreshold: 0.5,
+      maxExplorationDepth: 50,
+      // User requested to skip login and signup during exploration
+      // but we use autoLogin: true to be authenticated
+      skipModals: ["login-modal", "signup-modal", "login", "signup"],
+      minScenarioCount: 20,
+      autoLogin: true,
+    });
+
+    await orchestrator.init();
+
+    // Navigate to a market index page (e.g. EPL)
+    // The user mentioned "you can use url routees"
+    const result = await orchestrator.run("/market/EPL", "Index Page Trading");
+
+    expect(result.generatedTest.code).toContain("test(");
+    expect(result.qualityReport.overallScore).toBeGreaterThan(50);
+
+    console.log(`\n✅ Generated: ${result.generatedTest.filename}`);
+    console.log(
+      `   Quality: ${result.qualityReport.grade} (${result.qualityReport.overallScore})`
+    );
+    console.log(`   Scenarios: ${result.testPlan.scenarios.length}`);
+    console.log(
+      `   Elements explored: ${result.exploration?.exploredElements.size || 0}`
+    );
+  });
+
 
 
 
