@@ -159,7 +159,7 @@ const App: React.FC = () => {
         setActiveLeague(asset.market as League);
       }
     }
-  }, [location.pathname]);
+  }, [location.pathname, allAssets]);
 
   const handleAIAnalyticsClick = () => {
     // Check if user has any assets in portfolio
@@ -496,70 +496,10 @@ const App: React.FC = () => {
 
   // Filter teams when league changes or assets update
   useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "App.tsx:filter-effect",
-        message: "Filter effect running",
-        data: {
-          activeLeague,
-          allAssetsCount: allAssets.length,
-          sampleMarkets: allAssets.slice(0, 3).map((a) => a.market),
-        },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        hypothesisId: "H1-H2",
-      }),
-    }).catch(() => { });
-    // #endregion
     if (activeLeague === "HOME") {
       setTeams([]);
     } else {
       const filtered = allAssets.filter((a: any) => a.market === activeLeague);
-      // #region agent log
-      fetch(
-        "http://127.0.0.1:7242/ingest/1fed4756-abf9-427d-8827-62fd8885b4de",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "App.tsx:filter-result",
-            message: "Filtered teams result",
-            data: {
-              activeLeague,
-              filteredCount: filtered.length,
-              firstTeamSeasonData: filtered[0]
-                ? {
-                  start: filtered[0].season_start_date,
-                  end: filtered[0].season_end_date,
-                  stage: filtered[0].season_stage,
-                }
-                : null,
-            },
-            timestamp: Date.now(),
-            sessionId: "debug-session",
-            hypothesisId: "H1",
-          }),
-        },
-      ).catch(() => { });
-      // #endregion
-      // Debug: Log filtered teams
-      console.log(
-        "[DEBUG] Filtered teams for",
-        activeLeague,
-        ":",
-        filtered.length,
-        "teams",
-      );
-      if (filtered.length > 0) {
-        console.log("[DEBUG] First team season data:", {
-          season_start_date: filtered[0]?.season_start_date,
-          season_end_date: filtered[0]?.season_end_date,
-          season_stage: filtered[0]?.season_stage,
-        });
-      }
       setTeams(filtered);
     }
   }, [activeLeague, allAssets]);
@@ -960,6 +900,7 @@ const App: React.FC = () => {
                           allAssets={allAssets}
                           onNavigate={handleNavigate}
                           onSelectOrder={handleSelectOrder}
+                          onViewAsset={handleViewAsset}
                           leagueName={
                             selectedOrder && selectedOrder.team.market
                               ? getLeagueTitle(selectedOrder.team.market)
@@ -986,6 +927,7 @@ const App: React.FC = () => {
                       allAssets={allAssets}
                       onNavigate={handleNavigate}
                       onSelectOrder={handleSelectOrder}
+                      onViewAsset={handleViewAsset}
                       leagueName={
                         selectedOrder && selectedOrder.team.market
                           ? getLeagueTitle(selectedOrder.team.market)
