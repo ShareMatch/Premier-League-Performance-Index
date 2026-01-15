@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
-import { requestPasswordReset } from '../../lib/api';
-import Button from '../Button';
+import React, { useState, useEffect, useCallback } from "react";
+import { X } from "lucide-react";
+import { requestPasswordReset } from "../../lib/api";
+import Button from "../Button";
 
 // Mask email address (e.g., john@example.com -> j***n@example.com)
 const maskEmail = (email: string): string => {
-  const [localPart, domain] = email.split('@');
+  const [localPart, domain] = email.split("@");
   if (!domain || localPart.length <= 2) {
     return email;
   }
@@ -18,13 +18,24 @@ const maskEmail = (email: string): string => {
 const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  return `${mins.toString().padStart(2, "0")}:${secs
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 // Email Icon SVG
 const EmailIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="currentColor"/>
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z"
+      fill="currentColor"
+    />
   </svg>
 );
 
@@ -32,7 +43,7 @@ const EmailIcon = () => (
 const InputField = ({
   id,
   label,
-  type = 'text',
+  type = "text",
   placeholder,
   value,
   onChange,
@@ -49,8 +60,8 @@ const InputField = ({
   disabled?: boolean;
 }) => (
   <div className="flex flex-col w-full gap-1.5">
-    <label 
-      htmlFor={id} 
+    <label
+      htmlFor={id}
       className="capitalize text-white text-sm font-medium font-sans"
     >
       {label}
@@ -82,13 +93,13 @@ interface ForgotPasswordModalProps {
   onSwitchToSignUp?: () => void;
 }
 
-export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ 
-  isOpen, 
+export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
+  isOpen,
   onClose,
   onBackToLogin,
   onSwitchToSignUp,
 }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -99,7 +110,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setEmail('');
+      setEmail("");
       setLoading(false);
       setError(null);
       setEmailSent(false);
@@ -109,12 +120,13 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     }
   }, [isOpen]);
 
-  const canSubmit = email.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const canSubmit =
+    email.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   // Countdown timer effect
   useEffect(() => {
     if (!isOpen || !emailSent) return;
-    
+
     const timer = setInterval(() => {
       setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
       setResendCooldown((prev) => {
@@ -140,8 +152,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setResendCooldown(30); // 30s resend cooldown
       setCanResend(false);
     } catch (err: any) {
-      console.error('Password reset error:', err);
-      setError(err.message || 'Failed to request password reset');
+      console.error("Password reset error:", err);
+      setError(err.message || "Failed to request password reset");
       setEmailSent(false); // Ensure we stay in form state
     } finally {
       setLoading(false);
@@ -161,7 +173,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
   const handleClose = () => {
     // Reset state when closing
-    setEmail('');
+    setEmail("");
     setEmailSent(false);
     setError(null);
     setCountdown(300);
@@ -171,7 +183,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   };
 
   const handleBackToLogin = () => {
-    setEmail('');
+    setEmail("");
     setEmailSent(false);
     setError(null);
     setCountdown(300);
@@ -185,21 +197,22 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={handleClose}
       />
-      
+
       {/* Modal Content */}
       <div
         data-testid="forgot-password-modal"
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
-        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
           data-testid="forgot-password-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
@@ -207,7 +220,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
         {/* Title */}
         <h1 className="text-white text-center leading-tight whitespace-nowrap font-bold font-sans text-2xl md:text-3xl">
-          {emailSent ? 'Check Your Email' : 'Enter your email address'}
+          {emailSent ? "Check Your Email" : "Enter your email address"}
         </h1>
 
         {emailSent ? (
@@ -215,12 +228,14 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           <div className="flex flex-col w-full rounded-xl p-5">
             <div className="flex flex-col items-center text-center gap-4">
               <p className="text-white font-sans text-sm leading-relaxed">
-                We've sent a password reset link to your email address{' '}
-                <span className="text-white font-medium">{maskEmail(email)}</span>.{' '}
-                Please check your inbox and click the link to reset your password.
+                We've sent a password reset link to your email address{" "}
+                <span className="text-white font-medium">
+                  {maskEmail(email)}
+                </span>
+                . Please check your inbox and click the link to reset your
+                password.
               </p>
-              
-              
+
               {/* Resend Section */}
               <div className="flex flex-col items-center gap-3">
                 <span className="text-white/60 font-sans text-xs">
@@ -232,12 +247,12 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   disabled={!canResend || loading}
                   className={`px-6 py-2 rounded-full font-medium transition-all duration-300 text-sm font-sans ${
                     canResend && !loading
-                      ? 'bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm transform active:scale-95'
-                      : 'bg-gray-700/30 text-white/20 cursor-not-allowed'
+                      ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm transform active:scale-95"
+                      : "bg-gray-700/30 text-white/20 cursor-not-allowed"
                   }`}
                   data-testid="forgot-password-resend-button"
                 >
-                  {loading ? 'Sending...' : 'Resend Link'}
+                  {loading ? "Sending..." : "Resend Link"}
                 </button>
               </div>
             </div>
@@ -250,7 +265,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               <p className="text-gray-300 text-center font-sans text-sm leading-relaxed">
                 We will send you a link to reset your password.
               </p>
-              
+
               <InputField
                 id="forgot-email"
                 label="Email"
@@ -273,6 +288,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   type="button"
                   onClick={handleBackToLogin}
                   className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
+                  aria-label="Back to login"
                   data-testid="forgot-password-back-to-login"
                 >
                   Login
@@ -281,6 +297,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   type="button"
                   onClick={onSwitchToSignUp}
                   className="text-white underline transition-colors hover:text-brand-emerald500 font-sans text-xs"
+                  aria-label="Switch to sign up"
                   data-testid="forgot-password-switch-to-signup"
                 >
                   Sign up
@@ -289,7 +306,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             </div>
 
             {/* Button outside inner container */}
-            <form onSubmit={handleSubmit} className="w-full flex justify-center">
+            <form
+              onSubmit={handleSubmit}
+              className="w-full flex justify-center"
+            >
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
@@ -302,9 +322,28 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               >
                 {loading ? "Sending..." : "Send Link"}
                 {!loading && (
-                  <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                    <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                    <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="18"
+                    height="7"
+                    viewBox="0 0 48 14"
+                    fill="none"
+                    className="transition-colors"
+                  >
+                    <line
+                      x1="0"
+                      y1="7"
+                      x2="40"
+                      y2="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M40 1L47 7L40 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </button>

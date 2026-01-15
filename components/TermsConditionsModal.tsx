@@ -240,7 +240,7 @@ const renderFormattedContent = (
     const renderTextWithEmailLinks = (text: string): React.ReactNode[] => {
       const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
       const parts = text.split(emailRegex);
-      
+
       return parts.map((part, i) => {
         if (emailRegex.test(part)) {
           // Reset regex lastIndex since we're reusing it
@@ -265,7 +265,7 @@ const renderFormattedContent = (
     const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
     const hasEmail = emailRegex.test(trimmedLine);
     emailRegex.lastIndex = 0; // Reset after test
-    
+
     if (onOpenOther && linkRegex.test(trimmedLine)) {
       const parts = trimmedLine.split(linkRegex);
       const matches = trimmedLine.match(linkRegex);
@@ -384,6 +384,7 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors p-1"
+            aria-label="Close"
             data-testid={`${type}-modal-close-button`}
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />

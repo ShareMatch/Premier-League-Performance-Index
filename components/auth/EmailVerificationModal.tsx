@@ -317,6 +317,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+          aria-label="Close"
           data-testid="email-verification-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
@@ -356,6 +357,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 <button
                   onClick={onEditEmail}
                   className="text-xs transition-colors font-sans"
+                  aria-label="Edit email address"
                   data-testid="email-verification-edit-email"
                 >
                   <span className="text-white/60">Wrong Email?</span>{" "}
@@ -406,6 +408,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     : "text-white hover:text-white/80"
                 }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
+                aria-label="Resend verification code"
                 data-testid="email-verification-resend-button"
               >
                 Resend

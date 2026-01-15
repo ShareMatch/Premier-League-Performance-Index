@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Send } from 'lucide-react';
+import React, { useState } from "react";
+import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -7,25 +7,28 @@ interface ChatInputProps {
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !disabled) {
       onSend(input.trim());
-      setInput('');
+      setInput("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-2.5 sm:p-3 border-t border-gray-700 bg-gray-800/50">
+    <form
+      onSubmit={handleSubmit}
+      className="flex gap-2 p-2.5 sm:p-3 border-t border-gray-700 bg-gray-800/50"
+    >
       <input
         type="text"
         value={input}
@@ -37,6 +40,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
       />
       <button
         type="submit"
+        aria-label="Send message"
+        data-testid="chat-input-send"
         disabled={!input.trim() || disabled}
         className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] text-white hover:bg-[#00A651]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
       >

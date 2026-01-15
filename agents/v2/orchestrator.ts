@@ -1,9 +1,6 @@
 import { Page } from "@playwright/test";
-import {
-  IntelligentDeepExplorer,
-  createIntelligentDeepExplorer,
-} from "./intelligent-deep-explorer";
-import type { ExplorationState } from "./intelligent-deep-explorer";
+import { Explorer, createExplorer } from "./explorer";
+import type { ExplorationState } from "./explorer";
 import { RiskAssessor, createRiskAssessor } from "./risk-assessor";
 import type { RiskAssessment } from "./risk-assessor";
 import { TestPlanner, createTestPlanner } from "./test-planner";
@@ -62,7 +59,7 @@ export class IntelligentOrchestrator {
   private config: OrchestratorConfig;
   private knowledgeStore: KnowledgeStore | null = null;
 
-  private explorer: IntelligentDeepExplorer | null = null;
+  private explorer: Explorer | null = null;
   private riskAssessor: RiskAssessor;
   private planner: TestPlanner;
   private generator: CodeGenerator;
@@ -79,6 +76,8 @@ export class IntelligentOrchestrator {
       skipExploration: config?.skipExploration || false,
       skipQualityCheck: config?.skipQualityCheck || false,
       skipModals: config?.skipModals || [],
+      minScenarioCount: config?.minScenarioCount,
+      autoLogin: config?.autoLogin || false,
     };
 
     this.riskAssessor = createRiskAssessor();
@@ -98,7 +97,7 @@ export class IntelligentOrchestrator {
 
     this.knowledgeStore = await getKnowledgeStore();
 
-    this.explorer = createIntelligentDeepExplorer(this.page, {
+    this.explorer = createExplorer(this.page, {
       maxDepth: this.config.maxExplorationDepth,
       skipModals: this.config.skipModals,
     });
@@ -130,10 +129,6 @@ export class IntelligentOrchestrator {
     console.log(`   URL: ${url}`);
     console.log("=".repeat(60));
 
-    if (!this.explorer) {
-      await this.init();
-    }
-
     // Step 0: Authentication (if requested)
     if (this.config.autoLogin) {
       console.log("\n🔐 Step 0: Authenticating before exploration...");
@@ -143,6 +138,10 @@ export class IntelligentOrchestrator {
       } else {
         console.log("   ✅ Authenticated successfully");
       }
+    }
+
+    if (!this.explorer) {
+      await this.init();
     }
 
     // Step 1: Intelligent Exploration (LangGraph)
@@ -172,9 +171,16 @@ export class IntelligentOrchestrator {
     );
 
     // Apply minScenarioCount override if configured
-    if (this.config.minScenarioCount && this.config.minScenarioCount > riskAssessment.testingRecommendations.scenarioCount) {
-      console.log(`   📊 Overriding scenario count: ${riskAssessment.testingRecommendations.scenarioCount} → ${this.config.minScenarioCount}`);
-      riskAssessment.testingRecommendations.scenarioCount = this.config.minScenarioCount;
+    if (
+      this.config.minScenarioCount &&
+      this.config.minScenarioCount >
+        riskAssessment.testingRecommendations.scenarioCount
+    ) {
+      console.log(
+        `   📊 Overriding scenario count: ${riskAssessment.testingRecommendations.scenarioCount} → ${this.config.minScenarioCount}`
+      );
+      riskAssessment.testingRecommendations.scenarioCount =
+        this.config.minScenarioCount;
     }
 
     // Step 3: Test Planning
@@ -189,7 +195,7 @@ export class IntelligentOrchestrator {
       exploration,
       {
         excludeFeatures,
-        minScenarioCount: this.config.minScenarioCount
+        minScenarioCount: this.config.minScenarioCount,
       }
     );
     await this.planner.storePlanAsPatterns(testPlan);
@@ -303,7 +309,7 @@ export class IntelligentOrchestrator {
     const avgScore =
       results.length > 0
         ? results.reduce((sum, r) => sum + r.qualityReport.overallScore, 0) /
-        results.length
+          results.length
         : 0;
 
     const fullResult: FullRunResult = {
@@ -502,10 +508,14 @@ export class IntelligentOrchestrator {
       // We expect either the login modal to disappear or a verification modal to appear
       await this.page.waitForTimeout(5000);
 
-      const verificationModal = this.page.locator('[data-testid="verification-modal"]');
+      const verificationModal = this.page.locator(
+        '[data-testid="verification-modal"]'
+      );
 
       const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
-      const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+      const isVerificationModalVisible = await verificationModal
+        .isVisible()
+        .catch(() => false);
 
       if (isLoginModalHidden || isVerificationModalVisible) {
         return true;
@@ -513,7 +523,9 @@ export class IntelligentOrchestrator {
 
       // Retry check
       await this.page.waitForTimeout(5000);
-      return (await loginModal.isHidden()) || (await verificationModal.isVisible());
+      return (
+        (await loginModal.isHidden()) || (await verificationModal.isVisible())
+      );
     } catch (error: any) {
       console.error(`   ❌ Login error: ${error.message}`);
       return false;
