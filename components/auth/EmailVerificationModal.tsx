@@ -309,6 +309,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
 
       {/* Modal Content */}
       <div
+        data-testid="email-verification-modal"
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
         style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
@@ -316,6 +317,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+          data-testid="email-verification-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
@@ -354,6 +356,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                 <button
                   onClick={onEditEmail}
                   className="text-xs transition-colors font-sans"
+                  data-testid="email-verification-edit-email"
                 >
                   <span className="text-white/60">Wrong Email?</span>{" "}
                   <span className="text-white hover:text-white/80 underline">
@@ -403,6 +406,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     : "text-white hover:text-white/80"
                 }`}
                 style={{ fontFamily: "'Inter', sans-serif" }}
+                data-testid="email-verification-resend-button"
               >
                 Resend
               </button>
@@ -419,6 +423,7 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
                     : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
+                data-testid="email-verification-submit-button"
               >
                 {status === "verifying" ? "Verifying..." : "Verify"}
                 {status !== "verifying" && (

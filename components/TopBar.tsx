@@ -362,7 +362,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <>
-      <div className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
+      <div data-testid="top-bar" className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
         {/* Mobile Search Overlay */}
         {isMobileSearchOpen ? (
           <div className="absolute inset-0 bg-[#005430] z-[60] flex items-center px-3 gap-2 animate-in fade-in slide-in-from-top-2">
@@ -432,6 +432,7 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 className="lg:hidden text-white/80 hover:text-white transition-colors"
                 onClick={onMobileMenuClick}
+                data-testid="mobile-menu-button"
               >
                 <Menu className="h-6 w-6" />
               </button>
@@ -448,6 +449,7 @@ const TopBar: React.FC<TopBarProps> = ({
             <button
               className="lg:hidden ml-auto mr-3 text-white/80 hover:text-white"
               onClick={() => setIsMobileSearchOpen(true)}
+              data-testid="mobile-search-button"
             >
               <Search className="h-5 w-5" />
             </button>
@@ -456,18 +458,19 @@ const TopBar: React.FC<TopBarProps> = ({
             <div className="hidden lg:flex flex-1 max-w-xl mx-6 relative z-50">
               <div className="relative w-full group">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    isListening
-                      ? "Listening..."
-                      : "Find assets and indices..."
-                  }
-                  className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
-                />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={
+                      isListening
+                        ? "Listening..."
+                        : "Find assets and indices..."
+                    }
+                    className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
+                    data-testid="desktop-search-input"
+                  />
 
                 {/* Search Actions */}
                 {searchQuery ? (
@@ -530,6 +533,7 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 onClick={() => setShowLoginModal(true)}
                 className="px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                data-testid="topbar-login-button"
               >
                 Log In
               </button>
@@ -539,6 +543,7 @@ const TopBar: React.FC<TopBarProps> = ({
                   setShowSignUpModal(true);
                 }}
                 className="px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
+                data-testid="topbar-signup-button"
               >
                 Join Now
               </button>
@@ -668,6 +673,7 @@ const TopBar: React.FC<TopBarProps> = ({
                         signOut();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                      data-testid="user-menu-signout"
                     >
                       <LogOut className="h-4 w-4" /> Sign Out
                     </button>

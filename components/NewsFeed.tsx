@@ -247,7 +247,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
     return (
         <>
-            <div className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-50 md:h-48 lg:h-60 xl:h-60'}`}>
+            <div data-testid="news-feed" className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-50 md:h-48 lg:h-60 xl:h-60'}`}>
                 {showHeader && (
                     <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
                         <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
@@ -292,7 +292,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
 
             {/* AI Summary Modal - Responsive */}
             {selectedNews && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200" data-testid="news-summary-modal-overlay">
                     <div
                         className="max-w-[92vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto scrollbar-hide"
                         style={{
@@ -301,6 +301,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
                             backdropFilter: 'blur(40px)',
                             WebkitBackdropFilter: 'blur(40px)',
                         }}
+                        data-testid="news-summary-modal"
                     >
                         {/* Header - Compact on mobile */}
                         <div
@@ -314,7 +315,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
                                 <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
                                 AI News Summary
                             </h3>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0">
+                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" data-testid="news-summary-close-button">
                                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
                             </button>
                         </div>

@@ -1,0 +1,1 @@
+Buy and Sell prices are based on Last Traded Price (LTP) within the open market
