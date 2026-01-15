@@ -142,7 +142,7 @@ interface CausalRule {
 /**
  * Intelligent Deep Explorer with LangGraph decision-making
  */
-export class IntelligentDeepExplorer {
+export class Explorer {
   private page: Page;
   private state: ExplorationState;
   private knowledgeStore: KnowledgeStore | null = null;
@@ -745,7 +745,7 @@ export class IntelligentDeepExplorer {
    */
   private isFormUrl(): boolean {
     const currentUrl = this.page.url();
-    return IntelligentDeepExplorer.FORM_URL_PATTERNS.some((pattern) =>
+    return Explorer.FORM_URL_PATTERNS.some((pattern) =>
       pattern.test(currentUrl)
     );
   }
@@ -1177,13 +1177,24 @@ export class IntelligentDeepExplorer {
   /**
    * Main exploration entry point
    */
-  async explore(url: string): Promise<ExplorationState> {
+  async explore(
+    url: string,
+    skipInitialNav: boolean = false
+  ): Promise<ExplorationState> {
     console.log(`\n🔍 [IntelligentExplorer] Starting exploration: ${url}`);
     console.log(`   Using LangGraph for intelligent decision-making`);
     console.log(`   Max depth: ${this.maxDepth}\n`);
 
     if (!this.knowledgeStore) {
       this.knowledgeStore = await getKnowledgeStore();
+    }
+
+    if (!skipInitialNav) {
+      await this.page.goto(url, { waitUntil: "networkidle" });
+    } else {
+      console.log("   ⏭️  Skipping initial navigation (already authenticated)");
+      // Just navigate to the target URL
+      await this.page.goto(url, { waitUntil: "networkidle" });
     }
 
     await this.page.goto(url, { waitUntil: "networkidle" });
@@ -2574,11 +2585,11 @@ export class IntelligentDeepExplorer {
 /**
  * Create intelligent explorer instance
  */
-export function createIntelligentDeepExplorer(
+export function createExplorer(
   page: Page,
   options?: ExplorerOptions
-): IntelligentDeepExplorer {
-  return new IntelligentDeepExplorer(page, options);
+): Explorer {
+  return new Explorer(page, options);
 }
 
-export default IntelligentDeepExplorer;
+export default Explorer;

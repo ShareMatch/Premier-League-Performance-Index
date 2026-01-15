@@ -325,7 +325,10 @@ test.describe("Single Feature Generation", () => {
 
     await orchestrator.init();
 
-    const result = await orchestrator.run("/?action=forgot-password", "Forgot Password");
+    const result = await orchestrator.run(
+      "/?action=forgot-password",
+      "Forgot Password"
+    );
 
     expect(result.generatedTest.code).toContain("test(");
     expect(result.qualityReport.overallScore).toBeGreaterThan(50);
@@ -358,7 +361,6 @@ test.describe("Single Feature Generation", () => {
     console.log(
       `   Elements explored: ${result.exploration?.exploredElements.size || 0}`
     );
-
   });
 
   test("generate Index Page tests only", async ({ page }) => {
@@ -375,7 +377,7 @@ test.describe("Single Feature Generation", () => {
       autoLogin: true,
     });
 
-    await orchestrator.init();
+    // await orchestrator.init();
 
     // Navigate to a market index page (e.g. EPL)
     // The user mentioned "you can use url routees"
@@ -393,10 +395,6 @@ test.describe("Single Feature Generation", () => {
       `   Elements explored: ${result.exploration?.exploredElements.size || 0}`
     );
   });
-
-
-
-
 });
 
 test.describe("Knowledge Store Verification", () => {

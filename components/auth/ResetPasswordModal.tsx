@@ -1,21 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from './AuthProvider';
-import Button from '../Button';
+import React, { useState, useEffect } from "react";
+import { X, AlertCircle } from "lucide-react";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "./AuthProvider";
+import Button from "../Button";
 
 // Eye Icon for password visibility toggle
 const EyeIcon = ({ off = false }: { off?: boolean }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     {off ? (
       <>
-        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path
+          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <line
+          x1="1"
+          y1="1"
+          x2="23"
+          y2="23"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </>
     ) : (
       <>
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path
+          d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </>
     )}
   </svg>
@@ -42,19 +77,25 @@ const PasswordField = ({
   autoComplete?: string;
 }) => {
   const [visible, setVisible] = useState(false);
-  
+
   return (
     <div className="flex flex-col w-full gap-1.5">
-      <label 
-        htmlFor={id} 
+      <label
+        htmlFor={id}
         className="capitalize text-white text-sm font-medium font-sans"
       >
         {label}
       </label>
-      <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 px-4 ${error ? 'ring-2 ring-red-500' : 'focus-within:ring-2 focus-within:ring-brand-emerald500'}`}>
+      <div
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+        }`}
+      >
         <input
           id={id}
-          type={visible ? 'text' : 'password'}
+          type={visible ? "text" : "password"}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
@@ -72,20 +113,14 @@ const PasswordField = ({
         </button>
       </div>
       {hint && !error && (
-        <p className="text-brand-emerald500 font-sans text-xs">
-          {hint}
-        </p>
+        <p className="text-brand-emerald500 font-sans text-xs">{hint}</p>
       )}
-      {error && (
-        <p className="text-red-400 font-sans text-xs">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-red-400 font-sans text-xs">{error}</p>}
     </div>
   );
 };
 
-export type ResetPasswordState = 'loading' | 'ready' | 'invalid' | 'success';
+export type ResetPasswordState = "loading" | "ready" | "invalid" | "success";
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -94,16 +129,16 @@ interface ResetPasswordModalProps {
   initialState?: ResetPasswordState;
 }
 
-export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ 
-  isOpen, 
+export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
+  isOpen,
   onClose,
   onSuccess,
-  initialState = 'loading',
+  initialState = "loading",
 }) => {
   const { clearPasswordRecovery, session } = useAuth();
   const [state, setState] = useState<ResetPasswordState>(initialState);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
@@ -111,8 +146,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   // Reset states when modal opens
   useEffect(() => {
     if (isOpen) {
-      setNewPassword('');
-      setConfirmPassword('');
+      setNewPassword("");
+      setConfirmPassword("");
       setLoading(false);
       setError(null);
       setIsButtonHovered(false);
@@ -124,34 +159,42 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     if (!isOpen) return;
 
     // Check if there's an error flag (link expired/invalid)
-    const recoveryError = sessionStorage.getItem('password_recovery_error');
-    if (recoveryError === 'expired') {
-      setState('invalid');
-      sessionStorage.removeItem('password_recovery_error');
+    const recoveryError = sessionStorage.getItem("password_recovery_error");
+    if (recoveryError === "expired") {
+      setState("invalid");
+      sessionStorage.removeItem("password_recovery_error");
       return;
     }
 
     // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setState('ready');
+      if (event === "PASSWORD_RECOVERY") {
+        setState("ready");
         if (window.location.hash) {
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search
+          );
         }
       }
     });
 
     // Check if we already have a session from AuthProvider (for recovery flow)
     if (session) {
-      setState('ready');
+      setState("ready");
       if (window.location.hash) {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search
+        );
       }
     }
 
     // Set a timeout to show invalid state if no recovery event
     const timeout = setTimeout(() => {
-      setState((prev) => prev === 'loading' ? 'invalid' : prev);
+      setState((prev) => (prev === "loading" ? "invalid" : prev));
     }, 5000);
 
     return () => {
@@ -163,7 +206,11 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   // Validation
   const passwordsMatch = newPassword === confirmPassword;
   const passwordLongEnough = newPassword.length >= 8;
-  const canSubmit = state === 'ready' && passwordsMatch && passwordLongEnough && confirmPassword.length > 0;
+  const canSubmit =
+    state === "ready" &&
+    passwordsMatch &&
+    passwordLongEnough &&
+    confirmPassword.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,14 +228,16 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
       // Sign out after successful password reset
       await supabase.auth.signOut();
-      
+
       // Clear recovery mode in AuthProvider
       clearPasswordRecovery();
 
       // Go directly to login modal with success message
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to update password. The link may have expired.');
+      setError(
+        err.message || "Failed to update password. The link may have expired."
+      );
       setIsButtonHovered(false);
     } finally {
       setLoading(false);
@@ -198,12 +247,12 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   const handleClose = async () => {
     // Sign out user to prevent auto-login when closing without resetting password
     await supabase.auth.signOut();
-    
+
     // Reset state when closing
-    setNewPassword('');
-    setConfirmPassword('');
+    setNewPassword("");
+    setConfirmPassword("");
     setError(null);
-    setState('loading');
+    setState("loading");
     // Clear recovery mode in AuthProvider
     clearPasswordRecovery();
     onClose();
@@ -215,27 +264,29 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto w-full h-full">
       {/* Backdrop - no click to close to preserve password reset state */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      
+
       {/* Modal Content */}
       <div
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
-        style={{ maxWidth: "min(90vw, 550px)", maxHeight: '95vh' }}
+        style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-5 right-5 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="reset-password-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
         </button>
 
         {/* Title */}
         <h1 className="text-white text-center leading-tight whitespace-nowrap font-bold font-sans text-2xl md:text-3xl">
-          {state === 'invalid' ? 'Link Expired' : 'Create New Password'}
+          {state === "invalid" ? "Link Expired" : "Create New Password"}
         </h1>
 
         {/* Loading State */}
-        {state === 'loading' && (
+        {state === "loading" && (
           <div className="flex flex-col w-full rounded-xl p-6">
             <div className="flex flex-col items-center text-center gap-4">
               <div className="w-12 h-12 border-4 border-brand-emerald500/30 border-t-brand-emerald500 rounded-full animate-spin"></div>
@@ -247,16 +298,17 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         )}
 
         {/* Invalid/Expired State */}
-        {state === 'invalid' && (
+        {state === "invalid" && (
           <>
             <div className="flex flex-col w-full rounded-xl p-5">
               <div className="flex flex-col items-center text-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
                   <AlertCircle className="w-8 h-8 text-red-400" />
                 </div>
-                
+
                 <p className="text-gray-300 font-sans text-sm leading-relaxed">
-                  This reset link is invalid, expired, or has already been used. Please request a new password reset.
+                  This reset link is invalid, expired, or has already been used.
+                  Please request a new password reset.
                 </p>
               </div>
             </div>
@@ -264,7 +316,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             {/* Button outside inner container */}
             <div
               className={`rounded-full transition-all duration-300 ${
-                isButtonHovered ? 'shadow-glow' : ''
+                isButtonHovered ? "shadow-glow" : ""
               }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
@@ -273,14 +325,34 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 type="button"
                 onClick={handleClose}
                 className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
-                  isButtonHovered ? 'opacity-90' : ''
+                  isButtonHovered ? "opacity-90" : ""
                 } !disabled:opacity-100 disabled:cursor-not-allowed`}
                 variant="white"
+                data-testid="reset-password-back-to-login-button"
               >
                 Back to Login
-                <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                  <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                  <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="18"
+                  height="7"
+                  viewBox="0 0 48 14"
+                  fill="none"
+                  className="transition-colors"
+                >
+                  <line
+                    x1="0"
+                    y1="7"
+                    x2="40"
+                    y2="7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M40 1L47 7L40 13"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </Button>
             </div>
@@ -288,7 +360,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         )}
 
         {/* Ready State - Password Form */}
-        {state === 'ready' && (
+        {state === "ready" && (
           <>
             {/* Form Fields */}
             <div className="flex flex-col w-full rounded-xl p-5 gap-4">
@@ -298,17 +370,25 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                hint={newPassword.length > 0 && newPassword.length < 8 ? 'Must be at least 8 characters' : undefined}
+                hint={
+                  newPassword.length > 0 && newPassword.length < 8
+                    ? "Must be at least 8 characters"
+                    : undefined
+                }
                 autoComplete="new-password"
               />
-              
+
               <PasswordField
                 id="confirm-password"
                 label="Confirm Password"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                error={confirmPassword.length > 0 && !passwordsMatch ? 'Passwords do not match' : undefined}
+                error={
+                  confirmPassword.length > 0 && !passwordsMatch
+                    ? "Passwords do not match"
+                    : undefined
+                }
                 autoComplete="confirm-password"
               />
 
@@ -320,7 +400,10 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
             </div>
 
             {/* Button outside inner container */}
-            <form onSubmit={handleSubmit} className="w-full flex justify-center">
+            <form
+              onSubmit={handleSubmit}
+              className="w-full flex justify-center"
+            >
               <button
                 type="submit"
                 disabled={!canSubmit || loading}
@@ -329,12 +412,32 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
                     ? "bg-gray-700 text-white hover:bg-gray-600 cursor-pointer shadow-sm"
                     : "bg-gray-700/50 text-white/40 cursor-not-allowed"
                 }`}
+                data-testid="reset-password-submit-button"
               >
                 {loading ? "Updating..." : "Reset Password"}
                 {!loading && (
-                  <svg width="18" height="7" viewBox="0 0 48 14" fill="none" className="transition-colors">
-                    <line x1="0" y1="7" x2="40" y2="7" stroke="currentColor" strokeWidth="2" />
-                    <path d="M40 1L47 7L40 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="18"
+                    height="7"
+                    viewBox="0 0 48 14"
+                    fill="none"
+                    className="transition-colors"
+                  >
+                    <line
+                      x1="0"
+                      y1="7"
+                      x2="40"
+                      y2="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M40 1L47 7L40 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 )}
               </button>

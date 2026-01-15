@@ -524,9 +524,12 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       // Build final data with full E.164 phone numbers
       const finalData = { ...formData };
-      
+
       console.log("📋 EditDetailsModal formData:", formData);
-      console.log("📋 EditDetailsModal finalData (before phone conversion):", finalData);
+      console.log(
+        "📋 EditDetailsModal finalData (before phone conversion):",
+        finalData
+      );
 
       // Convert phone numbers to E.164 format
       if (formData.phone) {
@@ -641,11 +644,16 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="edit-details-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="edit-details-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -685,6 +693,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
             <button
               onClick={onClose}
               className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+              data-testid="edit-details-modal-cancel-button"
             >
               Cancel
             </button>
@@ -698,6 +707,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
               <Button
                 onClick={handleSave}
                 disabled={saving}
+                data-testid="edit-details-modal-save-button"
                 className={`${isButtonHovered ? "opacity-90" : ""}`}
               >
                 {saving ? "Saving..." : "Save"}

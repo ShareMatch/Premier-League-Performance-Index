@@ -213,7 +213,7 @@ interface TrendingCarouselProps {
   seasonDatesMap?: Map<string, SeasonDates>;
   onViewAsset?: (asset: Team) => void;
   onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
-  onCurrentTeamsChange?: (teamIds: string[]) => void
+  onCurrentTeamsChange?: (teamIds: string[]) => void;
 }
 
 const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
@@ -371,7 +371,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     }
   };
 
-
   const handlePrev = () => {
     if (!isAnimating && questionPool.length > 0) {
       setIsAnimating(true);
@@ -400,9 +399,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
       </g>
     );
   };
-
-
-
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -449,7 +445,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     color: entry.color,
                   }}
                 >
-                  <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {token.name}:
                   </span>
                   <span>${Number(entry.value).toFixed(2)}</span>
@@ -463,15 +465,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     return null;
   };
 
-
   useEffect(() => {
     if (questionPool.length > 0 && onCurrentTeamsChange) {
       const currentQuestion = questionPool[currentIndex];
-      const currentTeamIds = currentQuestion.topTokens.map(t => t.id);
+      const currentTeamIds = currentQuestion.topTokens.map((t) => t.id);
       onCurrentTeamsChange(currentTeamIds);
     }
   }, [currentIndex, questionPool, onCurrentTeamsChange]);
-
 
   useEffect(() => {
     if (questionPool.length > 0) {
@@ -515,14 +515,17 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
             // Calculate right padding for XAxis dynamically
             const xAxisRightPadding = (() => {
               if (chartData.length === 0) return 40;
-              const fontSize = window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10;
+              const fontSize =
+                window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10;
               const font = `${fontSize}px sans-serif`;
               const canvas = document.createElement("canvas");
               const context = canvas.getContext("2d");
               if (!context) return 40;
 
               context.font = font;
-              const maxWidth = Math.max(...chartData.map((d) => context.measureText(d.time).width));
+              const maxWidth = Math.max(
+                ...chartData.map((d) => context.measureText(d.time).width)
+              );
               return Math.ceil(maxWidth) + 45; // add extra padding
             })();
 
@@ -548,7 +551,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 const indexAvatarUrl = getIndexAvatarUrl(
                                   question.market
                                 );
-                                const avatarSizeClass = "w-[clamp(3.5rem,10vw,5rem)] h-[clamp(3.5rem,10vw,5rem)] flex-shrink-0";
+                                const avatarSizeClass =
+                                  "w-[clamp(3.5rem,10vw,5rem)] h-[clamp(3.5rem,10vw,5rem)] flex-shrink-0";
                                 return indexAvatarUrl ? (
                                   <img
                                     src={indexAvatarUrl}
@@ -556,7 +560,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                     className={`${avatarSizeClass}`}
                                   />
                                 ) : (
-                                  <div className={`${avatarSizeClass} flex items-center justify-center bg-gray-800/50 rounded-lg`}>
+                                  <div
+                                    className={`${avatarSizeClass} flex items-center justify-center bg-gray-800/50 rounded-lg`}
+                                  >
                                     {question.icon}
                                   </div>
                                 );
@@ -573,9 +579,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                               <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
                                 {/* Info Tooltip */}
-                                <InfoTooltip
-                                  text={tooltipText}
-                                />
+                                <InfoTooltip text={tooltipText} />
 
                                 {/* Live Badge */}
                                 <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
@@ -612,10 +616,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
                                 <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
                                   <span
-                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${token.change >= 0
-                                      ? "text-green-400"
-                                      : "text-red-400"
-                                      }`}
+                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${
+                                      token.change >= 0
+                                        ? "text-green-400"
+                                        : "text-red-400"
+                                    }`}
                                   >
                                     {token.change >= 0 ? (
                                       <FaCaretUp className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
@@ -661,10 +666,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <button
                             key={r}
                             onClick={() => setTimeRange(r)}
-                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${timeRange === r
-                              ? "bg-[#005430] text-white"
-                              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                              }`}
+                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${
+                              timeRange === r
+                                ? "bg-[#005430] text-white"
+                                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                            }`}
                           >
                             {r}
                           </button>
@@ -768,8 +774,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 window.innerWidth < 640
                                   ? 8
                                   : window.innerWidth < 1024
-                                    ? 9
-                                    : 10,
+                                  ? 9
+                                  : 10,
                             }}
                             type="category"
                             axisLine={false}
@@ -778,8 +784,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               window.innerWidth < 640
                                 ? 20
                                 : window.innerWidth < 1024
-                                  ? 25
-                                  : 30
+                                ? 25
+                                : 30
                             }
                             padding={{
                               left: window.innerWidth < 640 ? 10 : 20,
@@ -800,8 +806,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 window.innerWidth < 640
                                   ? 8
                                   : window.innerWidth < 1024
-                                    ? 9
-                                    : 11,
+                                  ? 9
+                                  : 11,
                             }}
                             axisLine={false}
                             tickLine={false}
@@ -812,8 +818,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               window.innerWidth < 640
                                 ? 35
                                 : window.innerWidth < 1024
-                                  ? 40
-                                  : 50
+                                ? 40
+                                : 50
                             }
                           />
                           <Tooltip
@@ -852,8 +858,16 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
                                     // show label on left or right
                                     const showOnRight = coordX < x;
-                                    const xOffset = showOnRight ? (window.innerWidth < 640 ? 6 : 10) : (window.innerWidth < 640 ? -6 : -10);
-                                    const textAnchor = showOnRight ? "start" : "end";
+                                    const xOffset = showOnRight
+                                      ? window.innerWidth < 640
+                                        ? 6
+                                        : 10
+                                      : window.innerWidth < 640
+                                      ? -6
+                                      : -10;
+                                    const textAnchor = showOnRight
+                                      ? "start"
+                                      : "end";
 
                                     // responsive font sizes
                                     const nameFontSize = `clamp(6px, 1vw, 9px)`; // min 6px, max 9px
@@ -887,7 +901,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                     );
                                   }}
                                 />
-
                               );
                             })}
 
@@ -928,13 +941,22 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                       dataKey={`token${idx}`}
                                       content={(props: any) => {
                                         const { x, y, index, value } = props;
-                                        if (index !== chartData.length - 1) return null;
+                                        if (index !== chartData.length - 1)
+                                          return null;
 
                                         // responsive font sizes
                                         const nameFontSize =
-                                          window.innerWidth < 640 ? 6 : window.innerWidth < 1024 ? 8 : 9;
+                                          window.innerWidth < 640
+                                            ? 6
+                                            : window.innerWidth < 1024
+                                            ? 8
+                                            : 9;
                                         const valueFontSize =
-                                          window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 10 : 12;
+                                          window.innerWidth < 640
+                                            ? 8
+                                            : window.innerWidth < 1024
+                                            ? 10
+                                            : 12;
 
                                         return (
                                           <g>
@@ -944,7 +966,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                               fill={color}
                                               fontSize={nameFontSize}
                                               fontWeight="700"
-                                              style={{ textTransform: "uppercase" }}
+                                              style={{
+                                                textTransform: "uppercase",
+                                              }}
                                             >
                                               {token.name}
                                             </text>
@@ -982,6 +1006,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           <button
             onClick={handlePrev}
             disabled={isAnimating}
+            aria-label="Previous carousel item"
+            data-testid="trending-carousel-prev"
             className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
             <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -997,16 +1023,19 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     setTimeout(() => setIsAnimating(false), 500);
                   }
                 }}
-                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
-                  ? "w-6 sm:w-8 bg-green-500"
-                  : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
-                  }`}
+                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${
+                  idx === currentIndex
+                    ? "w-6 sm:w-8 bg-green-500"
+                    : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
+                }`}
               />
             ))}
           </div>
           <button
             onClick={handleNext}
             disabled={isAnimating}
+            aria-label="Next carousel item"
+            data-testid="trending-carousel-next"
             className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
             <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
