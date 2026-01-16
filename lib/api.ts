@@ -256,6 +256,7 @@ export const fetchTradingAssets = async () => {
                 season_token,
                 start_date,
                 end_date,
+                stage,
                 settlement_price,
                 settled_at,
                 market_indexes!inner (
@@ -283,6 +284,63 @@ export const fetchTradingAssets = async () => {
 
     if (error) throw error;
     return data;
+};
+
+// Fetch season dates from market_index_seasons table
+// Returns a map of market_token -> { start_date, end_date, stage }
+export interface SeasonDates {
+    start_date: string;
+    end_date: string;
+    stage: string | null;
+    market_token: string;
+    index_name: string;
+}
+
+export const fetchSeasonDates = async (): Promise<Map<string, SeasonDates>> => {
+    const { data, error } = await supabase
+        .from('market_index_seasons')
+        .select(`
+            id,
+            start_date,
+            end_date,
+            stage,
+            status,
+            market_indexes!inner (
+                id,
+                name,
+                markets!inner (
+                    market_token
+                )
+            )
+        `)
+        .eq('status', 'active')
+        .order('start_date', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching season dates:', error);
+        throw error;
+    }
+
+    // Create a map of market_token -> season dates
+    const seasonDatesMap = new Map<string, SeasonDates>();
+    
+    for (const season of data || []) {
+        // market_indexes is a single object (many-to-one relation)
+        const marketIndex = season.market_indexes as any;
+        const marketToken = marketIndex?.markets?.market_token;
+        if (marketToken && !seasonDatesMap.has(marketToken)) {
+            // Only store the first (most recent) season for each market
+            seasonDatesMap.set(marketToken, {
+                start_date: season.start_date,
+                end_date: season.end_date,
+                stage: season.stage,
+                market_token: marketToken,
+                index_name: marketIndex?.name || ''
+            });
+        }
+    }
+
+    return seasonDatesMap;
 };
 
 // NEW: Build complete market hierarchy for navigation

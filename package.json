@@ -7,34 +7,52 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "audit": "ts-node monitoring/audit.ts",
-    "test:e2e": "playwright test"
+    "audit": "npx tsx monitoring/audit.ts",
+    "audit:ci": "npx tsx monitoring/enhanced-audit.ts",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report audit-reports",
+    "test:e2e": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts",
+    "test:ci": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts --reporter=list",
+    "generate-tests": "npx tsx scripts/generate-tests.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.1",
-    "@playwright/test": "^1.57.0",
+    "@langchain/groq": "^1.0.2",
+    "@langchain/langgraph": "^1.0.7",
+    "@langchain/openai": "^1.2.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@sumsub/websdk-react": "^2.5.0",
     "@supabase/supabase-js": "^2.83.0",
+    "langsmith": "^0.4.4",
     "libphonenumber-js": "^1.12.31",
     "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.12.0",
     "recharts": "^3.6.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^22.19.5",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
+    "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "glob": "^13.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "wrangler": "^4.56.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

@@ -13,6 +13,7 @@ interface RightPanelProps {
   allAssets: Team[];
   onNavigate: (league: League) => void;
   onSelectOrder: (team: Team, type: "buy" | "sell") => void;
+  onViewAsset?: (asset: Team) => void;
   leagueName: string;
   walletBalance?: number;
   onClose?: () => void;
@@ -28,6 +29,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
   allAssets,
   onNavigate,
   onSelectOrder,
+  onViewAsset,
   leagueName,
   walletBalance,
   onClose,
@@ -39,6 +41,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
 
   return (
     <div
+      data-testid="right-panel"
       className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
         }`}
     >
@@ -85,6 +88,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
               ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
               : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               }`}
+            data-testid="right-panel-portfolio-tab"
           >
             <Activity className="w-4 h-4" />
             Portfolio
@@ -95,6 +99,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
               ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
               : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
               }`}
+            data-testid="right-panel-history-tab"
           >
             <History className="w-4 h-4" />
             History
@@ -120,6 +125,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 allAssets={allAssets}
                 onNavigate={onNavigate}
                 onSelectAsset={onSelectOrder}
+                onViewAsset={onViewAsset}
               />
             </>
           ) : (
@@ -142,53 +148,53 @@ const RightPanel: React.FC<RightPanelProps> = ({
                         key={tx.id}
                         className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:bg-gray-800 transition-colors flex items-start gap-3"
                       >
-                         {/* Avatar Block */}
+                        {/* Avatar Block */}
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center overflow-hidden border border-gray-600/30 mt-0.5">
-                            {asset?.logo_url ? (
-                            <img 
-                                src={asset.logo_url} 
-                                alt={asset?.name || "Asset"} 
-                                className="w-full h-full object-contain"
+                          {asset?.logo_url ? (
+                            <img
+                              src={asset.logo_url}
+                              alt={asset?.name || "Asset"}
+                              className="w-full h-full object-contain"
                             />
-                            ) : (
+                          ) : (
                             <span className="text-[10px] text-gray-400 font-bold">
-                                {asset?.name?.substring(0, 2) || "??"}
+                              {asset?.name?.substring(0, 2) || "??"}
                             </span>
-                            )}
+                          )}
                         </div>
 
                         <div className="flex-1">
-                            <div className="flex justify-between items-start mb-1">
-                          <span className="text-gray-200 font-medium text-sm">
-                            {asset?.name || tx.asset_name || "Unknown Asset"}
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === "settlement"
-                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                              : tx.direction === "buy"
-                                ? "bg-[#005430] text-white border border-transparent"
-                                : "bg-red-500/10 text-red-500 border border-red-500/20"
-                              }`}
-                          >
-                            {tx.type === "settlement" ? "Settled" : tx.direction}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
-                          <span>
-                            {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
-                          </span>
-                          <span className="text-gray-500">
-                            {new Date(tx.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
-                          <span className="text-xs text-gray-500">Total</span>
-                          <span className="font-bold text-gray-300">
-                            ${tx.amount.toFixed(2)}
-                          </span>
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-gray-200 font-medium text-sm">
+                              {asset?.name || tx.asset_name || "Unknown Asset"}
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === "settlement"
+                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                : tx.direction === "buy"
+                                  ? "bg-[#005430] text-white border border-transparent"
+                                  : "bg-red-500/10 text-red-500 border border-red-500/20"
+                                }`}
+                            >
+                              {tx.type === "settlement" ? "Settled" : tx.direction}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
+                            <span>
+                              {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
+                            </span>
+                            <span className="text-gray-500">
+                              {new Date(tx.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-700/50">
+                            <span className="text-xs text-gray-500">Total</span>
+                            <span className="font-bold text-gray-300">
+                              ${tx.amount.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     );
                   })}
                   {/* Bottom spacer for mobile scrollability */}

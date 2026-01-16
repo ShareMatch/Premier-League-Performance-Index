@@ -90,6 +90,31 @@ export const getLogoUrl = (name: string, market: string, tradingAssetId?: string
 };
 
 /**
+ * Index avatar mappings for league/market icons
+ */
+const INDEX_AVATARS: Record<string, string> = {
+    'EPL': '/index-avatars/epl.svg',
+    'UCL': '/index-avatars/ucl.svg',
+    'SPL': '/index-avatars/spl.svg',
+    'F1': '/index-avatars/f1.svg',
+    'WC': '/index-avatars/wc.svg',
+    'NBA': '/index-avatars/nba.svg',
+    'NFL': '/index-avatars/nfl.svg',
+    'T20': '/index-avatars/t20.svg',
+    'ISL': '/index-avatars/isl.svg',
+};
+
+/**
+ * Get index avatar URL for a market/league
+ * @param market - Market code (EPL, UCL, etc.)
+ * @returns Index avatar URL or null if not available
+ */
+export const getIndexAvatarUrl = (market: string): string | null => {
+    if (!market) return null;
+    return INDEX_AVATARS[market.toUpperCase()] || null;
+};
+
+/**
  * Get fallback color for a team (from existing color field)
  */
 export const getFallbackColor = (color?: string): string => {

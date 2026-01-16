@@ -1,0 +1,5 @@
+All indexes are closed-ended digital markets composed of Index Asset Outcome Tokens (IAOTs), structured under Haqq Mālī principles to avoid Riba, Gharar, and Maysir. The opening and closing dates of the market are shown within the card.
+
+Initial IAOT prices are set using verified historical oracle data; open market prices are determined by user supply and demand.
+
+IAOTs are perpetual digital assets representing index performance, with transparent, predefined settlement terms via immutable smart contracts.

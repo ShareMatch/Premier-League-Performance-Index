@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { ArrowLeft, Share2, Star, TrendingUp, BarChart3, DollarSign } from "lucide-react";
+import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import PriceVolumeChart from "./PriceVolumeChart";
 import TradeHistoryList from "./TradeHistoryList";
 import { generateAssetHistory, generateTradeHistory } from "../utils/mockData";
@@ -49,20 +50,21 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     };
 
     return (
-        <div className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
+        <div data-testid="asset-page" className="h-full overflow-y-auto bg-[#040B11] text-gray-200">
             {/* Mobile Header - Compact */}
             <div className="lg:hidden sticky top-0 z-30 bg-[#0B1221] border-b border-gray-800">
                 <div className="flex items-center justify-between p-2 gap-1">
                     <button
                         onClick={onBack}
                         className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
+                        data-testid="asset-page-back-mobile"
                     >
                         <ArrowLeft className="w-4 h-4" />
                     </button>
-                    
+
                     <div className="flex items-center gap-1.5 flex-1 min-w-0">
                         {avatarUrl ? (
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 flex-shrink-0">
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center border border-white/10 flex-shrink-0 avatar-breathe">
                                 <img
                                     src={avatarUrl}
                                     alt={`${asset.name} avatar`}
@@ -114,31 +116,36 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                             <div className="flex items-center">
                                 <span className="text-base font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
                                 {(() => {
-                                    const change = (Math.random() * 10 - 3).toFixed(2);
-                                    const isPositive = parseFloat(change) >= 0;
+                                    // Generate mock price change
+                                    const changeAmount = (Math.random() * 2 - 0.5);
+                                    const isPositive = changeAmount >= 0;
                                     return (
-                                        <span className={`ml-1.5 text-[10px] font-medium ${isPositive ? 'text-brand-emerald500' : 'text-red-400'}`}>
-                                            {isPositive ? '+' : ''}{change}%
-                            </span>
+                                        <span className={`ml-1.5 text-[9px] font-bold flex items-center gap-0.5 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                                            {isPositive ? <FaCaretUp className="w-3 h-3" /> : <FaCaretDown className="w-3 h-3" />}
+                                            ${Math.abs(changeAmount).toFixed(2)}
+                                            <span className="ml-1 text-[9px]">({period})</span>
+                                        </span>
                                     );
                                 })()}
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'sell')}
+                                className="flex-1 px-3 py-2 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-xs"
+                                data-testid="asset-page-sell-mobile"
+                            >
+                                Sell
+                            </button>
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'buy')}
+                                className="flex-1 px-3 py-2 bg-[#005430] text-white font-bold rounded-lg transition-colors text-xs"
+                                data-testid="asset-page-buy-mobile"
+                            >
+                                Buy
+                            </button>
                         </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'sell')}
-                                className="flex-1 px-3 py-2 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-xs"
-                        >
-                            Sell
-                        </button>
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'buy')}
-                                className="flex-1 px-3 py-2 bg-[#005430] text-white font-bold rounded-lg transition-colors text-xs"
-                        >
-                            Buy
-                        </button>
-                    </div>
-                </div>
                 )}
             </div>
 
@@ -148,6 +155,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <button
                         onClick={onBack}
                         className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                        data-testid="asset-page-back-desktop"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -155,7 +163,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <div className="flex items-center gap-3">
                         {/* Asset Avatar */}
                         {avatarUrl ? (
-                            <div className="w-20 h-20 rounded-xl flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-xl flex items-center justify-center avatar-breathe">
                                 <img
                                     src={avatarUrl}
                                     alt={`${asset.name} avatar`}
@@ -185,12 +193,15 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                     <div className="flex flex-col items-end mr-2">
                         <span className="text-2xl font-bold text-white font-mono">${(asset.offer || 0).toFixed(1)}</span>
                         {(() => {
-                            const change = (Math.random() * 10 - 3).toFixed(2);
-                            const isPositive = parseFloat(change) >= 0;
+                            // Generate mock price change
+                            const changeAmount = (Math.random() * 2 - 0.5);
+                            const isPositive = changeAmount >= 0;
                             return (
-                                <span className={`text-xs font-medium flex items-center gap-1 ${isPositive ? 'text-brand-emerald500' : 'text-red-400'}`}>
-                                    {isPositive ? '+' : ''}{change}% (24h)
-                        </span>
+                                <span className={`text-[10px] font-bold flex items-center gap-0.5 ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                                    {isPositive ? <FaCaretUp className="w-3 h-3" /> : <FaCaretDown className="w-3 h-3" />}
+                                    ${Math.abs(changeAmount).toFixed(2)}
+                                    <span className="ml-1">({period})</span>
+                                </span>
                             );
                         })()}
                     </div>
@@ -200,20 +211,22 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                             Market Settled
                         </span>
                     ) : (
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'sell')}
-                            className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
-                        >
-                            Sell
-                        </button>
-                        <button
-                            onClick={() => onSelectOrder?.(asset, 'buy')}
-                            className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
-                        >
-                            Buy
-                        </button>
-                    </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'sell')}
+                                className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
+                                data-testid="asset-page-sell-desktop"
+                            >
+                                Sell
+                            </button>
+                            <button
+                                onClick={() => onSelectOrder?.(asset, 'buy')}
+                                className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
+                                data-testid="asset-page-buy-desktop"
+                            >
+                                Buy
+                            </button>
+                        </div>
                     )}
 
                     <div className="h-8 w-px bg-gray-700 mx-2"></div>
@@ -240,10 +253,10 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
                 <div className="p-3 sm:p-4 md:p-6 max-w-7xl mx-auto">
                     {/* Responsive Grid: Mobile stacked, Tablet 2-col option, Desktop 3-col */}
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
-                        
+
                         {/* Left Column - Main Chart & News (Mobile: Full Width, Desktop: 2/3) */}
                         <div className="xl:col-span-2 space-y-4 md:space-y-6">
-                            
+
                             {/* Price Chart */}
                             <PriceVolumeChart
                                 data={chartData}

@@ -29,6 +29,11 @@ components/chatbot/backend/venv/
 *.njsproj
 *.sln
 *.sw?
-
+.env
 # Supabase
 supabase/.temp
+
+# Playwright/Testing
+audit-reports/
+test-results/
+playwright-report/
