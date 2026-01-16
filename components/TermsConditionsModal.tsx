@@ -358,6 +358,7 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
       }}
     >
       <div
+        data-testid={`${type}-modal`}
         className="max-w-[95vw] sm:max-w-lg md:max-w-2xl lg:max-w-3xl w-full overflow-hidden animate-in zoom-in-95 duration-200"
         style={{
           borderRadius: "16px",
@@ -383,6 +384,7 @@ const TermsConditionsModal: React.FC<TermsConditionsModalProps> = ({
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors p-1"
+            data-testid={`${type}-modal-close-button`}
           >
             <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>

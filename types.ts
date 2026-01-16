@@ -1,4 +1,4 @@
-export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'ISL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS';
+export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'ISL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS' | 'ALL_MARKETS' | 'NEW_MARKETS' | 'MY_DETAILS';
 
 export interface Team {
   id: string; // Now UUID from market_index_trading_assets
@@ -21,6 +21,9 @@ export interface Team {
   index_name?: string;
   index_token?: string;
   season_status?: string;
+  season_start_date?: string;
+  season_end_date?: string;
+  season_stage?: string; // 'open' | 'closed' | 'settled'
   units?: number;
 }
 

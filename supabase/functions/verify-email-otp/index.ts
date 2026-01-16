@@ -71,6 +71,13 @@ serve(async (req: Request) => {
         const emailOtpState = userData.email_otp_state?.[0] || {};
         const whatsappVerifiedAt = userData.whatsapp_otp_state?.[0]?.verified_at;
 
+        // --- TEST MODE: Accept "123456" as valid OTP for automated testing ---
+        const testMode = Deno.env.get("TEST_MODE") === "true";
+        const isTestBypass = testMode && token === "123456";
+        if (isTestBypass) {
+            console.log("🧪 TEST MODE: Bypassing OTP verification with test code 123456");
+        }
+
         // --- Check if already verified (uses the new verified_at location) ---
         if (emailOtpState.verified_at) {
             const nextStep = whatsappVerifiedAt ? "dashboard" : "whatsapp";
@@ -94,16 +101,16 @@ serve(async (req: Request) => {
             );
         }
 
-        // --- Verify OTP code ---
-        if (emailOtpState.otp_code !== token) {
+        // --- Verify OTP code (skip if test bypass) ---
+        if (!isTestBypass && emailOtpState.otp_code !== token) {
             return new Response(
                 JSON.stringify({ error: "Invalid verification code." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        // Check expiry
-        if (!emailOtpState.otp_expires_at || new Date(emailOtpState.otp_expires_at).getTime() < Date.now()) {
+        // Check expiry (skip if test bypass)
+        if (!isTestBypass && (!emailOtpState.otp_expires_at || new Date(emailOtpState.otp_expires_at).getTime() < Date.now())) {
             return new Response(
                 JSON.stringify({ error: "Verification code has expired." }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
