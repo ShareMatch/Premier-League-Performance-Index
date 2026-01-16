@@ -106,8 +106,26 @@ DROP POLICY IF EXISTS "Users can update their own crypto wallets" ON public.user
 DROP POLICY IF EXISTS "Users can view their own crypto wallets" ON public.user_crypto_wallets;
 DROP POLICY IF EXISTS "Service role can manage user crypto wallets" ON public.user_crypto_wallets;
 CREATE POLICY "Users can manage their own crypto wallets" ON public.user_crypto_wallets FOR ALL
-  USING (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))
-  WITH CHECK (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id));
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.user_payment_details upd
+      JOIN public.users u ON u.id = upd.user_id
+      WHERE upd.payment_method_id = user_crypto_wallets.id
+        AND upd.payment_method_type = 'crypto_wallet'
+        AND u.auth_user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.user_payment_details upd
+      JOIN public.users u ON u.id = upd.user_id
+      WHERE upd.payment_method_id = user_crypto_wallets.id
+        AND upd.payment_method_type = 'crypto_wallet'
+        AND u.auth_user_id = auth.uid()
+    )
+  );
 CREATE POLICY "Service role full access on crypto wallets" ON public.user_crypto_wallets FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Public Tables: Allow anon SELECT
