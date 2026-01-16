@@ -77,56 +77,86 @@ test.describe('KYC Flow - Document Upload via SumSub SDK Iframe after Login', ()
         await test.step('Upload documents in SumSub iframe', async () => {
             const iframeLocator = page.frameLocator('iframe[src*="sumsub.com"]');
 
-            // Select document type (e.g., Passport) - Inspect iframe for exact selector
-            // Example: Assuming a button with text "Passport"
-            const docTypeButton = iframeLocator.locator('button:has-text("Passport")'); // Adapt after inspecting
-            await docTypeButton.click({ timeout: 10000 });
+            // Helper to get the primary footer button using exact name matching to avoid "Continue on phone" collision
+            const getFooterButton = (text: string) => iframeLocator.locator('footer').getByRole('button', { name: text, exact: true });
 
-            // Upload front side - Locate file input (inspect for name/class)
-            const frontInput = iframeLocator.locator('input[type="file"][data-qa*="front"]'); // Adapt qa/name
-            await frontInput.waitFor({ state: 'attached', timeout: 5000 });
-            const frontFilePath = path.join(__dirname, 'fixtures/Germany-ID_front.png'); // Your test file
-            await frontInput.setInputFiles(frontFilePath);
+            // Wait for the SDK to load
+            console.log('Waiting for Sumsub SDK to initialize...');
+            await iframeLocator.locator('main').waitFor({ state: 'visible', timeout: 30000 });
 
-            // Upload back side if required
-            const backInput = iframeLocator.locator('input[type="file"][data-qa*="back"]');
-            const isBackVisible = await backInput.isVisible({ timeout: 3000 }).catch(() => false);
-            if (isBackVisible) {
-                const backFilePath = path.join(__dirname, 'fixtures/Germany-ID_back');
-                await backInput.setInputFiles(backFilePath);
+            // 1. Initial Warning/Intro Screen
+            const warningContinue = getFooterButton('Continue');
+            if (await warningContinue.isVisible({ timeout: 5000 }).catch(() => false)) {
+                console.log('Screen: Initial screen detected');
+                await expect(warningContinue).toBeEnabled({ timeout: 10000 });
+                await warningContinue.click();
+                console.log('Action: Clicked initial Continue');
             }
 
-            // Selfie upload if required
-            //   const selfieInput = iframeLocator.locator('input[type="file"][data-qa*="selfie"]');
-            //   const isSelfieVisible = await selfieInput.isVisible({ timeout: 3000 }).catch(() => false);
-            //   if (isSelfieVisible) {
-            //     const selfieFilePath = path.join(__dirname, 'fixtures/dummy-selfie.jpg');
-            //     await selfieInput.setInputFiles(selfieFilePath);
-            //   }
+            // 2. Document Selection Screen
+            console.log('Waiting for Document Selection screen...');
+            const docTypeContainer = iframeLocator.locator('.RadioCheckContainer').filter({ hasText: 'ID card' });
+            await docTypeContainer.waitFor({ state: 'visible', timeout: 20000 });
 
-            // Submit/Continue - Adapt to actual button
-            const submitButton = iframeLocator.locator('button:has-text("Submit")'); // Or "Continue", inspect
-            await submitButton.click();
+            // Click the specific text label to ensure we hit the clickable area
+            await docTypeContainer.locator('div').filter({ hasText: 'ID card' }).first().click();
+            console.log('Action: Selected ID card');
 
-            // Wait for processing (adjust based on flow)
-            await page.waitForTimeout(10000);
-        });
+            const selectionContinue = getFooterButton('Continue');
+            await expect(selectionContinue).toBeEnabled({ timeout: 10000 });
+            await selectionContinue.click();
+            console.log('Action: Clicked Selection Continue');
 
-        // Step 5: Verify submission success (e.g., check for pending view or message)
-        await test.step('Verify KYC submission success', async () => {
-            // Check for pending view in modal
-            const pendingView = page.locator('text=Verification In Progress');
-            const isPendingVisible = await pendingView.isVisible({ timeout: 15000 }).catch(() => false);
-            if (isPendingVisible) {
-                console.log('Pending view shown - submission successful');
-            } else {
-                // Alternatively, check console logs or API if integrated
-                // Example: await expect(page.locator('text=Verification submitted')).toBeVisible();
+            // 3. Document Upload Screen
+            console.log('Waiting for Upload screen...');
+            const uploadFields = iframeLocator.locator('input[type="file"]');
+            await expect(uploadFields.first()).toBeVisible({ timeout: 20000 });
+            console.log('Screen: Upload detected');
+
+            // 4. Upload front and back sides
+            const frontFilePath = path.join(process.cwd(), 'fixtures/Germany-ID_front.png');
+            const backFilePath = path.join(process.cwd(), 'fixtures/Germany-ID_back.png');
+
+            console.log(`Uploading Front side: ${frontFilePath}`);
+            await uploadFields.first().setInputFiles(frontFilePath);
+            await page.waitForTimeout(2000);
+
+            console.log(`Uploading Back side: ${backFilePath}`);
+            await uploadFields.last().setInputFiles(backFilePath);
+
+            // 5. Final Submission (Continue button in footer)
+            console.log('Waiting for uploads to process...');
+            const finalContinue = getFooterButton('Continue');
+            await expect(finalContinue).toBeEnabled({ timeout: 30000 });
+            await finalContinue.click();
+            console.log('Action: Clicked final Continue');
+
+            // 6. Final Confirmation step if it appears (sometimes there's another "Continue" or "Submit")
+            // Based on user feedback, we should check and click all footer buttons if they appear
+            const submitButton = getFooterButton('Submit');
+            if (await submitButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+                console.log('Action: Clicked Submit');
+                await submitButton.click();
             }
 
-            // Optional: Close modal if needed
-            const closeButton = page.locator('button').filter({ has: page.locator('svg.lucide-x') });
-            await closeButton.click();
+            // 7. Verify success message inside iframe
+            const successHeader = iframeLocator.locator('h1:has-text("Your profile has been verified")');
+            await expect(successHeader).toBeVisible({ timeout: 60000 });
+            console.log('KYC flow confirmed as verified');
         });
+
+        // Step 5: Final verification outside iframe
+        await test.step('Verify KYC modal state and Close', async () => {
+            await page.waitForTimeout(3000);
+            // Specifically target the close button in the Identity Verification modal header
+            const closeButton = page.locator('div[role="dialog"]').filter({ hasText: 'Identity Verification' }).locator('button').filter({ has: page.locator('svg, img') }).first();
+
+            if (await closeButton.isVisible()) {
+                await closeButton.click();
+                console.log('Modal closed manually');
+            }
+        });
+
+
     });
 });
