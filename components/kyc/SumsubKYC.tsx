@@ -42,6 +42,11 @@ export interface SumsubKYCProps {
   onClose?: () => void;
 }
 
+const sumsubConfig = {
+  lang: 'en',
+  customizationName: 'sharematch_dark_mode',
+};
+
 export default function SumsubKYC({
   userId,
   levelName = "basic-kyc-level",
@@ -121,7 +126,7 @@ export default function SumsubKYC({
       console.error('❌ Access token refresh failed during expiration handling:', err);
       setError('Your session has expired. Please refresh the page or log in again.');
       onError?.(err);
-      return null;
+      throw err;
     }
   }, [userId, levelName, onError]);
 
@@ -280,10 +285,7 @@ export default function SumsubKYC({
         <SumsubWebSdk
           accessToken={accessToken}
           expirationHandler={accessTokenExpirationHandler}
-          config={{
-            lang: 'en',
-            customizationName: 'sharematch_dark_mode',
-          }}
+          config={sumsubConfig as any}
           options={{
             addViewportTag: true,
             adaptIframeHeight: true,  // SDK controls its own height

@@ -36,12 +36,13 @@ serve(async (req: Request) => {
 
         // Use the authenticated client from auth context
         const supabase = authContext.supabase;
+        const normalizedAuthEmail = String(authContext.publicUser.email ?? "").trim().toLowerCase();
 
         const body: UpdatePreferencesPayload = await req.json();
         const { email, preferences } = body;
 
         const normalizedEmail = email?.toLowerCase().trim();
-        if (normalizedEmail !== authContext.publicUser.email) {
+        if (normalizedEmail !== normalizedAuthEmail) {
             return new Response(
                 JSON.stringify({ error: "Email mismatch" }),
                 { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
