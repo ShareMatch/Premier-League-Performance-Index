@@ -124,7 +124,6 @@ export const getPublicUserId = async (authUserId: string, userEmail?: string): P
 
         // If that fails and we have email, try querying by email as fallback
         if ((error || !data) && userEmail) {
-            console.log('auth_user_id query failed, trying email fallback');
             const emailResult = await supabase
                 .from('users')
                 .select('id')
@@ -132,14 +131,12 @@ export const getPublicUserId = async (authUserId: string, userEmail?: string): P
                 .maybeSingle();
 
             if (!emailResult.error && emailResult.data) {
-                console.log('Found user record via email fallback:', emailResult.data.id);
                 return emailResult.data.id;
             }
         }
 
         // If we can't find the user record, this indicates incomplete registration
         // Don't try to create records from frontend - this should be handled by registration/login
-        console.log('No user record found for authenticated user. This indicates incomplete registration.');
 
         if (error) {
             console.error('Error fetching public user ID:', error);
@@ -1002,7 +999,6 @@ export const requestPasswordReset = async (email: string): Promise<ForgotPasswor
     });
 
     const result = await response.json();
-    console.log('Password reset response:', { status: response.status, ok: response.ok, result });
 
     // If the API returned an explicit error field, throw it so the UI can display the message
     if (result.error) {
@@ -1464,7 +1460,6 @@ export const fetchLoginHistory = async (userId: string, limit: number = 5) => {
         const data = await response.json();
         const loginHistory = data.logins || [];
 
-        console.log('✅ Login history fetched:', loginHistory);
         return loginHistory.slice(0, limit);
     } catch (err) {
         console.error('Exception fetching login history:', err);

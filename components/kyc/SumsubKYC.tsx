@@ -67,7 +67,6 @@ export default function SumsubKYC({
   useEffect(() => {
     // Prevent double-fetch in Strict Mode
     if (fetchingRef.current) {
-      console.log('⏭️ Skipping duplicate fetch (Strict Mode)');
       return;
     }
     fetchingRef.current = true;
@@ -75,15 +74,12 @@ export default function SumsubKYC({
     const getAccessToken = async () => {
       try {
         setLoading(true);
-        console.log('🔵 Fetching Sumsub token via Edge Function for user:', userId);
 
         // Call Supabase Edge Function
         const { response, data } = await callEdgeFunction('sumsub-access-token', {
           user_id: userId,
           levelName
         });
-
-        console.log('🔵 Sumsub response:', { ok: response.ok, status: response.status, data });
 
         if (!response.ok) {
           const errorMsg = data.error || data.detail || 'Failed to get access token';
@@ -95,7 +91,6 @@ export default function SumsubKYC({
           throw new Error('No token returned from server');
         }
 
-        console.log('✅ Token received successfully');
         setAccessToken(data.token);
       } catch (err: any) {
         console.error('❌ Access token error:', err);
@@ -111,7 +106,6 @@ export default function SumsubKYC({
 
   // Token expiration handler
   const accessTokenExpirationHandler = useCallback(async () => {
-    console.log('🔄 Token expired, fetching new token via Edge Function...');
     const { data } = await callEdgeFunction('sumsub-access-token', {
       user_id: userId,
       levelName
@@ -122,13 +116,11 @@ export default function SumsubKYC({
   // Save applicant ID to database (from SDK callback)
   const saveApplicantId = useCallback(async (applicantId: string) => {
     try {
-      console.log('📤 Saving applicant ID via Edge Function:', { applicantId });
       const { response, data } = await callEdgeFunction('sumsub-update-status', {
         user_id: userId,
         applicant_id: applicantId,
       });
       if (response.ok) {
-        console.log('✅ Applicant ID saved:', data);
       } else {
         console.error('❌ Failed to save applicant ID:', data);
       }
@@ -140,7 +132,6 @@ export default function SumsubKYC({
   // Update KYC status in database
   const updateKycStatus = useCallback(async (reviewStatus: string, reviewAnswer: string, reviewRejectType?: string) => {
     try {
-      console.log('📤 Updating KYC status via Edge Function:', { reviewStatus, reviewAnswer, reviewRejectType });
       const { response, data } = await callEdgeFunction('sumsub-update-status', {
         user_id: userId,
         review_status: reviewStatus,
@@ -148,7 +139,6 @@ export default function SumsubKYC({
         review_reject_type: reviewRejectType,
       });
       if (response.ok) {
-        console.log('✅ KYC status updated:', data);
       } else {
         console.error('❌ Failed to update KYC status:', data);
       }
@@ -163,24 +153,19 @@ export default function SumsubKYC({
     hasSubmittedInSessionRef.current = false;
 
     return () => {
-      console.log('🔄 SumsubKYC unmounting');
     };
   }, []);
 
   // Message handler
   const messageHandler = useCallback((type: string, payload: any) => {
-    console.log('📨 Sumsub message:', type, payload);
-
     if (type === 'idCheck.onApplicantLoaded') {
       // Save applicant ID when SDK loads applicant (only once)
       const applicantId = payload?.applicantId;
       if (applicantId && !applicantIdSavedRef.current) {
         applicantIdSavedRef.current = true;
-        console.log('📌 Applicant loaded:', applicantId);
         saveApplicantId(applicantId);
       }
     } else if (type === 'idCheck.onApplicantSubmitted' || type === 'idCheck.onApplicantResubmitted') {
-      console.log(`✅ ${type} - marking session as submitted`);
       // Mark that user has submitted documents in this session
       hasSubmittedInSessionRef.current = true;
       // Status will be updated via onApplicantStatusChanged event or webhook
@@ -198,13 +183,8 @@ export default function SumsubKYC({
       const moderationComment = payload?.reviewResult?.moderationComment || payload?.moderationComment || null;
       const buttonIds = payload?.reviewResult?.buttonIds || payload?.buttonIds || [];
 
-      // Log full payload to debug
-      console.log('🔄 Applicant status changed - FULL PAYLOAD:', JSON.stringify(payload, null, 2));
-      console.log('🔄 Extracted values:', { reviewStatus, reviewAnswer, reviewRejectType, rejectLabels, isReprocessing, hasSubmittedInSession: hasSubmittedInSessionRef.current });
-
       // Always process status changes to update the database
       // The webhook is the authoritative source, but we also update from SDK events for faster UX
-      console.log('✅ Processing status change...');
 
       // Update database whenever we have a review answer (GREEN or RED)
       if (reviewAnswer === 'GREEN' || reviewAnswer === 'RED') {
@@ -221,21 +201,17 @@ export default function SumsubKYC({
           kycStatus = isFinalRejection ? 'rejected' : 'resubmission';
           // Only close SDK for FINAL rejection, NOT for resubmission
           shouldCloseSDK = isFinalRejection;
-          console.log('📋 Rejection type:', { reviewRejectType, isFinalRejection, kycStatus, shouldCloseSDK });
         }
 
         // Update database with status and rejection type
-        console.log('📤 Calling updateKycStatus with:', { reviewStatus, reviewAnswer, reviewRejectType, kycStatus });
         updateKycStatus(reviewStatus, reviewAnswer, reviewRejectType);
 
         // DON'T auto-close SDK - let user see the result and close manually via X button
         // The SDK will show its own success/failure screen
-        console.log('✅ KYC status updated - SDK stays open for user to see result');
 
         // Note: User will close the modal manually by clicking X
         // The onComplete callback is no longer called automatically
       } else {
-        console.log('⏭️ No review answer yet, waiting for final result');
       }
     } else if (type === 'idCheck.onError') {
       console.error('❌ Sumsub error:', payload);

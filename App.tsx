@@ -358,7 +358,6 @@ const App: React.FC = () => {
         } else {
           // No user record found or session invalid - this indicates incomplete registration or session issue
           // Sign out the user for security
-          console.log('User record check failed - signing out for security (may be due to password change or session transition)');
           supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
           // Don't show alert during automatic sign-out to avoid spam
           setPublicUserId(null);
@@ -368,7 +367,6 @@ const App: React.FC = () => {
       }).catch((error) => {
         console.error('Error checking user registration:', error);
         // If there's an error checking, sign out to be safe
-        console.log('Error during user record check - signing out for security');
         supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
         setPublicUserId(null);
         setKycStatus(null);
@@ -428,7 +426,6 @@ const App: React.FC = () => {
   // Handle KYC completion - just update status, DON'T auto-close
   // User must click X to close the modal
   const handleKycComplete = (status: KycStatus) => {
-    console.log("KYC status update received:", status);
     setKycStatus(status);
     // DON'T auto-close - user will click X when they're ready
     // The modal will be hidden next time they open the app if approved
@@ -591,18 +588,6 @@ const App: React.FC = () => {
       return;
     }
 
-    console.log("handleSelectOrder Debug:", {
-      teamName: team.name,
-      teamMarketTradingAssetId: team.market_trading_asset_id,
-      type,
-      portfolioLength: portfolio.length,
-      portfolioItems: portfolio.map((p) => ({
-        id: p.id,
-        market_trading_asset_id: p.market_trading_asset_id,
-        quantity: p.quantity,
-      })),
-    });
-
     // Check if user is logged in
     if (!user) {
       setAlertMessage("Please login to trade.");
@@ -625,16 +610,7 @@ const App: React.FC = () => {
       const position = portfolio.find(
         (p) => p.market_trading_asset_id === team.market_trading_asset_id,
       );
-      console.log(
-        "Position lookup result:",
-        position,
-        "team.market_trading_asset_id:",
-        team.market_trading_asset_id,
-        "position.market_trading_asset_id:",
-        position?.market_trading_asset_id,
-      );
       maxQuantity = position ? Number(position.quantity) : 0;
-      console.log("maxQuantity calculated:", maxQuantity);
 
       // Validation: Cannot sell if not owned
       if (maxQuantity <= 0) {
@@ -645,14 +621,6 @@ const App: React.FC = () => {
     }
 
     const holdingValue = type === "sell" ? maxQuantity : 0;
-    console.log(
-      "Creating Order with holding:",
-      holdingValue,
-      "maxQuantity:",
-      maxQuantity,
-      "type:",
-      type,
-    );
 
     const orderObject = {
       team,
@@ -662,7 +630,6 @@ const App: React.FC = () => {
       maxQuantity,
       holding: holdingValue, // Current holdings for sell orders
     };
-    console.log("Order object being created:", orderObject);
 
     // Create a completely new object to prevent mutations
     setSelectedOrder({ ...orderObject });
