@@ -113,7 +113,7 @@ serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const whatsappVerified = whatsappVerification?.verified_at !== null;
+    const whatsappVerified = whatsappVerification?.verified_at != null;
     const isUserVerified = compliance?.is_user_verified === true;
     const fullyVerified = isUserVerified;
 

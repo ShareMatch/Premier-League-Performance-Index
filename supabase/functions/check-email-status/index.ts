@@ -91,8 +91,8 @@ serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const emailVerified = emailVerification?.verified_at !== null;
-    const whatsappVerified = whatsappVerification?.verified_at !== null;
+    const emailVerified = emailVerification?.verified_at != null;
+    const whatsappVerified = whatsappVerification?.verified_at != null;
     const kycStatus = compliance?.kyc_status || "unverified";
 
     // Account is fully verified when both email and WhatsApp are verified

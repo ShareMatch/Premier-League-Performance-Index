@@ -42,6 +42,16 @@ serve(async (req) => {
     const SUMSUB_SECRET_KEY = Deno.env.get("SUMSUB_SECRET_KEY")
     const SUMSUB_BASE_URL = Deno.env.get("SUMSUB_BASE_URL") || "https://api.sumsub.com"
 
+    if (!SUMSUB_APP_TOKEN || !SUMSUB_SECRET_KEY) {
+      return new Response(
+        JSON.stringify({ error: "Missing Sumsub credentials" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      )
+    }
+
     const supabase = authContext.supabase
 
     // Get user info from users table
