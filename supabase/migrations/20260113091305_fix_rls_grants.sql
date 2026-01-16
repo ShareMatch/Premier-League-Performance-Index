@@ -82,7 +82,9 @@ CREATE POLICY "Service role full access on compliance" ON public.user_compliance
 ALTER TABLE public.user_otp_verification ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow service_role full access on otp" ON public.user_otp_verification;
 DROP POLICY IF EXISTS "Allow service_role full access on otp table" ON public.user_otp_verification;
-CREATE POLICY "Users can manage their own OTP" ON public.user_otp_verification FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own OTP" ON public.user_otp_verification FOR ALL
+  USING (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))
+  WITH CHECK (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id));
 CREATE POLICY "Service role full access on OTP" ON public.user_otp_verification FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Payment Details Table
@@ -92,7 +94,9 @@ DROP POLICY IF EXISTS "Users can insert their own payment details" ON public.use
 DROP POLICY IF EXISTS "Users can update their own payment details" ON public.user_payment_details;
 DROP POLICY IF EXISTS "Users can view their own payment details" ON public.user_payment_details;
 DROP POLICY IF EXISTS "Service role can manage all user payment details" ON public.user_payment_details;
-CREATE POLICY "Users can manage their own payment details" ON public.user_payment_details FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own payment details" ON public.user_payment_details FOR ALL
+  USING (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))
+  WITH CHECK (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id));
 CREATE POLICY "Service role full access on payment details" ON public.user_payment_details FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Crypto Wallets Table
@@ -101,7 +105,9 @@ DROP POLICY IF EXISTS "Users can insert their own crypto wallets" ON public.user
 DROP POLICY IF EXISTS "Users can update their own crypto wallets" ON public.user_crypto_wallets;
 DROP POLICY IF EXISTS "Users can view their own crypto wallets" ON public.user_crypto_wallets;
 DROP POLICY IF EXISTS "Service role can manage user crypto wallets" ON public.user_crypto_wallets;
-CREATE POLICY "Users can manage their own crypto wallets" ON public.user_crypto_wallets FOR ALL USING (auth.uid() IN (SELECT payment_method_id FROM public.user_payment_details WHERE user_id = auth.uid())) WITH CHECK (true);
+CREATE POLICY "Users can manage their own crypto wallets" ON public.user_crypto_wallets FOR ALL
+  USING (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id))
+  WITH CHECK (auth.uid() = (SELECT auth_user_id FROM users WHERE id = user_id));
 CREATE POLICY "Service role full access on crypto wallets" ON public.user_crypto_wallets FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Public Tables: Allow anon SELECT

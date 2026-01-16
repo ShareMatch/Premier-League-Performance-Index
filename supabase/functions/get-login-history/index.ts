@@ -1,5 +1,9 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
 import { restrictedCors } from "../_shared/cors.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
+
+declare const Deno: {
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
 
 interface LoginHistoryResult {
   id: string;
@@ -13,34 +17,7 @@ interface LoginHistoryResult {
 // Dynamic CORS headers
 // const corsHeaders will be set dynamically in the function
 
-const requireAuthUser = async (
-  req: Request
-): Promise<{ authUserId: string | null; error?: Response }> => {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return { authUserId: null, error: { status: 401, message: "Unauthorized" } };
-  }
-
-  const token = authHeader.split(" ")[1];
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return { authUserId: null, error: { status: 500, message: "Missing Supabase credentials" } };
-  }
-
-  const authClient = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { persistSession: false },
-  });
-
-  const { data: userData, error } = await authClient.auth.getUser(token);
-  if (error || !userData?.user) {
-    return { authUserId: null, error: { status: 401, message: "Invalid session" } };
-  }
-
-  return { authUserId: userData.user.id };
-};
-
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   const corsHeaders = restrictedCors(req.headers.get('origin'));
 
   // Handle CORS
