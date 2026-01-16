@@ -1,4 +1,9 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { restrictedCors } from "../_shared/cors.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
+
+declare const Deno: {
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
 
 interface LoginHistoryResult {
   id: string;
@@ -9,14 +14,12 @@ interface LoginHistoryResult {
   os: string | null;
 }
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+// Dynamic CORS headers
+// const corsHeaders will be set dynamically in the function
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -30,6 +33,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authCheck = await requireAuthUser(req);
+    if (authCheck.error) {
+      return new Response(
+        JSON.stringify({ error: authCheck.error.message }),
+        { status: authCheck.error.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { user_id, limit = 5 } = await req.json();
 
     if (!user_id) {
@@ -39,19 +50,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // Use the authenticated client from auth context
+    const supabase = authCheck.supabase;
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    const { data: ownerUser, error: ownerError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_user_id", authCheck.authUserId)
+      .maybeSingle();
+
+    if (ownerError || !ownerUser || ownerUser.id !== user_id) {
       return new Response(
-        JSON.stringify({ error: "Missing Supabase credentials" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
 
     // Query login history using the helper function
     const { data: loginHistory, error } = await supabase.rpc("get_user_login_history", {
