@@ -1,11 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-// CORS headers for browser requests
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+import { restrictedCors } from "../_shared/cors.ts";
 
 // R2 Configuration - Set these in Supabase Dashboard > Edge Functions > Secrets
 const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID") || "";
@@ -121,6 +115,8 @@ async function generateSignedUrl(
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });

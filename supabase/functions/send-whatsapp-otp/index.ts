@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendWhatsAppOtp, formatPhoneForWhatsApp, maskPhone } from "../_shared/whatsapp.ts";
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
 
 // Configurable via environment variables
 const OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("WHATSAPP_OTP_EXPIRY_MINUTES") ?? "2");
@@ -17,6 +12,8 @@ function generateOtp(): string {
 }
 
 serve(async (req: Request) => {
+    const corsHeaders = publicCors(req.headers.get('origin'));
+
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });

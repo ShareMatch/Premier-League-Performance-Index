@@ -3,14 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { buildResetEmailHTML } from "../_shared/email-templates.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
 
 // Neutral response to prevent email enumeration attacks
-const neutralResponse = () =>
+const neutralResponse = (corsHeaders: any) =>
   new Response(
     JSON.stringify({
       ok: true,
@@ -20,6 +16,8 @@ const neutralResponse = () =>
   );
 
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -35,12 +33,12 @@ serve(async (req: Request) => {
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("Missing Supabase configuration");
-      return neutralResponse();
+      return neutralResponse(corsHeaders);
     }
 
     if (!sendgridApiKey || !sendgridFromEmail) {
       console.error("Missing SendGrid configuration");
-      return neutralResponse();
+      return neutralResponse(corsHeaders);
     }
 
     // Parse request body
@@ -48,7 +46,7 @@ serve(async (req: Request) => {
     const emailRaw = body.email?.toString().trim();
 
     if (!emailRaw) {
-      return neutralResponse();
+      return neutralResponse(corsHeaders);
     }
 
     const email = emailRaw.toLowerCase();
@@ -72,14 +70,8 @@ serve(async (req: Request) => {
     const userExists = authUser?.users?.some(u => u.email?.toLowerCase() === email);
 
     if (authError || !userExists) {
-      console.log("🟡 [forgot-password] User not found - returning 404 error");
-      return new Response(
-        JSON.stringify({ error: "User does not exist" }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
+      console.log("🟡 [forgot-password] User not found - returning neutral response");
+      return neutralResponse(corsHeaders);
     }
 
     console.log("🟢 [forgot-password] User found for email:", email);
@@ -98,7 +90,7 @@ serve(async (req: Request) => {
 
     if (linkError || !linkData) {
       console.error("🔴 [forgot-password] generateLink error:", linkError);
-      return neutralResponse();
+      return neutralResponse(corsHeaders);
     }
 
     console.log("🟢 [forgot-password] Reset link generated");
@@ -108,7 +100,7 @@ serve(async (req: Request) => {
 
     if (!resetLink) {
       console.error("🔴 [forgot-password] No action_link in response");
-      return neutralResponse();
+      return neutralResponse(corsHeaders);
     }
 
     // Build the email HTML using the simplified template
@@ -137,12 +129,12 @@ serve(async (req: Request) => {
     }
 
     // Always return neutral response
-    return neutralResponse();
+    return neutralResponse(corsHeaders);
 
   } catch (error: unknown) {
     console.error("🔴 [forgot-password] Unexpected error:", error);
     // Always return neutral response even on error
-    return neutralResponse();
+    return neutralResponse(corsHeaders);
   }
 });
 

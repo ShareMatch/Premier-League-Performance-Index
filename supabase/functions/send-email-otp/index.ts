@@ -4,12 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
 import { sendSendgridEmail } from "../_shared/sendgrid.ts"; // NEW
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
 
 const OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("OTP_EXPIRY_MINUTES") ?? "10");
 const MAX_ATTEMPTS = parseInt(Deno.env.get("OTP_MAX_ATTEMPTS") ?? "5");
@@ -19,6 +14,8 @@ function generateOtp(): string {
 }
 
 serve(async (req: Request) => {
+    const corsHeaders = publicCors(req.headers.get('origin'));
+
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }

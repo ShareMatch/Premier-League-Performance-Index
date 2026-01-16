@@ -161,11 +161,10 @@ const PhoneInputField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${
-          error
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${error
             ? "ring-2 ring-red-500"
             : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-        } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         ref={dropdownRef}
       >
         {/* Country Selector */}
@@ -177,9 +176,8 @@ const PhoneInputField = ({
             setSearch("");
           }}
           disabled={disabled}
-          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${
-            disabled ? "cursor-not-allowed" : ""
-          }`}
+          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${disabled ? "cursor-not-allowed" : ""
+            }`}
         >
           <img
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
@@ -187,9 +185,8 @@ const PhoneInputField = ({
             className="w-5 h-4 object-cover rounded"
           />
           <ChevronDown
-            className={`w-3 h-3 text-gray-600 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`w-3 h-3 text-gray-600 transition-transform ${isOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
         <span className="text-gray-900 text-xs font-medium mr-2 font-sans">
@@ -203,9 +200,8 @@ const PhoneInputField = ({
           onChange={handleInputChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${
-            disabled ? "cursor-not-allowed" : ""
-          }`}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${disabled ? "cursor-not-allowed" : ""
+            }`}
         />
 
         {/* Dropdown */}
@@ -233,9 +229,8 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${
-                    c.code === countryIso ? "bg-brand-emerald500/10" : ""
-                  }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? "bg-brand-emerald500/10" : ""
+                    }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -446,21 +441,16 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       // Build E.164 phone numbers for comparison
       const newWhatsAppE164 = formData.whatsapp
         ? normalizePhoneToE164(
-            formData.whatsapp,
-            whatsappCountry.dialCode,
-            whatsappCountry.code
-          )
+          formData.whatsapp,
+          whatsappCountry.dialCode,
+          whatsappCountry.code
+        )
         : "";
 
       // Check for email duplicates if email field exists and has a value
       const emailField = fields.find((f) => f.key === "email");
       const newEmail = formData.email?.trim().toLowerCase();
       const currentEmailLower = currentEmail?.trim().toLowerCase();
-      console.log("Email check:", {
-        newEmail,
-        currentEmailLower,
-        emailField: !!emailField,
-      });
 
       // Check if email is being changed (or if we don't know current email, always check)
       const emailChanged =
@@ -468,9 +458,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       if (emailField && newEmail && emailChanged) {
         try {
-          console.log("Checking email status for:", newEmail);
           const emailStatus = await checkEmailVerificationStatus(newEmail);
-          console.log("Email status result:", emailStatus);
           // Block if email already exists (regardless of verification status)
           if (emailStatus.exists) {
             setFieldErrors((prev) => ({
@@ -488,11 +476,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       // Check for WhatsApp duplicates if WhatsApp is being changed
       const whatsappField = fields.find((f) => f.key === "whatsapp");
-      console.log("WhatsApp check:", {
-        newWhatsAppE164,
-        currentWhatsApp,
-        whatsappField: !!whatsappField,
-      });
 
       // Check if WhatsApp is being changed (or if we don't know current WhatsApp, always check)
       const whatsappChanged =
@@ -501,12 +484,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       if (whatsappField && newWhatsAppE164 && whatsappChanged) {
         try {
-          console.log("Checking WhatsApp status for:", newWhatsAppE164);
           const whatsappStatus = await checkWhatsAppVerificationStatus(
             newWhatsAppE164,
             currentUserId
           );
-          console.log("WhatsApp status result:", whatsappStatus);
           // Block if WhatsApp already exists (regardless of verification status)
           if (whatsappStatus.exists) {
             setFieldErrors((prev) => ({
@@ -525,12 +506,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       // Build final data with full E.164 phone numbers
       const finalData = { ...formData };
 
-      console.log("📋 EditDetailsModal formData:", formData);
-      console.log(
-        "📋 EditDetailsModal finalData (before phone conversion):",
-        finalData
-      );
-
       // Convert phone numbers to E.164 format
       if (formData.phone) {
         finalData.phone = normalizePhoneToE164(
@@ -543,7 +518,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         finalData.whatsapp = newWhatsAppE164;
       }
 
-      console.log("📋 EditDetailsModal calling onSave with:", finalData);
       await onSave(finalData);
     } catch (err: any) {
       console.error("Failed to save:", err);
@@ -598,11 +572,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
           {field.label}
         </label>
         <div
-          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${
-            fieldErrors[field.key]
+          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${fieldErrors[field.key]
               ? "ring-2 ring-red-500 focus-within:ring-red-500"
               : "focus-within:ring-brand-emerald500"
-          } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
+            } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           <input
             id={`edit-${field.key}`}
@@ -615,9 +588,8 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
                 : undefined
             }
             disabled={field.editable === false}
-            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${
-              field.editable === false ? "cursor-not-allowed" : ""
-            }`}
+            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${field.editable === false ? "cursor-not-allowed" : ""
+              }`}
             placeholder={`Enter ${field.label}`}
           />
         </div>
@@ -698,9 +670,8 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 ${
-                isButtonHovered ? "shadow-glow" : ""
-              }`}
+              className={`flex-1 rounded-full transition-all duration-300 ${isButtonHovered ? "shadow-glow" : ""
+                }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
