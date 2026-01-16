@@ -24,6 +24,7 @@ export interface OrchestratorConfig {
   skipModals?: string[];
   minScenarioCount?: number;
   autoLogin?: boolean;
+  blockedElements?: string[];
 }
 
 export interface OrchestratorResult {
@@ -78,6 +79,7 @@ export class IntelligentOrchestrator {
       skipModals: config?.skipModals || [],
       minScenarioCount: config?.minScenarioCount,
       autoLogin: config?.autoLogin || false,
+      blockedElements: config?.blockedElements || [],
     };
 
     this.riskAssessor = createRiskAssessor();
@@ -100,6 +102,7 @@ export class IntelligentOrchestrator {
     this.explorer = createExplorer(this.page, {
       maxDepth: this.config.maxExplorationDepth,
       skipModals: this.config.skipModals,
+      blockedElements: this.config.blockedElements,
     });
     await this.explorer.init();
 
@@ -174,7 +177,7 @@ export class IntelligentOrchestrator {
     if (
       this.config.minScenarioCount &&
       this.config.minScenarioCount >
-        riskAssessment.testingRecommendations.scenarioCount
+      riskAssessment.testingRecommendations.scenarioCount
     ) {
       console.log(
         `   📊 Overriding scenario count: ${riskAssessment.testingRecommendations.scenarioCount} → ${this.config.minScenarioCount}`
@@ -309,7 +312,7 @@ export class IntelligentOrchestrator {
     const avgScore =
       results.length > 0
         ? results.reduce((sum, r) => sum + r.qualityReport.overallScore, 0) /
-          results.length
+        results.length
         : 0;
 
     const fullResult: FullRunResult = {
