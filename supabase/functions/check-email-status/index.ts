@@ -115,13 +115,13 @@ serve(async (req: Request) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      // For registration or other checks, just confirm existence
+      // For registration or other checks, expose only what is needed to enforce uniqueness
       return new Response(
         JSON.stringify({
           exists: true,
-          emailVerified: false, // Don't reveal verification status to unauthenticated users
+          emailVerified: false,
           whatsappVerified: false,
-          fullyVerified: false,
+          fullyVerified,
           kyc_status: "unverified",
           accountLocked: false,
           canOverwrite: true,
