@@ -51,6 +51,7 @@ serve(async (req: Request) => {
     }
 
     const supabase = authContext.supabase;
+    const normalizedAuthEmail = String(authContext.publicUser.email ?? "").trim().toLowerCase();
 
     // Parse request body
     const body = await req.json() as { currentEmail: string; newEmail: string };
@@ -73,7 +74,7 @@ serve(async (req: Request) => {
       );
     }
 
-    if (currentEmail !== authContext.publicUser.email) {
+    if (currentEmail !== normalizedAuthEmail) {
       return new Response(
         JSON.stringify({ error: "Authenticated user does not match the provided email." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
