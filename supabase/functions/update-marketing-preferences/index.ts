@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireAuthUser } from "../_shared/require-auth.ts";
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { restrictedCors } from "../_shared/cors.ts";
 
 // Channels that users can update (excludes OTP channels)
 const ALLOWED_CHANNELS = ["email", "whatsapp", "sms", "personalized_marketing"] as const;
@@ -23,6 +18,8 @@ interface UpdatePreferencesPayload {
 }
 
 serve(async (req: Request) => {
+    const corsHeaders = restrictedCors(req.headers.get('origin'));
+
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
@@ -37,11 +34,8 @@ serve(async (req: Request) => {
             );
         }
 
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: { persistSession: false },
-        });
+        // Use the authenticated client from auth context
+        const supabase = authContext.supabase;
 
         const body: UpdatePreferencesPayload = await req.json();
         const { email, preferences } = body;

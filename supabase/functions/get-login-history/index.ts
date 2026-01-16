@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { restrictedCors } from "../_shared/cors.ts";
 
 interface LoginHistoryResult {
   id: string;
@@ -9,12 +10,8 @@ interface LoginHistoryResult {
   os: string | null;
 }
 
-// CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+// Dynamic CORS headers
+// const corsHeaders will be set dynamically in the function
 
 const requireAuthUser = async (
   req: Request
@@ -44,6 +41,8 @@ const requireAuthUser = async (
 };
 
 Deno.serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -74,19 +73,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      return new Response(
-        JSON.stringify({ error: "Missing Supabase credentials" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    // Use the authenticated client from auth context
+    const supabase = authCheck.supabase;
 
     const { data: ownerUser, error: ownerError } = await supabase
       .from("users")

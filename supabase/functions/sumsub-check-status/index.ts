@@ -1,15 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
 import { requireAuthUser } from "../_shared/require-auth.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { restrictedCors } from "../_shared/cors.ts"
 
 serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -37,8 +33,6 @@ serve(async (req) => {
     const SUMSUB_APP_TOKEN = Deno.env.get('SUMSUB_APP_TOKEN')
     const SUMSUB_SECRET_KEY = Deno.env.get('SUMSUB_SECRET_KEY')
     const SUMSUB_BASE_URL = Deno.env.get('SUMSUB_BASE_URL') || 'https://api.sumsub.com'
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!SUMSUB_APP_TOKEN || !SUMSUB_SECRET_KEY) {
       return new Response(
@@ -47,14 +41,7 @@ serve(async (req) => {
       )
     }
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'Missing Supabase credentials' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    const supabase = authContext.supabase
 
     if (authContext.publicUser.id !== user_id) {
       return new Response(

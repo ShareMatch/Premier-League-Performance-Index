@@ -1,27 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { publicCors } from "../_shared/cors.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // Try to authenticate, but don't fail if no auth (for registration flow)
     const authContext = await requireAuthUser(req);
-    if (authContext.error) {
-      return new Response(
-        JSON.stringify({ error: authContext.error.message }),
-        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const isAuthenticated = !authContext.error && authContext.authUserId;
 
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -50,13 +43,6 @@ serve(async (req: Request) => {
       );
     }
 
-    if (email !== authContext.publicUser.email) {
-      return new Response(
-        JSON.stringify({ error: "Forbidden" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     // Step 1: find user by email
     const { data: user, error: fetchUserErr } = await supabase
       .from("users")
@@ -76,6 +62,9 @@ serve(async (req: Request) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Check if this is an authenticated user checking their own email
+    const isOwnEmail = isAuthenticated && authContext.publicUser.email === email;
 
     // Step 2: Check email verification from user_otp_verification table
     const { data: emailVerification, error: emailErr } = await supabase
@@ -116,18 +105,35 @@ serve(async (req: Request) => {
     // Can overwrite if account is not fully verified
     const canOverwrite = !isUserVerified;
 
-    return new Response(
-      JSON.stringify({
-        exists: true,
-        emailVerified,
-        whatsappVerified,
-        fullyVerified,
-        kyc_status: kycStatus,
-        accountLocked,
-        canOverwrite,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Return detailed info only for authenticated users checking their own email
+    if (isOwnEmail) {
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          emailVerified,
+          whatsappVerified,
+          fullyVerified,
+          kyc_status: kycStatus,
+          accountLocked,
+          canOverwrite,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // For registration or other checks, just confirm existence
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          emailVerified: false, // Don't reveal verification status to unauthenticated users
+          whatsappVerified: false,
+          fullyVerified: false,
+          kyc_status: "unverified",
+          accountLocked: true, // Prevent registration
+          canOverwrite: false,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
   } catch (error: unknown) {
     console.error("Unhandled error:", error);

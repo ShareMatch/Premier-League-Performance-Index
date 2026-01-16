@@ -3,13 +3,7 @@ import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
 import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
-import { requireAuthUser } from "../_shared/require-auth.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { restrictedCors } from "../_shared/cors.ts";
 
 // Configurable via environment variables
 const EMAIL_OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("OTP_EXPIRY_MINUTES") ?? "5");
@@ -39,6 +33,8 @@ interface UpdatePayload {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });

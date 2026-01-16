@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
 import { requireAuthUser } from "../_shared/require-auth.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { restrictedCors } from "../_shared/cors.ts"
 
 // Sign Sumsub API request
 function signSumsubRequest(
@@ -70,6 +65,8 @@ async function fetchApplicantVerifiedName(
 }
 
 serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })

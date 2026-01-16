@@ -132,9 +132,14 @@ export const getPublicUserId = async (authUserId: string, userEmail?: string): P
                 .maybeSingle();
 
             if (!emailResult.error && emailResult.data) {
+                console.log('Found user record via email fallback:', emailResult.data.id);
                 return emailResult.data.id;
             }
         }
+
+        // If we can't find the user record, this indicates incomplete registration
+        // Don't try to create records from frontend - this should be handled by registration/login
+        console.log('No user record found for authenticated user. This indicates incomplete registration.');
 
         if (error) {
             console.error('Error fetching public user ID:', error);
@@ -887,11 +892,18 @@ export interface MarketingPreferencesResponse {
  * Update user marketing preferences via edge function (bypasses RLS)
  */
 export const updateMarketingPreferences = async (payload: MarketingPreferencesPayload): Promise<MarketingPreferencesResponse> => {
+    // Get the current session to include auth token
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/update-marketing-preferences`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(payload),
     });
@@ -1175,11 +1187,17 @@ export interface CheckEmailStatusResponse {
  * Used to prevent duplicate registrations for fully verified accounts
  */
 export const checkEmailVerificationStatus = async (email: string): Promise<CheckEmailStatusResponse> => {
+    // Try to get session for authenticated requests, fall back to anon key for registration
+    const { data: { session } } = await supabase.auth.getSession();
+    const authHeader = session
+        ? `Bearer ${session.access_token}`
+        : `Bearer ${SUPABASE_ANON_KEY}`;
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/check-email-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': authHeader,
         },
         body: JSON.stringify({ email }),
     });
@@ -1193,6 +1211,7 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
             emailVerified: false,
             whatsappVerified: false,
             fullyVerified: false,
+            kyc_status: "unverified",
         };
     }
 
@@ -1219,11 +1238,17 @@ export const checkWhatsAppVerificationStatus = async (
     whatsappPhone: string,
     excludeUserId?: string
 ): Promise<CheckWhatsAppStatusResponse> => {
+    // Try to get session for authenticated requests, fall back to anon key for registration
+    const { data: { session } } = await supabase.auth.getSession();
+    const authHeader = session
+        ? `Bearer ${session.access_token}`
+        : `Bearer ${SUPABASE_ANON_KEY}`;
+
     const response = await fetch(`${SUPABASE_URL}/functions/v1/check-whatsapp-status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Authorization': authHeader,
         },
         body: JSON.stringify({ whatsappPhone, excludeUserId }),
     });
@@ -1310,11 +1335,11 @@ export interface UserBankingDetails {
 }
 
 /**
- * Fetch user banking details from the user_banking_details table
+ * Fetch user banking details from the user_payment_details table
  */
 export const fetchUserBankingDetails = async (userId: string): Promise<UserBankingDetails | null> => {
     const { data, error } = await supabase
-        .from('user_banking_details')
+        .from('user_payment_details')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();

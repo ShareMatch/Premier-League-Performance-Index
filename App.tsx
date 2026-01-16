@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Team, Order, Wallet, Position, Transaction, League } from "./types";
+import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import TopBar from "./components/TopBar";
 import RightPanel from "./components/RightPanel";
@@ -280,7 +281,28 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       // Pass both auth_user_id and email for better fallback support
-      getPublicUserId(user.id, user.email).then(setPublicUserId);
+      getPublicUserId(user.id, user.email).then((userId) => {
+        if (userId) {
+          setPublicUserId(userId);
+        } else {
+          // No user record found or session invalid - this indicates incomplete registration or session issue
+          // Sign out the user for security
+          console.log('User record check failed - signing out for security (may be due to password change or session transition)');
+          supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
+          // Don't show alert during automatic sign-out to avoid spam
+          setPublicUserId(null);
+          setKycStatus(null);
+          setKycChecked(false);
+        }
+      }).catch((error) => {
+        console.error('Error checking user registration:', error);
+        // If there's an error checking, sign out to be safe
+        console.log('Error during user record check - signing out for security');
+        supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
+        setPublicUserId(null);
+        setKycStatus(null);
+        setKycChecked(false);
+      });
     } else {
       setPublicUserId(null);
       setKycStatus(null);
