@@ -121,10 +121,10 @@ serve(async (req: Request) => {
           exists: true,
           emailVerified: false, // Don't reveal verification status to unauthenticated users
           whatsappVerified: false,
-          fullyVerified,
+          fullyVerified: false,
           kyc_status: "unverified",
-          accountLocked: fullyVerified, // Prevent registration when fully verified
-          canOverwrite: !fullyVerified,
+          accountLocked: false,
+          canOverwrite: true,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

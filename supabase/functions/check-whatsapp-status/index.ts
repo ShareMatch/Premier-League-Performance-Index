@@ -106,16 +106,17 @@ serve(async (req: Request) => {
       .not("verified_at", "is", null)
       .maybeSingle();
 
-    // Fetch verification status from user_compliance
-    const { data: compliance } = await supabase
-      .from("user_compliance")
-      .select("is_user_verified")
+    const whatsappVerified = whatsappVerification?.verified_at != null;
+    const { data: emailVerification } = await supabase
+      .from("user_otp_verification")
+      .select("verified_at")
       .eq("user_id", user.id)
+      .eq("channel", "email")
+      .not("verified_at", "is", null)
       .maybeSingle();
 
-    const whatsappVerified = whatsappVerification?.verified_at != null;
-    const isUserVerified = compliance?.is_user_verified === true;
-    const fullyVerified = isUserVerified;
+    const emailVerified = emailVerification?.verified_at != null;
+    const fullyVerified = emailVerified && whatsappVerified;
 
     // Return detailed info only for authenticated users checking their own WhatsApp
     if (isOwnWhatsApp) {

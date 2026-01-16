@@ -88,17 +88,37 @@ export const placeTrade = async (
     // For sells: user receives subtotal - fee
     const totalCost = direction === 'buy' ? subtotal : subtotal - fee;
 
-    const { data, error } = await supabase.rpc('place_trade', {
-        p_user_id: userId,
-        p_market_trading_asset_id: marketTradingAssetId,
-        p_direction: direction,
-        p_price: price,
-        p_quantity: quantity,
-        p_total_cost: totalCost
+    const {
+        data: { session },
+        error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+        throw new Error('No active session. Please log in.');
+    }
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/place-trade`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+            marketTradingAssetId,
+            direction,
+            price,
+            quantity,
+            totalCost,
+        }),
     });
 
-    if (error) throw error;
-    return data;
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to place trade');
+    }
+
+    return result;
 };
 
 /**
@@ -1234,6 +1254,9 @@ export interface CheckEmailStatusResponse {
     emailVerified: boolean;
     whatsappVerified: boolean;
     fullyVerified: boolean;
+    kyc_status?: string;
+    accountLocked?: boolean;
+    canOverwrite?: boolean;
 }
 
 /**
@@ -1266,6 +1289,8 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
             whatsappVerified: false,
             fullyVerified: false,
             kyc_status: "unverified",
+            accountLocked: false,
+            canOverwrite: true,
         };
     }
 
