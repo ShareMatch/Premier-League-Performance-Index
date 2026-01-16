@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
 
 // Parse User-Agent to extract device info
 function parseUserAgent(ua: string): { deviceType: string; browser: string; os: string } {
@@ -37,6 +32,7 @@ function parseUserAgent(ua: string): { deviceType: string; browser: string; os: 
 
 
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
@@ -105,7 +101,7 @@ serve(async (req: Request) => {
             // If the user is unverified OR if the user lookup failed entirely:
             // 1. Attempt the actual Supabase Auth sign-in. This is crucial for security.
             const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-            const { error: authError } = await supabaseClient.auth.signInWithPassword({
+            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                 email,
                 password,
             });
@@ -117,7 +113,7 @@ serve(async (req: Request) => {
                     { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
                 );
             }
-            
+
             // 2. If user exists but is NOT fully verified, treat as "account doesn't exist"
             // This prevents information leakage about which emails have accounts
             if (userId && !isFullyVerified) {
@@ -130,12 +126,17 @@ serve(async (req: Request) => {
                 );
             }
 
-            // 3. If the code reaches here, it means Auth succeeded but the user record or compliance record 
-            //    is inconsistent (e.g., auth exists, but user record does not).
-            return new Response(
-                JSON.stringify({ success: false, message: "Account configuration error. Please contact support." }),
-                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+            // If user exists in auth but not in our users table, this indicates incomplete registration
+            if (!userId) {
+                console.log("Auth succeeded but no user record found for email:", email, "auth_user_id:", authData?.user?.id);
+                return new Response(
+                    JSON.stringify({
+                        success: false,
+                        message: "Account setup incomplete. Please complete registration or contact support."
+                    }),
+                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
         }
 
         // --- GLOBAL VERIFICATION PASSED: Attempt actual login (Only runs if isFullyVerified is TRUE) ---

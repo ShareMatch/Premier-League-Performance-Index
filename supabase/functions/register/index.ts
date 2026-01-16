@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
 
 interface RegistrationPayload {
     full_name: string;
@@ -43,8 +38,8 @@ async function isUserFullyVerified(supabase: any, userId: string): Promise<boole
 async function cleanupUserRecords(supabase: any, userId: string, authUserId: string | null) {
     console.log(`Starting cleanup for user ID: ${userId}`);
     
-    // Delete child records first to satisfy potential FK constraints 
-    await supabase.from("user_banking_details").delete().eq("user_id", userId);
+    // Delete child records first to satisfy potential FK constraints
+    await supabase.from("user_payment_details").delete().eq("user_id", userId);
     await supabase.from("wallets").delete().eq("user_id", userId);
     await supabase.from("user_compliance").delete().eq("user_id", userId);
     await supabase.from("user_otp_verification").delete().eq("user_id", userId);
@@ -66,6 +61,7 @@ async function cleanupUserRecords(supabase: any, userId: string, authUserId: str
 
 // --- MAIN SERVE FUNCTION ---
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
