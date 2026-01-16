@@ -106,12 +106,24 @@ export default function SumsubKYC({
 
   // Token expiration handler
   const accessTokenExpirationHandler = useCallback(async () => {
-    const { data } = await callEdgeFunction('sumsub-access-token', {
-      user_id: userId,
-      levelName
-    });
-    return data.token;
-  }, [userId, levelName]);
+    try {
+      const { data } = await callEdgeFunction('sumsub-access-token', {
+        user_id: userId,
+        levelName
+      });
+
+      if (!data?.token) {
+        throw new Error('No token returned from server');
+      }
+
+      return data.token;
+    } catch (err: any) {
+      console.error('❌ Access token refresh failed during expiration handling:', err);
+      setError('Your session has expired. Please refresh the page or log in again.');
+      onError?.(err);
+      return null;
+    }
+  }, [userId, levelName, onError]);
 
   // Save applicant ID to database (from SDK callback)
   const saveApplicantId = useCallback(async (applicantId: string) => {

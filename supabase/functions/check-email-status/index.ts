@@ -93,17 +93,12 @@ serve(async (req: Request) => {
 
     const emailVerified = emailVerification?.verified_at !== null;
     const whatsappVerified = whatsappVerification?.verified_at !== null;
-    const isUserVerified = compliance?.is_user_verified === true;
     const kycStatus = compliance?.kyc_status || "unverified";
 
-    // Account is fully verified if user has completed full verification process
-    const fullyVerified = isUserVerified;
-
-    // Account is locked if fully verified (is_user_verified = true)
-    const accountLocked = isUserVerified;
-
-    // Can overwrite if account is not fully verified
-    const canOverwrite = !isUserVerified;
+    // Account is fully verified when both email and WhatsApp are verified
+    const fullyVerified = emailVerified && whatsappVerified;
+    const accountLocked = fullyVerified;
+    const canOverwrite = !fullyVerified;
 
     // Return detailed info only for authenticated users checking their own email
     if (isOwnEmail) {
@@ -126,10 +121,10 @@ serve(async (req: Request) => {
           exists: true,
           emailVerified: false, // Don't reveal verification status to unauthenticated users
           whatsappVerified: false,
-          fullyVerified: false,
+          fullyVerified,
           kyc_status: "unverified",
-          accountLocked: true, // Prevent registration
-          canOverwrite: false,
+          accountLocked: fullyVerified, // Prevent registration when fully verified
+          canOverwrite: !fullyVerified,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
