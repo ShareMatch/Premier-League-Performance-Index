@@ -1,19 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // Try to authenticate, but don't fail if no auth (for registration flow)
+    const authContext = await requireAuthUser(req);
+    const isAuthenticated = !authContext.error && authContext.authUserId;
+
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -61,6 +63,9 @@ serve(async (req: Request) => {
       );
     }
 
+    // Check if this is an authenticated user checking their own email
+    const isOwnEmail = isAuthenticated && authContext.publicUser.email === email;
+
     // Step 2: Check email verification from user_otp_verification table
     const { data: emailVerification, error: emailErr } = await supabase
       .from("user_otp_verification")
@@ -86,32 +91,44 @@ serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const emailVerified = emailVerification?.verified_at !== null;
-    const whatsappVerified = whatsappVerification?.verified_at !== null;
-    const isUserVerified = compliance?.is_user_verified === true;
+    const emailVerified = emailVerification?.verified_at != null;
+    const whatsappVerified = whatsappVerification?.verified_at != null;
     const kycStatus = compliance?.kyc_status || "unverified";
 
-    // Account is fully verified if user has completed full verification process
-    const fullyVerified = isUserVerified;
+    // Account is fully verified when both email and WhatsApp are verified
+    const fullyVerified = emailVerified && whatsappVerified;
+    const accountLocked = fullyVerified;
+    const canOverwrite = !fullyVerified;
 
-    // Account is locked if fully verified (is_user_verified = true)
-    const accountLocked = isUserVerified;
-
-    // Can overwrite if account is not fully verified
-    const canOverwrite = !isUserVerified;
-
-    return new Response(
-      JSON.stringify({
-        exists: true,
-        emailVerified,
-        whatsappVerified,
-        fullyVerified,
-        kyc_status: kycStatus,
-        accountLocked,
-        canOverwrite,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Return detailed info only for authenticated users checking their own email
+    if (isOwnEmail) {
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          emailVerified,
+          whatsappVerified,
+          fullyVerified,
+          kyc_status: kycStatus,
+          accountLocked,
+          canOverwrite,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // For registration or other checks, expose only what is needed to enforce uniqueness
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          emailVerified: false,
+          whatsappVerified: false,
+          fullyVerified,
+          kyc_status: "unverified",
+          accountLocked: false,
+          canOverwrite: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
   } catch (error: unknown) {
     console.error("Unhandled error:", error);

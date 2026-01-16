@@ -6,7 +6,7 @@ import {
 } from "https://deno.land/std@0.177.0/node/crypto.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "none",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-payload-digest",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -399,9 +399,7 @@ serve(async (req) => {
         if (updateError) {
           console.error("Failed to save applicant ID:", updateError);
         } else {
-          console.log(
-            `Saved applicant ID ${applicantId} for user ${externalUserId}`
-          );
+          console.log(`Saved applicant ID ${applicantId} for user ${externalUserId}`);
         }
       }
     }
@@ -409,14 +407,12 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message || "Internal server error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error("Webhook processing error:", errorMsg);
+    return new Response(JSON.stringify({ error: errorMsg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
