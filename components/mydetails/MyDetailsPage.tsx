@@ -240,9 +240,8 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
         // Set login history from auth logs
         if (logins && logins.length > 0) {
-          console.log("📋 Login history fetched:", logins);
           // Format timestamps for display
-          const formattedLogins = logins.map((login) => ({
+          const formattedLogins = logins.map((login: any) => ({
             ...login,
             timestamp: formatLastLogin(login.timestamp),
           }));
@@ -262,7 +261,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         // Set marketing preferences from database
         if (userPrefs?.data) {
           const prefs = userPrefs.data;
-          console.log("📧 User preferences from DB:", prefs);
           setPreferences([
             { id: "email", label: "Email", enabled: Boolean(prefs.email) },
             {
@@ -327,8 +325,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const handleSaveAboutYou = async (updatedFields: Record<string, string>) => {
     if (!userId) return;
 
-    console.log("📝 handleSaveAboutYou called with:", updatedFields);
-
     const currentEmail = userDetails?.email || "";
     const currentWhatsApp = userDetails?.whatsapp_phone_e164 || "";
     const newEmail = updatedFields.email || "";
@@ -355,15 +351,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       try {
         // Send OTP to the NEW email to verify user has access to it
         // currentEmail is used to identify the user, newEmail is where OTP is sent
-        console.log(
-          "📧 Sending email OTP to new email for verification:",
-          newEmail
-        );
         await sendEmailOtp(currentEmail, {
           targetEmail: newEmail,
           forProfileChange: true,
         });
-        console.log("📧 Email OTP sent to new email successfully");
 
         setPendingChanges(changes);
         setVerificationEmail(newEmail); // Show NEW email in modal (where OTP was sent)
@@ -383,16 +374,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       try {
         // Send OTP to the NEW WhatsApp number to verify user has access to it
         // Identify user by current email, send OTP to new number
-        console.log(
-          "📱 Sending WhatsApp OTP to new number for verification:",
-          newWhatsApp
-        );
         await sendWhatsAppOtp({
           email: currentEmail,
           targetPhone: newWhatsApp,
           forProfileChange: true,
         });
-        console.log("📱 WhatsApp OTP sent to new number successfully");
 
         setPendingChanges(changes);
         setVerificationWhatsApp(newWhatsApp); // Show NEW number in modal (where OTP was sent)
@@ -408,12 +394,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     }
 
     // No verification needed - just update phone and/or display name via edge function
-    console.log("📝 Sending to editUserProfile:", {
-      currentEmail,
-      phone: updatedFields.phone,
-      displayName: newDisplayName
-    });
-
     await editUserProfile({
       currentEmail: currentEmail,
       phone: updatedFields.phone,
@@ -431,14 +411,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   // Handle email verification success
   // NOW we update the email to the new value (OTP was verified)
   const handleEmailVerificationSuccess = async () => {
-    console.log("🎉 handleEmailVerificationSuccess called");
-    console.log("📋 pendingChanges:", pendingChanges);
-
     // Don't close email modal yet if WhatsApp also needs verification
     // This keeps the overlay visible for a continuous experience
 
     if (!pendingChanges || !userId) {
-      console.log("❌ No pending changes or userId - aborting");
       setShowEmailVerification(false);
       setPendingChanges(null);
       return;
@@ -449,11 +425,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     try {
       // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.emailChanged && pendingChanges.email) {
-        console.log(
-          "✅ Email verified, updating via editUserProfile to:",
-          pendingChanges.email
-        );
-
         // editUserProfile just updates the DB - no OTP sending
         await editUserProfile({
           currentEmail: currentEmail,
@@ -462,8 +433,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           displayName: pendingChanges.displayName,
           emailAlreadyVerified: true,
         });
-
-        console.log("✅ Email and display name updated successfully via editUserProfile");
       }
 
       // Check if WhatsApp also needs verification
@@ -471,10 +440,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         // Send OTP to NEW WhatsApp number to verify user has access to it
         // Use the NEW email (now in DB) to identify user
         const emailForLookup = pendingChanges.email || currentEmail;
-        console.log(
-          "📱 WhatsApp also changed, sending OTP to new number:",
-          pendingChanges.whatsapp
-        );
         await sendWhatsAppOtp({
           email: emailForLookup,
           targetPhone: pendingChanges.whatsapp,
@@ -489,14 +454,11 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
       // All done - close modal and refresh user details
       setShowEmailVerification(false);
-      console.log("🔄 Refreshing user details...");
       const details = await fetchUserDetails(userId);
       if (details) {
-        console.log("✅ User details refreshed:", details);
         setUserDetails(details);
       }
       setPendingChanges(null);
-      console.log("🎉 Email update complete!");
     } catch (error: any) {
       console.error("❌ Failed to update email:", error);
       setShowEmailVerification(false);
@@ -525,11 +487,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     try {
       // Use the simple edit function (no OTP sending) - we already verified
       if (pendingChanges.whatsappChanged && pendingChanges.whatsapp) {
-        console.log(
-          "✅ WhatsApp verified, updating via editUserProfile to:",
-          pendingChanges.whatsapp
-        );
-
         // editUserProfile just updates the DB - no OTP sending
         await editUserProfile({
           currentEmail: currentEmail,
@@ -538,8 +495,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           displayName: pendingChanges.displayName,
           whatsappAlreadyVerified: true,
         });
-
-        console.log("✅ WhatsApp and display name updated successfully via editUserProfile");
       }
 
       // Refresh user details
@@ -562,11 +517,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     try {
       // OTP is stored against user's current email, so verify using current email
       const currentEmail = userDetails?.email || "";
-      console.log(
-        "🔐 Verifying email OTP (user identified by:",
-        currentEmail,
-        ")"
-      );
       const result = await verifyEmailOtp(currentEmail, code);
       return result.ok === true;
     } catch (error) {
@@ -585,11 +535,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         pendingChanges?.emailChanged && pendingChanges?.email
           ? pendingChanges.email
           : userDetails?.email || "";
-      console.log(
-        "🔐 Verifying WhatsApp OTP (user identified by email:",
-        emailForLookup,
-        ")"
-      );
       // forProfileChange: true skips the "already verified" check since user is changing to new number
       const result = await verifyWhatsAppOtp({
         email: emailForLookup,
@@ -610,7 +555,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       // verificationEmail contains the NEW email (where OTP should be sent)
       // We need current email to identify the user
       const currentEmail = userDetails?.email || "";
-      console.log("📧 Resending email OTP to new email:", verificationEmail);
       await sendEmailOtp(currentEmail, {
         targetEmail: verificationEmail,
         forProfileChange: true,
@@ -629,10 +573,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       // verificationWhatsApp contains the NEW number (where OTP should be sent)
       // We need current email to identify the user
       const currentEmail = userDetails?.email || "";
-      console.log(
-        "📱 Resending WhatsApp OTP to new number:",
-        verificationWhatsApp
-      );
       await sendWhatsAppOtp({
         email: currentEmail,
         targetPhone: verificationWhatsApp,
@@ -720,6 +660,20 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     currentPassword: string,
     newPassword: string
   ) => {
+    // Input validation
+    if (!currentPassword?.trim()) {
+      throw new Error("Current password is required");
+    }
+    if (!newPassword?.trim()) {
+      throw new Error("New password is required");
+    }
+    if (newPassword.length < 8) {
+      throw new Error("New password must be at least 8 characters long");
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      throw new Error("New password must contain at least one uppercase letter, one lowercase letter, and one number");
+    }
+
     // Get current user
     const {
       data: { user: authUser },
@@ -736,7 +690,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     if (verifyError) {
       // Check for specific error messages
       if (verifyError.message.includes("Invalid login credentials")) {
-        throw new Error("Current password is incorrect");
+        throw new Error("The current password you entered is incorrect.");
       }
       throw new Error("Failed to verify current password");
     }
@@ -760,7 +714,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const handleDeleteAccount = async () => {
     // TODO: Implement account deletion
     // This should call a backend function to properly delete the user
-    console.log("Delete account requested");
     setAlertMessage(
       "Account deletion feature coming soon. Please contact support."
     );

@@ -1,14 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSendgridEmail } from "../_shared/sendgrid.ts";
 import { generateOtpEmailHtml, generateOtpEmailSubject } from "../_shared/email-templates.ts";
 import { sendWhatsAppOtp, formatPhoneForWhatsApp } from "../_shared/whatsapp.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { requireAuthUser } from "../_shared/require-auth.ts";
+import { restrictedCors } from "../_shared/cors.ts";
 
 // Configurable via environment variables
 const EMAIL_OTP_EXPIRY_MINUTES = parseInt(Deno.env.get("OTP_EXPIRY_MINUTES") ?? "5");
@@ -38,33 +33,24 @@ interface UpdatePayload {
 }
 
 serve(async (req: Request) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Get environment variables
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY") ?? "";
-    const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL") ?? "";
-    const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
-    const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
-
-    // Validate required env vars
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase environment variables");
+    const authContext = await requireAuthUser(req);
+    if (authContext.error) {
       return new Response(
-        JSON.stringify({ error: "Server configuration error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    const supabase = authContext.supabase;
+    const normalizedAuthEmail = String(authContext.publicUser.email ?? "").trim().toLowerCase();
 
     // Parse request body
     const body: UpdatePayload = await req.json();
@@ -77,11 +63,18 @@ serve(async (req: Request) => {
       );
     }
 
-    // Get user by current email
+    if (currentEmail !== normalizedAuthEmail) {
+      return new Response(
+        JSON.stringify({ error: "Current email does not match logged-in user." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get user by id (session owner)
     const { data: user, error: fetchErr } = await supabase
       .from("users")
       .select("id, auth_user_id, full_name, email, whatsapp_phone_e164, profile_update_attempts")
-      .eq("email", currentEmail)
+      .eq("id", authContext.publicUser.id)
       .single();
 
     if (fetchErr || !user) {

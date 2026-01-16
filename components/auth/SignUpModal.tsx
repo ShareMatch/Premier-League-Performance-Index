@@ -998,7 +998,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       if (emailStatus.exists && emailStatus.fullyVerified) {
         setErrors((prev) => ({
           ...prev,
-          email: "An account with this email already exists",
+          email:
+            "An account with this email already exists. Please log in to continue.",
         }));
       } else {
         // Clear error if valid
@@ -1368,7 +1369,10 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       if (error instanceof RegistrationError) {
         // Handle specific duplicate errors
         if (error.duplicates?.includes("email")) {
-          setErrors({ email: "An account with this email already exists" });
+            setErrors({
+              email:
+                "An account with this email already exists. Please log in to continue.",
+            });
           setStep(1); // Go back to step 1 to show email error
         } else if (error.duplicates?.includes("phone")) {
           setErrors({

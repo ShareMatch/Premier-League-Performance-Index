@@ -132,7 +132,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true
             const lastUpdated = updateData?.last_updated_at ? new Date(updateData.last_updated_at) : null;
 
             if (!lastUpdated || lastUpdated < sixHoursAgo) {
-                console.log(`News for ${topic} is stale. Triggering update...`);
                 triggerUpdate();
             }
 

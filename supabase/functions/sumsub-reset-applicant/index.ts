@@ -1,54 +1,58 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
+import { requireAuthUser } from "../_shared/require-auth.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { restrictedCors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { user_id } = await req.json()
+    const authContext = await requireAuthUser(req)
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    const { user_id: rawUserId } = await req.json()
+    const user_id = rawUserId ? String(rawUserId).trim() : ""
 
     if (!user_id) {
       return new Response(
-        JSON.stringify({ error: 'user_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "user_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
-    // Get secrets from environment
-    const SUMSUB_APP_TOKEN = Deno.env.get('SUMSUB_APP_TOKEN')
-    const SUMSUB_SECRET_KEY = Deno.env.get('SUMSUB_SECRET_KEY')
-    const SUMSUB_BASE_URL = Deno.env.get('SUMSUB_BASE_URL') || 'https://api.sumsub.com'
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (user_id !== authContext.publicUser.id) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      )
+    }
+
+    const SUMSUB_APP_TOKEN = Deno.env.get("SUMSUB_APP_TOKEN")
+    const SUMSUB_SECRET_KEY = Deno.env.get("SUMSUB_SECRET_KEY")
+    const SUMSUB_BASE_URL = Deno.env.get("SUMSUB_BASE_URL") || "https://api.sumsub.com"
 
     if (!SUMSUB_APP_TOKEN || !SUMSUB_SECRET_KEY) {
-      console.error('Missing Sumsub credentials')
       return new Response(
-        JSON.stringify({ error: 'Missing Sumsub credentials' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Missing Sumsub credentials" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       )
     }
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      console.error('Missing Supabase credentials')
-      return new Response(
-        JSON.stringify({ error: 'Missing Supabase credentials' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Create Supabase client with service role
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    const supabase = authContext.supabase
 
     // Get user info from users table
     const { data: user, error: userError } = await supabase
