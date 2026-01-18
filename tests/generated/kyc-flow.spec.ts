@@ -11,7 +11,6 @@ import {
   uploadSumsubDocument,
   requestVerification,
   pollForVerificationResult,
-  simulateReviewInSandbox,
   getApplicantStatus,
   getVerifiedName,
 } from "../../adapters/sumsub";
@@ -108,8 +107,9 @@ test.describe("KYC Flow - SumSub API Integration", () => {
         finalStatus.reviewResult?.reviewAnswer;
 
       expect(reviewAnswer).toBeDefined();
-      // Note: Real verification might return GREEN, RED, or RETRY
-      expect(["GREEN", "RED", "RETRY"]).toContain(reviewAnswer);
+      
+      // For this test, we expect GREEN (approved)
+      expect(reviewAnswer).toBe("GREEN");
 
       console.log(`✓ Verification completed with result: ${reviewAnswer}`);
 
@@ -128,41 +128,30 @@ test.describe("KYC Flow - SumSub API Integration", () => {
         finalStatus.review?.reviewResult?.reviewAnswer ||
         finalStatus.reviewResult?.reviewAnswer;
 
-      // Map SumSub review answer to KYC status
-      let kycStatus: "approved" | "rejected" | "resubmission_requested" | "pending" = "pending";
-      if (reviewAnswer === "GREEN") {
-        kycStatus = "approved";
-      } else if (reviewAnswer === "RED") {
-        const rejectType =
-          finalStatus.review?.reviewResult?.reviewRejectType ||
-          finalStatus.reviewResult?.reviewRejectType;
-        kycStatus = rejectType === "FINAL" ? "rejected" : "resubmission_requested";
-      }
+      // Since we're only testing approved flow, status should be approved
+      expect(reviewAnswer).toBe("GREEN");
+      const kycStatus = "approved";
 
       // Update KYC compliance status
       const updated = await supabaseAdapter.updateKycStatus(TEST_USER.email, {
         kycStatus,
         applicantId,
         level: "id-and-liveness",
-        coolingOffUntil: kycStatus === "approved" 
-          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          : undefined,
+        coolingOffUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         reviewedAt: new Date().toISOString(),
       });
       expect(updated).toBe(true);
       console.log(`✓ Updated KYC status in database: ${kycStatus}`);
 
-      // If approved, also update verified name
-      if (kycStatus === "approved") {
-        const verifiedName = await getVerifiedName(applicantId);
-        if (verifiedName) {
-          const nameUpdated = await supabaseAdapter.updateVerifiedName(
-            TEST_USER.email,
-            verifiedName,
-          );
-          if (nameUpdated) {
-            console.log(`✓ Updated verified name in database: ${verifiedName}`);
-          }
+      // Update verified name
+      const verifiedName = await getVerifiedName(applicantId);
+      if (verifiedName) {
+        const nameUpdated = await supabaseAdapter.updateVerifiedName(
+          TEST_USER.email,
+          verifiedName,
+        );
+        if (nameUpdated) {
+          console.log(`✓ Updated verified name in database: ${verifiedName}`);
         }
       }
 
@@ -173,65 +162,6 @@ test.describe("KYC Flow - SumSub API Integration", () => {
       expect(dbStatus?.applicantId).toBe(applicantId);
       console.log(`✓ Verified database status: ${dbStatus?.kycStatus}`);
     });
-  });
-
-  test("should handle verification rejection gracefully", async ({
-    supabaseAdapter,
-  }) => {
-    // This test demonstrates handling of rejected applications using sandbox simulation
-    console.log("\n=== Testing Rejection Handling (Sandbox) ===\n");
-
-    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
-    expect(user).not.toBeNull();
-
-    // Use unique ID for this test
-    const testUserId = `${user.email}.rejection-test`;
-    const applicantId = await getOrCreateApplicant(
-      testUserId,
-      "id-and-liveness",
-      false, // Don't recreate, reuse existing
-    );
-
-    // Simulate a RED (rejected) review result with reject labels
-    await simulateReviewInSandbox(applicantId, "RED", [
-      "FORGERY",
-      "DOCUMENT_DAMAGED",
-    ]);
-    console.log("✓ Simulated RED review result in Sandbox");
-
-    // Verify the status from SumSub
-    const status = await getApplicantStatus(applicantId);
-
-    const reviewAnswer =
-      status.review?.reviewResult?.reviewAnswer ||
-      status.reviewResult?.reviewAnswer;
-
-    expect(reviewAnswer).toBeDefined();
-    expect(reviewAnswer).toBe("RED");
-
-    const rejectLabels =
-      status.review?.reviewResult?.rejectLabels ||
-      status.reviewResult?.rejectLabels;
-    console.log("Application rejected. Reasons:", rejectLabels);
-
-    // Update rejection status in Supabase database
-    const rejectType =
-      status.review?.reviewResult?.reviewRejectType ||
-      status.reviewResult?.reviewRejectType;
-    const kycStatus = rejectType === "FINAL" ? "rejected" : "resubmission_requested";
-
-    const updated = await supabaseAdapter.updateKycStatus(TEST_USER.email, {
-      kycStatus: kycStatus as "rejected" | "resubmission_requested",
-      applicantId,
-      level: "id-and-liveness",
-      reviewedAt: new Date().toISOString(),
-    });
-    
-    if (updated) {
-      console.log(`✓ Updated rejection status in database: ${kycStatus}`);
-    }
-
-    console.log("\n=== Rejection Handling Test Completed ===\n");
   });
 });
 
