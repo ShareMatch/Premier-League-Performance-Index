@@ -121,6 +121,14 @@ export default async function globalSetup(config: FullConfig) {
 
     // Create user in public.users table manually
     console.log('[Global Setup] Creating user record in public.users...');
+    console.log('[Global Setup] Insert data:', {
+      email: TEST_USER.email.toLowerCase(),
+      full_name: TEST_USER.fullName,
+      auth_user_id: authUserId,
+      phone_number: TEST_USER.phone,
+      country_code: '+971',
+    });
+    
     const { data: insertedUser, error: insertError } = await supabase
       .from('users')
       .insert({
@@ -133,7 +141,14 @@ export default async function globalSetup(config: FullConfig) {
       .select('id')
       .single();
 
+    console.log('[Global Setup] Insert result - data:', insertedUser, 'error:', insertError);
+
     if (insertError) {
+      console.log('[Global Setup] ❌ Insert error code:', insertError.code);
+      console.log('[Global Setup] ❌ Insert error message:', insertError.message);
+      console.log('[Global Setup] ❌ Insert error details:', insertError.details);
+      console.log('[Global Setup] ❌ Insert error hint:', insertError.hint);
+      
       // User might already exist due to trigger, check again
       if (insertError.code === '23505') { // Unique violation
         console.log('[Global Setup] User already exists in users table (race condition with trigger)');
@@ -145,18 +160,29 @@ export default async function globalSetup(config: FullConfig) {
         if (existingUserRetry) {
           await ensureOtpRecords(supabase, existingUserRetry.id);
         }
-      } else {
-        console.error('[Global Setup] Failed to create user record:', insertError.message);
-        console.error('[Global Setup] Error details:', JSON.stringify(insertError));
       }
     } else {
-      console.log(`[Global Setup] ✅ Created user record in public.users`);
+      console.log(`[Global Setup] ✅ Created user record in public.users with id: ${insertedUser?.id}`);
       if (insertedUser) {
         await ensureOtpRecords(supabase, insertedUser.id);
       }
     }
 
-    console.log(`[Global Setup] ✅ Test user ready: ${TEST_USER.email}`);
+    // VERIFY the user was actually created
+    const { data: verifyUser, error: verifyError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', TEST_USER.email.toLowerCase())
+      .maybeSingle();
+    
+    if (verifyUser) {
+      console.log(`[Global Setup] ✅ VERIFIED: User exists in public.users: ${verifyUser.email} (id: ${verifyUser.id})`);
+    } else {
+      console.log('[Global Setup] ❌ VERIFICATION FAILED: User NOT found in public.users after insert!');
+      console.log('[Global Setup] ❌ Verify error:', verifyError);
+    }
+
+    console.log(`[Global Setup] Test user setup complete: ${TEST_USER.email}`);
 
   } catch (err: any) {
     console.error('[Global Setup] Error:', err.message);

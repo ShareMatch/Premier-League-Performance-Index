@@ -128,12 +128,12 @@ test.describe("Login Flow", () => {
   test("Login with brute force attempt", async ({ page, supabaseAdapter }) => {
     console.log("[Test] Starting brute force test...");
     
-    // First verify user exists
+    // Check user exists (for debugging)
     const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
     console.log(`[Test] User exists in DB: ${!!user}`);
-    
-    // Skip this test if user doesn't exist
-    test.skip(!user, "User not found in public.users - global setup may have failed");
+    if (!user) {
+      console.log("[Test] ⚠️ User not found in public.users - global setup may have failed");
+    }
     
     await page.goto("/?action=login");
     const modal = page.locator('[data-testid="login-modal"]');
@@ -178,12 +178,12 @@ test.describe("Login Flow", () => {
   }) => {
     console.log("[Test] Starting valid login test...");
     
-    // First verify user exists in public.users
+    // Check user exists (for debugging)
     const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
     console.log(`[Test] User exists in DB: ${!!user}`);
-    
-    // Skip this test if user doesn't exist - global setup should create the user
-    test.skip(!user, "User not found in public.users - global setup may have failed");
+    if (!user) {
+      console.log("[Test] ⚠️ User not found in public.users - global setup may have failed");
+    }
     
     await page.goto("/?action=login");
     await page
