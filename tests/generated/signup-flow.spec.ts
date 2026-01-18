@@ -29,25 +29,9 @@ const TEST_USER = {
 };
 
 test.describe("Signup Flow", () => {
-  test.beforeEach(async ({ supabaseAdapter }) => {
-    console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
-    await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  });
-
-  test.afterEach(async ({ supabaseAdapter }, testInfo) => {
-    // If this is the final signup test AND it passed, keep the user
-    if (
-      testInfo.title ===
-        "Complete signup with email and whatsapp verification" &&
-      testInfo.status === "passed"
-    ) {
-      console.log("[Cleanup] Signup succeeded — keeping user in database");
-      return;
-    }
-
-    // Otherwise, clean up
-    await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  });
+  // Note: Global setup ensures test user exists
+  // Signup tests validate the UI flow, not user creation
+  // User is kept in database for subsequent tests (login, KYC, trading, etc.)
 
   test("Signup with empty fields", async ({ page, supabaseAdapter }) => {
     console.log("[Test] Starting...");
@@ -320,6 +304,10 @@ test.describe("Signup Flow", () => {
   }) => {
     test.setTimeout(180000);
 
+    // Clean up user before this specific test to ensure fresh signup
+    console.log(`[Setup] Cleaning up test user for fresh signup: ${TEST_USER.email}`);
+    await supabaseAdapter.deleteTestUser(TEST_USER.email);
+
     console.log("========================================");
     console.log("COMPLETE SIGNUP TEST WITH VERIFICATION");
     console.log(`Email: ${TEST_USER.email}`);
@@ -545,23 +533,37 @@ test.describe("Signup Flow", () => {
 
     // ============ VERIFY USER IN DATABASE ============
     console.log("[Verify] Checking user in database...");
-    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+    
+    // Wait a bit for database triggers to complete
+    await page.waitForTimeout(2000);
+    
+    let user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
 
-    if (user) {
-      console.log("  ✅ User found in database!");
-      console.log(`     - ID: ${user.id}`);
-      console.log(`     - Email: ${user.email}`);
-
-      const verificationStatus = await supabaseAdapter.isUserVerified(
-        TEST_USER.email,
-      );
-      console.log(`     - Email Verified: ${verificationStatus.email}`);
-      console.log(`     - WhatsApp Verified: ${verificationStatus.whatsapp}`);
-
-      // Assertions
-      expect(user).toBeTruthy();
-      expect(user.email).toBe(TEST_USER.email);
+    // Retry a few times if user not found (database trigger might be slow)
+    if (!user) {
+      console.log("  - User not found, retrying...");
+      for (let i = 0; i < 5; i++) {
+        await page.waitForTimeout(2000);
+        user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+        if (user) break;
+        console.log(`  - Retry ${i + 1}/5: User still not found...`);
+      }
     }
+
+    // This MUST pass - if user is not in database, test should fail
+    expect(user, "User should exist in database after signup").toBeTruthy();
+    
+    console.log("  ✅ User found in database!");
+    console.log(`     - ID: ${user.id}`);
+    console.log(`     - Email: ${user.email}`);
+
+    const verificationStatus = await supabaseAdapter.isUserVerified(
+      TEST_USER.email,
+    );
+    console.log(`     - Email Verified: ${verificationStatus.email}`);
+    console.log(`     - WhatsApp Verified: ${verificationStatus.whatsapp}`);
+
+    expect(user.email.toLowerCase()).toBe(TEST_USER.email.toLowerCase());
 
     await page.screenshot({ path: "test-results/signup-final.png" });
 
