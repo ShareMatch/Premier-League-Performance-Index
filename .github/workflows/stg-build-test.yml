@@ -22,7 +22,9 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_STAGING_SERVICE_ROLE_KEY }}
       VITE_SUPABASE_URL: ${{ secrets.SUPABASE_STG_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_STAGING_ANON_KEY }}
-      
+
+      SUMSUB_APP_TOKEN: ${{ secrets.SUMSUB_APP_TOKEN }}
+      SUMSUB_SECRET_KEY: ${{ secrets.SUMSUB_SECRET_KEY }}
       CI: true
 
     steps:
