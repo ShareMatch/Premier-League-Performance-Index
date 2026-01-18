@@ -120,24 +120,24 @@ export default async function globalSetup(config: FullConfig) {
     }
 
     // Create user in public.users table manually
+    // Column names from actual schema:
+    // - phone_e164 (not phone_number) - E.164 format like +971561164259
+    // - country_code is char(2) like 'AE' (not '+971')
     console.log('[Global Setup] Creating user record in public.users...');
-    console.log('[Global Setup] Insert data:', {
+    
+    const insertData = {
       email: TEST_USER.email.toLowerCase(),
       full_name: TEST_USER.fullName,
       auth_user_id: authUserId,
-      phone_number: TEST_USER.phone,
-      country_code: '+971',
-    });
+      phone_e164: `+971${TEST_USER.phone}`,  // E.164 format
+      country_code: 'AE',  // 2-letter country code
+    };
+    
+    console.log('[Global Setup] Insert data:', insertData);
     
     const { data: insertedUser, error: insertError } = await supabase
       .from('users')
-      .insert({
-        email: TEST_USER.email.toLowerCase(),
-        full_name: TEST_USER.fullName,
-        auth_user_id: authUserId,
-        phone_number: TEST_USER.phone,
-        country_code: '+971',
-      })
+      .insert(insertData)
       .select('id')
       .single();
 
