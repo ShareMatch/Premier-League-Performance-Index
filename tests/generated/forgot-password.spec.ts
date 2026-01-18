@@ -59,10 +59,18 @@ test.describe("Forgot Password Flow", () => {
       resetLink = body.resetLink;
       expect(resetLink).toBeTruthy();
       console.log("✅ Got reset link from test endpoint");
+      
+      // Fix redirect URL if it points to localhost (in CI, we need the staging URL)
+      const appBaseUrl = process.env.APP_BASE_URL || process.env.VITE_APP_URL || 'http://localhost:3000';
+      if (resetLink && resetLink.includes('redirect_to=http://localhost:3000')) {
+        resetLink = resetLink.replace('redirect_to=http://localhost:3000', `redirect_to=${encodeURIComponent(appBaseUrl)}`);
+        console.log("📝 Fixed redirect URL to:", appBaseUrl);
+      }
     });
 
     // Step 3: Navigate to reset link and set new password
     await test.step("Set new password via reset link", async () => {
+      console.log("🔗 Navigating to reset link:", resetLink);
       await page.goto(resetLink!);
 
       // Wait for reset password modal to appear

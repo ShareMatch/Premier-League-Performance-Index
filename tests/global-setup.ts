@@ -24,6 +24,8 @@ export default async function globalSetup(config: FullConfig) {
     return;
   }
 
+  console.log(`[Global Setup] Using Supabase URL: ${supabaseUrl.substring(0, 30)}...`);
+
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false },
   });
@@ -36,16 +38,28 @@ export default async function globalSetup(config: FullConfig) {
       .eq('email', TEST_USER.email.toLowerCase())
       .maybeSingle();
 
+    if (queryError) {
+      console.error('[Global Setup] Error querying users table:', queryError.message);
+    }
+
     if (existingUser) {
-      console.log(`[Global Setup] ✅ Test user already exists: ${TEST_USER.email}`);
+      console.log(`[Global Setup] ✅ Test user already exists in public.users: ${TEST_USER.email}`);
+      
+      // Still ensure OTP records exist
+      await ensureOtpRecords(supabase, existingUser.id);
+      
       console.log('Global setup complete.');
       return;
     }
 
-    console.log(`[Global Setup] Test user not found, creating: ${TEST_USER.email}`);
+    console.log(`[Global Setup] Test user not found in public.users, creating: ${TEST_USER.email}`);
 
     // Check if user exists in auth but not in users table
     const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) {
+      console.error('[Global Setup] Error listing auth users:', listError.message);
+    }
+    
     const existingAuthUser = authUsers?.users?.find(
       u => u.email?.toLowerCase() === TEST_USER.email.toLowerCase()
     );
@@ -55,8 +69,19 @@ export default async function globalSetup(config: FullConfig) {
     if (existingAuthUser) {
       console.log(`[Global Setup] Found existing auth user: ${existingAuthUser.id}`);
       authUserId = existingAuthUser.id;
+      
+      // Update the user to ensure email is confirmed
+      const { error: updateError } = await supabase.auth.admin.updateUserById(authUserId, {
+        email_confirm: true,
+      });
+      if (updateError) {
+        console.warn('[Global Setup] Could not confirm email:', updateError.message);
+      } else {
+        console.log('[Global Setup] ✅ Confirmed email for existing auth user');
+      }
     } else {
       // Create user in Supabase Auth
+      console.log('[Global Setup] Creating new auth user...');
       const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
         email: TEST_USER.email,
         password: TEST_USER.password,
@@ -73,11 +98,30 @@ export default async function globalSetup(config: FullConfig) {
       }
 
       authUserId = newAuthUser.user.id;
-      console.log(`[Global Setup] Created auth user: ${authUserId}`);
+      console.log(`[Global Setup] ✅ Created auth user: ${authUserId}`);
     }
 
-    // Create user in public.users table
-    const { error: insertError } = await supabase
+    // Wait a bit for any database triggers to run
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Check again if user was created by trigger
+    const { data: userAfterTrigger } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', TEST_USER.email.toLowerCase())
+      .maybeSingle();
+
+    if (userAfterTrigger) {
+      console.log('[Global Setup] ✅ User was created by database trigger');
+      await ensureOtpRecords(supabase, userAfterTrigger.id);
+      console.log(`[Global Setup] ✅ Test user ready: ${TEST_USER.email}`);
+      console.log('Global setup complete.');
+      return;
+    }
+
+    // Create user in public.users table manually
+    console.log('[Global Setup] Creating user record in public.users...');
+    const { data: insertedUser, error: insertError } = await supabase
       .from('users')
       .insert({
         email: TEST_USER.email.toLowerCase(),
@@ -85,55 +129,75 @@ export default async function globalSetup(config: FullConfig) {
         auth_user_id: authUserId,
         phone_number: TEST_USER.phone,
         country_code: '+971',
-      });
+      })
+      .select('id')
+      .single();
 
     if (insertError) {
       // User might already exist due to trigger, check again
       if (insertError.code === '23505') { // Unique violation
-        console.log('[Global Setup] User already exists in users table (created by trigger)');
+        console.log('[Global Setup] User already exists in users table (race condition with trigger)');
+        const { data: existingUserRetry } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', TEST_USER.email.toLowerCase())
+          .single();
+        if (existingUserRetry) {
+          await ensureOtpRecords(supabase, existingUserRetry.id);
+        }
       } else {
         console.error('[Global Setup] Failed to create user record:', insertError.message);
+        console.error('[Global Setup] Error details:', JSON.stringify(insertError));
       }
     } else {
       console.log(`[Global Setup] ✅ Created user record in public.users`);
-    }
-
-    // Ensure OTP verification records exist
-    const { data: userData } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', TEST_USER.email.toLowerCase())
-      .single();
-
-    if (userData) {
-      // Create email OTP record
-      await supabase
-        .from('user_otp_verification')
-        .upsert({
-          user_id: userData.id,
-          channel: 'email',
-          otp_attempts: 0,
-          verified_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,channel' });
-
-      // Create WhatsApp OTP record
-      await supabase
-        .from('user_otp_verification')
-        .upsert({
-          user_id: userData.id,
-          channel: 'whatsapp',
-          otp_attempts: 0,
-          verified_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,channel' });
-
-      console.log('[Global Setup] ✅ OTP verification records created/updated');
+      if (insertedUser) {
+        await ensureOtpRecords(supabase, insertedUser.id);
+      }
     }
 
     console.log(`[Global Setup] ✅ Test user ready: ${TEST_USER.email}`);
 
   } catch (err: any) {
     console.error('[Global Setup] Error:', err.message);
+    console.error('[Global Setup] Stack:', err.stack);
   }
 
   console.log('Global setup complete.');
+}
+
+async function ensureOtpRecords(supabase: any, userId: string) {
+  try {
+    // Create/update email OTP record
+    const { error: emailOtpError } = await supabase
+      .from('user_otp_verification')
+      .upsert({
+        user_id: userId,
+        channel: 'email',
+        otp_attempts: 0,
+        verified_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,channel' });
+
+    if (emailOtpError) {
+      console.warn('[Global Setup] Could not create email OTP record:', emailOtpError.message);
+    }
+
+    // Create/update WhatsApp OTP record
+    const { error: whatsappOtpError } = await supabase
+      .from('user_otp_verification')
+      .upsert({
+        user_id: userId,
+        channel: 'whatsapp',
+        otp_attempts: 0,
+        verified_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,channel' });
+
+    if (whatsappOtpError) {
+      console.warn('[Global Setup] Could not create WhatsApp OTP record:', whatsappOtpError.message);
+    }
+
+    console.log('[Global Setup] ✅ OTP verification records created/updated');
+  } catch (err: any) {
+    console.warn('[Global Setup] Error creating OTP records:', err.message);
+  }
 }
