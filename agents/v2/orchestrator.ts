@@ -1,9 +1,6 @@
 import { Page } from "@playwright/test";
-import {
-  IntelligentDeepExplorer,
-  createIntelligentDeepExplorer,
-} from "./intelligent-deep-explorer";
-import type { ExplorationState } from "./intelligent-deep-explorer";
+import { Explorer, createExplorer } from "./explorer";
+import type { ExplorationState } from "./explorer";
 import { RiskAssessor, createRiskAssessor } from "./risk-assessor";
 import type { RiskAssessment } from "./risk-assessor";
 import { TestPlanner, createTestPlanner } from "./test-planner";
@@ -26,6 +23,8 @@ export interface OrchestratorConfig {
   skipQualityCheck?: boolean;
   skipModals?: string[];
   minScenarioCount?: number;
+  autoLogin?: boolean;
+  blockedElements?: string[];
 }
 
 export interface OrchestratorResult {
@@ -61,7 +60,7 @@ export class IntelligentOrchestrator {
   private config: OrchestratorConfig;
   private knowledgeStore: KnowledgeStore | null = null;
 
-  private explorer: IntelligentDeepExplorer | null = null;
+  private explorer: Explorer | null = null;
   private riskAssessor: RiskAssessor;
   private planner: TestPlanner;
   private generator: CodeGenerator;
@@ -78,6 +77,9 @@ export class IntelligentOrchestrator {
       skipExploration: config?.skipExploration || false,
       skipQualityCheck: config?.skipQualityCheck || false,
       skipModals: config?.skipModals || [],
+      minScenarioCount: config?.minScenarioCount,
+      autoLogin: config?.autoLogin || false,
+      blockedElements: config?.blockedElements || [],
     };
 
     this.riskAssessor = createRiskAssessor();
@@ -97,9 +99,10 @@ export class IntelligentOrchestrator {
 
     this.knowledgeStore = await getKnowledgeStore();
 
-    this.explorer = createIntelligentDeepExplorer(this.page, {
+    this.explorer = createExplorer(this.page, {
       maxDepth: this.config.maxExplorationDepth,
       skipModals: this.config.skipModals,
+      blockedElements: this.config.blockedElements,
     });
     await this.explorer.init();
 
@@ -128,6 +131,17 @@ export class IntelligentOrchestrator {
     console.log(`🎯 Processing: ${featureName} (Intelligent Mode)`);
     console.log(`   URL: ${url}`);
     console.log("=".repeat(60));
+
+    // Step 0: Authentication (if requested)
+    if (this.config.autoLogin) {
+      console.log("\n🔐 Step 0: Authenticating before exploration...");
+      const success = await this.performLogin();
+      if (!success) {
+        console.log("   ❌ Authentication failed, continuing as guest...");
+      } else {
+        console.log("   ✅ Authenticated successfully");
+      }
+    }
 
     if (!this.explorer) {
       await this.init();
@@ -160,9 +174,16 @@ export class IntelligentOrchestrator {
     );
 
     // Apply minScenarioCount override if configured
-    if (this.config.minScenarioCount && this.config.minScenarioCount > riskAssessment.testingRecommendations.scenarioCount) {
-      console.log(`   📊 Overriding scenario count: ${riskAssessment.testingRecommendations.scenarioCount} → ${this.config.minScenarioCount}`);
-      riskAssessment.testingRecommendations.scenarioCount = this.config.minScenarioCount;
+    if (
+      this.config.minScenarioCount &&
+      this.config.minScenarioCount >
+      riskAssessment.testingRecommendations.scenarioCount
+    ) {
+      console.log(
+        `   📊 Overriding scenario count: ${riskAssessment.testingRecommendations.scenarioCount} → ${this.config.minScenarioCount}`
+      );
+      riskAssessment.testingRecommendations.scenarioCount =
+        this.config.minScenarioCount;
     }
 
     // Step 3: Test Planning
@@ -177,7 +198,7 @@ export class IntelligentOrchestrator {
       exploration,
       {
         excludeFeatures,
-        minScenarioCount: this.config.minScenarioCount
+        minScenarioCount: this.config.minScenarioCount,
       }
     );
     await this.planner.storePlanAsPatterns(testPlan);
@@ -459,6 +480,59 @@ export class IntelligentOrchestrator {
     }
 
     return [...new Set(selectors)];
+  }
+
+  /**
+   * Perform automatic login using test credentials
+   */
+  async performLogin(): Promise<boolean> {
+    try {
+      // Hardcoded test credentials as requested
+      const TEST_USER = {
+        email: "affan@sharematch.me",
+        password: "Affan@1234",
+      };
+
+      console.log(`   🔑 Logging in as: ${TEST_USER.email}`);
+
+      // Navigate to login
+      await this.page.goto("/?action=login");
+
+      // Wait for modal
+      const loginModal = this.page.locator('[data-testid="login-modal"]');
+      await loginModal.waitFor({ timeout: 10000 });
+
+      // Fill and submit
+      await this.page.locator("#login-email").fill(TEST_USER.email);
+      await this.page.locator("#login-password").fill(TEST_USER.password);
+      await this.page.locator('[data-testid="login-submit-button"]').click();
+
+      // Wait for navigation or modal to close
+      // We expect either the login modal to disappear or a verification modal to appear
+      await this.page.waitForTimeout(5000);
+
+      const verificationModal = this.page.locator(
+        '[data-testid="verification-modal"]'
+      );
+
+      const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
+      const isVerificationModalVisible = await verificationModal
+        .isVisible()
+        .catch(() => false);
+
+      if (isLoginModalHidden || isVerificationModalVisible) {
+        return true;
+      }
+
+      // Retry check
+      await this.page.waitForTimeout(5000);
+      return (
+        (await loginModal.isHidden()) || (await verificationModal.isVisible())
+      );
+    } catch (error: any) {
+      console.error(`   ❌ Login error: ${error.message}`);
+      return false;
+    }
   }
 }
 

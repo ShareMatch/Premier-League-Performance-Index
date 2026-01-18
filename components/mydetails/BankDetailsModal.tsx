@@ -156,11 +156,16 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-2xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="bank-details-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="bank-details-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -172,6 +177,8 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
             <button
               onClick={onBack}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors flex-shrink-0"
+              aria-label="Go back"
+              data-testid="bank-details-modal-back-button"
             >
               <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </button>

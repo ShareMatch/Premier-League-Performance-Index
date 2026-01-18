@@ -145,11 +145,16 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="change-password-modal"
+      >
         {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="change-password-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -289,6 +294,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             <button
               onClick={handleClose}
               className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+              data-testid="change-password-modal-cancel-button"
             >
               Cancel
             </button>
@@ -302,6 +308,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               <Button
                 onClick={handleSave}
                 disabled={!canSubmit || saving}
+                data-testid="change-password-modal-update-button"
                 // keep Update fully opaque; show disabled cursor
                 className="!hover:opacity-100 !disabled:opacity-100 disabled:cursor-not-allowed"
               >

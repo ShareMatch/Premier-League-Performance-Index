@@ -161,11 +161,10 @@ const PhoneInputField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${
-          error
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${error
             ? "ring-2 ring-red-500"
             : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-        } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         ref={dropdownRef}
       >
         {/* Country Selector */}
@@ -177,9 +176,8 @@ const PhoneInputField = ({
             setSearch("");
           }}
           disabled={disabled}
-          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${
-            disabled ? "cursor-not-allowed" : ""
-          }`}
+          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${disabled ? "cursor-not-allowed" : ""
+            }`}
         >
           <img
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
@@ -187,9 +185,8 @@ const PhoneInputField = ({
             className="w-5 h-4 object-cover rounded"
           />
           <ChevronDown
-            className={`w-3 h-3 text-gray-600 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
+            className={`w-3 h-3 text-gray-600 transition-transform ${isOpen ? "rotate-180" : ""
+              }`}
           />
         </button>
         <span className="text-gray-900 text-xs font-medium mr-2 font-sans">
@@ -203,9 +200,8 @@ const PhoneInputField = ({
           onChange={handleInputChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${
-            disabled ? "cursor-not-allowed" : ""
-          }`}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${disabled ? "cursor-not-allowed" : ""
+            }`}
         />
 
         {/* Dropdown */}
@@ -233,9 +229,8 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${
-                    c.code === countryIso ? "bg-brand-emerald500/10" : ""
-                  }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? "bg-brand-emerald500/10" : ""
+                    }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -446,10 +441,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       // Build E.164 phone numbers for comparison
       const newWhatsAppE164 = formData.whatsapp
         ? normalizePhoneToE164(
-            formData.whatsapp,
-            whatsappCountry.dialCode,
-            whatsappCountry.code
-          )
+          formData.whatsapp,
+          whatsappCountry.dialCode,
+          whatsappCountry.code
+        )
         : "";
 
       // Check for email duplicates if email field exists and has a value
@@ -577,11 +572,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
           {field.label}
         </label>
         <div
-          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${
-            fieldErrors[field.key]
+          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${fieldErrors[field.key]
               ? "ring-2 ring-red-500 focus-within:ring-red-500"
               : "focus-within:ring-brand-emerald500"
-          } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
+            } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           <input
             id={`edit-${field.key}`}
@@ -594,9 +588,8 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
                 : undefined
             }
             disabled={field.editable === false}
-            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${
-              field.editable === false ? "cursor-not-allowed" : ""
-            }`}
+            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${field.editable === false ? "cursor-not-allowed" : ""
+              }`}
             placeholder={`Enter ${field.label}`}
           />
         </div>
@@ -623,11 +616,16 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-xl bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="edit-details-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="edit-details-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -667,19 +665,20 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
             <button
               onClick={onClose}
               className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+              data-testid="edit-details-modal-cancel-button"
             >
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 ${
-                isButtonHovered ? "shadow-glow" : ""
-              }`}
+              className={`flex-1 rounded-full transition-all duration-300 ${isButtonHovered ? "shadow-glow" : ""
+                }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >
               <Button
                 onClick={handleSave}
                 disabled={saving}
+                data-testid="edit-details-modal-save-button"
                 className={`${isButtonHovered ? "opacity-90" : ""}`}
               >
                 {saving ? "Saving..." : "Save"}

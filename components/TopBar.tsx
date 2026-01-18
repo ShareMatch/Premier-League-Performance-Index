@@ -130,16 +130,16 @@ const TopBar: React.FC<TopBarProps> = ({
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    
-    if (action === 'login' && !user) {
+    const action = urlParams.get("action");
+
+    if (action === "login" && !user) {
       setShowLoginModal(true);
       // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (action === 'signup' && !user) {
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (action === "signup" && !user) {
       setShowSignUpModal(true);
       // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
+      window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
 
@@ -362,7 +362,10 @@ const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <>
-      <div data-testid="top-bar" className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm">
+      <div
+        data-testid="top-bar"
+        className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm"
+      >
         {/* Mobile Search Overlay */}
         {isMobileSearchOpen ? (
           <div className="absolute inset-0 bg-[#005430] z-[60] flex items-center px-3 gap-2 animate-in fade-in slide-in-from-top-2">
@@ -379,6 +382,8 @@ const TopBar: React.FC<TopBarProps> = ({
             {searchQuery ? (
               <button
                 onClick={() => setSearchQuery("")}
+                aria-label="Clear search query"
+                data-testid="topbar-clear-search-mobile"
                 className="text-gray-400"
               >
                 <X className="h-5 w-5" />
@@ -386,8 +391,13 @@ const TopBar: React.FC<TopBarProps> = ({
             ) : (
               <button
                 onClick={startListening}
-                className={`text-gray-400 ${isListening ? "text-[#005430] animate-pulse" : ""
-                  }`}
+                aria-label={
+                  isListening ? "Stop voice search" : "Start voice search"
+                }
+                data-testid="topbar-voice-search-mobile"
+                className={`text-gray-400 ${
+                  isListening ? "text-[#005430] animate-pulse" : ""
+                }`}
               >
                 <Mic className={`h-5 w-5 ${isListening ? "text-white" : ""}`} />
               </button>
@@ -458,19 +468,17 @@ const TopBar: React.FC<TopBarProps> = ({
             <div className="hidden lg:flex flex-1 max-w-xl mx-6 relative z-50">
               <div className="relative w-full group">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={
-                      isListening
-                        ? "Listening..."
-                        : "Find assets and indices..."
-                    }
-                    className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
-                    data-testid="desktop-search-input"
-                  />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={
+                    isListening ? "Listening..." : "Find assets and indices..."
+                  }
+                  className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
+                  data-testid="desktop-search-input"
+                />
 
                 {/* Search Actions */}
                 {searchQuery ? (
@@ -483,10 +491,11 @@ const TopBar: React.FC<TopBarProps> = ({
                 ) : (
                   <button
                     onClick={startListening}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
-                      ? "text-[#005430]"
-                      : "text-gray-400 hover:text-gray-200"
-                      }`}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                      isListening
+                        ? "text-[#005430]"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
                   >
                     <Mic className="h-4 w-4" />
                   </button>
@@ -554,8 +563,9 @@ const TopBar: React.FC<TopBarProps> = ({
           {user && !isPasswordRecovery && (
             <div ref={balanceRef} className="hidden lg:relative lg:block">
               <button
-                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
-                  }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${
+                  isBalanceOpen ? "bg-[#003820]" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsBalanceOpen(!isBalanceOpen);
@@ -572,8 +582,9 @@ const TopBar: React.FC<TopBarProps> = ({
                   })}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-4 w-4 text-white/70 transition-transform ${
+                    isBalanceOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -619,8 +630,11 @@ const TopBar: React.FC<TopBarProps> = ({
           {user && !isPasswordRecovery && (
             <div ref={avatarRef} className="hidden lg:relative lg:block">
               <button
-                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
-                  }`}
+                aria-label="Open user menu"
+                data-testid="topbar-user-avatar-desktop"
+                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${
+                  isAvatarOpen ? "bg-[#004225] text-white" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsAvatarOpen(!isAvatarOpen);
@@ -707,8 +721,9 @@ const TopBar: React.FC<TopBarProps> = ({
                   })}
                 </span>
                 <ChevronDown
-                  className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-3 w-3 text-white/70 transition-transform ${
+                    isBalanceOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -717,6 +732,8 @@ const TopBar: React.FC<TopBarProps> = ({
 
               {/* User Icon Part */}
               <button
+                aria-label="Open user menu"
+                data-testid="topbar-user-avatar-mobile"
                 className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
                 onClick={(e) => {
                   e.stopPropagation();

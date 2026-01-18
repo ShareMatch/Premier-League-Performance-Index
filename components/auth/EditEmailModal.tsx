@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
-import { checkEmailVerificationStatus } from '../../lib/api';
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
+import { checkEmailVerificationStatus } from "../../lib/api";
 
 interface EditEmailModalProps {
   isOpen: boolean;
@@ -40,34 +40,38 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
     }
   }, [isOpen, currentEmail]);
 
-  const canSubmit = email.trim().length > 0 && isValidEmailFormat(email) && email.toLowerCase() !== currentEmail.toLowerCase() && !fieldError;
+  const canSubmit =
+    email.trim().length > 0 &&
+    isValidEmailFormat(email) &&
+    email.toLowerCase() !== currentEmail.toLowerCase() &&
+    !fieldError;
 
   // Handle email blur - validate format and check for duplicates
   const handleEmailBlur = async (value: string) => {
     const emailValue = value.trim().toLowerCase();
-    
+
     // Skip if empty
     if (!emailValue) return;
-    
+
     // Check format first
     if (!isValidEmailFormat(emailValue)) {
-      setFieldError('Invalid email address');
+      setFieldError("Invalid email address");
       return;
     }
-    
+
     // Check if email is same as current
     if (emailValue === currentEmail.toLowerCase()) {
       return;
     }
-    
+
     // Check if email already exists
     try {
       const emailStatus = await checkEmailVerificationStatus(emailValue);
       if (emailStatus.exists) {
-        setFieldError('An account with this email already exists');
+        setFieldError("An account with this email already exists");
       }
     } catch (e) {
-      console.error('Error checking email status on blur:', e);
+      console.error("Error checking email status on blur:", e);
     }
   };
 
@@ -84,7 +88,7 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
         onClose();
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to update email. Please try again.');
+      setError(err.message || "Failed to update email. Please try again.");
       setIsButtonHovered(false);
     } finally {
       setLoading(false);
@@ -102,11 +106,16 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-sm bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-5 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-sm bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-5 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="edit-email-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="edit-email-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -117,13 +126,25 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
             Edit Email
           </h2>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:gap-3 w-full">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2 sm:gap-3 w-full"
+          >
             {/* Email Input */}
             <div className="flex flex-col w-full gap-1 sm:gap-1.5">
-              <label htmlFor="edit-email" className="text-white text-xs sm:text-sm font-medium font-sans">
+              <label
+                htmlFor="edit-email"
+                className="text-white text-xs sm:text-sm font-medium font-sans"
+              >
                 Email Address
               </label>
-              <div className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${fieldError ? 'ring-2 ring-red-500 focus-within:ring-red-500' : 'focus-within:ring-brand-emerald500'}`}>
+              <div
+                className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${
+                  fieldError
+                    ? "ring-2 ring-red-500 focus-within:ring-red-500"
+                    : "focus-within:ring-brand-emerald500"
+                }`}
+              >
                 <input
                   id="edit-email"
                   type="email"
@@ -139,7 +160,9 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
                 />
               </div>
               {(fieldError || error) && (
-                <p className="text-red-400 text-[10px] sm:text-xs font-sans ml-1">{fieldError || error}</p>
+                <p className="text-red-400 text-[10px] sm:text-xs font-sans ml-1">
+                  {fieldError || error}
+                </p>
               )}
               {!fieldError && !error && (
                 <p className="text-gray-300 text-[10px] sm:text-xs font-sans ml-1">
@@ -154,12 +177,13 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
                 type="button"
                 onClick={onClose}
                 className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+                data-testid="edit-email-modal-cancel-button"
               >
                 Cancel
               </button>
               <div
                 className={`flex-1 rounded-full transition-all duration-300 ${
-                  isButtonHovered && canSubmit ? 'shadow-glow' : ''
+                  isButtonHovered && canSubmit ? "shadow-glow" : ""
                 }`}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
@@ -168,10 +192,11 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
                   type="submit"
                   disabled={!canSubmit || loading}
                   className={`w-full py-1.5 sm:py-2 rounded-full font-medium font-sans text-xs sm:text-sm transition-all duration-300 disabled:opacity-60 bg-white text-brand-primary ${
-                    isButtonHovered && canSubmit ? 'opacity-90' : ''
+                    isButtonHovered && canSubmit ? "opacity-90" : ""
                   }`}
+                  data-testid="edit-email-modal-update-button"
                 >
-                  {loading ? 'Updating...' : 'Update'}
+                  {loading ? "Updating..." : "Update"}
                 </button>
               </div>
             </div>
