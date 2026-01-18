@@ -41,11 +41,11 @@ class Audit {
     'tests/generated/login-flow.spec.ts',
     'tests/generated/kyc-flow.spec.ts',
     'tests/generated/home-page.spec.ts',
+    'tests/generated/user-profile-page.spec.ts',
     'tests/generated/index-page-trading.spec.ts',
     'tests/generated/asset-page-trading.spec.ts',
     'tests/generated/twilio.spec.ts',
     'tests/generated/my-media-inbox.spec.ts',
-    'tests/generated/user-profile-page.spec.ts',
     'tests/generated/forgot-password.spec.ts'
   ];
 

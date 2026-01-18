@@ -14,11 +14,11 @@ const TEST_USER_FOR_DESTRUCTIVE_TESTS = {
   newPassword: "Affan@5678",
 };
 
-// Test data for updates (NEVER MODIFY EMAIL IN TESTS)
+
 const UPDATED_PROFILE = {
   name: "Affan Updated",
-  email: "affan+88@sharematch.me", // Keep same email to avoid account loss
-  phone: "501234567", // Just the number part, country code will be UAE +971
+  email: "affan+88@sharematch.me",
+  phone: "501234567", 
   whatsapp: "501234567",
 };
 
