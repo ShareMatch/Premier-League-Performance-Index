@@ -235,21 +235,41 @@ test.describe('Index Page Trading Flow - Complete Buy/Sell', () => {
             await page.locator("#login-password").fill(TEST_USER.password);
             await page.locator('[data-testid="login-submit-button"]').click();
             await page.waitForTimeout(5000);
+
+            // Verify login succeeded - modal should close
+            const verificationModal = page.locator('[data-testid="verification-modal"]');
+            const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
+            const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
+
+            if (!isLoginModalHidden && !isVerificationModalVisible) {
+                // Retry check after a moment
+                await page.waitForTimeout(3000);
+                const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
+                const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
+                expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
+            } else {
+                expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
+            }
         });
 
         await test.step('Navigate to EPL', async () => {
             await page.goto('/market/EPL');
             await expect(page.getByRole('heading', { name: /Premier League/i })).toBeVisible({ timeout: 15000 });
+            // Wait for order book to load
+            await expect(page.getByText('Asset', { exact: true })).toBeVisible();
         });
 
         await test.step('Attempt to buy with excessive quantity', async () => {
+            // Wait for order book to load
             const arsenalRow = page.locator('[data-testid^="order-book-row-"]').filter({ hasText: 'Arsenal' }).first();
+            await expect(arsenalRow).toBeVisible({ timeout: 10000 });
+            
             const buyButton = arsenalRow.locator('[data-testid^="buy-button-"]');
             await buyButton.click();
 
             // Use :visible to avoid strict mode violations
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
-            await expect(rightPanel).toBeVisible();
+            await expect(rightPanel).toBeVisible({ timeout: 5000 });
             const tradeSlip = rightPanel.locator('[data-testid="trade-slip"]');
             await expect(tradeSlip).toBeVisible();
 

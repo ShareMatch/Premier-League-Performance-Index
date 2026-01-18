@@ -267,6 +267,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
 
       {/* Modal Content */}
       <div
+        data-testid="reset-password-modal"
         className="relative w-full flex flex-col items-center bg-[#005430] rounded-modal p-6 md:p-8 gap-6 z-[101]"
         style={{ maxWidth: "min(90vw, 550px)", maxHeight: "95vh" }}
       >
