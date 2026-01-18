@@ -33,22 +33,17 @@ const UPDATED_ADDRESS = {
 /**
  * Helper to check and log login errors
  */
-async function checkLoginError(page: any, context: string): Promise<string | null> {
-  const errorSelectors = [
-    '.text-red-400',
-    '[data-testid="login-error"]',
-    '.error-message',
-  ];
+async function checkLoginError(page: Page, context: string): Promise<string | null> {
+  // Only check for the specific login error element inside the login modal
+  const loginError = page.locator('[data-testid="login-error"]');
+  const isVisible = await loginError.isVisible().catch(() => false);
   
-  for (const selector of errorSelectors) {
-    const errorEl = page.locator(selector).first();
-    const isVisible = await errorEl.isVisible().catch(() => false);
-    if (isVisible) {
-      const text = await errorEl.textContent().catch(() => '(could not read error)');
+  if (isVisible) {
+      const text = await loginError.textContent().catch(() => '');
       console.log(`[${context}] ❌ Login error found: ${text}`);
       return text;
-    }
   }
+  
   return null;
 }
 
