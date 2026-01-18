@@ -30,6 +30,28 @@ const UPDATED_ADDRESS = {
   postCode: "12345",
 };
 
+/**
+ * Helper to check and log login errors
+ */
+async function checkLoginError(page: any, context: string): Promise<string | null> {
+  const errorSelectors = [
+    '.text-red-400',
+    '[data-testid="login-error"]',
+    '.error-message',
+  ];
+  
+  for (const selector of errorSelectors) {
+    const errorEl = page.locator(selector).first();
+    const isVisible = await errorEl.isVisible().catch(() => false);
+    if (isVisible) {
+      const text = await errorEl.textContent().catch(() => '(could not read error)');
+      console.log(`[${context}] ❌ Login error found: ${text}`);
+      return text;
+    }
+  }
+  return null;
+}
+
 // Login helper function
 async function loginUser(page: any) {
   await test.step("Login to application", async () => {
@@ -49,7 +71,15 @@ async function loginUser(page: any) {
       page.locator('[data-testid="login-submit-button"]').click(),
     ]);
 
-    await page.waitForTimeout(2000);
+    // Wait longer in CI
+    await page.waitForTimeout(process.env.CI ? 8000 : 2000);
+
+    // Check for login errors first
+    const loginError = await checkLoginError(page, 'User Profile Login');
+    if (loginError) {
+      await page.screenshot({ path: 'test-results/user-profile-login-error.png' });
+      throw new Error(`Login failed with error: ${loginError}`);
+    }
 
     // Wait for login modal to disappear
     await expect(loginModal)
@@ -76,6 +106,8 @@ async function loginUser(page: any) {
       await closeButton.click({ timeout: 5000 });
       await expect(kycModal).toBeHidden({ timeout: 5000 });
     }
+    
+    console.log("[User Profile Login] ✅ Login successful");
   });
 }
 
