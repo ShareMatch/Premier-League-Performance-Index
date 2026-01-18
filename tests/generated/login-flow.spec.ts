@@ -18,7 +18,7 @@
  * DO NOT EDIT DIRECTLY - regenerate using the test planner
  */
 
-import { test, expect } from "../../adapters";
+import { test, expect, Page } from "../../adapters";
 
 const TEST_USER = {
   email: `affan@sharematch.me`,
@@ -27,6 +27,28 @@ const TEST_USER = {
   phone: "501234567",
   dob: { month: "0", year: "1990", day: "15" },
 };
+
+/**
+ * Helper to check and log login errors
+ */
+async function checkLoginError(page: Page, context: string): Promise<string | null> {
+  const errorSelectors = [
+    '.text-red-400',
+    '[data-testid="login-error"]',
+    '.error-message',
+  ];
+  
+  for (const selector of errorSelectors) {
+    const errorEl = page.locator(selector).first();
+    const isVisible = await errorEl.isVisible().catch(() => false);
+    if (isVisible) {
+      const text = await errorEl.textContent().catch(() => '(could not read error)');
+      console.log(`[${context}] ❌ Login error found: ${text}`);
+      return text;
+    }
+  }
+  return null;
+}
 
 test.describe("Login Flow", () => {
   // test.beforeEach(async ({ supabaseAdapter }) => {
@@ -133,34 +155,35 @@ test.describe("Login Flow", () => {
     console.log(`[Test] User exists in DB: ${!!user}`);
     if (!user) {
       console.log("[Test] ⚠️ User not found in public.users - global setup may have failed");
+      // Don't fail immediately - let login attempt show the actual error
     }
     
     await page.goto("/?action=login");
     const modal = page.locator('[data-testid="login-modal"]');
-    await modal.waitFor({ timeout: 5000 });
+    await modal.waitFor({ timeout: 10000 });
 
     await page.locator("#login-email").fill(TEST_USER.email);
     await page.locator("#login-password").fill(TEST_USER.password);
     await page.locator('[data-testid="login-submit-button"]').click();
-    await page.waitForTimeout(5000);
+    
+    // Wait longer for CI
+    await page.waitForTimeout(process.env.CI ? 8000 : 5000);
 
-    // Check for error message first
-    const errorMsg = modal.locator('.text-red-400').first();
-    const hasError = await errorMsg.isVisible().catch(() => false);
-    if (hasError) {
-      const errorText = await errorMsg.textContent();
-      console.log(`[Test] Login error: ${errorText}`);
+    // Check for error message
+    const loginError = await checkLoginError(page, 'Brute Force Test');
+    if (loginError) {
+      // If login failed, fail the test with clear message
+      expect(loginError, `Login failed with error: ${loginError}`).toBeNull();
     }
 
     const verificationModal = page.locator('[data-testid="verification-modal"]');
-
     const isLoginModalHidden = await modal.isHidden().catch(() => false);
     const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
 
     console.log(`[Test] Modal hidden: ${isLoginModalHidden}, Verification visible: ${isVerificationModalVisible}`);
 
     if (!isLoginModalHidden && !isVerificationModalVisible) {
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
       const isLoginModalHiddenRetry = await modal.isHidden().catch(() => false);
       const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
       console.log(`[Test] Retry - Modal hidden: ${isLoginModalHiddenRetry}, Verification visible: ${isVerificationModalVisibleRetry}`);
@@ -186,25 +209,23 @@ test.describe("Login Flow", () => {
     }
     
     await page.goto("/?action=login");
-    await page
-      .locator('[data-testid="login-modal"]')
-      .waitFor({ timeout: 5000 });
+    const loginModal = page.locator('[data-testid="login-modal"]');
+    await loginModal.waitFor({ timeout: 10000 });
 
     await page.locator("#login-email").fill(TEST_USER.email);
     await page.locator("#login-password").fill(TEST_USER.password);
     await page.locator('[data-testid="login-submit-button"]').click();
-    await page.waitForTimeout(5000);
-
-    const loginModal = page.locator('[data-testid="login-modal"]');
     
-    // Check for error message first
-    const errorMsg = loginModal.locator('.text-red-400').first();
-    const hasError = await errorMsg.isVisible().catch(() => false);
-    if (hasError) {
-      const errorText = await errorMsg.textContent();
-      console.log(`[Test] ❌ Login error: ${errorText}`);
+    // Wait longer for CI
+    await page.waitForTimeout(process.env.CI ? 8000 : 5000);
+
+    // Check for error message
+    const loginError = await checkLoginError(page, 'Valid Login Test');
+    if (loginError) {
       // Take screenshot for debugging
       await page.screenshot({ path: 'test-results/login-error.png' });
+      // Fail with clear message
+      expect(loginError, `Login failed with error: ${loginError}`).toBeNull();
     }
     
     const verificationModal = page.locator('[data-testid="verification-modal"]');
@@ -214,7 +235,7 @@ test.describe("Login Flow", () => {
     console.log(`[Test] Modal hidden: ${isLoginModalHidden}, Verification visible: ${isVerificationModalVisible}`);
 
     if (!isLoginModalHidden && !isVerificationModalVisible) {
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
       const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
       const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
       console.log(`[Test] Retry - Modal hidden: ${isLoginModalHiddenRetry}, Verification visible: ${isVerificationModalVisibleRetry}`);

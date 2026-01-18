@@ -31,7 +31,12 @@ export default async function globalSetup(config: FullConfig) {
   });
 
   try {
-    // Check if user already exists in public.users table
+    // ========================================
+    // STEP 1: ALWAYS DELETE EXISTING USER FIRST
+    // This ensures a fresh user with correct password every run
+    // ========================================
+    console.log('[Global Setup] Step 1: Checking for existing user to delete...');
+    
     const { data: existingUser, error: queryError } = await supabase
       .from('users')
       .select('id, email, auth_user_id')
@@ -43,150 +48,182 @@ export default async function globalSetup(config: FullConfig) {
     }
 
     if (existingUser) {
-      console.log(`[Global Setup] ✅ Test user already exists in public.users: ${TEST_USER.email}`);
+      console.log(`[Global Setup] Found existing user in public.users: ${existingUser.email}`);
       
-      // Still ensure OTP records exist
-      await ensureOtpRecords(supabase, existingUser.id);
+      // Delete from auth.users first (cascade will handle related tables or we do it manually)
+      if (existingUser.auth_user_id) {
+        console.log(`[Global Setup] Deleting auth user: ${existingUser.auth_user_id}`);
+        const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(existingUser.auth_user_id);
+        if (deleteAuthError) {
+          console.error('[Global Setup] Error deleting auth user:', deleteAuthError.message);
+        } else {
+          console.log('[Global Setup] ✅ Deleted auth user');
+        }
+      }
       
+      // Delete from public.users (if not cascaded)
+      const { error: deleteUserError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', existingUser.id);
+      
+      if (deleteUserError) {
+        console.error('[Global Setup] Error deleting public user:', deleteUserError.message);
+      } else {
+        console.log('[Global Setup] ✅ Deleted public user');
+      }
+      
+      // Wait for deletions to propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } else {
+      // Check if auth user exists without public.users entry
+      const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
+      if (listError) {
+        console.error('[Global Setup] Error listing auth users:', listError.message);
+      }
+      
+      const orphanAuthUser = authUsers?.users?.find(
+        u => u.email?.toLowerCase() === TEST_USER.email.toLowerCase()
+      );
+      
+      if (orphanAuthUser) {
+        console.log(`[Global Setup] Found orphan auth user (no public.users entry): ${orphanAuthUser.id}`);
+        const { error: deleteOrphanError } = await supabase.auth.admin.deleteUser(orphanAuthUser.id);
+        if (deleteOrphanError) {
+          console.error('[Global Setup] Error deleting orphan auth user:', deleteOrphanError.message);
+        } else {
+          console.log('[Global Setup] ✅ Deleted orphan auth user');
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    // ========================================
+    // STEP 2: CREATE NEW AUTH USER
+    // ========================================
+    console.log('[Global Setup] Step 2: Creating new auth user...');
+    
+    const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
+      email: TEST_USER.email,
+      password: TEST_USER.password,
+      email_confirm: true, // Auto-confirm for tests
+      user_metadata: {
+        full_name: TEST_USER.fullName,
+      },
+    });
+
+    if (createError) {
+      console.error('[Global Setup] ❌ Failed to create auth user:', createError.message);
+      console.error('[Global Setup] ❌ Error code:', createError.status);
       console.log('Global setup complete.');
       return;
     }
 
-    console.log(`[Global Setup] Test user not found in public.users, creating: ${TEST_USER.email}`);
+    const authUserId = newAuthUser.user.id;
+    console.log(`[Global Setup] ✅ Created auth user: ${authUserId}`);
 
-    // Check if user exists in auth but not in users table
-    const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers();
-    if (listError) {
-      console.error('[Global Setup] Error listing auth users:', listError.message);
-    }
+    // ========================================
+    // STEP 3: WAIT FOR DB TRIGGER TO CREATE public.users
+    // ========================================
+    console.log('[Global Setup] Step 3: Waiting for database trigger...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // ========================================
+    // STEP 4: VERIFY OR MANUAL INSERT INTO public.users
+    // ========================================
+    console.log('[Global Setup] Step 4: Verifying user in public.users...');
     
-    const existingAuthUser = authUsers?.users?.find(
-      u => u.email?.toLowerCase() === TEST_USER.email.toLowerCase()
-    );
-
-    let authUserId: string;
-
-    if (existingAuthUser) {
-      console.log(`[Global Setup] Found existing auth user: ${existingAuthUser.id}`);
-      authUserId = existingAuthUser.id;
-      
-      // Update the user to ensure email is confirmed AND password is correct
-      const { error: updateError } = await supabase.auth.admin.updateUserById(authUserId, {
-        email_confirm: true,
-        password: TEST_USER.password,  // Reset password to known test password
-      });
-      if (updateError) {
-        console.warn('[Global Setup] Could not update auth user:', updateError.message);
-      } else {
-        console.log('[Global Setup] ✅ Confirmed email and reset password for existing auth user');
-      }
-    } else {
-      // Create user in Supabase Auth
-      console.log('[Global Setup] Creating new auth user...');
-      const { data: newAuthUser, error: createError } = await supabase.auth.admin.createUser({
-        email: TEST_USER.email,
-        password: TEST_USER.password,
-        email_confirm: true, // Auto-confirm for tests
-        user_metadata: {
-          full_name: TEST_USER.fullName,
-        },
-      });
-
-      if (createError) {
-        console.error('[Global Setup] Failed to create auth user:', createError.message);
-        console.log('Global setup complete.');
-        return;
-      }
-
-      authUserId = newAuthUser.user.id;
-      console.log(`[Global Setup] ✅ Created auth user: ${authUserId}`);
-    }
-
-    // Wait a bit for any database triggers to run
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Check again if user was created by trigger
-    const { data: userAfterTrigger } = await supabase
+    const { data: userAfterTrigger, error: triggerCheckError } = await supabase
       .from('users')
       .select('id, email')
       .eq('email', TEST_USER.email.toLowerCase())
       .maybeSingle();
+
+    if (triggerCheckError) {
+      console.error('[Global Setup] Error checking trigger result:', triggerCheckError.message);
+    }
+
+    let userId: string;
 
     if (userAfterTrigger) {
       console.log('[Global Setup] ✅ User was created by database trigger');
-      await ensureOtpRecords(supabase, userAfterTrigger.id);
-      console.log(`[Global Setup] ✅ Test user ready: ${TEST_USER.email}`);
-      console.log('Global setup complete.');
-      return;
-    }
-
-    // Create user in public.users table manually
-    // Column names from actual schema:
-    // - phone_e164 (not phone_number) - E.164 format like +971561164259
-    // - country_code is char(2) like 'AE' (not '+971')
-    console.log('[Global Setup] Creating user record in public.users...');
-    
-    const insertData = {
-      email: TEST_USER.email.toLowerCase(),
-      full_name: TEST_USER.fullName,
-      auth_user_id: authUserId,
-      phone_e164: `+971${TEST_USER.phone}`,  // E.164 format
-      country_code: 'AE',  // 2-letter country code
-    };
-    
-    console.log('[Global Setup] Insert data:', insertData);
-    
-    const { data: insertedUser, error: insertError } = await supabase
-      .from('users')
-      .insert(insertData)
-      .select('id')
-      .single();
-
-    console.log('[Global Setup] Insert result - data:', insertedUser, 'error:', insertError);
-
-    if (insertError) {
-      console.log('[Global Setup] ❌ Insert error code:', insertError.code);
-      console.log('[Global Setup] ❌ Insert error message:', insertError.message);
-      console.log('[Global Setup] ❌ Insert error details:', insertError.details);
-      console.log('[Global Setup] ❌ Insert error hint:', insertError.hint);
+      userId = userAfterTrigger.id;
+    } else {
+      console.log('[Global Setup] Trigger did not create user, manual insert...');
       
-      // User might already exist due to trigger, check again
-      if (insertError.code === '23505') { // Unique violation
-        console.log('[Global Setup] User already exists in users table (race condition with trigger)');
-        const { data: existingUserRetry } = await supabase
+      const insertData = {
+        email: TEST_USER.email.toLowerCase(),
+        full_name: TEST_USER.fullName,
+        auth_user_id: authUserId,
+        phone_e164: `+971${TEST_USER.phone}`,  // E.164 format
+        country_code: 'AE',  // 2-letter country code
+      };
+      
+      console.log('[Global Setup] Insert data:', insertData);
+      
+      const { data: insertedUser, error: insertError } = await supabase
+        .from('users')
+        .insert(insertData)
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('[Global Setup] ❌ Insert error code:', insertError.code);
+        console.error('[Global Setup] ❌ Insert error message:', insertError.message);
+        console.error('[Global Setup] ❌ Insert error details:', insertError.details);
+        console.error('[Global Setup] ❌ Insert error hint:', insertError.hint);
+        
+        // One more check - maybe trigger ran late
+        const { data: lateUser } = await supabase
           .from('users')
           .select('id')
           .eq('email', TEST_USER.email.toLowerCase())
-          .single();
-        if (existingUserRetry) {
-          await ensureOtpRecords(supabase, existingUserRetry.id);
+          .maybeSingle();
+        
+        if (lateUser) {
+          console.log('[Global Setup] ✅ User appeared (late trigger)');
+          userId = lateUser.id;
+        } else {
+          console.error('[Global Setup] ❌ FATAL: Could not create user in public.users');
+          console.log('Global setup complete.');
+          return;
         }
-      }
-    } else {
-      console.log(`[Global Setup] ✅ Created user record in public.users with id: ${insertedUser?.id}`);
-      if (insertedUser) {
-        await ensureOtpRecords(supabase, insertedUser.id);
+      } else {
+        console.log(`[Global Setup] ✅ Created user in public.users: ${insertedUser?.id}`);
+        userId = insertedUser!.id;
       }
     }
 
-    // VERIFY the user was actually created
-    const { data: verifyUser, error: verifyError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', TEST_USER.email.toLowerCase())
-      .maybeSingle();
+    // ========================================
+    // STEP 5: ENSURE OTP RECORDS
+    // ========================================
+    console.log('[Global Setup] Step 5: Creating OTP records...');
+    await ensureOtpRecords(supabase, userId);
+
+    // ========================================
+    // STEP 6: FINAL VERIFICATION
+    // ========================================
+    console.log('[Global Setup] Step 6: Final verification...');
     
-    if (verifyUser) {
-      console.log(`[Global Setup] ✅ VERIFIED: User exists in public.users: ${verifyUser.email} (id: ${verifyUser.id})`);
-    } else {
-      console.log('[Global Setup] ❌ VERIFICATION FAILED: User NOT found in public.users after insert!');
-      console.log('[Global Setup] ❌ Verify error:', verifyError);
-    }
+    const { data: finalVerify, error: finalError } = await supabase
+      .from('users')
+      .select('id, email, auth_user_id')
+      .eq('email', TEST_USER.email.toLowerCase())
+      .single();
 
-    console.log(`[Global Setup] Test user setup complete: ${TEST_USER.email}`);
+    if (finalVerify) {
+      console.log(`[Global Setup] ✅✅✅ VERIFIED: Test user ready!`);
+      console.log(`[Global Setup]   - Email: ${finalVerify.email}`);
+      console.log(`[Global Setup]   - User ID: ${finalVerify.id}`);
+      console.log(`[Global Setup]   - Auth ID: ${finalVerify.auth_user_id}`);
+      console.log(`[Global Setup]   - Password: ${TEST_USER.password}`);
+    } else {
+      console.error('[Global Setup] ❌❌❌ FINAL VERIFICATION FAILED!');
+      console.error('[Global Setup] Error:', finalError?.message);
+    }
 
   } catch (err: any) {
-    console.error('[Global Setup] Error:', err.message);
+    console.error('[Global Setup] ❌ Exception:', err.message);
     console.error('[Global Setup] Stack:', err.stack);
   }
 
@@ -207,6 +244,8 @@ async function ensureOtpRecords(supabase: any, userId: string) {
 
     if (emailOtpError) {
       console.warn('[Global Setup] Could not create email OTP record:', emailOtpError.message);
+    } else {
+      console.log('[Global Setup] ✅ Email OTP record created');
     }
 
     // Create/update WhatsApp OTP record
@@ -221,9 +260,10 @@ async function ensureOtpRecords(supabase: any, userId: string) {
 
     if (whatsappOtpError) {
       console.warn('[Global Setup] Could not create WhatsApp OTP record:', whatsappOtpError.message);
+    } else {
+      console.log('[Global Setup] ✅ WhatsApp OTP record created');
     }
 
-    console.log('[Global Setup] ✅ OTP verification records created/updated');
   } catch (err: any) {
     console.warn('[Global Setup] Error creating OTP records:', err.message);
   }

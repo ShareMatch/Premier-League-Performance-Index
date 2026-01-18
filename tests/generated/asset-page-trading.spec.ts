@@ -1,10 +1,32 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // Test credentials
 const TEST_USER = {
     email: 'affan@sharematch.me',
     password: 'Affan@1234',
 };
+
+/**
+ * Helper to check and log login errors
+ */
+async function checkLoginError(page: Page, context: string): Promise<string | null> {
+    const errorSelectors = [
+        '.text-red-400',
+        '[data-testid="login-error"]',
+        '.error-message',
+    ];
+    
+    for (const selector of errorSelectors) {
+        const errorEl = page.locator(selector).first();
+        const isVisible = await errorEl.isVisible().catch(() => false);
+        if (isVisible) {
+            const text = await errorEl.textContent().catch(() => '(could not read error)');
+            console.log(`[${context}] ❌ Login error found: ${text}`);
+            return text;
+        }
+    }
+    return null;
+}
 
 test.describe.configure({ mode: 'serial' });
 
@@ -33,16 +55,25 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await page.locator("#login-password").fill(TEST_USER.password);
             await page.locator('[data-testid="login-submit-button"]').click();
 
-            // Wait for login processing
-            await page.waitForTimeout(5000);
+            // Wait for login processing (longer in CI)
+            await page.waitForTimeout(process.env.CI ? 8000 : 5000);
+
+            // Check for login errors first
+            const loginError = await checkLoginError(page, 'Asset Page Trading Login');
+            if (loginError) {
+                await page.screenshot({ path: 'test-results/asset-trading-login-error.png' });
+                expect(loginError, `Login failed with error: ${loginError}`).toBeNull();
+            }
 
             // Verify modals are closed (adapted from index test)
             const verificationModal = page.locator('[data-testid="verification-modal"]');
             const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
             const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
 
+            console.log(`[Asset Trading Test] Modal hidden: ${isLoginModalHidden}, Verification visible: ${isVerificationModalVisible}`);
+
             if (!isLoginModalHidden && !isVerificationModalVisible) {
-                await page.waitForTimeout(3000);
+                await page.waitForTimeout(5000);
                 const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
                 const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
                 expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
