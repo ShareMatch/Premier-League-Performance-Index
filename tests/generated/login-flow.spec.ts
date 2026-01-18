@@ -32,33 +32,41 @@ const TEST_USER = {
  * Helper to check and log login errors
  */
 async function checkLoginError(page: Page, context: string): Promise<string | null> {
-  const errorSelectors = [
-    '.text-red-400',
-    '[data-testid="login-error"]',
-    '.error-message',
-  ];
+  // Check for specific login error element first
+  const loginError = page.locator('[data-testid="login-error"]');
+  const isVisible = await loginError.isVisible().catch(() => false);
   
-  for (const selector of errorSelectors) {
-    const errorEl = page.locator(selector).first();
-    const isVisible = await errorEl.isVisible().catch(() => false);
-    if (isVisible) {
-      const text = await errorEl.textContent().catch(() => '(could not read error)');
-      console.log(`[${context}] ❌ Login error found: ${text}`);
-      return text;
-    }
+  if (isVisible) {
+    const text = await loginError.textContent().catch(() => '');
+    console.log(`[${context}] ❌ Login error found: ${text}`);
+    return text;
   }
+  
   return null;
 }
 
 test.describe("Login Flow", () => {
-  // test.beforeEach(async ({ supabaseAdapter }) => {
-  //   console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
-  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  // });
+  // Create the test user before all tests in this file (if not exists)
+  test.beforeAll(async ({ supabaseAdapter }) => {
+    console.log(`[Login Setup] Ensuring test user exists: ${TEST_USER.email}`);
+    
+    // Check if exists
+    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+    if (!user) {
+      console.log('[Login Setup] User not found, creating...');
+      await supabaseAdapter.createUser(TEST_USER.email, TEST_USER.password);
+      // Wait for consistency
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Ensure OTP records
+      const newUser = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+      if (newUser) {
+        await supabaseAdapter.ensureOtpRecords(TEST_USER.email);
+      }
+    } else {
+      console.log('[Login Setup] User already exists');
+    }
+  });
 
-  // test.afterEach(async ({ supabaseAdapter }) => {
-  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  // });
 
   // test.beforeEach(async ({ page }) => {
   //   await page.context().clearCookies();

@@ -377,7 +377,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
 
               {error && (
-                <p className="text-center text-red-400 font-sans text-sm">
+                <p className="text-center text-red-400 font-sans text-sm"
+                   data-testid="login-error"
+                >
                   {error}
                 </p>
               )}

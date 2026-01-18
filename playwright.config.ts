@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Load both .env and .env.local (Vite uses .env.local for local overrides)
 dotenv.config();
+dotenv.config({ path: '.env.local', override: true });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,7 +15,6 @@ process.env.TS_NODE_PROJECT = path.resolve(__dirname, 'tsconfig.json');
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false, // Run tests sequentially to avoid conflicts
-  globalSetup: './tests/global-setup.ts',
   testMatch: '**/*.spec.ts',
   forbidOnly: !!process.env.CI,
   
@@ -36,7 +37,7 @@ export default defineConfig({
   ],
   
   use: {
-    baseURL: process.env.APP_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.APP_BASE_URL,
     
     // Traces and artifacts for debugging
     trace: 'on-first-retry',
