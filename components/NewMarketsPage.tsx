@@ -35,6 +35,8 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => onNavigate("HOME")}
+            aria-label="Back to home"
+            data-testid="new-markets-back"
             className="p-1 rounded-full hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-400" />
@@ -51,7 +53,6 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
                 className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
               />
             </h2>
-
           </div>
         </div>
       </div>

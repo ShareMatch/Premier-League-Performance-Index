@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Clock, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Clock, AlertTriangle } from "lucide-react";
 
 interface InactivityModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Calculate progress for the ring
@@ -68,7 +68,8 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
         <div
           className="flex flex-col items-center bg-modal-inner rounded-xl p-8 gap-6 border border-transparent"
           style={{
-            backgroundImage: "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
+            backgroundImage:
+              "linear-gradient(#021A1A, #021A1A), linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
             backgroundOrigin: "border-box",
             backgroundClip: "padding-box, border-box",
           }}
@@ -95,7 +96,9 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
                 strokeWidth="6"
                 fill="none"
                 strokeLinecap="round"
-                className={`transition-all duration-1000 ${timeLeft <= 30 ? 'text-red-500' : 'text-brand-amber500'}`}
+                className={`transition-all duration-1000 ${
+                  timeLeft <= 30 ? "text-red-500" : "text-brand-amber500"
+                }`}
                 style={{
                   strokeDasharray: circumference,
                   strokeDashoffset: strokeDashoffset,
@@ -104,7 +107,11 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
             </svg>
             {/* Timer text */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-2xl font-bold font-sans ${timeLeft <= 30 ? 'text-red-500' : 'text-white'}`}>
+              <span
+                className={`text-2xl font-bold font-sans ${
+                  timeLeft <= 30 ? "text-red-500" : "text-white"
+                }`}
+              >
                 {formatTime(timeLeft)}
               </span>
             </div>
@@ -119,7 +126,7 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
               </h2>
             </div>
             <p className="text-gray-400 text-sm font-sans max-w-xs">
-              You've been inactive for a while. For your security, you'll be 
+              You've been inactive for a while. For your security, you'll be
               automatically logged out if there's no response.
             </p>
           </div>
@@ -128,8 +135,8 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
           <div
             className={`w-full max-w-xs rounded-full transition-all duration-300 p-0.5 ${
               isButtonHovered
-                ? 'border border-white shadow-glow'
-                : 'border border-brand-emerald500'
+                ? "border border-white shadow-glow"
+                : "border border-brand-emerald500"
             }`}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
@@ -138,9 +145,11 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
               onClick={onStayLoggedIn}
               className={`w-full py-3 rounded-full font-semibold font-sans text-sm transition-all duration-300 ${
                 isButtonHovered
-                  ? 'bg-white text-brand-emerald500'
-                  : 'bg-gradient-primary text-white'
+                  ? "bg-white text-brand-emerald500"
+                  : "bg-gradient-primary text-white"
               }`}
+              aria-label="Stay logged in"
+              data-testid="inactivity-modal-stay-logged-in-button"
             >
               Yes, I'm still here
             </button>
@@ -150,6 +159,8 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
           <button
             onClick={onTimeout}
             className="text-gray-500 text-xs font-sans hover:text-gray-400 transition-colors"
+            aria-label="Log out now"
+            data-testid="inactivity-modal-logout-button"
           >
             Log out now
           </button>
@@ -162,4 +173,3 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
 };
 
 export default InactivityModal;
-

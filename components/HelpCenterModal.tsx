@@ -518,6 +518,8 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
               <>
                 <button
                   onClick={() => setLanguage("ar")}
+                  aria-label="Switch to Arabic"
+                  data-testid="help-center-language-toggle-ar"
                   className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                     language === "ar"
                       ? "bg-white text-[#005430]"
@@ -528,6 +530,8 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                 </button>
                 <button
                   onClick={() => setLanguage("en")}
+                  aria-label="Switch to English"
+                  data-testid="help-center-language-toggle-en"
                   className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                     language === "en"
                       ? "bg-white text-[#005430]"
@@ -541,6 +545,8 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
               <>
                 <button
                   onClick={() => setLanguage("en")}
+                  aria-label="Switch to English"
+                  data-testid="help-center-language-toggle-en"
                   className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                     language === "en"
                       ? "bg-white text-[#005430]"
@@ -551,6 +557,8 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                 </button>
                 <button
                   onClick={() => setLanguage("ar")}
+                  aria-label="Switch to Arabic"
+                  data-testid="help-center-language-toggle-ar"
                   className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
                     language === "ar"
                       ? "bg-white text-[#005430]"
@@ -568,7 +576,8 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
-          data-testid="alert-modal-close-button"
+          aria-label="Close"
+          data-testid="help-center-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -614,6 +623,10 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                         {/* Card Header - Clickable to expand/collapse */}
                         <button
                           onClick={() => toggleTopicExpanded(topicId)}
+                          aria-label={`${isExpanded ? "Collapse" : "Expand"} ${
+                            t[topic.titleKey]
+                          }`}
+                          data-testid={`help-center-topic-toggle-${topicId}`}
                           className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3.5 bg-brand-emerald500/10 hover:bg-brand-emerald500/15 transition-colors"
                         >
                           <div className="flex items-center gap-3">
@@ -667,6 +680,10 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                       onClick={() =>
                                         fetchVideoUrl(topicId, language)
                                       }
+                                      aria-label={`Retry loading ${
+                                        t[topic.titleKey]
+                                      }`}
+                                      data-testid={`help-center-retry-video-${topicId}`}
                                       className="text-brand-primary text-sm hover:underline"
                                     >
                                       {t.tryAgain}

@@ -80,7 +80,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   const [pageCache, setPageCache] = useState<Record<number, Team[]>>({});
   const [isDragging, setIsDragging] = useState(false);
 
-
   const ITEMS_PER_PAGE = 10;
 
   const handleSelectMarket = (
@@ -191,7 +190,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     setCurrentPage(1);
   }, [activeCategory, activeFilters, searchQuery]);
 
-
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -221,9 +219,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     };
   }, []);
 
-
-
-
   // Pagination loading and caching logic
   useEffect(() => {
     // If page is already in cache, don't show loading
@@ -231,8 +226,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       setIsLoading(false);
       return;
     }
-
-
 
     // Otherwise, simulate a fetch/load for the new page
     setIsLoading(true);
@@ -297,6 +290,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={() => onNavigate("HOME")}
+            aria-label="Back to home"
+            data-testid="all-markets-back"
             className="p-1 rounded-full hover:bg-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-gray-400" />
@@ -323,7 +318,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex items-center gap-2 pb-1 scrollbar-hide select-none
-        ${openDropdown ? "overflow-x-hidden touch-none" : "overflow-x-auto touch-pan-x"}`}
+        ${
+          openDropdown
+            ? "overflow-x-hidden touch-none"
+            : "overflow-x-auto touch-pan-x"
+        }`}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
             setIsDragging(false);
@@ -352,10 +351,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             const pillButton = (
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
-                  ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
-                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
-                  }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
+                  isActive
+                    ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
+                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
+                }`}
               >
                 <span>{cat.label}</span>
                 {hasMarkets &&
@@ -381,7 +381,9 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               >
                 <DropdownMenu.Trigger asChild>
                   <div
-                    className={isDragging ? "pointer-events-none" : "cursor-pointer"}
+                    className={
+                      isDragging ? "pointer-events-none" : "cursor-pointer"
+                    }
                   >
                     {pillButton}
                   </div>
@@ -405,10 +407,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       return (
                         <DropdownMenu.CheckboxItem
                           key={m.id}
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
-                            ? "bg-brand-primary text-white"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${
+                            isSelected
+                              ? "bg-brand-primary text-white"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
+                          }`}
                           checked={isSelected}
                           onSelect={(e) => {
                             e.preventDefault(); // Keep dropdown open for multi-select
@@ -554,10 +557,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
-                  }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  currentPage === 1
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
+                }`}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -573,10 +577,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <button
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
-                          ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
-                          : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
-                          }`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${
+                          currentPage === page
+                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
+                            : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                        }`}
                       >
                         {page}
                       </button>
@@ -589,10 +594,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
-                  }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  currentPage === totalPages
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
+                }`}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

@@ -42,8 +42,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
   return (
     <div
       data-testid="right-panel"
-      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
-        }`}
+      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${
+        isMobile
+          ? "w-80 h-full max-h-full"
+          : "h-full w-[clamp(8rem,30vw,20rem)]"
+      }`}
     >
       {/* Mobile Header with Close Button - Fixed at top */}
       {isMobile && (
@@ -51,6 +54,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
           <h2 className="text-lg font-bold text-white">Portfolio & History</h2>
           <button
             onClick={onClose}
+            aria-label="Close portfolio panel"
+            data-testid="right-panel-close-button"
             className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -69,7 +74,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 ...selectedOrder,
                 holding:
                   portfolio.find(
-                    (p) => p.market_trading_asset_id === selectedOrder.team.market_trading_asset_id
+                    (p) =>
+                      p.market_trading_asset_id ===
+                      selectedOrder.team.market_trading_asset_id
                   )?.quantity || 0,
               }}
               onClose={onCloseTradeSlip}
@@ -84,10 +91,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
         <div className="flex-shrink-0 flex border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
           <button
             onClick={() => setActiveTab("portfolio")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "portfolio"
-              ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
-              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-              }`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              activeTab === "portfolio"
+                ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+            }`}
             data-testid="right-panel-portfolio-tab"
           >
             <Activity className="w-4 h-4" />
@@ -95,10 +103,11 @@ const RightPanel: React.FC<RightPanelProps> = ({
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "history"
-              ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
-              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-              }`}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              activeTab === "history"
+                ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+            }`}
             data-testid="right-panel-history-tab"
           >
             <History className="w-4 h-4" />
@@ -141,7 +150,10 @@ const RightPanel: React.FC<RightPanelProps> = ({
               ) : (
                 <div className="space-y-3">
                   {transactions.map((tx) => {
-                    const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
+                    const asset = allAssets.find(
+                      (a) =>
+                        a.market_trading_asset_id === tx.market_trading_asset_id
+                    );
                     // ... (rest of the map remains the same)
                     return (
                       <div
@@ -169,19 +181,23 @@ const RightPanel: React.FC<RightPanelProps> = ({
                               {asset?.name || tx.asset_name || "Unknown Asset"}
                             </span>
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === "settlement"
-                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                                : tx.direction === "buy"
+                              className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${
+                                tx.type === "settlement"
+                                  ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                  : tx.direction === "buy"
                                   ? "bg-[#005430] text-white border border-transparent"
                                   : "bg-red-500/10 text-red-500 border border-red-500/20"
-                                }`}
+                              }`}
                             >
-                              {tx.type === "settlement" ? "Settled" : tx.direction}
+                              {tx.type === "settlement"
+                                ? "Settled"
+                                : tx.direction}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
                             <span>
-                              {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
+                              {tx.quantity} units @{" "}
+                              {tx.price_per_unit.toFixed(2)}
                             </span>
                             <span className="text-gray-500">
                               {new Date(tx.created_at).toLocaleDateString()}

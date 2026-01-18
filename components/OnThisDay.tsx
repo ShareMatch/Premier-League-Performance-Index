@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, CalendarDays } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import { saveAssetFact } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 interface OnThisDayProps {
     assetName: string;
@@ -17,33 +17,16 @@ const OnThisDay: React.FC<OnThisDayProps> = ({ assetName, market, className = ''
         const fetchFact = async () => {
             setLoading(true);
             try {
-                const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    setFact(`On this day, ${assetName} fans are engaging with the Performance Index.`);
-                    setLoading(false);
-                    return;
-                }
-
-                const ai = new GoogleGenAI({ apiKey });
-                const today = new Date();
-                const dateString = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-
-                const contextClause = market ? `specifically for ${market}` : 'in sports history';
-                const prompt = `Write a short "On This Day" (${dateString}) historical fact about ${assetName} ${contextClause}.
-Rules:
-1. It MUST be historically accurate for TODAY'S DATE (${dateString}).
-2. If no specific event happened on this exact date for ${assetName}, find a significant event from this WEEK in history.
-3. Keep it to one interesting sentence.
-4. STRICTLY AVOID: politics, war, religion.
-5. Focus on wins, records, signings, or legendary moments.
-Start directly with the fact.`;
-
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.0-flash',
-                    contents: prompt,
+                const { data, error } = await supabase.functions.invoke('on-this-day', {
+                    body: {
+                        assetName,
+                        market
+                    }
                 });
 
-                const generatedFact = response.text || `On this day, ${assetName} continues to make history.`;
+                if (error) throw error;
+
+                const generatedFact = data?.fact || `On this day, ${assetName} continues to make history.`;
                 setFact(generatedFact);
 
                 // We can treat this as a fact to save, maybe prefix with "On This Day:"

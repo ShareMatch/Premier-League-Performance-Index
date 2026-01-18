@@ -1414,6 +1414,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-30"
+          aria-label="Close"
           data-testid="signup-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
@@ -1425,6 +1426,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
             type="button"
             onClick={() => setStep(1)}
             className="absolute top-6 left-6 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors z-30"
+            aria-label="Go back"
             data-testid="signup-back-button"
           >
             <ArrowLeft className="w-4 h-4 text-white" />
@@ -1682,12 +1684,16 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     id="agreeToMarketingComms"
                     checked={formData.agreeToMarketingComms}
                     onChange={(checked) =>
-                      setFormData((p) => ({ ...p, agreeToMarketingComms: checked }))
+                      setFormData((p) => ({
+                        ...p,
+                        agreeToMarketingComms: checked,
+                      }))
                     }
                     error={false}
                   >
                     <span className="text-gray-400">
-                      I agree to receive marketing communications via Email and WhatsApp (optional)
+                      I agree to receive marketing communications via Email and
+                      WhatsApp (optional)
                     </span>
                   </Checkbox>
 
@@ -1700,8 +1706,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     error={!!errors.agreeToTerms}
                   >
                     <span>
-                      I agree to the
-                      {" "}
+                      I agree to the{" "}
                       <a
                         href="/terms.html"
                         target="_blank"
@@ -1709,8 +1714,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                         className="underline hover:text-white transition-colors"
                       >
                         Terms of Service
-                      </a>
-                      {" "}and{" "}
+                      </a>{" "}
+                      and{" "}
                       <a
                         href="/privacy.html"
                         target="_blank"
@@ -1721,8 +1726,6 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                       </a>
                     </span>
                   </Checkbox>
-
-                  
                 </div>
               )}
 
@@ -1742,7 +1745,11 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                       isButtonHovered ? "opacity-90" : ""
                     } !disabled:opacity-100 disabled:cursor-not-allowed`}
                     variant="white"
-                    data-testid={step === 1 ? "signup-continue-button" : "signup-submit-button"}
+                    data-testid={
+                      step === 1
+                        ? "signup-continue-button"
+                        : "signup-submit-button"
+                    }
                   >
                     {loading
                       ? "Processing..."

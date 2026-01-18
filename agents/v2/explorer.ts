@@ -22,20 +22,22 @@ export interface ExplorerOptions {
   timeout?: number;
   /** Modal IDs to skip exploring (e.g., ['login-modal', 'signup-modal']) */
   skipModals?: string[];
+  /** Texts or selectors to explicitly block from clicking */
+  blockedElements?: string[];
 }
 
 export interface ElementDescriptor {
   selector: string;
   text: string;
   type:
-    | "button"
-    | "input"
-    | "link"
-    | "modal"
-    | "dropdown"
-    | "checkbox"
-    | "select"
-    | "unknown";
+  | "button"
+  | "input"
+  | "link"
+  | "modal"
+  | "dropdown"
+  | "checkbox"
+  | "select"
+  | "unknown";
   attributes: Record<string, string>;
   isVisible: boolean;
   isEnabled: boolean;
@@ -87,11 +89,11 @@ interface DecisionResult {
   reasoning: string;
   confidence: number;
   elementClassification:
-    | "close_button"
-    | "action_button"
-    | "input"
-    | "navigation"
-    | "unknown";
+  | "close_button"
+  | "action_button"
+  | "input"
+  | "navigation"
+  | "unknown";
 }
 
 interface GraphState {
@@ -121,10 +123,10 @@ interface UIState {
 
 interface Change {
   type:
-    | "new_inputs_appeared"
-    | "buttons_enabled"
-    | "modal_opened"
-    | "navigation";
+  | "new_inputs_appeared"
+  | "buttons_enabled"
+  | "modal_opened"
+  | "navigation";
   delta?: number;
   interpretation: string;
   from?: string;
@@ -142,7 +144,7 @@ interface CausalRule {
 /**
  * Intelligent Deep Explorer with LangGraph decision-making
  */
-export class IntelligentDeepExplorer {
+export class Explorer {
   private page: Page;
   private state: ExplorationState;
   private knowledgeStore: KnowledgeStore | null = null;
@@ -153,6 +155,8 @@ export class IntelligentDeepExplorer {
   private sessionId: string;
   /** Modal IDs to skip (already tested or not relevant) */
   private skipModals: Set<string>;
+  /** Texts or selectors to explicitly block */
+  private blockedElements: Set<string>;
   /** URLs that contain forms (login, signup, etc.) - only these get form-specific behavior */
   private static FORM_URL_PATTERNS = [
     /action\?login/i,
@@ -173,6 +177,7 @@ export class IntelligentDeepExplorer {
     this.sessionId = `exploration-${Date.now()}`;
     // Default: skip login/signup modals when exploring home page
     this.skipModals = new Set(options?.skipModals || []);
+    this.blockedElements = new Set((options?.blockedElements || []).map(s => s.toLowerCase()));
 
     // Initialize memory for pattern learning
     this.memory = new MemorySaver();
@@ -511,16 +516,22 @@ export class IntelligentDeepExplorer {
     ariaDisabled: boolean;
   }> {
     try {
+      if (this.page.isClosed()) return { isEnabled: false, computedStyle: "", ariaDisabled: true };
+
       const locator =
         element.locator || this.page.locator(element.selector).first();
 
-      const info = await locator.evaluate((el: HTMLElement) => ({
-        isEnabled: !el.hasAttribute("disabled"),
-        computedStyle: window
-          .getComputedStyle(el)
-          .getPropertyValue("pointer-events"),
-        ariaDisabled: el.getAttribute("aria-disabled") === "true",
-      }));
+      const info = await locator.evaluate(
+        (el: HTMLElement) => ({
+          isEnabled: !el.hasAttribute("disabled"),
+          computedStyle: window
+            .getComputedStyle(el)
+            .getPropertyValue("pointer-events"),
+          ariaDisabled: el.getAttribute("aria-disabled") === "true",
+        }),
+        null,
+        { timeout: 2000 }
+      );
 
       return info;
     } catch (e) {
@@ -548,7 +559,7 @@ export class IntelligentDeepExplorer {
       for (const input of emptyInputs) {
         const value = await input.inputValue().catch(() => "");
         originalValues.push(value);
-        await input.fill("test").catch(() => {});
+        await input.fill("test").catch(() => { });
       }
 
       // Check if button enabled (assume checking a specific button or general)
@@ -556,7 +567,7 @@ export class IntelligentDeepExplorer {
 
       // Rollback
       for (let i = 0; i < emptyInputs.length; i++) {
-        await emptyInputs[i].fill(originalValues[i]).catch(() => {});
+        await emptyInputs[i].fill(originalValues[i]).catch(() => { });
       }
 
       return isEnabled;
@@ -587,6 +598,17 @@ export class IntelligentDeepExplorer {
         shouldInteract: false,
         interactionType: "skip",
         reasoning: `Skipping: Would open ${skipModalMatch}`,
+        confidence: 1.0,
+        elementClassification: "action_button",
+      };
+    }
+
+    // Check blocked elements (explicit user overrides)
+    if (this.isBlockedElement(element)) {
+      return {
+        shouldInteract: false,
+        interactionType: "skip",
+        reasoning: `Skipping: Element is explicitly blocked`,
         confidence: 1.0,
         elementClassification: "action_button",
       };
@@ -740,12 +762,37 @@ export class IntelligentDeepExplorer {
   }
 
   /**
+   * Check if element matches any blocked patterns
+   */
+  private isBlockedElement(element: ElementDescriptor): boolean {
+    if (this.blockedElements.size === 0) return false;
+
+    const text = element.text.toLowerCase();
+    const selector = element.selector.toLowerCase();
+    const ariaLabel = (element.attributes["aria-label"] || "").toLowerCase();
+
+    for (const blocked of this.blockedElements) {
+      if (
+        text === blocked ||
+        text.includes(blocked) ||
+        ariaLabel === blocked ||
+        ariaLabel.includes(blocked) ||
+        selector.includes(blocked)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Check if current URL is a form URL (login, signup, KYC, etc.)
    * Only form URLs get form-specific behavior like input filling and submit detection
    */
   private isFormUrl(): boolean {
     const currentUrl = this.page.url();
-    return IntelligentDeepExplorer.FORM_URL_PATTERNS.some((pattern) =>
+    return Explorer.FORM_URL_PATTERNS.some((pattern) =>
       pattern.test(currentUrl)
     );
   }
@@ -1177,13 +1224,24 @@ export class IntelligentDeepExplorer {
   /**
    * Main exploration entry point
    */
-  async explore(url: string): Promise<ExplorationState> {
+  async explore(
+    url: string,
+    skipInitialNav: boolean = false
+  ): Promise<ExplorationState> {
     console.log(`\n🔍 [IntelligentExplorer] Starting exploration: ${url}`);
     console.log(`   Using LangGraph for intelligent decision-making`);
     console.log(`   Max depth: ${this.maxDepth}\n`);
 
     if (!this.knowledgeStore) {
       this.knowledgeStore = await getKnowledgeStore();
+    }
+
+    if (!skipInitialNav) {
+      await this.page.goto(url, { waitUntil: "networkidle" });
+    } else {
+      console.log("   ⏭️  Skipping initial navigation (already authenticated)");
+      // Just navigate to the target URL
+      await this.page.goto(url, { waitUntil: "networkidle" });
     }
 
     await this.page.goto(url, { waitUntil: "networkidle" });
@@ -1243,10 +1301,10 @@ export class IntelligentDeepExplorer {
       formFlow:
         this.formSteps.length > 0
           ? {
-              type: "multi_step_form",
-              steps: this.formSteps,
-              totalSteps: this.formSteps.length,
-            }
+            type: "multi_step_form",
+            steps: this.formSteps,
+            totalSteps: this.formSteps.length,
+          }
           : null,
     };
   }
@@ -1314,6 +1372,15 @@ export class IntelligentDeepExplorer {
 
       this.state.exploredElements.add(elementKey);
 
+      // Safety check: verify element is still connected
+      const isConnected = await element.locator?.count().then(c => c > 0).catch(() => false) ||
+        await this.page.locator(element.selector).count().then(c => c > 0).catch(() => false);
+
+      if (!isConnected) {
+        console.log(`${indent}   ⚠️ Element no longer connected, skipping`);
+        continue;
+      }
+
       // Use LangGraph to make decision
       const result = await this.explorationGraph.invoke(
         {
@@ -1337,8 +1404,7 @@ export class IntelligentDeepExplorer {
 
       // Log decision
       console.log(
-        `${indent}   ${element.type}: "${element.text.substring(0, 30)}" → ${
-          result.decision?.interactionType
+        `${indent}   ${element.type}: "${element.text.substring(0, 30)}" → ${result.decision?.interactionType
         } (${result.decision?.reasoning})`
       );
 
@@ -1357,6 +1423,16 @@ export class IntelligentDeepExplorer {
       // Update learned patterns
       if (result.context.learnedPatterns) {
         this.state.learnedPatterns = result.context.learnedPatterns;
+      }
+
+      // If we are in a modal context and it just closed, stop processing remaining elements
+      if (this.state.currentContext.startsWith('modal:') && !result.outcome?.modalOpened && result.decision?.interactionType !== 'skip') {
+        // Check if modal actually closed
+        const modalStillExists = await this.currentScope?.count().then(c => c > 0).catch(() => false);
+        if (!modalStillExists) {
+          console.log(`${indent}   🚫 Modal closed by action, stopping element iteration`);
+          break;
+        }
       }
 
       // Handle navigation - if URL changed, explore the new page then go back
@@ -1396,10 +1472,9 @@ export class IntelligentDeepExplorer {
           this.state.currentContext =
             depth === 0
               ? "root"
-              : `modal:${
-                  this.state.modalStack[this.state.modalStack.length - 1] ||
-                  "root"
-                }`;
+              : `modal:${this.state.modalStack[this.state.modalStack.length - 1] ||
+              "root"
+              }`;
         } catch (e: any) {
           console.log(
             `${indent}   ⚠️ Could not navigate back: ${e.message?.substring(
@@ -1435,9 +1510,8 @@ export class IntelligentDeepExplorer {
           this.state.modalStack.pop();
           this.state.currentContext =
             this.state.modalStack.length > 0
-              ? `modal:${
-                  this.state.modalStack[this.state.modalStack.length - 1]
-                }`
+              ? `modal:${this.state.modalStack[this.state.modalStack.length - 1]
+              }`
               : "root";
         } else if (modalId && this.state.modalStack.includes(modalId)) {
           // FORM STEP CHANGE: Same modal but content changed (e.g., Step 1 → Step 2)
@@ -1451,8 +1525,7 @@ export class IntelligentDeepExplorer {
 
           if (stepsInModal < MAX_FORM_STEPS) {
             console.log(
-              `${indent}   📋 Form step change detected in ${modalId} - re-exploring (step ${
-                stepsInModal + 1
+              `${indent}   📋 Form step change detected in ${modalId} - re-exploring (step ${stepsInModal + 1
               }/${MAX_FORM_STEPS})`
             );
 
@@ -1464,9 +1537,8 @@ export class IntelligentDeepExplorer {
             this.state.modalStack.pop();
             this.state.currentContext =
               this.state.modalStack.length > 0
-                ? `modal:${
-                    this.state.modalStack[this.state.modalStack.length - 1]
-                  }`
+                ? `modal:${this.state.modalStack[this.state.modalStack.length - 1]
+                }`
                 : "root";
           } else {
             console.log(
@@ -1593,7 +1665,7 @@ export class IntelligentDeepExplorer {
         } else {
           // Rollback even if it didn't work
           for (const input of inputsToFill) {
-            await input.clear().catch(() => {});
+            await input.clear().catch(() => { });
           }
         }
       }
@@ -1701,7 +1773,7 @@ export class IntelligentDeepExplorer {
     });
 
     // Click submit
-    await submitButton.click().catch(() => {});
+    await submitButton.click().catch(() => { });
     await this.page.waitForTimeout(1500);
 
     // Capture AFTER state
@@ -1848,7 +1920,7 @@ export class IntelligentDeepExplorer {
           console.log(`   📦 Found modal (ARIA): ${selector}`);
           return modal;
         }
-      } catch {}
+      } catch { }
     }
 
     // Strategy 2: Find by common z-index patterns (overlays)
@@ -2002,7 +2074,7 @@ export class IntelligentDeepExplorer {
           return modal;
         }
       }
-    } catch {}
+    } catch { }
 
     // Strategy 5: Detect dropdown menus (for sub-menus after clicking)
     for (const selector of dropdownSelectors) {
@@ -2012,7 +2084,7 @@ export class IntelligentDeepExplorer {
           console.log(`   📂 Found dropdown (${selector})`);
           return dropdown;
         }
-      } catch {}
+      } catch { }
     }
 
     // Strategy 6: Detect visible popover/menu content by class patterns
@@ -2054,10 +2126,10 @@ export class IntelligentDeepExplorer {
         const sel = popoverElements.testId
           ? `[data-testid="${popoverElements.testId}"]`
           : popoverElements.id
-          ? `#${popoverElements.id}`
-          : popoverElements.className
-          ? `.${popoverElements.className}`
-          : null;
+            ? `#${popoverElements.id}`
+            : popoverElements.className
+              ? `.${popoverElements.className}`
+              : null;
 
         if (sel) {
           const element = this.page.locator(sel).first();
@@ -2067,7 +2139,7 @@ export class IntelligentDeepExplorer {
           }
         }
       }
-    } catch {}
+    } catch { }
 
     // Fallback: Use body if no modal/dropdown detected
     console.log("   📦 No modal/dropdown detected, using body scope");
@@ -2414,7 +2486,7 @@ export class IntelligentDeepExplorer {
           return `[role="${role}"]:has-text("${cleanText}")`;
         }
         return `[role="${role}"]`;
-      } catch {}
+      } catch { }
     }
 
     try {
@@ -2574,11 +2646,11 @@ export class IntelligentDeepExplorer {
 /**
  * Create intelligent explorer instance
  */
-export function createIntelligentDeepExplorer(
+export function createExplorer(
   page: Page,
   options?: ExplorerOptions
-): IntelligentDeepExplorer {
-  return new IntelligentDeepExplorer(page, options);
+): Explorer {
+  return new Explorer(page, options);
 }
 
-export default IntelligentDeepExplorer;
+export default Explorer;

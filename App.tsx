@@ -889,7 +889,7 @@ const App: React.FC = () => {
 
                     {/* Right Panel Desktop */}
                     {user && (
-                      <div className="hidden xl:block h-full">
+                      <div className="hidden lg:block h-full">
                         <RightPanel
                           portfolio={portfolio}
                           transactions={transactions}
@@ -915,7 +915,7 @@ const App: React.FC = () => {
                 {/* Right Panel Mobile */}
                 {user && (
                   <div
-                    className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"}`}
+                    className={`lg:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"}`}
                   >
                     <RightPanel
                       portfolio={portfolio}
@@ -957,7 +957,7 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 2xl:hidden touch-none"
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden touch-none"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
@@ -1119,9 +1119,9 @@ const LeagueRouteWrapper: React.FC<{
     );
   }
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
-      {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
-      <div className="w-full lg:flex-[2] flex flex-col">
+    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+      {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+      <div className="w-full xl:flex-[2] flex flex-col">
         {/* Header aligned with order book */}
         <div className="flex-shrink-0">
           <Header
@@ -1134,7 +1134,7 @@ const LeagueRouteWrapper: React.FC<{
         </div>
 
         {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
+        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
           {/* Fixed Header - Responsive padding and text */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
             <div className="text-left">Asset</div>
@@ -1156,8 +1156,8 @@ const LeagueRouteWrapper: React.FC<{
         </div>
       </div>
 
-      {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
+      {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
         {/* AI Analysis */}
         <div className="flex-shrink-0">
           <AIAnalysis

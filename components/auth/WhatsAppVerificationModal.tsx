@@ -455,6 +455,7 @@ export const WhatsAppVerificationModal: React.FC<
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-white/70 hover:text-white transition-colors z-10"
+          aria-label="Close"
           data-testid="whatsapp-verification-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
@@ -494,6 +495,7 @@ export const WhatsAppVerificationModal: React.FC<
                 <button
                   onClick={onEditPhone}
                   className="text-xs transition-colors font-sans"
+                  aria-label="Edit phone number"
                   data-testid="whatsapp-verification-edit-phone"
                 >
                   <span className="text-white/60">Wrong Number?</span>{" "}
