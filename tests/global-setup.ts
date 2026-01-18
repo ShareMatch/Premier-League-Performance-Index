@@ -70,14 +70,15 @@ export default async function globalSetup(config: FullConfig) {
       console.log(`[Global Setup] Found existing auth user: ${existingAuthUser.id}`);
       authUserId = existingAuthUser.id;
       
-      // Update the user to ensure email is confirmed
+      // Update the user to ensure email is confirmed AND password is correct
       const { error: updateError } = await supabase.auth.admin.updateUserById(authUserId, {
         email_confirm: true,
+        password: TEST_USER.password,  // Reset password to known test password
       });
       if (updateError) {
-        console.warn('[Global Setup] Could not confirm email:', updateError.message);
+        console.warn('[Global Setup] Could not update auth user:', updateError.message);
       } else {
-        console.log('[Global Setup] ✅ Confirmed email for existing auth user');
+        console.log('[Global Setup] ✅ Confirmed email and reset password for existing auth user');
       }
     } else {
       // Create user in Supabase Auth
