@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { requireAuthUser } from "../_shared/require-auth.ts";
+import { restrictedCors } from "../_shared/cors.ts";
 
 // Channels that users can update (excludes OTP channels)
 const ALLOWED_CHANNELS = ["email", "whatsapp", "sms", "personalized_marketing"] as const;
@@ -22,20 +18,36 @@ interface UpdatePreferencesPayload {
 }
 
 serve(async (req: Request) => {
+    const corsHeaders = restrictedCors(req.headers.get('origin'));
+
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
     }
 
     try {
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: { persistSession: false },
-        });
+        const authContext = await requireAuthUser(req);
+        if (authContext.error) {
+            return new Response(
+                JSON.stringify({ error: authContext.error.message }),
+                { status: authContext.error.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // Use the authenticated client from auth context
+        const supabase = authContext.supabase;
+        const normalizedAuthEmail = String(authContext.publicUser.email ?? "").trim().toLowerCase();
 
         const body: UpdatePreferencesPayload = await req.json();
         const { email, preferences } = body;
+
+        const normalizedEmail = email?.toLowerCase().trim();
+        if (normalizedEmail !== normalizedAuthEmail) {
+            return new Response(
+                JSON.stringify({ error: "Email mismatch" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         if (!email) {
             return new Response(
@@ -67,6 +79,12 @@ serve(async (req: Request) => {
         }
 
         const userId = user.id;
+        if (userId !== authContext.publicUser.id) {
+            return new Response(
+                JSON.stringify({ error: "Forbidden" }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
 
         // Upsert each preference that was provided
         const upsertPromises: Promise<any>[] = [];

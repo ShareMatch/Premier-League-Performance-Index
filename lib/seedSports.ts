@@ -14,11 +14,8 @@ export const seedSportsAssets = async () => {
         }
 
         if (count && count > 0) {
-            console.log('Sports assets already seeded.');
             return;
         }
-
-        console.log('Seeding NBA and NFL assets...');
 
         const nbaTeams = [
             { id: 404, name: 'Oklahoma City Thunder', market: 'NBA', bid: 40.4, offer: 44.7, last_change: 'none', color: '#007ACC', category: 'basketball' },
@@ -112,8 +109,6 @@ export const seedSportsAssets = async () => {
 
         if (insertError) {
             console.error('Error seeding sports assets:', insertError);
-        } else {
-            console.log('Successfully seeded sports assets.');
         }
 
     } catch (err) {

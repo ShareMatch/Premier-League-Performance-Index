@@ -56,7 +56,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   leagueName,
   walletBalance = 0,
 }) => {
-  console.log('TradeSlip received order:', order);
   const [shares, setShares] = useState<number | "">("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,16 +83,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   const isBuy = side === "buy";
   const holding = Number(order.holding ?? 0);
   const canSell = holding > 0;
-
-  // Debug logging
-  console.log('TradeSlip Debug:', {
-    side,
-    orderHolding: order.holding,
-    holding,
-    canSell,
-    orderType: order.type,
-    teamName: order.team.name
-  });
 
   // Fee percentage from config - ONLY applies to SELL orders
   const FEE_RATE = TRADING_CONFIG.FEE_RATE;
@@ -138,7 +127,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       await onConfirm(shares as number, side);
       onClose();
     } catch (error) {
-      console.error("Trade failed:", error);
       setAlertMessage("Trade failed. Please try again.");
       setAlertOpen(true);
     } finally {
@@ -169,8 +157,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       }
       return newVal;
     });
-  };
-
+  };    
   const handleSideToggle = (newSide: "buy" | "sell") => {
     if (newSide === side) return;
     setSide(newSide);

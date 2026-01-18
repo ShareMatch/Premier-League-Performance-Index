@@ -44,7 +44,6 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         // If forceUpdateMode is true and user is approved, show confirmation dialog
         // Explain that updating documents requires re-verification
         if (forceUpdateMode && status.kyc_status === 'approved') {
-          console.log('Force update mode - showing update confirmation');
           setView('update_confirm');
           setLoading(false);
           return;
@@ -95,7 +94,6 @@ export const KYCModal: React.FC<KYCModalProps> = ({
   // NOTE: This is only called when user manually triggers completion, NOT automatically
   // The SDK stays open and user must click X to close
   const handleKycComplete = (data: any) => {
-    console.log('KYC Complete (manual close):', data);
     const status = data.kycStatus as KycStatus;
 
     // Update local state but DON'T change the view or close the modal
@@ -104,7 +102,6 @@ export const KYCModal: React.FC<KYCModalProps> = ({
     if (status === 'approved') {
       // Don't change view - let SDK show success screen
       // Don't call onKycComplete - don't auto-close the modal
-      console.log('✅ KYC approved - SDK stays open for user to see result');
     } else if (status === 'rejected') {
       // Update rejection data for when user eventually sees the rejected view
       setKycData(prev => prev ? {
@@ -115,9 +112,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         moderation_comment: data.moderationComment,
         button_ids: data.buttonIds,
       } : null);
-      console.log('❌ KYC rejected - SDK stays open for user to see result');
     } else {
-      console.log('⏳ KYC pending - SDK stays open');
     }
     // NEVER auto-close - user must click X button
   };
@@ -135,11 +130,8 @@ export const KYCModal: React.FC<KYCModalProps> = ({
     try {
       setResetting(true);
       setError(null);
-      console.log('🔄 Resetting KYC for user:', userId);
-      
+
       await resetKycApplicant(userId);
-      
-      console.log('✅ KYC reset successful, opening SDK');
       setResetting(false);
       setView('kyc');
     } catch (err: any) {

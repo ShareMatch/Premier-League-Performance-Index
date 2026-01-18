@@ -456,11 +456,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       const emailField = fields.find((f) => f.key === "email");
       const newEmail = formData.email?.trim().toLowerCase();
       const currentEmailLower = currentEmail?.trim().toLowerCase();
-      console.log("Email check:", {
-        newEmail,
-        currentEmailLower,
-        emailField: !!emailField,
-      });
 
       // Check if email is being changed (or if we don't know current email, always check)
       const emailChanged =
@@ -468,9 +463,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       if (emailField && newEmail && emailChanged) {
         try {
-          console.log("Checking email status for:", newEmail);
           const emailStatus = await checkEmailVerificationStatus(newEmail);
-          console.log("Email status result:", emailStatus);
           // Block if email already exists (regardless of verification status)
           if (emailStatus.exists) {
             setFieldErrors((prev) => ({
@@ -488,11 +481,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       // Check for WhatsApp duplicates if WhatsApp is being changed
       const whatsappField = fields.find((f) => f.key === "whatsapp");
-      console.log("WhatsApp check:", {
-        newWhatsAppE164,
-        currentWhatsApp,
-        whatsappField: !!whatsappField,
-      });
 
       // Check if WhatsApp is being changed (or if we don't know current WhatsApp, always check)
       const whatsappChanged =
@@ -501,12 +489,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       if (whatsappField && newWhatsAppE164 && whatsappChanged) {
         try {
-          console.log("Checking WhatsApp status for:", newWhatsAppE164);
           const whatsappStatus = await checkWhatsAppVerificationStatus(
             newWhatsAppE164,
             currentUserId
           );
-          console.log("WhatsApp status result:", whatsappStatus);
           // Block if WhatsApp already exists (regardless of verification status)
           if (whatsappStatus.exists) {
             setFieldErrors((prev) => ({
@@ -524,9 +510,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       // Build final data with full E.164 phone numbers
       const finalData = { ...formData };
-      
-      console.log("📋 EditDetailsModal formData:", formData);
-      console.log("📋 EditDetailsModal finalData (before phone conversion):", finalData);
 
       // Convert phone numbers to E.164 format
       if (formData.phone) {
@@ -540,7 +523,6 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         finalData.whatsapp = newWhatsAppE164;
       }
 
-      console.log("📋 EditDetailsModal calling onSave with:", finalData);
       await onSave(finalData);
     } catch (err: any) {
       console.error("Failed to save:", err);

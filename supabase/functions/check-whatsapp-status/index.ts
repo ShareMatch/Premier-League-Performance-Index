@@ -1,12 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parsePhoneNumberFromString } from "https://esm.sh/libphonenumber-js@1.10.53";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { publicCors } from "../_shared/cors.ts";
+import { requireAuthUser } from "../_shared/require-auth.ts";
 
 // Normalize phone numbers to E.164 format
 const normalizePhone = (phoneStr: string): string => {
@@ -31,12 +27,18 @@ const normalizePhone = (phoneStr: string): string => {
 };
 
 serve(async (req: Request) => {
+  const corsHeaders = publicCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // Try to authenticate, but don't fail if no auth (for registration flow)
+    const authContext = await requireAuthUser(req);
+    const isAuthenticated = !authContext.error && authContext.authUserId;
+
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -68,6 +70,9 @@ serve(async (req: Request) => {
     // Normalize the phone number
     const whatsappPhone = normalizePhone(rawPhone);
     console.log("Checking WhatsApp status for:", whatsappPhone);
+
+    // Check if this is an authenticated user checking their own WhatsApp number
+    const isOwnWhatsApp = isAuthenticated && authContext.publicUser.whatsapp_phone_e164 === whatsappPhone;
 
     // Find user by WhatsApp phone, optionally excluding a user ID (for edit scenarios)
     let query = supabase
@@ -101,25 +106,39 @@ serve(async (req: Request) => {
       .not("verified_at", "is", null)
       .maybeSingle();
 
-    // Fetch verification status from user_compliance
-    const { data: compliance } = await supabase
-      .from("user_compliance")
-      .select("is_user_verified")
+    const whatsappVerified = whatsappVerification?.verified_at != null;
+    const { data: emailVerification } = await supabase
+      .from("user_otp_verification")
+      .select("verified_at")
       .eq("user_id", user.id)
+      .eq("channel", "email")
+      .not("verified_at", "is", null)
       .maybeSingle();
 
-    const whatsappVerified = whatsappVerification?.verified_at !== null;
-    const isUserVerified = compliance?.is_user_verified === true;
-    const fullyVerified = isUserVerified;
+    const emailVerified = emailVerification?.verified_at != null;
+    const fullyVerified = emailVerified && whatsappVerified;
 
-    return new Response(
-      JSON.stringify({
-        exists: true,
-        whatsappVerified,
-        fullyVerified,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Return detailed info only for authenticated users checking their own WhatsApp
+    if (isOwnWhatsApp) {
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          whatsappVerified,
+          fullyVerified,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // For registration or other checks, just confirm existence
+      return new Response(
+        JSON.stringify({
+          exists: true,
+          whatsappVerified: false, // Don't reveal verification status to unauthenticated users
+          fullyVerified: false,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
   } catch (error: unknown) {
     console.error("Unhandled error:", error);

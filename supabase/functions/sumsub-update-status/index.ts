@@ -1,12 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+import { requireAuthUser } from "../_shared/require-auth.ts"
+import { restrictedCors } from "../_shared/cors.ts"
 
 // Sign Sumsub API request
 function signSumsubRequest(
@@ -70,12 +65,22 @@ async function fetchApplicantVerifiedName(
 }
 
 serve(async (req) => {
+  const corsHeaders = restrictedCors(req.headers.get('origin'));
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    const authContext = await requireAuthUser(req)
+    if (authContext.error) {
+      return new Response(
+        JSON.stringify({ error: authContext.error.message }),
+        { status: authContext.error.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { user_id, applicant_id, review_status, review_answer, review_reject_type } = await req.json()
 
     if (!user_id) {
@@ -85,23 +90,19 @@ serve(async (req) => {
       )
     }
 
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (user_id !== authContext.publicUser.id) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const SUMSUB_APP_TOKEN = Deno.env.get('SUMSUB_APP_TOKEN')
     const SUMSUB_SECRET_KEY = Deno.env.get('SUMSUB_SECRET_KEY')
     const SUMSUB_BASE_URL = Deno.env.get('SUMSUB_BASE_URL') || 'https://api.sumsub.com'
     const SUMSUB_DEFAULT_LEVEL = Deno.env.get('SUMSUB_DEFAULT_LEVEL') || 'basic-kyc-level'
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(
-        JSON.stringify({ error: 'Missing Supabase credentials' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false }
-    })
+    const supabase = authContext.supabase
 
     // Fetch auth_user_id from users (core table)
     const { data: userData, error: userFetchError } = await supabase
