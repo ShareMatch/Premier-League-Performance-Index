@@ -1,0 +1,258 @@
+id	name	market	sell	buy
+1	Arsenal	EPL	73.1	80.8
+2	Man City	EPL	18.3	20.2
+3	Liverpool	EPL	0.1	0.2
+4	Chelsea	EPL	0.1	0.2
+5	Man Utd	EPL	0.1	0.2
+6	Tottenham	EPL	0.1	0.2
+7	Sunderland	EPL	0.1	0.2
+8	Bournemouth	EPL	0.1	0.2
+9	Crystal Palace	EPL	0.1	0.2
+10	Newcastle	EPL	0.1	0.2
+11	Brighton	EPL	0.1	0.2
+12	Aston Villa	EPL	3.2	3.5
+13	Nottm Forest	EPL	0.1	0.2
+14	Everton	EPL	0.1	0.2
+15	West Ham	EPL	0.1	0.2
+16	Fulham	EPL	0.1	0.2
+17	Wolves	EPL	0.1	0.2
+18	Brentford	EPL	0.1	0.2
+19	Leeds	EPL	0.1	0.2
+20	Burnley	EPL	0.1	0.2
+101	Arsenal	UCL	21.1	23.3
+102	Bayern Munich	UCL	17.3	19.1
+103	PSG	UCL	11.9	13.1
+104	Liverpool	UCL	8.6	9.5
+105	Man City	UCL	13.6	15
+106	Barcelona	UCL	9.5	10.5
+107	Real Madrid	UCL	8.6	9.5
+108	Chelsea	UCL	5	5.5
+109	Inter Milan	UCL	3.3	3.6
+110	Newcastle	UCL	1.9	2.1
+111	Atletico Madrid	UCL	2.8	3.1
+112	Tottenham	UCL	1.9	2.1
+113	Borussia Dortmund	UCL	1.4	1.6
+114	Napoli	UCL	1.9	2.1
+115	Galatasaray	UCL	0.1	0.2
+116	Atalanta	UCL	1.2	1.3
+117	Juventus	UCL	0.1	0.2
+118	Sporting Lisbon	UCL	0.1	0.2
+119	Bayer Leverkusen	UCL	0.1	0.2
+120	PSV	UCL	0.1	0.2
+121	Marseille	UCL	0.1	0.2
+122	Monaco	UCL	0.1	0.2
+123	Athletic Bilbao	UCL	0.1	0.2
+124	Villarreal	UCL	0.1	0.2
+125	Eintracht Frankfurt	UCL	0.1	0.2
+126	Benfica	UCL	0.1	0.2
+127	Olympiakos	UCL	0.1	0.2
+128	Club Brugge	UCL	0.1	0.2
+129	Union St Gilloise	UCL	0.1	0.2
+130	FK Qarabag	UCL	0.1	0.2
+131	Bodo Glimt	UCL	0.1	0.2
+132	Ajax	UCL	0.1	0.2
+133	Slavia Prague	UCL	0.1	0.2
+134	FC Copenhagen	UCL	0.1	0.2
+135	AEP Paphos	UCL	0.1	0.2
+136	Kairat Almaty	UCL	0.1	0.2
+201	Spain	WC	17.3	19.1
+202	England	WC	14.6	16.2
+203	France	WC	10.6	11.7
+204	Brazil	WC	10.6	11.7
+205	Argentina	WC	10.6	11.7
+206	Portugal	WC	7.9	8.8
+207	Germany	WC	7.3	8.1
+208	Netherlands	WC	4.5	5
+209	Norway	WC	3.7	4
+210	Italy	WC	2.8	3.1
+211	Belgium	WC	2.8	3.1
+212	Uruguay	WC	1.4	1.6
+213	Colombia	WC	1.9	2.1
+214	Mexico	WC	1.4	1.6
+215	USA	WC	1.2	1.3
+216	Japan	WC	0.1	0.2
+217	Croatia	WC	0.1	0.2
+218	Ecuador	WC	1.2	1.3
+219	Morocco	WC	1.2	1.3
+220	Switzerland	WC	0.1	0.2
+221	Austria	WC	0.1	0.2
+222	Senegal	WC	0.1	0.2
+223	Denmark	WC	0.1	0.2
+224	Sweden	WC	0.1	0.2
+225	Ivory Coast	WC	0.1	0.2
+226	Poland	WC	0.1	0.2
+227	Turkey	WC	0.1	0.2
+228	Canada	WC	0.1	0.2
+229	Egypt	WC	0.1	0.2
+230	Paraguay	WC	0.1	0.2
+231	Ukraine	WC	0.1	0.2
+232	Algeria	WC	0.1	0.2
+233	South Korea	WC	0.1	0.2
+234	Romania	WC	0.1	0.2
+235	Australia	WC	0.1	0.2
+236	Scotland	WC	0.1	0.2
+237	Ghana	WC	0.1	0.2
+238	Iran	WC	0.1	0.2
+239	Wales	WC	0.1	0.2
+240	Tunisia	WC	0.1	0.2
+241	Slovakia	WC	0.1	0.2
+242	Bolivia	WC	0.1	0.2
+243	Czech Republic	WC	0.1	0.2
+244	Qatar	WC	0.1	0.2
+245	Republic of Ireland	WC	0.1	0.2
+246	New Zealand	WC	0.1	0.2
+247	Saudi Arabia	WC	0.1	0.2
+248	North Macedonia	WC	0.1	0.2
+249	DR Congo	WC	0.1	0.2
+250	Panama	WC	0.1	0.2
+251	Albania	WC	0.1	0.2
+252	Northern Ireland	WC	0.1	0.2
+253	Iraq	WC	0.1	0.2
+254	Kosovo	WC	0.1	0.2
+255	Curacao	WC	0.1	0.2
+256	Cape Verde	WC	0.1	0.2
+257	Jamaica	WC	0.1	0.2
+258	Suriname	WC	0.1	0.2
+259	Jordan	WC	0.1	0.2
+260	Haiti	WC	0.1	0.2
+301	AL Hilal	SPL	66	72.9
+302	Al-Nassr Riyadh	SPL	21.9	24.2
+303	Al Qadisiyah FC	SPL	5.6	6.2
+304	Al Ittihad Jeddah	SPL	3.7	4
+305	Al Ahli Jeddah	SPL	8.6	9.5
+306	Al Taawon	SPL	3.7	4
+307	Al Khaleej Saihat	SPL	0.1	0.2
+308	Neom SC	SPL	0.1	0.2
+309	Al Ittifaq Dammam	SPL	0.1	0.2
+310	Al Kholood Ar Rass	SPL	0.1	0.2
+311	Al Shabab	SPL	0.1	0.2
+312	Al Riyadh	SPL	0.1	0.2
+313	Al Fateh SC	SPL	0.1	0.2
+314	Al Feiha	SPL	0.1	0.2
+315	Al Hazm	SPL	0.1	0.2
+316	Al Akhdoud	SPL	0.1	0.2
+317	Damac FC	SPL	0.1	0.2
+318	Al Najma	SPL	0.1	0.2
+401	Lando Norris	F1	70.4	77.8
+402	Oscar Piastri	F1	5.6	6.2
+403	Max Verstappen	F1	20.7	22.8
+404	Oklahoma City Thunder	NBA	44.2	48.8
+405	Denver Nuggets	NBA	11.9	13.1
+406	Houston Rockets	NBA	7.3	8.1
+407	Los Angeles Lakers	NBA	3.3	3.6
+408	Cleveland Cavaliers	NBA	3.7	4
+409	New York Knicks	NBA	7.3	8.1
+410	Detroit Pistons	NBA	5	5.5
+411	Golden State Warriors	NBA	2.6	2.9
+412	Minnesota Timberwolves	NBA	3.1	3.4
+413	Orlando Magic	NBA	2.3	2.6
+414	San Antonio Spurs	NBA	7.3	8.1
+415	Atlanta Hawks	NBA	0.1	0.2
+416	Philadelphia 76ers	NBA	1.9	2.1
+417	Boston Celtics	NBA	4.5	5
+418	Miami Heat	NBA	1.2	1.3
+419	Toronto Raptors	NBA	0.1	0.2
+420	Chicago Bulls	NBA	0.1	0.2
+421	Milwaukee Bucks	NBA	0.1	0.2
+422	Phoenix Suns	NBA	0.1	0.2
+423	Dallas Mavericks	NBA	0.1	0.2
+424	Memphis Grizzlies	NBA	0.1	0.2
+425	Portland Trail Blazers	NBA	0.1	0.2
+426	Los Angeles Clippers	NBA	0.1	0.2
+427	Sacramento Kings	NBA	0.1	0.2
+428	Indiana Pacers	NBA	0.1	0.2
+429	New Orleans Pelicans	NBA	0.1	0.2
+430	Charlotte Hornets	NBA	0.1	0.2
+431	Utah Jazz	NBA	0.1	0.2
+432	Washington Wizards	NBA	0.1	0.2
+433	Brooklyn Nets	NBA	0.1	0.2
+434	Los Angeles Rams	NFL	29.7	32.8
+435	Philadelphia Eagles	NFL	0.1	0.2
+436	Buffalo Bills	NFL	0.1	0.2
+437	Seattle Seahawks	NFL	38	42
+438	New England Patriots	NFL	27.9	30.9
+439	Green Bay Packers	NFL	0.1	0.2
+440	Denver Broncos	NFL	7.3	8.1
+441	Baltimore Ravens	NFL	0.1	0.2
+442	Kansas City Chiefs	NFL	0.1	0.2
+443	Detroit Lions	NFL	0.1	0.2
+444	Indianapolis Colts	NFL	0.1	0.2
+445	San Francisco 49ers	NFL	0.1	0.2
+446	Houston Texans	NFL	0.1	0.2
+447	Chicago Bears	NFL	0.1	0.2
+448	Tampa Bay Buccaneers	NFL	0.1	0.2
+449	Los Angeles Chargers	NFL	0.1	0.2
+450	Jacksonville Jaguars	NFL	0.1	0.2
+451	Cincinnati Bengals	NFL	0.1	0.2
+452	Pittsburgh Steelers	NFL	0.1	0.2
+453	Dallas Cowboys	NFL	0.1	0.2
+454	Carolina Panthers	NFL	0.1	0.2
+455	Miami Dolphins	NFL	0.1	0.2
+456	Cleveland Browns	NFL	0.1	0.2
+457	Atlanta Falcons	NFL	0.1	0.2
+458	Washington Commanders	NFL	0.1	0.2
+459	Minnesota Vikings	NFL	0.1	0.2
+460	New York Jets	NFL	0.1	0.2
+461	India	T20 World Cup	39.9	44.1
+462	Australia	T20 World Cup	19	21
+463	South Africa	T20 World Cup	14.6	16.2
+464	England	T20 World Cup	17.3	19.1
+465	Pakistan	T20 World Cup	5.6	6.2
+466	New Zealand	T20 World Cup	5.6	6.2
+467	West Indies	T20 World Cup	4.5	5
+468	Afghanistan	T20 World Cup	3.7	4
+469	Sri Lanka	T20 World Cup	2.3	2.6
+470	Bangladesh	T20 World Cup	0.1	0.2
+471	Ireland	T20 World Cup	0.1	0.2
+472	Zimbabwe	T20 World Cup	0.1	0.2
+473	USA	T20 World Cup	0.1	0.2
+474	Netherlands	T20 World Cup	0.1	0.2
+475	Nepal	T20 World Cup	0.1	0.2
+476	Canada	T20 World Cup	0.1	0.2
+477	UAE	T20 World Cup	0.1	0.2
+478	Oman	T20 World Cup	0.1	0.2
+479	Namibia	T20 World Cup	0.1	0.2
+480	Italy	T20 World Cup	0.1	0.2
+481	Israel	Eurovision	14.8	16.4
+482	Finland	Eurovision	15.8	17.5
+483	Sweden	Eurovision	14	15.4
+484	Ukraine	Eurovision	7.9	8.8
+485	Italy	Eurovision	7.3	8.1
+486	Luxembourg	Eurovision	7	7.8
+487	France	Eurovision	4.5	5
+488	Norway	Eurovision	4.8	5.3
+489	Belgium	Eurovision	4.5	5
+490	Bulgaria	Eurovision	4.1	4.6
+491	Denmark	Eurovision	4.1	4.6
+492	Croatia	Eurovision	4	4.4
+493	Cyprus	Eurovision	4	4.4
+494	Lithuania	Eurovision	4	4.4
+495	Netherlands	Eurovision	0.1	0.2
+496	Moldova	Eurovision	3.8	4.2
+497	United Kingdom	Eurovision	3.7	4
+498	Romania	Eurovision	3.5	3.9
+499	Estonia	Eurovision	3.7	4
+500	Greece	Eurovision	3.7	4
+501	Poland	Eurovision	3.7	4
+502	Switzerland	Eurovision	3.5	3.9
+503	Spain	Eurovision	3.5	3.9
+504	Latvia	Eurovision	3.5	3.9
+505	Montenegro	Eurovision	3.5	3.9
+506	Borneo	Indonesia	30.6	33.9
+507	Persija Jakarta	Indonesia	20	22.1
+508	Persib Bandung	Indonesia	36.5	40.4
+509	Malut United	Indonesia	8.6	9.5
+510	PSIM Yogyakarta	Indonesia	2.3	2.6
+511	Persita Tangerang	Indonesia	2.8	3.1
+512	Bhayangkara United	Indonesia	0.1	0.2
+513	PSM Makassar	Indonesia	0.1	0.2
+514	Persebaya 1927	Indonesia	1.4	1.6
+515	Arema	Indonesia	0.1	0.2
+516	Bali United Pusam	Indonesia	1.2	1.3
+517	Persik Kediri	Indonesia	0.1	0.2
+518	Madura United	Indonesia	0.1	0.2
+519	Dewa United	Indonesia	0.1	0.2
+520	PSBS Biak	Indonesia	0.1	0.2
+521	Persijap Jepara	Indonesia	0.1	0.2
+522	Semen Padang	Indonesia	0.1	0.2
+523	Persis Solo	Indonesia	0.1	0.2
