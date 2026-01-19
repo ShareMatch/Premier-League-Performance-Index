@@ -32,23 +32,23 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
 
   const getIcon = () => {
     switch (team.category) {
-      case 'f1': return <Car className="w-5 h-5" style={{ color: team.color }} />;
-      case 'football': return <Shield className="w-5 h-5" style={{ color: team.color }} />;
-      default: return <Trophy className="w-5 h-5" style={{ color: team.color || '#6B7280' }} />;
+      case 'f1': return <Car className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" style={{ color: team.color }} />;
+      case 'football': return <Shield className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" style={{ color: team.color }} />;
+      default: return <Trophy className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" style={{ color: team.color || '#6B7280' }} />;
     }
   };
 
   const logoUrl = team.market ? getLogoUrl(team.name || '', team.market, team.id) : null;
 
   return (
-    <div data-testid={`order-book-row-${team.id}`} className={`grid grid-cols-3 gap-2 sm:gap-4 items-center p-2 sm:p-3 text-xs sm:text-sm transition-colors duration-500 ${flashClass}`}>
+    <div data-testid={`order-book-row-${team.id}`} className={`grid grid-cols-3 gap-[clamp(0.5rem,1.5vw,1rem)] items-center p-[clamp(0.5rem,1.25vw,0.75rem)] transition-colors duration-500 ${flashClass}`}>
       {/* Asset name with logo */}
       <div
-        className="font-medium text-gray-200 text-left flex items-center gap-1.5 sm:gap-2 min-w-0 cursor-pointer hover:text-white transition-colors"
+        className="font-medium text-gray-200 text-left flex items-center gap-[clamp(0.375rem,1vw,0.5rem)] min-w-0 cursor-pointer hover:text-white transition-colors"
         onClick={() => onViewAsset?.(team)}
       >
         {logoUrl && !logoError ? (
-          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+          <div className="w-[clamp(1.75rem,5vw,2.25rem)] h-[clamp(1.75rem,5vw,2.25rem)] rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
             <img
               src={logoUrl}
               alt={`${team.name} logo`}
@@ -58,23 +58,23 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
           </div>
         ) : (
           <div
-            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
+            className="w-[clamp(1.75rem,5vw,2.25rem)] h-[clamp(1.75rem,5vw,2.25rem)] rounded-full flex items-center justify-center flex-shrink-0 border border-white/20"
             style={{ backgroundColor: team.color || '#6B7280' }}
           >
-            <span className="text-white text-xs font-bold">
+            <span className="text-white text-[clamp(0.5rem,1.25vw,0.75rem)] font-bold">
               {team.name?.charAt(0) || '?'}
             </span>
           </div>
         )}
-        <span className="truncate text-xs sm:text-sm">{team.name || 'Unknown'}</span>
+        <span className="text-[clamp(0.55rem,1.4vw,0.875rem)] leading-tight break-words">{team.name || 'Unknown'}</span>
       </div>
 
       {team.is_settled ? (
-        <div className="col-span-2 flex flex-col items-end pr-1 sm:pr-2">
-          <span className="text-gray-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Settled</span>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <span className="text-gray-500 text-[10px] sm:text-xs hidden sm:inline">{team.settled_date || 'Dec 8, 2025'}</span>
-            <span className={`text-sm sm:text-lg font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
+        <div className="col-span-2 flex flex-col items-end pr-[clamp(0.25rem,0.75vw,0.5rem)]">
+          <span className="text-gray-400 text-[clamp(0.5rem,1vw,0.75rem)] font-medium uppercase tracking-wider">Settled</span>
+          <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)]">
+            <span className="text-gray-500 text-[clamp(0.5rem,1vw,0.75rem)]">{team.settled_date || 'Dec 8, 2025'}</span>
+            <span className={`text-[clamp(0.75rem,1.75vw,1.125rem)] font-bold ${team.bid >= 100 ? 'text-brand-emerald500' : 'text-gray-400'}`}>
               ${team.bid.toFixed(1)}
             </span>
           </div>
@@ -82,24 +82,24 @@ const OrderBookRow: React.FC<OrderBookRowProps> = ({ team, onSelectOrder, onView
       ) : (
         <>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
+            className="text-center rounded-[clamp(0.25rem,0.5vw,0.375rem)] transition-colors hover:bg-gray-700/50 cursor-pointer py-[clamp(0.375rem,1vw,0.5rem)] -my-[clamp(0.375rem,1vw,0.5rem)]"
             onClick={() => onSelectOrder(team, 'sell')}
             role="button"
             tabIndex={0}
             aria-label={`Sell ${team.name} Performance Index at $${team.bid.toFixed(1)}`}
             data-testid={`sell-button-${team.id}`}
           >
-            <span className="font-semibold text-red-400 text-xs sm:text-sm">${team.bid.toFixed(1)}</span>
+            <span className="font-semibold text-red-400 text-[clamp(0.6rem,1.5vw,0.875rem)]">${team.bid.toFixed(1)}</span>
           </div>
           <div
-            className="text-center rounded-md transition-colors hover:bg-gray-700/50 cursor-pointer py-1.5 sm:py-2 -my-1.5 sm:-my-2"
+            className="text-center rounded-[clamp(0.25rem,0.5vw,0.375rem)] transition-colors hover:bg-gray-700/50 cursor-pointer py-[clamp(0.375rem,1vw,0.5rem)] -my-[clamp(0.375rem,1vw,0.5rem)]"
             onClick={() => onSelectOrder(team, 'buy')}
             role="button"
             tabIndex={0}
             aria-label={`Buy ${team.name} Performance Index at $${team.offer.toFixed(1)}`}
             data-testid={`buy-button-${team.id}`}
           >
-            <span className="font-semibold bg-[#005430] text-white px-2 py-1 rounded text-xs sm:text-sm">${team.offer.toFixed(1)}</span>
+            <span className="font-semibold bg-[#005430] text-white px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] rounded-[clamp(0.125rem,0.375vw,0.25rem)] text-[clamp(0.6rem,1.5vw,0.875rem)]">${team.offer.toFixed(1)}</span>
           </div>
         </>
       )}

@@ -19,6 +19,15 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
   onSelectOrder,
   seasonDatesMap,
 }) => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Artificial delay to show skeleton loader
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
   // No extra loading state needed, HotQuestions handles its own skeleton if needed via props or check
   // Actually, user wants no loader delay here, so we just remove the state logic that forced a delay.
   // If the data (teams) is not ready, HotQuestions will show partial or empty.
@@ -68,7 +77,7 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
           limit={0} // Show all
           showHeader={false}
           enableAnimation={false}
-          isLoading={false}
+          isLoading={isLoading || teams.length === 0}
         />
       </div>
     </div>

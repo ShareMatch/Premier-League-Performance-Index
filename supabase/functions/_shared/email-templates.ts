@@ -2,69 +2,69 @@
 // Separate templates for different email types
 
 export interface OtpEmailParams {
-  logoImageUrl: string;
-  userFullName: string;
-  otpCode: string;
-  expiryMinutes: number;
+    logoImageUrl: string;
+    userFullName: string;
+    otpCode: string;
+    expiryMinutes: number;
 }
 
 export interface ForgotPasswordEmailParams {
-  logoImageUrl: string;
-  userFullName: string;
-  resetLink: string;
-  expiryMinutes: number;
+    logoImageUrl: string;
+    userFullName: string;
+    resetLink: string;
+    expiryMinutes: number;
 }
 
 /**
  * Generate OTP verification email HTML
  */
 export function generateOtpEmailHtml(params: OtpEmailParams): string {
-  const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
-  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
-  
-  return OTP_VERIFICATION_TEMPLATE
-    .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-    .replace(/##OTP_CODE##/g, otpCode)
-    .replace(/##EXPIRY_TIME##/g, expiryText);
+    const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
+    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+
+    return OTP_VERIFICATION_TEMPLATE
+        .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+        .replace(/##OTP_CODE##/g, otpCode)
+        .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate OTP verification email subject
  */
 export function generateOtpEmailSubject(otpCode: string): string {
-  return `${otpCode} is your ShareMatch verification code`;
+    return `${otpCode} is your ShareMatch verification code`;
 }
 
 /**
  * Generate forgot password email HTML (legacy - with personalization)
  */
 export function generateForgotPasswordEmailHtml(params: ForgotPasswordEmailParams): string {
-  const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
-  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
-  
-  return FORGOT_PASSWORD_TEMPLATE
-    .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-    .replace(/##RESET_LINK##/g, resetLink)
-    .replace(/##EXPIRY_TIME##/g, expiryText);
+    const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
+    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+
+    return FORGOT_PASSWORD_TEMPLATE
+        .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+        .replace(/##RESET_LINK##/g, resetLink)
+        .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate forgot password email subject
  */
 export function generateForgotPasswordEmailSubject(): string {
-  return `Reset your ShareMatch password`;
+    return `Reset your ShareMatch password`;
 }
 
 /**
  * Build password reset email HTML - simplified version with magic link
  */
 export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
-  return PASSWORD_RESET_TEMPLATE
-    .replace(/\${magicLink}/g, magicLink)
-    .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
+    const logoUrl = logoImageUrl || "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
+    return PASSWORD_RESET_TEMPLATE
+        .replace(/\${magicLink}/g, magicLink)
+        .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
 }
 
 // ============================================
@@ -520,7 +520,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                     <!-- Footer Section -->
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -647,7 +647,7 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
                     </tr>
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -1106,7 +1106,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                     <!-- Footer Section -->
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
             </table>
