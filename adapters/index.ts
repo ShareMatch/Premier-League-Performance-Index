@@ -38,7 +38,7 @@ export const test = base.extend<{
   };
   supabaseAdapter: {
     client: any;
-    createUser: (email: string, password: string) => Promise<any | null>;
+    createUser: (email: string, password: string, fullName?: string) => Promise<any | null>;
     getEmailOtp: (email: string) => Promise<string | null>;
     getWhatsAppOtp: (email: string) => Promise<string | null>;
     getUserByEmail: (email: string) => Promise<any | null>;
@@ -56,8 +56,11 @@ export const test = base.extend<{
     // For simplicity, we'll create the tools inline
     const axios = (await import('axios')).default;
     const crypto = await import('crypto');
-    const dotenv = await import('dotenv');
-    dotenv.config();
+    // Only load dotenv locally - in CI, env vars come from GitHub secrets
+    if (!process.env.CI) {
+      const dotenv = await import('dotenv');
+      dotenv.config();
+    }
 
     const signRequest = (method: string, url: string, body: string = '') => {
       const ts = Math.floor(Date.now() / 1000);
@@ -123,8 +126,11 @@ export const test = base.extend<{
   // Inherit supabaseAdapter fixture
   supabaseAdapter: async ({ }, use) => {
     const { createClient } = await import('@supabase/supabase-js');
-    const dotenv = await import('dotenv');
-    dotenv.config();
+    // Only load dotenv locally - in CI, env vars come from GitHub secrets
+    if (!process.env.CI) {
+      const dotenv = await import('dotenv');
+      dotenv.config();
+    }
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -152,7 +158,7 @@ export const test = base.extend<{
 
     const adapter = {
       client,
-      createUser: async (email: string, password: string) => {
+      createUser: async (email: string, password: string, fullName: string = 'Test User') => {
         try {
           // Create user in Supabase Auth
           const { data, error } = await client.auth.admin.createUser({
@@ -162,12 +168,35 @@ export const test = base.extend<{
           });
 
           if (error) {
-            console.error('[Supabase] Error creating user:', error);
+            console.error('[Supabase] Error creating auth user:', error);
             return null;
           }
 
-          console.log(`[Supabase] Created test user: ${email}`);
-          return data.user;
+          const authUser = data.user;
+          console.log(`[Supabase] Created auth user: ${email} (${authUser.id})`);
+
+          // Also create in public.users table (app's user table)
+          const { data: publicUser, error: publicError } = await client
+            .from('users')
+            .upsert({
+              auth_user_id: authUser.id,
+              email: email.toLowerCase(),
+              full_name: fullName,
+              email_verified: true,
+              whatsapp_verified: true,
+              created_at: new Date().toISOString(),
+            }, { onConflict: 'email' })
+            .select()
+            .single();
+
+          if (publicError) {
+            console.error('[Supabase] Error creating public.users entry:', publicError);
+            // Still return auth user even if public.users insert fails
+          } else {
+            console.log(`[Supabase] Created public.users entry: ${publicUser?.id}`);
+          }
+
+          return authUser;
         } catch (err) {
           console.error('[Supabase] Exception creating user:', err);
           return null;

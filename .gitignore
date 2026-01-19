@@ -19,6 +19,9 @@ __pycache__/
 components/chatbot/backend/__pycache__/
 components/chatbot/backend/venv/
 
+.env.local
+.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
