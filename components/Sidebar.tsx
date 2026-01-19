@@ -12,7 +12,7 @@ import {
   Sparkles,
   HelpCircle,
 } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ interface SidebarProps {
   onLeagueChange: (league: League) => void;
   allAssets: Team[];
   onHelpCenterClick?: () => void;
+  onViewAsset?: (asset: Team) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -30,7 +31,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLeagueChange,
   allAssets,
   onHelpCenterClick,
+  onViewAsset,
 }) => {
+  const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<string[]>([
     "Sports",
     "Football",
@@ -163,15 +166,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                       .replace(/\s+/g, "-")}`}
                     className={`
                     w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${
-                      item.id === "AI_ANALYTICS"
+                    ${item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
                           : "text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20"
                         : item.active
-                        ? "bg-brand-emerald500/10 text-brand-emerald500"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                    }
+                          ? "bg-brand-emerald500/10 text-brand-emerald500"
+                          : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                      }
                   `}
                   >
                     <div className="flex items-center gap-3">
@@ -210,25 +212,24 @@ const Sidebar: React.FC<SidebarProps> = ({
                       item.id === "HOME"
                         ? "/"
                         : item.id === "ALL_MARKETS"
-                        ? "/markets"
-                        : item.id === "NEW_MARKETS"
-                        ? "/new-markets"
-                        : item.id === "AI_ANALYTICS"
-                        ? "/ai-analytics"
-                        : `/market/${item.id}`
+                          ? "/markets"
+                          : item.id === "NEW_MARKETS"
+                            ? "/new-markets"
+                            : item.id === "AI_ANALYTICS"
+                              ? "/ai-analytics"
+                              : `/market/${item.id}`
                     }
                     onClick={() => item.id && onLeagueChange(item.id as any)}
                     className={`
                     w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${
-                      item.id === "AI_ANALYTICS"
+                    ${item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
                           : "text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20"
                         : item.active
-                        ? "bg-brand-emerald500/10 text-brand-emerald500"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                    }
+                          ? "bg-brand-emerald500/10 text-brand-emerald500"
+                          : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                      }
                   `}
                     data-testid={item.testId}
                   >
@@ -249,11 +250,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                             onClick={() => toggleExpand(subItem.label)}
                             className={`
                             w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                            ${
-                              (subItem as any).active
+                            ${(subItem as any).active
                                 ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
                                 : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-                            }
+                              }
                           `}
                           >
                             <div className="flex items-center gap-2">
@@ -269,23 +269,35 @@ const Sidebar: React.FC<SidebarProps> = ({
                           </button>
                         ) : (
                           <Link
-                            to={`/market/${(subItem as any).id}`}
+                            to={
+                              (subItem as any).asset
+                                ? `/asset/${(subItem as any).asset.name.toLowerCase().replace(/\s+/g, '-')}`
+                                : `/market/${(subItem as any).id}`
+                            }
                             onClick={(e) => {
-                              if ((subItem as any).badge) {
+                              if ((subItem as any).badge || (subItem as any).disabled) {
                                 e.preventDefault();
                                 return;
                               }
+
+                              if ((subItem as any).asset) {
+                                e.preventDefault();
+                                onViewAsset?.((subItem as any).asset);
+                                setIsOpen(false);
+                                return;
+                              }
+
                               onLeagueChange((subItem as any).id);
+                              setIsOpen(false);
                             }}
                             className={`
                             w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
-                            ${
-                              (subItem as any).badge
+                            ${(subItem as any).badge || (subItem as any).disabled
                                 ? "cursor-not-allowed opacity-60 text-gray-400"
                                 : (subItem as any).active
-                                ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
-                                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-                            }
+                                  ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
+                                  : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                              }
                           `}
                           >
                             <div className="flex items-center gap-2">
@@ -318,13 +330,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   }}
                                   className={`
                                 w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
-                                ${
-                                  deepItem.active
-                                    ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
-                                    : (deepItem as any).badge
-                                    ? "text-gray-600 cursor-not-allowed"
-                                    : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
-                                }
+                                ${deepItem.active
+                                      ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
+                                      : (deepItem as any).badge
+                                        ? "text-gray-600 cursor-not-allowed"
+                                        : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                                    }
                               `}
                                 >
                                   <div className="flex items-center justify-between">

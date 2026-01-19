@@ -11,7 +11,9 @@ import {
   X,
   Mic,
   Menu,
+  HelpCircle,
 } from "lucide-react";
+import { formatCurrency } from "../utils/currencyUtils";
 import type { Wallet as WalletType, Team, League } from "../types";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./auth/AuthProvider";
@@ -49,6 +51,7 @@ interface TopBarProps {
   onTriggerLoginHandled?: () => void;
   triggerSignUpModal?: boolean;
   onTriggerSignUpHandled?: () => void;
+  onHelpCenterClick?: () => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -90,6 +93,7 @@ const TopBar: React.FC<TopBarProps> = ({
   onTriggerLoginHandled,
   triggerSignUpModal,
   onTriggerSignUpHandled,
+  onHelpCenterClick,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -313,7 +317,7 @@ const TopBar: React.FC<TopBarProps> = ({
         window.history.replaceState(
           null,
           "",
-          window.location.pathname + window.location.search
+          window.location.pathname + window.location.search,
         );
       }
     }
@@ -523,6 +527,16 @@ const TopBar: React.FC<TopBarProps> = ({
                   </div>
                 )}
               </div>
+              {onHelpCenterClick && (
+                <button
+                  onClick={onHelpCenterClick}
+                  aria-label="Help Center"
+                  className="ml-3 text-white/70 hover:text-white transition-colors"
+                  data-testid="topbar-help-center"
+                >
+                  <HelpCircle className="w-6 h-6" />
+                </button>
+              )}
             </div>
           </>
         )}
@@ -530,11 +544,11 @@ const TopBar: React.FC<TopBarProps> = ({
         {/* Right: Date, Balance, Avatar */}
         <div className="flex items-center gap-3 lg:gap-4">
           {/* Date - Desktop Only */}
-          <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
+          {/* <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
             <span className="text-xs font-medium">
               {formatTime(currentTime)}
             </span>
-          </div>
+          </div> */}
 
           {/* Auth Buttons */}
           {!user && (
@@ -574,12 +588,7 @@ const TopBar: React.FC<TopBarProps> = ({
                 }}
               >
                 <span className="font-bold text-white text-sm">
-                  {balance.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrency(balance)}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 text-white/70 transition-transform ${
@@ -595,29 +604,20 @@ const TopBar: React.FC<TopBarProps> = ({
                       Total Balance
                     </p>
                     <p className="text-xl font-bold text-white">
-                      {balance.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                      {formatCurrency(balance)}
                     </p>
                   </div>
                   <div className="px-4 py-2">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-400">Available</span>
                       <span className="font-medium text-gray-200">
-                        {available.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(available)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Active Assets</span>
                       <span className="font-medium text-gray-200">
-                        {reserved.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(portfolioValue)}
                       </span>
                     </div>
                   </div>
@@ -659,16 +659,6 @@ const TopBar: React.FC<TopBarProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
                         onOpenPortfolio?.();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
@@ -681,6 +671,16 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
                     </a>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAvatarOpen(false);
+                        onOpenSettings?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                    >
+                      <Settings className="h-4 w-4" /> Settings
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -713,12 +713,7 @@ const TopBar: React.FC<TopBarProps> = ({
                 }}
               >
                 <span className="font-bold text-white text-sm">
-                  {balance.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrency(balance)}
                 </span>
                 <ChevronDown
                   className={`h-3 w-3 text-white/70 transition-transform ${
@@ -752,29 +747,20 @@ const TopBar: React.FC<TopBarProps> = ({
                       Total Balance
                     </p>
                     <p className="text-xl font-bold text-white">
-                      {balance.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                      {formatCurrency(balance)}
                     </p>
                   </div>
                   <div className="px-4 py-2">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-400">Available</span>
                       <span className="font-medium text-gray-200">
-                        {available.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(available)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Active Assets</span>
                       <span className="font-medium text-gray-200">
-                        {reserved.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(portfolioValue)}
                       </span>
                     </div>
                   </div>
@@ -797,16 +783,6 @@ const TopBar: React.FC<TopBarProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
                         onOpenPortfolio?.();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
@@ -819,6 +795,16 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
                     </a>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAvatarOpen(false);
+                        onOpenSettings?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                    >
+                      <Settings className="h-4 w-4" /> Settings
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -865,7 +851,7 @@ const TopBar: React.FC<TopBarProps> = ({
         onSuccess={async (
           email: string,
           userId: string,
-          formData: SignUpFormData
+          formData: SignUpFormData,
         ) => {
           setShowSignUpModal(false);
           setIsEditMode(false);
@@ -900,7 +886,7 @@ const TopBar: React.FC<TopBarProps> = ({
         onEditSuccess={async (
           email: string,
           whatsappPhone: string | undefined,
-          formData: SignUpFormData
+          formData: SignUpFormData,
         ) => {
           setShowSignUpModal(false);
           setIsEditMode(false);
@@ -977,7 +963,7 @@ const TopBar: React.FC<TopBarProps> = ({
           try {
             const result = await verifyEmailOtp(
               pendingVerification.email,
-              code
+              code,
             );
             if (result.whatsappData) {
               whatsappDataRef.current = result.whatsappData;

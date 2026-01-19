@@ -264,7 +264,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3">
-          {Array.from({ length: limit || 3 }).map((_, i) => (
+          {Array.from({ length: limit > 0 ? limit : 9 }).map((_, i) => (
             <div
               key={i}
               className="bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 h-[180px] animate-pulse flex flex-col justify-between"

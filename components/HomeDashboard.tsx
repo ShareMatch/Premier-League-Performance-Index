@@ -37,6 +37,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     seasonDatesMap={seasonDatesMap}
                     onViewAsset={onViewAsset}
                     onSelectOrder={onSelectOrder}
+                    onNavigate={onNavigate}
                 />
 
                 <div className="space-y-2">
@@ -46,15 +47,6 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
                         onSelectOrder={onSelectOrder}
                         seasonDatesMap={seasonDatesMap}
                     />
-                    {/* View All button aligned to the right - Linked to HotQuestions */}
-                    <div className="flex justify-end px-2">
-                        <button
-                            onClick={() => onNavigate("NEW_MARKETS")}
-                            className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
-                        >
-                            View All <ChevronRight className="w-3 h-3" />
-                        </button>
-                    </div>
                 </div>
 
                 <RecentlyViewed onNavigate={onNavigate} onViewAsset={onViewAsset} />
