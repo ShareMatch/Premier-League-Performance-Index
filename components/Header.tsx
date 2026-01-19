@@ -27,12 +27,12 @@ const Header: React.FC<HeaderProps> = ({
   const indexAvatarUrl = getIndexAvatarUrl(market);
 
   return (
-    <div className="flex items-center justify-between py-3 sm:py-4">
+    <div className="flex items-center justify-between py-3 sm:py-4 gap-3 sm:gap-4">
       {/* Left: Title & Subtitle */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4 min-w-0">
         {/* Index Avatar */}
         {indexAvatarUrl && (
-          <div className="w-[64px] h-[64px] sm:w-[80px] sm:h-[80px] rounded-xl flex items-center justify-center flex-shrink-0 overflow-visible">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 overflow-visible">
             <img
               src={indexAvatarUrl}
               alt={`${market} Index Avatar`}
@@ -41,8 +41,8 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        <div className="flex flex-col">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-tight">
             {title.replace(/ Performance Index$/i, "")}{" "}
             <span className="text-emerald-500">Performance Index</span>
           </h1>
@@ -55,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({
       {/* Right: Market Status & Info Icon */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <span
-          className={`px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-bold rounded border whitespace-nowrap ${marketInfo.isOpen
+          className={`px-2 sm:px-2.5 md:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold rounded sm:rounded-md border whitespace-nowrap ${marketInfo.isOpen
               ? "bg-[#005430] text-white border-[#005430] animate-pulse"
               : "bg-amber-500/10 text-amber-500 border-amber-500/30"
             }`}
@@ -67,7 +67,7 @@ const Header: React.FC<HeaderProps> = ({
           content={marketInfo.content}
           seasonDates={marketInfo.seasonDates}
           isMarketOpen={marketInfo.isOpen}
-          iconSize={25}
+          iconSize={24}
         />
       </div>
     </div>

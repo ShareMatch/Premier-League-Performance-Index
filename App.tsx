@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Routes, Route, useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  useParams,
+  Navigate,
+} from "react-router-dom";
 import { Team, Order, Wallet, Position, Transaction, League } from "./types";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
@@ -13,6 +26,7 @@ import OrderBookRow from "./components/OrderBookRow";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import AIAnalysis from "./components/AIAnalysis";
+import OrderConfirmationModal from "./components/OrderConfirmationModal";
 // Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
 const AIAnalyticsPage = React.lazy(
   () => import("./components/AIAnalyticsPage"),
@@ -62,6 +76,7 @@ const App: React.FC = () => {
   const [previousLeague, setPreviousLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   // Supabase State
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -70,6 +85,14 @@ const App: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const [confirmationData, setConfirmationData] = useState<null | {
+    orderId: string;
+    assetName: string;
+    side: "buy" | "sell";
+    units: number;
+    pricePerUnit: number;
+    totalAmount: number;
+  }>(null);
 
   // Refs to track current state for subscription callbacks
   const userRef = useRef(user);
@@ -142,7 +165,6 @@ const App: React.FC = () => {
     };
   }, [showRightPanel]);
 
-
   // Help Center Modal visibility
   const [showHelpCenter, setShowHelpCenter] = useState(false);
 
@@ -163,7 +185,9 @@ const App: React.FC = () => {
       setActiveLeague(league);
     } else if (path.startsWith("/asset/")) {
       const slug = path.split("/")[2];
-      const asset = allAssets.find(a => a.name.toLowerCase().replace(/\s+/g, '-') === slug);
+      const asset = allAssets.find(
+        (a) => a.name.toLowerCase().replace(/\s+/g, "-") === slug,
+      );
       if (asset?.market) {
         setActiveLeague(asset.market as League);
       }
@@ -333,9 +357,9 @@ const App: React.FC = () => {
             is_settled: ta.market_index_seasons.is_settled,
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                "en-US",
-                { month: "short", day: "numeric", year: "numeric" },
-              )
+                  "en-US",
+                  { month: "short", day: "numeric", year: "numeric" },
+                )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -360,26 +384,32 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       // Pass both auth_user_id and email for better fallback support
-      getPublicUserId(user.id, user.email).then((userId) => {
-        if (userId) {
-          setPublicUserId(userId);
-        } else {
-          // No user record found or session invalid - this indicates incomplete registration or session issue
-          // Sign out the user for security
-          supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
-          // Don't show alert during automatic sign-out to avoid spam
+      getPublicUserId(user.id, user.email)
+        .then((userId) => {
+          if (userId) {
+            setPublicUserId(userId);
+          } else {
+            // No user record found or session invalid - this indicates incomplete registration or session issue
+            // Sign out the user for security
+            supabase.auth
+              .signOut()
+              .catch((err) => console.error("Error signing out:", err));
+            // Don't show alert during automatic sign-out to avoid spam
+            setPublicUserId(null);
+            setKycStatus(null);
+            setKycChecked(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking user registration:", error);
+          // If there's an error checking, sign out to be safe
+          supabase.auth
+            .signOut()
+            .catch((err) => console.error("Error signing out:", err));
           setPublicUserId(null);
           setKycStatus(null);
           setKycChecked(false);
-        }
-      }).catch((error) => {
-        console.error('Error checking user registration:', error);
-        // If there's an error checking, sign out to be safe
-        supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
-        setPublicUserId(null);
-        setKycStatus(null);
-        setKycChecked(false);
-      });
+        });
     } else {
       setPublicUserId(null);
       setKycStatus(null);
@@ -443,8 +473,9 @@ const App: React.FC = () => {
     setSelectedOrder(null); // Close trade slip when viewing an asset page
     setPreviousLeague(activeLeague);
 
-    const slug = asset.name.toLowerCase().replace(/\s+/g, '-');
-    navigate(`/asset/${slug}`);
+    const slug = asset.name.toLowerCase().replace(/\s+/g, "-");
+    const market = asset.market?.toLowerCase() || "unknown";
+    navigate(`/asset/${market}/${slug}`);
 
     // Sync sidebar active league with the asset's market if available
     if (asset.market) {
@@ -505,21 +536,23 @@ const App: React.FC = () => {
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
       // Guard: only update if user is still logged in (check refs for current state)
       if (userRef.current && publicUserIdRef.current) {
-        fetchPortfolio(publicUserIdRef.current).then(setPortfolio).catch((error) => {
-          console.error('Error updating portfolio via subscription:', error);
-        });
+        fetchPortfolio(publicUserIdRef.current)
+          .then(setPortfolio)
+          .catch((error) => {
+            console.error("Error updating portfolio via subscription:", error);
+          });
       }
     });
 
     const assetsSubscription = subscribeToAssets(() => {
       loadAssets().catch((error) => {
-        console.error('Error updating assets via subscription:', error);
+        console.error("Error updating assets via subscription:", error);
       });
     });
 
     const tradingAssetsSubscription = subscribeToTradingAssets(() => {
       loadAssets().catch((error) => {
-        console.error('Error updating trading assets via subscription:', error);
+        console.error("Error updating trading assets via subscription:", error);
       });
     });
 
@@ -577,6 +610,9 @@ const App: React.FC = () => {
       return;
     }
 
+    // Set activeLeague BEFORE navigating to prevent flash of wrong state
+    setActiveLeague(league);
+
     if (league === "HOME") {
       navigate("/");
     } else if (league === "ALL_MARKETS") {
@@ -586,8 +622,6 @@ const App: React.FC = () => {
     } else {
       navigate(`/market/${league}`);
     }
-
-    setActiveLeague(league);
   };
 
   const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
@@ -650,10 +684,10 @@ const App: React.FC = () => {
     if (!selectedOrder || !wallet || !publicUserId) return;
 
     try {
-      // Recompute the correct price based on the final selected side
       const team = selectedOrder.team;
       const priceForSide = side === "buy" ? team.offer : team.bid;
 
+      // Execute real trade
       const result = await placeTrade(
         publicUserId,
         team.market_trading_asset_id || team.id,
@@ -662,11 +696,32 @@ const App: React.FC = () => {
         quantity,
       );
 
-      // Refresh portfolio and wallet after trade
+      // ── SUCCESS PATH ───────────────────────────────────────
+      // Refresh data
       await loadUserData();
+
+      // Prepare confirmation data
+      setConfirmationData({
+        orderId: result?.orderId || `ORD-${Date.now()}`, // use real ID if backend returns it
+        assetName: team.name,
+        side,
+        units: quantity,
+        pricePerUnit: priceForSide,
+        totalAmount:
+          side === "buy"
+            ? quantity * priceForSide
+            : quantity * priceForSide * (1 - 0.05), // adjust if fee logic changes
+      });
+
+      // Show confirmation modal
+      setShowConfirmationModal(true);
+
+      // Close trade slip
       setSelectedOrder(null);
-    } catch (error) {
-      setAlertMessage("Trade failed. Please try again.");
+      setShowRightPanel(false); // especially important on mobile
+    } catch (error: any) {
+      console.error("Trade error:", error);
+      setAlertMessage(error.message || "Trade failed. Please try again.");
       setAlertOpen(true);
     }
   };
@@ -722,7 +777,9 @@ const App: React.FC = () => {
               loading ? (
                 <div className="h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-                  <p className="text-gray-400 font-sans">Verifying session...</p>
+                  <p className="text-gray-400 font-sans">
+                    Verifying session...
+                  </p>
                 </div>
               ) : user ? (
                 <MyDetailsPage
@@ -731,21 +788,21 @@ const App: React.FC = () => {
                   userData={
                     user
                       ? {
-                        name: user.user_metadata?.full_name || "",
-                        email: user.email || "",
-                        phone: user.user_metadata?.phone || "",
-                        whatsapp: user.user_metadata?.whatsapp_phone || "",
-                        address: user.user_metadata?.address_line || "",
-                        city: user.user_metadata?.city || "",
-                        state: user.user_metadata?.region || "",
-                        country: user.user_metadata?.country || "",
-                        postCode: user.user_metadata?.postal_code || "",
-                        accountName: "",
-                        accountNumber: "",
-                        iban: "",
-                        swiftBic: "",
-                        bankName: "",
-                      }
+                          name: user.user_metadata?.full_name || "",
+                          email: user.email || "",
+                          phone: user.user_metadata?.phone || "",
+                          whatsapp: user.user_metadata?.whatsapp_phone || "",
+                          address: user.user_metadata?.address_line || "",
+                          city: user.user_metadata?.city || "",
+                          state: user.user_metadata?.region || "",
+                          country: user.user_metadata?.country || "",
+                          postCode: user.user_metadata?.postal_code || "",
+                          accountName: "",
+                          accountNumber: "",
+                          iban: "",
+                          swiftBic: "",
+                          bankName: "",
+                        }
                       : undefined
                   }
                   onSignOut={async () => {
@@ -789,15 +846,18 @@ const App: React.FC = () => {
                   onTriggerLoginHandled={() => setTriggerLoginModal(false)}
                   triggerSignUpModal={triggerSignUpModal}
                   onTriggerSignUpHandled={() => setTriggerSignUpModal(false)}
+                  onHelpCenterClick={() => setShowHelpCenter(true)}
                 />
 
                 {/* AI Analytics Banner */}
-                <div className="w-full">
-                  <AIAnalyticsBanner
-                    onClick={handleAIAnalyticsClick}
-                    isActive={activeLeague === "AI_ANALYTICS"}
-                  />
-                </div>
+                {user && (
+                  <div className="w-full">
+                    <AIAnalyticsBanner
+                      onClick={handleAIAnalyticsClick}
+                      isActive={activeLeague === "AI_ANALYTICS"}
+                    />
+                  </div>
+                )}
 
                 {/* Main Layout: Sidebar + Content */}
                 <div className="flex-1 flex overflow-hidden">
@@ -838,21 +898,28 @@ const App: React.FC = () => {
                               <Route
                                 path="/markets"
                                 element={
-                                  <React.Suspense fallback={
-                                    <div className="space-y-3 p-4">
-                                      {/* Skeleton Header */}
-                                      <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
-                                        <div className="h-8 w-48 bg-gray-800 rounded animate-pulse" />
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="space-y-3 p-4">
+                                        {/* Skeleton Header */}
+                                        <div className="flex items-center gap-3 mb-6">
+                                          <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
+                                          <div className="h-8 w-48 bg-gray-800 rounded animate-pulse" />
+                                        </div>
+                                        {/* Skeleton List */}
+                                        <div className="flex flex-col gap-3">
+                                          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                                            (i) => (
+                                              <div
+                                                key={i}
+                                                className="h-20 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse w-full"
+                                              />
+                                            ),
+                                          )}
+                                        </div>
                                       </div>
-                                      {/* Skeleton List */}
-                                      <div className="flex flex-col gap-3">
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
-                                          <div key={i} className="h-20 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse w-full" />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  }>
+                                    }
+                                  >
                                     <AllMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -865,18 +932,25 @@ const App: React.FC = () => {
                               <Route
                                 path="/new-markets"
                                 element={
-                                  <React.Suspense fallback={
-                                    <div className="space-y-4 p-4">
-                                      {/* Skeleton Header */}
-                                      <div className="h-8 w-48 bg-gray-800 rounded animate-pulse mb-6" />
-                                      {/* Skeleton Grid */}
-                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
-                                          <div key={i} className="h-48 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse" />
-                                        ))}
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="space-y-4 p-4">
+                                        {/* Skeleton Header */}
+                                        <div className="h-8 w-48 bg-gray-800 rounded animate-pulse mb-6" />
+                                        {/* Skeleton Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                                            (i) => (
+                                              <div
+                                                key={i}
+                                                className="h-48 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse"
+                                              />
+                                            ),
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
-                                  }>
+                                    }
+                                  >
                                     <NewMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -890,18 +964,41 @@ const App: React.FC = () => {
                               <Route
                                 path="/ai-analytics"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#00A651]" /></div>}>
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="h-full flex items-center justify-center">
+                                        <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                                      </div>
+                                    }
+                                  >
                                     <AIAnalyticsPage teams={allAssets} />
                                   </React.Suspense>
                                 }
                               />
                               <Route
-                                path="/asset/:name"
-                                element={<AssetRouteWrapper allAssets={allAssets} handleSelectOrder={handleSelectOrder} handleNavigate={handleNavigate} previousLeague={previousLeague} />}
+                                path="/asset/:market/:name"
+                                element={
+                                  <AssetRouteWrapper
+                                    allAssets={allAssets}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleNavigate={handleNavigate}
+                                    previousLeague={previousLeague}
+                                  />
+                                }
                               />
                               <Route
                                 path="/market/:leagueId"
-                                element={<LeagueRouteWrapper teams={teams} activeLeague={activeLeague} seasonDatesMap={seasonDatesMap} sortedTeams={sortedTeams} handleSelectOrder={handleSelectOrder} handleViewAsset={handleViewAsset} loading={loading} />}
+                                element={
+                                  <LeagueRouteWrapper
+                                    teams={teams}
+                                    activeLeague={activeLeague}
+                                    seasonDatesMap={seasonDatesMap}
+                                    sortedTeams={sortedTeams}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleViewAsset={handleViewAsset}
+                                    loading={loading}
+                                  />
+                                }
                               />
                             </Routes>
 
@@ -1029,7 +1126,6 @@ const App: React.FC = () => {
           />
         )}
 
-
         {/* Access Denied Modal (AI Analytics) */}
         <AccessDeniedModal
           isOpen={showAccessDeniedModal}
@@ -1051,6 +1147,22 @@ const App: React.FC = () => {
           onClose={() => setAlertOpen(false)}
           message={alertMessage}
         />
+
+        {confirmationData && (
+          <OrderConfirmationModal
+            isOpen={showConfirmationModal}
+            onClose={() => {
+              setShowConfirmationModal(false);
+              setConfirmationData(null); // clean up
+            }}
+            orderId={confirmationData.orderId}
+            assetName={confirmationData.assetName}
+            side={confirmationData.side}
+            units={confirmationData.units}
+            pricePerUnit={confirmationData.pricePerUnit}
+            totalAmount={confirmationData.totalAmount}
+          />
+        )}
 
         {/* AI Chatbot - Fixed position bottom right */}
         <ChatBot />
@@ -1119,11 +1231,16 @@ const AssetRouteWrapper: React.FC<{
   handleNavigate: (league: League) => void;
   previousLeague: League;
 }> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
-  const { name } = useParams();
+  const { market, name } = useParams();
   const navigate = useNavigate();
   const asset = useMemo(() => {
-    return allAssets.find(a => a.name.toLowerCase().replace(/\s+/g, '-') === name);
-  }, [allAssets, name]);
+    // Find asset by both market and name for accurate matching
+    return allAssets.find(
+      (a) =>
+        a.name.toLowerCase().replace(/\s+/g, "-") === name &&
+        a.market?.toLowerCase() === market?.toLowerCase(),
+    );
+  }, [allAssets, name, market]);
 
   if (allAssets.length === 0) {
     return (
@@ -1145,6 +1262,10 @@ const AssetRouteWrapper: React.FC<{
         navigate(-1);
       }}
       onSelectOrder={handleSelectOrder}
+      onNavigateToIndex={(market) => {
+        // Navigate to the index/league page for this market
+        handleNavigate(market as League);
+      }}
     />
   );
 };
@@ -1157,7 +1278,19 @@ const LeagueRouteWrapper: React.FC<{
   handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
   handleViewAsset: (asset: Team) => void;
   loading: boolean;
-}> = ({ teams, activeLeague, seasonDatesMap, sortedTeams, handleSelectOrder, handleViewAsset, loading }) => {
+}> = ({
+  teams,
+  activeLeague,
+  seasonDatesMap,
+  sortedTeams,
+  handleSelectOrder,
+  handleViewAsset,
+  loading,
+}) => {
+  // Use URL param for the league to prevent flash when navigating away
+  const { leagueId } = useParams();
+  const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+
   if (loading && teams.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
@@ -1173,11 +1306,11 @@ const LeagueRouteWrapper: React.FC<{
         {/* Header aligned with order book */}
         <div className="flex-shrink-0">
           <Header
-            title={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
-            seasonStartDate={seasonDatesMap.get(activeLeague)?.start_date}
-            seasonEndDate={seasonDatesMap.get(activeLeague)?.end_date}
-            seasonStage={seasonDatesMap.get(activeLeague)?.stage || undefined}
+            title={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+            seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+            seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+            seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
           />
         </div>
 
@@ -1210,29 +1343,29 @@ const LeagueRouteWrapper: React.FC<{
         <div className="flex-shrink-0">
           <AIAnalysis
             teams={teams}
-            leagueName={getLeagueTitleUtil(activeLeague)}
+            leagueName={getLeagueTitleUtil(displayLeague)}
           />
         </div>
 
         {/* Did You Know (Index/League Context) */}
         <div className="flex-shrink-0">
           <DidYouKnow
-            assetName={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
           />
         </div>
 
         {/* On This Day (Index/League Context) */}
         <div className="flex-shrink-0">
           <OnThisDay
-            assetName={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
           />
         </div>
 
         {/* News Feed */}
         <div className="flex-shrink-0 pb-4 xl:pb-0">
-          <NewsFeed topic={activeLeague as any} />
+          <NewsFeed topic={displayLeague as any} />
         </div>
       </div>
     </div>
