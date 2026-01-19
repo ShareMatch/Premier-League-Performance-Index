@@ -6,7 +6,7 @@ import Header from "./components/Header";
 import TopBar from "./components/TopBar";
 import RightPanel from "./components/RightPanel";
 import Ticker from "./components/Ticker";
-import { Menu, X, Loader2 } from "lucide-react";
+import { Menu, X, Loader2, HelpCircle } from "lucide-react";
 import NewsFeed from "./components/NewsFeed";
 import HomeDashboard from "./components/HomeDashboard";
 import OrderBookRow from "./components/OrderBookRow";
@@ -96,6 +96,14 @@ const App: React.FC = () => {
   const [sellErrorAssetName, setSellErrorAssetName] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top on navigation changes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -800,13 +808,17 @@ const App: React.FC = () => {
                     onLeagueChange={handleNavigate}
                     allAssets={allAssets}
                     onHelpCenterClick={() => setShowHelpCenter(true)}
+                    onViewAsset={handleViewAsset}
                   />
 
                   {/* Content Container (Main + Right Panel) */}
                   <div className="flex-1 flex overflow-hidden">
                     {/* Center Content */}
                     <div className="flex-1 flex flex-col min-w-0 relative">
-                      <div className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto">
+                      <div
+                        ref={mainContentRef}
+                        className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto"
+                      >
                         <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                           {/* Main content wrapper - grows to fill space */}
                           <div className="flex-1">
@@ -826,7 +838,21 @@ const App: React.FC = () => {
                               <Route
                                 path="/markets"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>}>
+                                  <React.Suspense fallback={
+                                    <div className="space-y-3 p-4">
+                                      {/* Skeleton Header */}
+                                      <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
+                                        <div className="h-8 w-48 bg-gray-800 rounded animate-pulse" />
+                                      </div>
+                                      {/* Skeleton List */}
+                                      <div className="flex flex-col gap-3">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
+                                          <div key={i} className="h-20 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse w-full" />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  }>
                                     <AllMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -839,7 +865,18 @@ const App: React.FC = () => {
                               <Route
                                 path="/new-markets"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>}>
+                                  <React.Suspense fallback={
+                                    <div className="space-y-4 p-4">
+                                      {/* Skeleton Header */}
+                                      <div className="h-8 w-48 bg-gray-800 rounded animate-pulse mb-6" />
+                                      {/* Skeleton Grid */}
+                                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
+                                          <div key={i} className="h-48 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse" />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  }>
                                     <NewMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -875,6 +912,17 @@ const App: React.FC = () => {
                             )}
                           </div>
                         </div>
+                      </div>
+
+                      {/* Mobile Help Center Bar - Fixed above Ticker */}
+                      <div className="md:hidden flex-shrink-0 bg-[#0B1221] border-t border-gray-800">
+                        <button
+                          onClick={() => setShowHelpCenter(true)}
+                          className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                        >
+                          <HelpCircle className="w-3.5 h-3.5" />
+                          <span>Help Center</span>
+                        </button>
                       </div>
 
                       {/* Ticker */}

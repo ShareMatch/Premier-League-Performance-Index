@@ -96,8 +96,8 @@ serve(async (req: Request) => {
 
         // Debug logging - detailed check
         console.log("OTP state from DB:", JSON.stringify(currentOtpState));
-        console.log("Decision check:", { 
-            forProfileChange, 
+        console.log("Decision check:", {
+            forProfileChange,
             verified_at: currentOtpState.verified_at,
             willBlock: !forProfileChange && currentOtpState.verified_at,
             reason: forProfileChange ? "BYPASS (profile change)" : (currentOtpState.verified_at ? "BLOCK (already verified)" : "ALLOW (not verified)")
@@ -148,7 +148,7 @@ serve(async (req: Request) => {
         }
 
         // -- GENERATE EMAIL BODY --
-        const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
+        const logoImageUrl = "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
 
         const emailHtml = generateOtpEmailHtml({
             logoImageUrl,

@@ -12,6 +12,7 @@ import {
   Mic,
   Menu,
 } from "lucide-react";
+import { formatCurrency } from "../utils/currencyUtils";
 import type { Wallet as WalletType, Team, League } from "../types";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./auth/AuthProvider";
@@ -395,9 +396,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   isListening ? "Stop voice search" : "Start voice search"
                 }
                 data-testid="topbar-voice-search-mobile"
-                className={`text-gray-400 ${
-                  isListening ? "text-[#005430] animate-pulse" : ""
-                }`}
+                className={`text-gray-400 ${isListening ? "text-[#005430] animate-pulse" : ""
+                  }`}
               >
                 <Mic className={`h-5 w-5 ${isListening ? "text-white" : ""}`} />
               </button>
@@ -491,11 +491,10 @@ const TopBar: React.FC<TopBarProps> = ({
                 ) : (
                   <button
                     onClick={startListening}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
-                      isListening
-                        ? "text-[#005430]"
-                        : "text-gray-400 hover:text-gray-200"
-                    }`}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
+                      ? "text-[#005430]"
+                      : "text-gray-400 hover:text-gray-200"
+                      }`}
                   >
                     <Mic className="h-4 w-4" />
                   </button>
@@ -563,9 +562,8 @@ const TopBar: React.FC<TopBarProps> = ({
           {user && !isPasswordRecovery && (
             <div ref={balanceRef} className="hidden lg:relative lg:block">
               <button
-                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${
-                  isBalanceOpen ? "bg-[#003820]" : ""
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsBalanceOpen(!isBalanceOpen);
@@ -574,17 +572,11 @@ const TopBar: React.FC<TopBarProps> = ({
                 }}
               >
                 <span className="font-bold text-white text-sm">
-                  {balance.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-white/70 transition-transform ${
-                    isBalanceOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -595,29 +587,20 @@ const TopBar: React.FC<TopBarProps> = ({
                       Total Balance
                     </p>
                     <p className="text-xl font-bold text-white">
-                      {balance.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                      {formatCurrency(balance)}
                     </p>
                   </div>
                   <div className="px-4 py-2">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-400">Available</span>
                       <span className="font-medium text-gray-200">
-                        {available.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(available)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Active Assets</span>
                       <span className="font-medium text-gray-200">
-                        {reserved.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(portfolioValue)}
                       </span>
                     </div>
                   </div>
@@ -632,9 +615,8 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 aria-label="Open user menu"
                 data-testid="topbar-user-avatar-desktop"
-                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${
-                  isAvatarOpen ? "bg-[#004225] text-white" : ""
-                }`}
+                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsAvatarOpen(!isAvatarOpen);
@@ -659,16 +641,6 @@ const TopBar: React.FC<TopBarProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
                         onOpenPortfolio?.();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
@@ -681,6 +653,16 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
                     </a>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAvatarOpen(false);
+                        onOpenSettings?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                    >
+                      <Settings className="h-4 w-4" /> Settings
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -713,17 +695,11 @@ const TopBar: React.FC<TopBarProps> = ({
                 }}
               >
                 <span className="font-bold text-white text-sm">
-                  {balance.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-3 w-3 text-white/70 transition-transform ${
-                    isBalanceOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -752,29 +728,20 @@ const TopBar: React.FC<TopBarProps> = ({
                       Total Balance
                     </p>
                     <p className="text-xl font-bold text-white">
-                      {balance.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                      {formatCurrency(balance)}
                     </p>
                   </div>
                   <div className="px-4 py-2">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-400">Available</span>
                       <span className="font-medium text-gray-200">
-                        {available.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(available)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Active Assets</span>
                       <span className="font-medium text-gray-200">
-                        {reserved.toLocaleString("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        })}
+                        {formatCurrency(portfolioValue)}
                       </span>
                     </div>
                   </div>
@@ -797,16 +764,6 @@ const TopBar: React.FC<TopBarProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
                         onOpenPortfolio?.();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
@@ -819,6 +776,16 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
                     </a>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAvatarOpen(false);
+                        onOpenSettings?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                    >
+                      <Settings className="h-4 w-4" /> Settings
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

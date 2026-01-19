@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import TradeSlip from "./TradeSlip";
 import Portfolio from "./Portfolio";
+import Watchlist from "./Watchlist";
 import type { Order, Position, Team, Transaction, League } from "../types";
-import { History, Activity, X } from "lucide-react";
+import { History, Activity, X, Star } from "lucide-react";
 
 interface RightPanelProps {
   portfolio: Position[];
@@ -35,18 +36,17 @@ const RightPanel: React.FC<RightPanelProps> = ({
   onClose,
   isMobile = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<"portfolio" | "history">(
+  const [activeTab, setActiveTab] = useState<"portfolio" | "watchlist" | "history">(
     "portfolio"
   );
 
   return (
     <div
       data-testid="right-panel"
-      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${
-        isMobile
+      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile
           ? "w-80 h-full max-h-full"
           : "h-full w-[clamp(8rem,30vw,20rem)]"
-      }`}
+        }`}
     >
       {/* Mobile Header with Close Button - Fixed at top */}
       {isMobile && (
@@ -91,23 +91,32 @@ const RightPanel: React.FC<RightPanelProps> = ({
         <div className="flex-shrink-0 flex border-b border-gray-800 bg-gray-900 sticky top-0 z-10">
           <button
             onClick={() => setActiveTab("portfolio")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === "portfolio"
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "portfolio"
                 ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
                 : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+              }`}
             data-testid="right-panel-portfolio-tab"
           >
             <Activity className="w-4 h-4" />
             Portfolio
           </button>
           <button
-            onClick={() => setActiveTab("history")}
-            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-              activeTab === "history"
+            onClick={() => setActiveTab("watchlist")}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "watchlist"
                 ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
                 : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+              }`}
+            data-testid="right-panel-watchlist-tab"
+          >
+            <Star className="w-4 h-4" />
+            Watchlist
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "history"
+                ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+                : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              }`}
             data-testid="right-panel-history-tab"
           >
             <History className="w-4 h-4" />
@@ -137,6 +146,18 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 onViewAsset={onViewAsset}
               />
             </>
+          ) : activeTab === "watchlist" ? (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+                <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
+                Watchlist
+              </h2>
+              <Watchlist
+                allAssets={allAssets}
+                onViewAsset={onViewAsset}
+                onSelectAsset={(team, type) => onSelectOrder(team, type)}
+              />
+            </div>
           ) : (
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
@@ -181,13 +202,12 @@ const RightPanel: React.FC<RightPanelProps> = ({
                               {asset?.name || tx.asset_name || "Unknown Asset"}
                             </span>
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${
-                                tx.type === "settlement"
+                              className={`text-xs px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${tx.type === "settlement"
                                   ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                                   : tx.direction === "buy"
-                                  ? "bg-[#005430] text-white border border-transparent"
-                                  : "bg-red-500/10 text-red-500 border border-red-500/20"
-                              }`}
+                                    ? "bg-[#005430] text-white border border-transparent"
+                                    : "bg-red-500/10 text-red-500 border border-red-500/20"
+                                }`}
                             >
                               {tx.type === "settlement"
                                 ? "Settled"

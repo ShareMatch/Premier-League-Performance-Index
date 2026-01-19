@@ -9,6 +9,7 @@ import NewsFeed from "./NewsFeed";
 import DidYouKnow from "./DidYouKnow";
 import OnThisDay from "./OnThisDay";
 import { getLogoUrl } from "../lib/logoHelper";
+import { useFavorites } from "../hooks/useFavorites";
 
 interface AssetPageProps {
     asset: Team;
@@ -18,9 +19,18 @@ interface AssetPageProps {
 
 const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) => {
     const [period, setPeriod] = useState<'1h' | '24h' | '7d' | 'All'>('24h');
-    const [isFavorite, setIsFavorite] = useState(false);
+    const { favorites, toggleFavorite } = useFavorites();
 
-    // Generate consistent mock data based on asset ID 
+    // Prioritize asset_id (static ID) for watchlist so it sticks across leagues
+    const watchId = asset.asset_id || asset.id;
+    const isInWatchlist = favorites.includes(watchId);
+
+    console.log("AssetPage - Watchlist State:", {
+        assetName: asset.name,
+        watchId,
+        isInWatchlist,
+        totalWatchlistCount: favorites.length
+    });
     // (In a real app this would be fetched)
     const chartData = useMemo(() => {
         const basePrice = asset.offer || 1.0;
@@ -45,7 +55,9 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
     }, [asset.name]);
 
     const handleShare = () => {
-        navigator.clipboard.writeText(`Check out ${asset.name} on ShareMatch!`);
+        const slug = asset.name.toLowerCase().replace(/\s+/g, '-');
+        const shareUrl = `${window.location.origin}/asset/${slug}`;
+        navigator.clipboard.writeText(shareUrl);
         alert('Link copied to clipboard!');
     };
 
@@ -95,10 +107,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                     <div className="flex items-center flex-shrink-0">
                         <button
-                            onClick={() => setIsFavorite(!isFavorite)}
-                            className={`p-1.5 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:bg-gray-800'}`}
+                            onClick={() => {
+                                console.log("Watchlist Toggle - ID:", watchId);
+                                toggleFavorite(watchId);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${isInWatchlist ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:bg-gray-800'}`}
+                            title={isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                         >
-                            <Star className={`w-4 h-4 ${isFavorite ? 'fill-yellow-400' : ''}`} />
+                            <Star className={`w-4 h-4 ${isInWatchlist ? 'fill-yellow-400' : ''}`} />
                         </button>
                         <button
                             onClick={handleShare}
@@ -233,10 +249,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                     <div className="flex gap-1">
                         <button
-                            onClick={() => setIsFavorite(!isFavorite)}
-                            className={`p-2 rounded-lg transition-colors ${isFavorite ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                            onClick={() => {
+                                console.log("Watchlist Toggle - ID:", watchId);
+                                toggleFavorite(watchId);
+                            }}
+                            className={`p-2 rounded-lg transition-colors ${isInWatchlist ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                            title={isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                         >
-                            <Star className={`w-5 h-5 ${isFavorite ? 'fill-yellow-400' : ''}`} />
+                            <Star className={`w-5 h-5 ${isInWatchlist ? 'fill-yellow-400' : ''}`} />
                         </button>
                         <button
                             onClick={handleShare}
@@ -302,7 +322,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                             {/* Trade History - Mobile/Tablet: Show inline */}
                             <div className="xl:hidden">
-                                <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
+                                <TradeHistoryList trades={tradeHistory} assetName={asset.name} assetId={watchId} />
                             </div>
 
                             {/* Did You Know - Mobile/Tablet */}
@@ -328,7 +348,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder }) =
 
                         {/* Right Column - Stats & Info (Desktop Only) */}
                         <div className="hidden xl:block xl:col-span-1 space-y-6">
-                            <TradeHistoryList trades={tradeHistory} assetName={asset.name} />
+                            <TradeHistoryList trades={tradeHistory} assetName={asset.name} assetId={watchId} />
 
                             {/* Key Stats Card */}
                             <div className="bg-[#0B1221] border border-gray-800 rounded-xl p-5 space-y-4">
