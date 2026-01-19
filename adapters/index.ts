@@ -38,7 +38,7 @@ export const test = base.extend<{
   };
   supabaseAdapter: {
     client: any;
-    createUser: (email: string, password: string) => Promise<any | null>;
+    createUser: (email: string, password: string, fullName?: string) => Promise<any | null>;
     getEmailOtp: (email: string) => Promise<string | null>;
     getWhatsAppOtp: (email: string) => Promise<string | null>;
     getUserByEmail: (email: string) => Promise<any | null>;
@@ -158,7 +158,7 @@ export const test = base.extend<{
 
     const adapter = {
       client,
-      createUser: async (email: string, password: string) => {
+      createUser: async (email: string, password: string, fullName: string = 'Test User') => {
         try {
           // Create user in Supabase Auth
           const { data, error } = await client.auth.admin.createUser({
@@ -168,12 +168,35 @@ export const test = base.extend<{
           });
 
           if (error) {
-            console.error('[Supabase] Error creating user:', error);
+            console.error('[Supabase] Error creating auth user:', error);
             return null;
           }
 
-          console.log(`[Supabase] Created test user: ${email}`);
-          return data.user;
+          const authUser = data.user;
+          console.log(`[Supabase] Created auth user: ${email} (${authUser.id})`);
+
+          // Also create in public.users table (app's user table)
+          const { data: publicUser, error: publicError } = await client
+            .from('users')
+            .upsert({
+              auth_user_id: authUser.id,
+              email: email.toLowerCase(),
+              full_name: fullName,
+              email_verified: true,
+              whatsapp_verified: true,
+              created_at: new Date().toISOString(),
+            }, { onConflict: 'email' })
+            .select()
+            .single();
+
+          if (publicError) {
+            console.error('[Supabase] Error creating public.users entry:', publicError);
+            // Still return auth user even if public.users insert fails
+          } else {
+            console.log(`[Supabase] Created public.users entry: ${publicUser?.id}`);
+          }
+
+          return authUser;
         } catch (err) {
           console.error('[Supabase] Exception creating user:', err);
           return null;
