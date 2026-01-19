@@ -56,8 +56,11 @@ export const test = base.extend<{
     // For simplicity, we'll create the tools inline
     const axios = (await import('axios')).default;
     const crypto = await import('crypto');
-    const dotenv = await import('dotenv');
-    dotenv.config();
+    // Only load dotenv locally - in CI, env vars come from GitHub secrets
+    if (!process.env.CI) {
+      const dotenv = await import('dotenv');
+      dotenv.config();
+    }
 
     const signRequest = (method: string, url: string, body: string = '') => {
       const ts = Math.floor(Date.now() / 1000);
@@ -123,8 +126,11 @@ export const test = base.extend<{
   // Inherit supabaseAdapter fixture
   supabaseAdapter: async ({ }, use) => {
     const { createClient } = await import('@supabase/supabase-js');
-    const dotenv = await import('dotenv');
-    dotenv.config();
+    // Only load dotenv locally - in CI, env vars come from GitHub secrets
+    if (!process.env.CI) {
+      const dotenv = await import('dotenv');
+      dotenv.config();
+    }
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

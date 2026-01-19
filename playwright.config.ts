@@ -3,9 +3,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load both .env and .env.local (Vite uses .env.local for local overrides)
-dotenv.config();
-dotenv.config({ path: '.env.local', override: true });
+// Load .env files only locally - in CI, env vars come from GitHub secrets
+if (!process.env.CI) {
+  dotenv.config();
+  dotenv.config({ path: '.env.local', override: true });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
