@@ -4,6 +4,7 @@ import TermsConditionsModal from "./TermsConditionsModal";
 import AlertModal from "./AlertModal";
 import { TRADING_CONFIG } from "../lib/config";
 import { formatCurrency, formatNumberWithCommas } from "../utils/currencyUtils";
+import OrderConfirmationModal from "./OrderConfirmationModal";
 
 interface TradeSlipProps {
   order: Order;
@@ -68,7 +69,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
 
   // Local side state (buy / sell) so user can toggle within the slip
   const [side, setSide] = useState<"buy" | "sell">(
-    order.type === "buy" ? "buy" : "sell"
+    order.type === "buy" ? "buy" : "sell",
   );
 
   // Sync side state when order changes (e.g., user clicks Buy/Sell on a different asset)
@@ -105,8 +106,10 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   const totalDisplay = formatNumberWithCommas(totalAmount);
 
   // Calculate returns (based on subtotal, not including fees)
-  const maxReturn = shares !== "" ? formatNumberWithCommas(shares * 100) : "0.00";
-  const minReturn = shares !== "" ? formatNumberWithCommas(shares * 0.1) : "0.00";
+  const maxReturn =
+    shares !== "" ? formatNumberWithCommas(shares * 100) : "0.00";
+  const minReturn =
+    shares !== "" ? formatNumberWithCommas(shares * 0.1) : "0.00";
 
   useEffect(() => {
     if (countdown === null) return;
@@ -123,13 +126,22 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
 
   const handleSubmit = async () => {
     if (shares === "" || shares <= 0) return;
+
     setIsSubmitting(true);
+    setError(null);
+
     try {
-      // pass the UI-selected side to the parent confirm handler
+      // We let the PARENT handle the real trade + set confirmation data
       await onConfirm(shares as number, side);
+
+      // If we reach here → trade was successful
+      // Parent already set confirmationData
+      // → we just close the slip
       onClose();
-    } catch (error) {
-      setAlertMessage("Trade failed. Please try again.");
+    } catch (err: any) {
+      console.error("Trade failed:", err);
+      setError(err.message || "Trade failed. Please try again.");
+      setAlertMessage(err.message || "Trade failed. Please try again.");
       setAlertOpen(true);
     } finally {
       setIsSubmitting(false);
@@ -180,7 +192,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       // Buy-side validation: check for sufficient funds
       if (isBuy && subtotal > walletBalance) {
         setError(
-          `Insufficient funds. You need ${formatCurrency(subtotal)} but only have ${formatCurrency(walletBalance)}`
+          `Insufficient funds. You need ${formatCurrency(subtotal)} but only have ${formatCurrency(walletBalance)}`,
         );
         return;
       }
@@ -192,7 +204,10 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   };
 
   return (
-    <div data-testid="trade-slip" className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700">
+    <div
+      data-testid="trade-slip"
+      className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700"
+    >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-lg text-gray-200">Transaction Slip</h2>
       </div>
@@ -202,10 +217,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
         <button
           type="button"
           onClick={() => handleSideToggle("buy")}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${isBuy
-            ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
-            : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
+            isBuy
+              ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
+              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+          }`}
           data-testid="trade-slip-buy-tab"
         >
           Buy
@@ -214,12 +230,13 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           type="button"
           onClick={() => handleSideToggle("sell")}
           disabled={!canSell}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${!isBuy
-            ? "text-white bg-gray-800/20 border-b-2 border-red-600"
-            : canSell
-              ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-              : "text-gray-600 cursor-not-allowed"
-            } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
+            !isBuy
+              ? "text-white bg-gray-800/20 border-b-2 border-red-600"
+              : canSell
+                ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+                : "text-gray-600 cursor-not-allowed"
+          } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
           data-testid="trade-slip-sell-tab"
         >
           Sell
@@ -272,10 +289,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             </div>
           </div>
           <p
-            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${isBuy
-              ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
-              : "text-red-400"
-              }`}
+            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${
+              isBuy
+                ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
+                : "text-red-400"
+            }`}
           >
             {formatCurrency(currentPrice)}
           </p>
@@ -288,9 +306,13 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             Number of Units
           </label>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Subtotal: {formatCurrency(subtotal)}</p>
+            <p className="text-xs text-gray-500">
+              Subtotal: {formatCurrency(subtotal)}
+            </p>
             {!isBuy && holding > 0 && (
-              <p className="text-xs text-gray-400">Avaliable Units: {holding}</p>
+              <p className="text-xs text-gray-400">
+                Avaliable Units: {holding}
+              </p>
             )}
           </div>
         </div>
@@ -449,15 +471,16 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
           }
-          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${sharesNum <= 0 ||
+          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+            sharesNum <= 0 ||
             isSubmitting ||
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
-            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-            : countdown !== null
-              ? "bg-[#1C7D83] text-gray-300 cursor-wait"
-              : "bg-[#005430] hover:bg-[#005430]/90 text-white"
-            }`}
+              ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+              : countdown !== null
+                ? "bg-[#1C7D83] text-gray-300 cursor-wait"
+                : "bg-[#005430] hover:bg-[#005430]/90 text-white"
+          }`}
           data-testid="trade-slip-confirm-button"
         >
           {countdown !== null ? (

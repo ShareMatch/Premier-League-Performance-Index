@@ -11,6 +11,7 @@ import {
   X,
   Mic,
   Menu,
+  HelpCircle,
 } from "lucide-react";
 import { formatCurrency } from "../utils/currencyUtils";
 import type { Wallet as WalletType, Team, League } from "../types";
@@ -50,6 +51,7 @@ interface TopBarProps {
   onTriggerLoginHandled?: () => void;
   triggerSignUpModal?: boolean;
   onTriggerSignUpHandled?: () => void;
+  onHelpCenterClick?: () => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -91,6 +93,7 @@ const TopBar: React.FC<TopBarProps> = ({
   onTriggerLoginHandled,
   triggerSignUpModal,
   onTriggerSignUpHandled,
+  onHelpCenterClick,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -314,7 +317,7 @@ const TopBar: React.FC<TopBarProps> = ({
         window.history.replaceState(
           null,
           "",
-          window.location.pathname + window.location.search
+          window.location.pathname + window.location.search,
         );
       }
     }
@@ -396,8 +399,9 @@ const TopBar: React.FC<TopBarProps> = ({
                   isListening ? "Stop voice search" : "Start voice search"
                 }
                 data-testid="topbar-voice-search-mobile"
-                className={`text-gray-400 ${isListening ? "text-[#005430] animate-pulse" : ""
-                  }`}
+                className={`text-gray-400 ${
+                  isListening ? "text-[#005430] animate-pulse" : ""
+                }`}
               >
                 <Mic className={`h-5 w-5 ${isListening ? "text-white" : ""}`} />
               </button>
@@ -491,10 +495,11 @@ const TopBar: React.FC<TopBarProps> = ({
                 ) : (
                   <button
                     onClick={startListening}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
-                      ? "text-[#005430]"
-                      : "text-gray-400 hover:text-gray-200"
-                      }`}
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                      isListening
+                        ? "text-[#005430]"
+                        : "text-gray-400 hover:text-gray-200"
+                    }`}
                   >
                     <Mic className="h-4 w-4" />
                   </button>
@@ -522,6 +527,16 @@ const TopBar: React.FC<TopBarProps> = ({
                   </div>
                 )}
               </div>
+              {onHelpCenterClick && (
+                <button
+                  onClick={onHelpCenterClick}
+                  aria-label="Help Center"
+                  className="ml-3 text-white/70 hover:text-white transition-colors"
+                  data-testid="topbar-help-center"
+                >
+                  <HelpCircle className="w-6 h-6" />
+                </button>
+              )}
             </div>
           </>
         )}
@@ -529,11 +544,11 @@ const TopBar: React.FC<TopBarProps> = ({
         {/* Right: Date, Balance, Avatar */}
         <div className="flex items-center gap-3 lg:gap-4">
           {/* Date - Desktop Only */}
-          <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
+          {/* <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
             <span className="text-xs font-medium">
               {formatTime(currentTime)}
             </span>
-          </div>
+          </div> */}
 
           {/* Auth Buttons */}
           {!user && (
@@ -562,8 +577,9 @@ const TopBar: React.FC<TopBarProps> = ({
           {user && !isPasswordRecovery && (
             <div ref={balanceRef} className="hidden lg:relative lg:block">
               <button
-                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
-                  }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${
+                  isBalanceOpen ? "bg-[#003820]" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsBalanceOpen(!isBalanceOpen);
@@ -575,8 +591,9 @@ const TopBar: React.FC<TopBarProps> = ({
                   {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-4 w-4 text-white/70 transition-transform ${
+                    isBalanceOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -615,8 +632,9 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 aria-label="Open user menu"
                 data-testid="topbar-user-avatar-desktop"
-                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
-                  }`}
+                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${
+                  isAvatarOpen ? "bg-[#004225] text-white" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsAvatarOpen(!isAvatarOpen);
@@ -698,8 +716,9 @@ const TopBar: React.FC<TopBarProps> = ({
                   {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
+                  className={`h-3 w-3 text-white/70 transition-transform ${
+                    isBalanceOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -832,7 +851,7 @@ const TopBar: React.FC<TopBarProps> = ({
         onSuccess={async (
           email: string,
           userId: string,
-          formData: SignUpFormData
+          formData: SignUpFormData,
         ) => {
           setShowSignUpModal(false);
           setIsEditMode(false);
@@ -867,7 +886,7 @@ const TopBar: React.FC<TopBarProps> = ({
         onEditSuccess={async (
           email: string,
           whatsappPhone: string | undefined,
-          formData: SignUpFormData
+          formData: SignUpFormData,
         ) => {
           setShowSignUpModal(false);
           setIsEditMode(false);
@@ -944,7 +963,7 @@ const TopBar: React.FC<TopBarProps> = ({
           try {
             const result = await verifyEmailOtp(
               pendingVerification.email,
-              code
+              code,
             );
             if (result.whatsappData) {
               whatsappDataRef.current = result.whatsappData;
