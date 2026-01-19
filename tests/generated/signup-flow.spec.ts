@@ -313,6 +313,16 @@ test.describe("Signup Flow", () => {
     console.log(`Phone: ${TEST_USER.phone}`);
     console.log("========================================");
 
+    // Clean up any existing test user to ensure fresh signup
+    console.log("[Setup] Cleaning up existing test user if any...");
+    const deleted = await supabaseAdapter.deleteTestUser(TEST_USER.email);
+    if (deleted) {
+      console.log("[Setup] Deleted existing test user");
+      await page.waitForTimeout(1000); // Give DB time to propagate
+    } else {
+      console.log("[Setup] No existing user to delete");
+    }
+
     await page.goto("/?action=signup");
     console.log("[Step] Navigated to signup page");
 
@@ -455,11 +465,13 @@ test.describe("Signup Flow", () => {
           console.log("  - Clicked Verify for email");
         }
 
+        // Wait longer in CI - verification API can be slow
+        const verifyTimeout = process.env.CI ? 30000 : 10000;
         await Promise.race([
           page
             .getByText("Email verified successfully")
-            .waitFor({ timeout: 10000 }),
-          page.getByText("WhatsApp Verification").waitFor({ timeout: 10000 }),
+            .waitFor({ timeout: verifyTimeout }),
+          page.getByText("WhatsApp Verification").waitFor({ timeout: verifyTimeout }),
         ]);
         console.log("[Step 3] Email verification completed");
       }
