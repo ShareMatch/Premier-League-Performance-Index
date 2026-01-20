@@ -52,18 +52,20 @@ const OnThisDay: React.FC<OnThisDayProps> = ({ assetName, market, className = ''
             {/* Background decorative elements */}
             <div className="absolute top-0 right-0 -mr-[clamp(0.75rem,2vw,1rem)] -mt-[clamp(0.75rem,2vw,1rem)] w-[clamp(4rem,12vw,6rem)] h-[clamp(4rem,12vw,6rem)] bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
 
-            <div className="flex items-start gap-[clamp(0.5rem,1.5vw,0.75rem)] relative z-10">
-                <div className="p-[clamp(0.375rem,1vw,0.5rem)] bg-blue-500/10 rounded-[clamp(0.375rem,1vw,0.5rem)] text-blue-500 flex-shrink-0">
-                    <Calendar className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                    <h3 className="text-white font-bold text-[clamp(0.7rem,1.75vw,0.875rem)] mb-[clamp(0.375rem,1vw,0.5rem)] flex items-center gap-[clamp(0.375rem,1vw,0.5rem)] flex-wrap">
+            <div className="relative z-10">
+                <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] mb-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <div className="p-[clamp(0.375rem,1vw,0.5rem)] bg-blue-500/10 rounded-[clamp(0.375rem,1vw,0.5rem)] text-blue-500 flex-shrink-0">
+                        <Calendar className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" />
+                    </div>
+                    <h3 className="text-white font-bold text-[clamp(0.7rem,1.75vw,0.875rem)] flex items-center gap-[clamp(0.375rem,1vw,0.5rem)]">
                         On This Day
-                        <span className="text-[clamp(0.55rem,1.25vw,0.75rem)] font-normal text-gray-500 bg-gray-800 px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.0625rem,0.25vw,0.125rem)] rounded-full">
+                        <span className="text-[clamp(0.55rem,1.25vw,0.75rem)] font-normal text-gray-400 bg-blue-500/10 px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.0625rem,0.25vw,0.125rem)] rounded-full border border-blue-500/20">
                             {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                     </h3>
+                </div>
 
+                <div className="min-w-0">
                     {loading ? (
                         <div className="space-y-[clamp(0.375rem,1vw,0.5rem)] animate-pulse">
                             <div className="h-[clamp(0.625rem,1.5vw,0.75rem)] bg-gray-700/50 rounded w-full"></div>

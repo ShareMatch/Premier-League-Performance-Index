@@ -162,8 +162,8 @@ const PhoneInputField = ({
       </label>
       <div
         className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${error
-            ? "ring-2 ring-red-500"
-            : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+          ? "ring-2 ring-red-500"
+          : "focus-within:ring-2 focus-within:ring-brand-emerald500"
           } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         ref={dropdownRef}
       >
@@ -573,8 +573,8 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         </label>
         <div
           className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${fieldErrors[field.key]
-              ? "ring-2 ring-red-500 focus-within:ring-red-500"
-              : "focus-within:ring-brand-emerald500"
+            ? "ring-2 ring-red-500 focus-within:ring-red-500"
+            : "focus-within:ring-brand-emerald500"
             } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           <input
@@ -611,7 +611,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 overflow-y-auto w-full h-full">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 

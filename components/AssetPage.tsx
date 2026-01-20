@@ -6,6 +6,7 @@ import {
   TrendingUp,
   BarChart3,
   DollarSign,
+  Check,
 } from "lucide-react";
 import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import PriceVolumeChart from "./PriceVolumeChart";
@@ -33,6 +34,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
   onNavigateToIndex,
 }) => {
   const [period, setPeriod] = useState<"1h" | "24h" | "7d" | "All">("24h");
+  const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop' } | null>(null);
   const { favorites, toggleFavorite } = useFavorites();
 
   // Prioritize asset_id (static ID) for watchlist so it sticks across leagues
@@ -76,14 +78,28 @@ const AssetPage: React.FC<AssetPageProps> = ({
     return colors[index];
   }, [asset.name]);
 
-  const handleShare = async () => {
+  const handleShare = async (type: 'mobile' | 'desktop') => {
+    // If we have a short_code already, we can go instant
+    if (asset.short_code) {
+      const shareUrl = `${window.location.origin}/a/${asset.short_code}`;
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareConfig({ url: shareUrl, type });
+        setTimeout(() => setShareConfig(null), 3000);
+        return; // Done! No delay.
+      } catch (err) {
+        console.error("Clipboard error:", err);
+      }
+    }
+
+    // Fallback to generating one if missing
     try {
       const shareUrl = await generateShareLink(asset.id);
-      navigator.clipboard.writeText(shareUrl);
-      alert("Shortened link copied to clipboard!");
+      await navigator.clipboard.writeText(shareUrl);
+      setShareConfig({ url: shareUrl, type });
+      setTimeout(() => setShareConfig(null), 3000);
     } catch (err) {
       console.error("Share error:", err);
-      alert("Failed to generate share link");
     }
   };
 
@@ -164,12 +180,36 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 className={`w-4 h-4 ${isInWatchlist ? "fill-yellow-400" : ""}`}
               />
             </button>
-            <button
-              onClick={handleShare}
-              className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => handleShare('mobile')}
+                className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+
+              {shareConfig?.type === 'mobile' && (
+                <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-2.5 py-1.5 shadow-2xl relative min-w-[max-content] max-w-[calc(100vw-2rem)]">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <Check className="w-2.5 h-2.5 text-emerald-500" />
+                        <span className="text-[9px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
+                          Link Copied!
+                        </span>
+                      </div>
+                      {shareConfig.url && (
+                        <span className="text-[10px] text-emerald-400/80 font-mono break-all sm:whitespace-nowrap">
+                          {shareConfig.url}
+                        </span>
+                      )}
+                    </div>
+                    {/* Arrow */}
+                    <div className="absolute -top-1 right-3 w-2 h-2 bg-[#0B1221] border-l border-t border-emerald-500/30 rotate-45" />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -177,17 +217,14 @@ const AssetPage: React.FC<AssetPageProps> = ({
         {!asset.is_settled && (
           <div className="p-2 border-t border-gray-800 bg-[#0B1221]/50">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <span className="text-base font-bold text-white font-mono">
-                  ${(asset.offer || 0).toFixed(1)}
-                </span>
+              <div className="flex items-center min-h-[1.5rem]">
                 {(() => {
                   // Generate mock price change
                   const changeAmount = Math.random() * 2 - 0.5;
                   const isPositive = changeAmount >= 0;
                   return (
                     <span
-                      className={`ml-1.5 text-[9px] font-bold flex items-center gap-0.5 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                      className={`text-[10px] font-bold flex items-center gap-0.5 ${isPositive ? "text-green-400" : "text-red-400"}`}
                     >
                       {isPositive ? (
                         <FaCaretUp className="w-3 h-3" />
@@ -201,20 +238,30 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 })()}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onSelectOrder?.(asset, "sell")}
-                className="flex-1 px-3 py-2 bg-red-900/20 border border-red-500/20 text-red-400 font-bold rounded-lg transition-all text-xs"
-                data-testid="asset-page-sell-mobile"
-              >
-                Sell
-              </button>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => onSelectOrder?.(asset, "buy")}
-                className="flex-1 px-3 py-2 bg-[#005430] text-white font-bold rounded-lg transition-colors text-xs"
+                className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1.5 transition-all shadow-lg shadow-black/20"
                 data-testid="asset-page-buy-mobile"
               >
-                Buy
+                <span className="text-[clamp(0.45rem,1.5vw,0.5rem)] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">
+                  Buy
+                </span>
+                <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] font-bold text-white">
+                  ${(asset.offer || 0).toFixed(2)}
+                </span>
+              </button>
+              <button
+                onClick={() => onSelectOrder?.(asset, "sell")}
+                className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1.5 transition-all"
+                data-testid="asset-page-sell-mobile"
+              >
+                <span className="text-[clamp(0.45rem,1.5vw,0.5rem)] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">
+                  Sell
+                </span>
+                <span className="text-[clamp(0.75rem,2.5vw,0.875rem)] font-bold text-red-400">
+                  ${(asset.bid || 0).toFixed(2)}
+                </span>
               </button>
             </div>
           </div>
@@ -278,10 +325,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end mr-2">
-            <span className="text-2xl font-bold text-white font-mono">
-              ${(asset.offer || 0).toFixed(1)}
-            </span>
+          <div className="flex flex-col items-end mr-2 min-w-[80px]">
             {(() => {
               // Generate mock price change
               const changeAmount = Math.random() * 2 - 0.5;
@@ -307,20 +351,30 @@ const AssetPage: React.FC<AssetPageProps> = ({
               Market Settled
             </span>
           ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onSelectOrder?.(asset, "sell")}
-                className="px-6 py-2 bg-red-900/20 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-lg transition-all"
-                data-testid="asset-page-sell-desktop"
-              >
-                Sell
-              </button>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => onSelectOrder?.(asset, "buy")}
-                className="px-6 py-2 bg-[#005430] hover:bg-[#006838] text-white font-bold rounded-lg transition-colors shadow-lg shadow-[#005430]/20"
+                className="w-[clamp(5rem,8vw,6.5rem)] flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1.5 transition-all shadow-lg shadow-black/20"
                 data-testid="asset-page-buy-desktop"
               >
-                Buy
+                <span className="text-[clamp(0.5rem,1.2vw,0.55rem)] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">
+                  Buy
+                </span>
+                <span className="text-[clamp(0.875rem,2vw,1rem)] font-bold text-white">
+                  ${(asset.offer || 0).toFixed(2)}
+                </span>
+              </button>
+              <button
+                onClick={() => onSelectOrder?.(asset, "sell")}
+                className="w-[clamp(5rem,8vw,6.5rem)] flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1.5 transition-all"
+                data-testid="asset-page-sell-desktop"
+              >
+                <span className="text-[clamp(0.5rem,1.2vw,0.55rem)] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">
+                  Sell
+                </span>
+                <span className="text-[clamp(0.875rem,2vw,1rem)] font-bold text-red-400">
+                  ${(asset.bid || 0).toFixed(2)}
+                </span>
               </button>
             </div>
           )}
@@ -342,12 +396,37 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 className={`w-5 h-5 ${isInWatchlist ? "fill-yellow-400" : ""}`}
               />
             </button>
-            <button
-              onClick={handleShare}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => handleShare('desktop')}
+                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                title="Share Asset"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+
+              {shareConfig?.type === 'desktop' && (
+                <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-3 py-2 shadow-2xl relative min-w-[max-content]">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <Check className="w-3 h-3 text-emerald-500" />
+                        <span className="text-[10px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
+                          Link Copied!
+                        </span>
+                      </div>
+                      {shareConfig.url && (
+                        <span className="text-[10px] text-emerald-400/80 font-mono whitespace-nowrap">
+                          {shareConfig.url}
+                        </span>
+                      )}
+                    </div>
+                    {/* Arrow */}
+                    <div className="absolute -top-1 right-4 w-2 h-2 bg-[#0B1221] border-l border-t border-emerald-500/30 rotate-45" />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -438,7 +517,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
               {/* News Section */}
               <div className="mt-4 md:mt-8">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <h2 className="text-base sm:text-lg md:text-xl font-bold text-white">
+                  <h2 className="text-[clamp(0.875rem,3vw,1.25rem)] font-bold text-white">
                     Latest News for {asset.name}
                   </h2>
                 </div>

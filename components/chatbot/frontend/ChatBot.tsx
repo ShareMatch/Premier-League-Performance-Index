@@ -74,9 +74,41 @@ const ChatBot: React.FC = () => {
   return (
     <>
       <div
-        className={`fixed z-50 flex flex-col-reverse items-center gap-[clamp(0.5rem,1.5vh,0.75rem)] bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+        className={`fixed z-50 flex items-center gap-3 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
           }`}
       >
+        {/* Persistent Desktop Label (Redesigned matching TrendingCarousel Live Badge) */}
+        <div
+          className="
+    relative
+    hidden sm:flex
+    items-center
+    gap-[clamp(0.125rem,0.5vw,0.25rem)]
+    px-[clamp(0.375rem,1vw,0.5rem)]
+    py-[clamp(0.125rem,0.5vw,0.25rem)]
+    bg-green-500/10
+    rounded-[clamp(0.125rem,0.5vw,0.25rem)]
+    border border-green-500/20
+    flex-shrink-0
+    animate-in fade-in slide-in-from-right-2 duration-700 delay-300
+
+    after:content-['']
+    after:absolute
+    after:top-1/2
+    after:right-[-0.4rem]
+    after:-translate-y-1/2
+    after:border-y-[0.35rem]
+    after:border-y-transparent
+    after:border-l-[0.4rem]
+    after:border-l-green-500/20
+  "
+        >
+          <span className="text-[clamp(0.45rem,0.9vw,0.625rem)] text-green-500 font-bold uppercase tracking-wide whitespace-nowrap">
+            Talk to me
+          </span>
+        </div>
+
+
         {/* Floating Action Button */}
         <button
           onClick={toggleChat}
@@ -92,20 +124,6 @@ const ChatBot: React.FC = () => {
           {/* Pulse animation */}
           <span className="absolute w-full h-full rounded-full bg-[#00A651] animate-ping opacity-20 pointer-events-none" />
         </button>
-
-        {/* Persistent Desktop Label (Tooltip Style) */}
-        <div className="hidden sm:flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
-          <div className="bg-[#0B1221] backdrop-blur-xl border border-white/10 rounded-xl px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.4rem,1vh,0.6rem)] shadow-2xl relative">
-            <div className="flex items-center">
-              <span className="text-[clamp(0.75rem,2vw,0.85rem)] font-semibold text-white tracking-wide uppercase whitespace-nowrap">
-                Talk to me
-              </span>
-            </div>
-
-            {/* Bottom Arrow matching InfoTooltip style */}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0B1221] border-r border-b border-white/10 rotate-45" />
-          </div>
-        </div>
       </div>
 
       {/* Chat Window */}

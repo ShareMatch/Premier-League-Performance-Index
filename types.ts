@@ -25,6 +25,7 @@ export interface Team {
   season_end_date?: string;
   season_stage?: string; // 'open' | 'closed' | 'settled'
   units?: number;
+  short_code?: string;
 }
 
 export interface Order {

@@ -67,7 +67,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   };
 
   const modal = (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={(e) => {
         e.stopPropagation();
@@ -76,16 +76,16 @@ const AlertModal: React.FC<AlertModalProps> = ({
       data-testid="alert-modal-overlay"
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       {/* Modal Content */}
-      <div 
-        className="relative bg-[#0B1221] border border-[#005430] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+      <div
+        className="relative bg-[#005430] border border-[#005430] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         data-testid="alert-modal"
       >
         {/* Header Enhancement */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005430] via-[#00A651] to-[#005430]" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white/20 via-white/40 to-white/20" />
 
         <button
           onClick={onClose}
@@ -108,14 +108,14 @@ const AlertModal: React.FC<AlertModalProps> = ({
             <h2 className="text-2xl font-bold text-white tracking-tight">
               {title}
             </h2>
-            <p className="text-gray-300 leading-relaxed text-sm whitespace-pre-line">
+            <p className="text-gray-200 leading-relaxed text-sm whitespace-pre-line">
               {message}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="w-full py-3.5 px-6 bg-[#005430] hover:bg-[#006838] active:bg-[#004225] text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-[#005430]/50 transform hover:-translate-y-0.5"
+            className="w-full py-3.5 px-6 bg-white text-gray-900 hover:bg-white/90 active:scale-[0.98] font-bold rounded-full transition-all shadow-lg transform hover:-translate-y-0.5"
             data-testid="alert-modal-ok-button"
           >
             {confirmLabel}
