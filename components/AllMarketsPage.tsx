@@ -25,7 +25,6 @@ interface AllMarketsPageProps {
 }
 
 const CATEGORIES = [
-  { id: "ALL", label: "All Index Tokens" },
   {
     id: "football",
     label: "Football",
@@ -69,7 +68,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   onViewAsset,
   onSelectOrder,
 }) => {
-  const [activeCategory, setActiveCategory] = useState("ALL");
+  const [activeCategory, setActiveCategory] = useState("football");
   const [activeFilters, setActiveFilters] = useState<string[]>(["ALL"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -170,7 +169,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     const activeCatIds = new Set(activeTeams.map((t) => t.category));
 
     return CATEGORIES.filter((cat) => {
-      if (cat.id === "ALL") return true; // Always show "All"
       return activeCatIds.has(cat.id as any);
     });
   }, [teams]);
@@ -286,17 +284,17 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   return (
     <div className="h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 gap-4">
-        <div className="flex items-center gap-3 shrink-0">
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 gap-[clamp(0.5rem,2vw,1rem)]">
+        <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)] shrink-0">
           <button
             onClick={() => onNavigate("HOME")}
             aria-label="Back to home"
             data-testid="all-markets-back"
-            className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+            className="p-1 rounded-full hover:bg-white/5 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />
           </button>
-          <h1 className="text-xl font-bold font-sans whitespace-nowrap">
+          <h1 className="text-[clamp(1.125rem,4vw,1.5rem)] font-bold font-sans whitespace-nowrap">
             Index Tokens
           </h1>
         </div>
@@ -318,11 +316,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex items-center gap-2 pb-1 scrollbar-hide select-none
-        ${
-          openDropdown
-            ? "overflow-x-hidden touch-none"
-            : "overflow-x-auto touch-pan-x"
-        }`}
+        ${openDropdown
+              ? "overflow-x-hidden touch-none"
+              : "overflow-x-auto touch-pan-x"
+            }`}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
             setIsDragging(false);
@@ -351,11 +348,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             const pillButton = (
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
-                  isActive
-                    ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
-                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
+                  ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
+                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
+                  }`}
               >
                 <span>{cat.label}</span>
                 {hasMarkets &&
@@ -407,11 +403,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       return (
                         <DropdownMenu.CheckboxItem
                           key={m.id}
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${
-                            isSelected
-                              ? "bg-brand-primary text-white"
-                              : "text-gray-400 hover:text-white hover:bg-white/5"
-                          }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
+                            ? "bg-brand-primary text-white"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                            }`}
                           checked={isSelected}
                           onSelect={(e) => {
                             e.preventDefault(); // Keep dropdown open for multi-select
@@ -557,11 +552,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === 1
-                    ? "text-gray-600 cursor-not-allowed"
-                    : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
+                  ? "text-gray-600 cursor-not-allowed"
+                  : "text-brand-primary hover:bg-gray-700/50"
+                  }`}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -577,11 +571,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <button
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${
-                          currentPage === page
-                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
-                            : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
-                        }`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
+                          ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
+                          : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                          }`}
                       >
                         {page}
                       </button>
@@ -594,11 +587,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === totalPages
-                    ? "text-gray-600 cursor-not-allowed"
-                    : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
+                  ? "text-gray-600 cursor-not-allowed"
+                  : "text-brand-primary hover:bg-gray-700/50"
+                  }`}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

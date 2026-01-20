@@ -398,7 +398,6 @@ test.describe("Single Feature Generation", () => {
       expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
     }
 
-
     test.setTimeout(1800000); // 30 minutes
 
     const orchestrator = createOrchestrator(page, {

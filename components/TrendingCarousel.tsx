@@ -231,11 +231,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     chartId: string;
     index: number;
   } | null>(null);
-  const chartContainerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [chartDimensions, setChartDimensions] = useState<{
-    width: number;
-    height: number;
-  }>({ width: 0, height: 0 });
 
   const DEFAULT_COLORS = ["#17B76E", "#FFBF00", "#E24A3F"];
 
@@ -358,110 +353,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     return map;
   }, [questionPool, timeRange, seasonDatesMap]);
 
-  // Update chart dimensions when current index changes or on resize
-  useEffect(() => {
-    const updateDimensions = () => {
-      const currentQuestion = questionPool[currentIndex];
-      if (currentQuestion) {
-        const ref = chartContainerRefs.current.get(currentQuestion.id);
-        if (ref) {
-          const rect = ref.getBoundingClientRect();
-          setChartDimensions({ width: rect.width, height: rect.height });
-        }
-      }
-    };
 
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, [currentIndex, questionPool]);
-
-  // Calculate position for hover labels
-  const calculateLabelPosition = (
-    index: number,
-    value: number,
-    dataLength: number,
-  ) => {
-    if (!chartDimensions.width || !chartDimensions.height)
-      return { x: 0, y: 0 };
-
-    // Chart margins matching the ComposedChart margin prop
-    const margin = { top: 10, right: 5, left: 0, bottom: 20 };
-    const yAxisWidth =
-      window.innerWidth < 640 ? 35 : window.innerWidth < 1024 ? 40 : 50;
-
-    const chartWidth =
-      chartDimensions.width - margin.left - margin.right - yAxisWidth;
-    const chartHeight = chartDimensions.height - margin.top - margin.bottom;
-
-    // Get Y domain range from current data
-    const currentQuestion = questionPool[currentIndex];
-    const chartData =
-      chartDataMap.get(`${currentQuestion?.id}-${timeRange}`) || [];
-    let minVal = Infinity;
-    let maxVal = -Infinity;
-    chartData.forEach((d) => {
-      currentQuestion?.topTokens.forEach((_, idx) => {
-        const val = d[`token${idx}`];
-        if (val !== undefined) {
-          minVal = Math.min(minVal, val);
-          maxVal = Math.max(maxVal, val);
-        }
-      });
-    });
-    // Apply domain transformation: [dataMin - 20, dataMax + 20]
-    const yMin = Math.max(0, minVal - 20);
-    const yMax = maxVal + 20;
-
-    const x = margin.left + (index / (dataLength - 1)) * chartWidth;
-    const y = margin.top + ((yMax - value) / (yMax - yMin)) * chartHeight;
-
-    return { x, y };
-  };
-
-  // Adjust Y positions to prevent label overlap
-  const getAdjustedLabelPositions = (
-    hoverIndex: number,
-    tokens: IndexToken[],
-    chartData: any[],
-  ) => {
-    const minDistance = 20; // Minimum pixel distance between labels
-    const positions: {
-      x: number;
-      y: number;
-      value: number;
-      color: string;
-      token: IndexToken;
-    }[] = [];
-
-    tokens.forEach((token, idx) => {
-      const value = chartData[hoverIndex]?.[`token${idx}`];
-      if (value === undefined) return;
-
-      const pos = calculateLabelPosition(hoverIndex, value, chartData.length);
-      positions.push({
-        x: pos.x,
-        y: pos.y,
-        value,
-        color: token.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
-        token,
-      });
-    });
-
-    // Sort by Y position (top to bottom)
-    positions.sort((a, b) => a.y - b.y);
-
-    // Adjust positions to prevent overlap
-    for (let i = 1; i < positions.length; i++) {
-      const prev = positions[i - 1];
-      const curr = positions[i];
-      if (curr.y - prev.y < minDistance) {
-        curr.y = prev.y + minDistance;
-      }
-    }
-
-    return positions;
-  };
 
   const handleNext = () => {
     if (!isAnimating && questionPool.length > 0) {
@@ -507,6 +399,71 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         />
       </g>
     );
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length && activeHover) {
+      return (
+        <div
+          className="bg-[#0B1221] border border-[#005430] rounded shadow-xl"
+          style={{
+            padding: "clamp(4px, 1vw, 12px)", // smaller padding on mobile
+            fontSize: "clamp(10px, 2vw, 14px)", // responsive text size
+            maxWidth: "clamp(120px, 40vw, 220px)", // limit width on mobile
+            lineHeight: "1.2",
+          }}
+        >
+          <p
+            style={{
+              color: "#9ca3af",
+              marginBottom: "clamp(2px, 0.5vw, 6px)",
+              fontSize: "clamp(9px, 1.5vw, 12px)",
+            }}
+          >
+            {label}
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "clamp(2px, 0.5vw, 6px)",
+            }}
+          >
+            {payload.map((entry: any, index: number) => {
+              const tokenIndex = parseInt(entry.dataKey.replace("token", ""));
+              const token = questionPool[currentIndex].topTokens[tokenIndex];
+              if (!token) return null;
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "clamp(4px, 1vw, 10px)",
+                    fontSize: "clamp(8px, 1.5vw, 12px)",
+                    fontWeight: 700,
+                    color: entry.color,
+                  }}
+                >
+                  <span
+                    style={{
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {token.name}:
+                  </span>
+                  <span>${Number(entry.value).toFixed(2)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -587,7 +544,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
             return (
               <div
                 key={question.id}
-                className="w-full flex-shrink-0 grid grid-cols-1 lg:grid-cols-2"
+                className="w-full flex-shrink-0 grid grid-cols-1 xl:grid-cols-2"
               >
                 {/* Left Column - Question Card */}
                 <div className="p-[clamp(0.375rem,1.5vw,1.5rem)] flex bg-[#0b1221]">
@@ -671,11 +628,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               <div className="flex items-center gap-[clamp(0.375rem,1vw,0.75rem)] flex-shrink-0">
                                 <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] flex-wrap justify-end">
                                   <span
-                                    className={`text-[clamp(0.4rem,0.9vw,0.625rem)] font-bold flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)] whitespace-nowrap ${
-                                      token.change >= 0
-                                        ? "text-green-400"
-                                        : "text-red-400"
-                                    }`}
+                                    className={`text-[clamp(0.4rem,0.9vw,0.625rem)] font-bold flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)] whitespace-nowrap ${token.change >= 0
+                                      ? "text-green-400"
+                                      : "text-red-400"
+                                      }`}
                                   >
                                     {token.change >= 0 ? (
                                       <FaCaretUp className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
@@ -721,11 +677,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           <button
                             key={r}
                             onClick={() => setTimeRange(r)}
-                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.4rem,0.85vw,0.625rem)] px-[clamp(0.375rem,1vw,0.75rem)] py-[clamp(0.125rem,0.4vw,0.25rem)] ${
-                              timeRange === r
-                                ? "bg-[#005430] text-white"
-                                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                            }`}
+                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.4rem,0.85vw,0.625rem)] px-[clamp(0.375rem,1vw,0.75rem)] py-[clamp(0.125rem,0.4vw,0.25rem)] ${timeRange === r
+                              ? "bg-[#005430] text-white"
+                              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                              }`}
                           >
                             {r}
                           </button>
@@ -780,13 +735,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                       </div>
                     </div>
 
-                    {/* Chart */}
-                    <div
-                      className="w-full h-[clamp(8rem,25vw,14rem)] relative"
-                      ref={(el) => {
-                        if (el) chartContainerRefs.current.set(question.id, el);
-                      }}
-                    >
+                    <div className="w-full h-[clamp(8rem,25vw,14rem)] relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           data={chartData}
@@ -883,7 +832,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                             }
                           />
                           <Tooltip
-                            content={() => null}
+                            content={<CustomTooltip />}
                             cursor={<CustomCursor />}
                           />
 
@@ -978,38 +927,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                         </ComposedChart>
                       </ResponsiveContainer>
 
-                      {/* Hover labels - absolutely positioned outside SVG */}
-                      {activeHover?.chartId === question.id &&
-                        chartDimensions.width > 0 &&
-                        (() => {
-                          const positions = getAdjustedLabelPositions(
-                            activeHover.index,
-                            question.topTokens,
-                            chartData,
-                          );
-
-                          return positions.map((pos) => (
-                            <div
-                              key={pos.token.id}
-                              className="absolute pointer-events-none transition-all duration-100 ease-out"
-                              style={{
-                                left: `${pos.x}px`,
-                                top: `${pos.y}px`,
-                                transform: "translate(-50%, -50%)",
-                                zIndex: 50,
-                              }}
-                            >
-                              <div
-                                className="px-[clamp(0.25rem,0.75vw,0.375rem)] py-[clamp(0.0625rem,0.25vw,0.125rem)] rounded-full text-white font-semibold whitespace-nowrap shadow-md border border-white/10 text-[clamp(0.4rem,0.9vw,0.625rem)]"
-                                style={{
-                                  backgroundColor: pos.color,
-                                }}
-                              >
-                                {pos.token.name} ${pos.value.toFixed(2)}
-                              </div>
-                            </div>
-                          ));
-                        })()}
                     </div>
                   </div>
                 </div>
@@ -1040,11 +957,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     setTimeout(() => setIsAnimating(false), 500);
                   }
                 }}
-                className={`h-[clamp(0.25rem,0.5vw,0.375rem)] rounded-full transition-all duration-300 ${
-                  idx === currentIndex
-                    ? "w-[clamp(1.25rem,3vw,2rem)] bg-green-500"
-                    : "w-[clamp(0.25rem,0.5vw,0.375rem)] bg-gray-600 hover:bg-gray-500"
-                }`}
+                className={`h-[clamp(0.25rem,0.5vw,0.375rem)] rounded-full transition-all duration-300 ${idx === currentIndex
+                  ? "w-[clamp(1.25rem,3vw,2rem)] bg-green-500"
+                  : "w-[clamp(0.25rem,0.5vw,0.375rem)] bg-gray-600 hover:bg-gray-500"
+                  }`}
               />
             ))}
           </div>

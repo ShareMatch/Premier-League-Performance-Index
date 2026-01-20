@@ -17,6 +17,7 @@ import DidYouKnow from "./DidYouKnow";
 import OnThisDay from "./OnThisDay";
 import { getLogoUrl } from "../lib/logoHelper";
 import { useFavorites } from "../hooks/useFavorites";
+import { generateShareLink } from "../lib/api";
 
 interface AssetPageProps {
   asset: Team;
@@ -75,11 +76,15 @@ const AssetPage: React.FC<AssetPageProps> = ({
     return colors[index];
   }, [asset.name]);
 
-  const handleShare = () => {
-    const slug = asset.name.toLowerCase().replace(/\s+/g, "-");
-    const shareUrl = `${window.location.origin}/asset/${slug}`;
-    navigator.clipboard.writeText(shareUrl);
-    alert("Link copied to clipboard!");
+  const handleShare = async () => {
+    try {
+      const shareUrl = await generateShareLink(asset.id);
+      navigator.clipboard.writeText(shareUrl);
+      alert("Shortened link copied to clipboard!");
+    } catch (err) {
+      console.error("Share error:", err);
+      alert("Failed to generate share link");
+    }
   };
 
   return (
@@ -89,13 +94,13 @@ const AssetPage: React.FC<AssetPageProps> = ({
     >
       {/* Mobile Header - Compact */}
       <div className="lg:hidden sticky top-0 z-30 bg-[#0B1221] border-b border-gray-800">
-        <div className="flex items-center justify-between p-2 gap-1">
+        <div className="flex items-center justify-between p-2 gap-[clamp(0.5rem,2vw,1rem)]">
           <button
             onClick={onBack}
-            className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
+            className="p-1 hover:bg-white/5 rounded-full transition-colors flex-shrink-0"
             data-testid="asset-page-back-mobile"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />
           </button>
 
           <div className="flex items-center gap-1.5 flex-1 min-w-0">

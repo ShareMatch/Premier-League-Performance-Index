@@ -19,7 +19,7 @@ import Header from "./components/Header";
 import TopBar from "./components/TopBar";
 import RightPanel from "./components/RightPanel";
 import Ticker from "./components/Ticker";
-import { Menu, X, Loader2, HelpCircle } from "lucide-react";
+import { Menu, X, Loader2, HelpCircle, ArrowLeft } from "lucide-react";
 import NewsFeed from "./components/NewsFeed";
 import HomeDashboard from "./components/HomeDashboard";
 import OrderBookRow from "./components/OrderBookRow";
@@ -67,6 +67,167 @@ import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
 import HelpCenterModal from "./components/HelpCenterModal";
+import HowItWorksModal from "./components/HowItWorksModal";
+
+const AssetRouteWrapper: React.FC<{
+  allAssets: Team[];
+  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
+  handleNavigate: (league: League) => void;
+  previousLeague: League;
+}> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
+  const { market, name } = useParams();
+  const navigate = useNavigate();
+  const asset = useMemo(() => {
+    // Find asset by both market and name for accurate matching
+    return allAssets.find(
+      (a) =>
+        a.name.toLowerCase().replace(/\s+/g, "-") === name &&
+        a.market?.toLowerCase() === market?.toLowerCase(),
+    );
+  }, [allAssets, name, market]);
+
+  if (allAssets.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+        <p className="text-gray-400">Loading asset data...</p>
+      </div>
+    );
+  }
+
+  if (!asset) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <AssetPage
+      asset={asset}
+      onBack={() => {
+        navigate(-1);
+      }}
+      onSelectOrder={handleSelectOrder}
+      onNavigateToIndex={(market) => {
+        // Navigate to the index/league page for this market
+        handleNavigate(market as League);
+      }}
+    />
+  );
+};
+
+const ShortAssetRouteWrapper: React.FC<{
+  allAssets: Team[];
+  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
+  handleNavigate: (league: League) => void;
+}> = ({ allAssets, handleSelectOrder, handleNavigate }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [resolving, setResolving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const asset = useMemo(() => {
+    // Find asset by ID (string comparison)
+    return allAssets.find((a) => a.id.toString() === id);
+  }, [allAssets, id]);
+
+  useEffect(() => {
+    // If not a direct asset ID match, it's likely a short code
+    if (allAssets.length > 0 && !asset && id) {
+      const resolveShortCode = async () => {
+        setResolving(true);
+        try {
+          // In a real browser, the Edge Function might 301, 
+          // but here we can call it and follow or use the result.
+          // Since our Edge Function GET /share?code=ABC redirects, 
+          // we can just use the mapping logic or update the function to return JSON if requested.
+
+          // Actually, we'll do a direct lookup to keep it fast
+          const { data, error: lookupError } = await supabase
+            .from("market_index_trading_assets")
+            .select(`
+              id,
+              assets!inner (name),
+              market_index_seasons!inner (
+                market_indexes!inner (
+                  markets!inner (market_token)
+                )
+              )
+            `)
+            .eq("short_code", id)
+            .maybeSingle();
+
+          if (lookupError || !data) {
+            setError("Link not found");
+            return;
+          }
+
+          const ta = data as any;
+
+          if (!ta) {
+            setError("Link details not found");
+            return;
+          }
+
+          // Supabase joins can sometimes return arrays depending on the schema inference
+          const assetObj = Array.isArray(ta.assets) ? ta.assets[0] : ta.assets;
+          const season = Array.isArray(ta.market_index_seasons) ? ta.market_index_seasons[0] : ta.market_index_seasons;
+          const marketIndex = Array.isArray(season?.market_indexes) ? season.market_indexes[0] : season?.market_indexes;
+          const marketObj = Array.isArray(marketIndex?.markets) ? marketIndex.markets[0] : marketIndex?.markets;
+
+          const slug = assetObj?.name?.toLowerCase().replace(/\s+/g, "-");
+          const market = marketObj?.market_token;
+
+          if (!slug || !market) {
+            setError("Invalid asset data");
+            return;
+          }
+
+          // Redirect to the canonical asset URL
+          navigate(`/asset/${market}/${slug}`, { replace: true });
+        } catch (err) {
+          console.error("Resolve error:", err);
+          setError("Failed to resolve link");
+        } finally {
+          setResolving(false);
+        }
+      };
+      resolveShortCode();
+    }
+  }, [allAssets, asset, id, navigate]);
+
+  if (allAssets.length === 0 || resolving) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+        <p className="text-gray-400">{resolving ? "Resolving share link..." : "Loading asset data..."}</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <p className="text-red-400 mb-4">{error}</p>
+        <button onClick={() => navigate("/")} className="text-brand-primary hover:underline">
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
+  if (!asset) {
+    // This could be the gap between lookup and navigation
+    return null;
+  }
+
+  return (
+    <AssetPage
+      asset={asset}
+      onBack={() => navigate(-1)}
+      onSelectOrder={handleSelectOrder}
+      onNavigateToIndex={(market) => handleNavigate(market as League)}
+    />
+  );
+};
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -167,6 +328,7 @@ const App: React.FC = () => {
 
   // Help Center Modal visibility
   const [showHelpCenter, setShowHelpCenter] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Triggers for opening auth modals from HelpCenterModal (passed to TopBar)
   const [triggerLoginModal, setTriggerLoginModal] = useState(false);
@@ -357,9 +519,9 @@ const App: React.FC = () => {
             is_settled: ta.market_index_seasons.is_settled,
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                  "en-US",
-                  { month: "short", day: "numeric", year: "numeric" },
-                )
+                "en-US",
+                { month: "short", day: "numeric", year: "numeric" },
+              )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -697,10 +859,7 @@ const App: React.FC = () => {
       );
 
       // ── SUCCESS PATH ───────────────────────────────────────
-      // Refresh data
-      await loadUserData();
-
-      // Prepare confirmation data
+      // Prepare confirmation data and show modal IMMEDIATELY
       setConfirmationData({
         orderId: result?.orderId || `ORD-${Date.now()}`, // use real ID if backend returns it
         assetName: team.name,
@@ -713,12 +872,15 @@ const App: React.FC = () => {
             : quantity * priceForSide * (1 - 0.05), // adjust if fee logic changes
       });
 
-      // Show confirmation modal
+      // Show confirmation modal immediately
       setShowConfirmationModal(true);
 
       // Close trade slip
       setSelectedOrder(null);
       setShowRightPanel(false); // especially important on mobile
+
+      // Refresh data in the background (don't wait)
+      loadUserData();
     } catch (error: any) {
       console.error("Trade error:", error);
       setAlertMessage(error.message || "Trade failed. Please try again.");
@@ -788,21 +950,21 @@ const App: React.FC = () => {
                   userData={
                     user
                       ? {
-                          name: user.user_metadata?.full_name || "",
-                          email: user.email || "",
-                          phone: user.user_metadata?.phone || "",
-                          whatsapp: user.user_metadata?.whatsapp_phone || "",
-                          address: user.user_metadata?.address_line || "",
-                          city: user.user_metadata?.city || "",
-                          state: user.user_metadata?.region || "",
-                          country: user.user_metadata?.country || "",
-                          postCode: user.user_metadata?.postal_code || "",
-                          accountName: "",
-                          accountNumber: "",
-                          iban: "",
-                          swiftBic: "",
-                          bankName: "",
-                        }
+                        name: user.user_metadata?.full_name || "",
+                        email: user.email || "",
+                        phone: user.user_metadata?.phone || "",
+                        whatsapp: user.user_metadata?.whatsapp_phone || "",
+                        address: user.user_metadata?.address_line || "",
+                        city: user.user_metadata?.city || "",
+                        state: user.user_metadata?.region || "",
+                        country: user.user_metadata?.country || "",
+                        postCode: user.user_metadata?.postal_code || "",
+                        accountName: "",
+                        accountNumber: "",
+                        iban: "",
+                        swiftBic: "",
+                        bankName: "",
+                      }
                       : undefined
                   }
                   onSignOut={async () => {
@@ -987,6 +1149,16 @@ const App: React.FC = () => {
                                 }
                               />
                               <Route
+                                path="/a/:id"
+                                element={
+                                  <ShortAssetRouteWrapper
+                                    allAssets={allAssets}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleNavigate={handleNavigate}
+                                  />
+                                }
+                              />
+                              <Route
                                 path="/market/:leagueId"
                                 element={
                                   <LeagueRouteWrapper
@@ -1011,14 +1183,13 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Mobile Help Center Bar - Fixed above Ticker */}
+                      {/* Mobile How It Works Bar - Fixed above Ticker */}
                       <div className="md:hidden flex-shrink-0 bg-[#0B1221] border-t border-gray-800">
                         <button
-                          onClick={() => setShowHelpCenter(true)}
-                          className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                          onClick={() => setShowHowItWorks(true)}
+                          className="w-full flex items-center justify-center gap-2 py-[clamp(0.5rem,1.5vh,0.75rem)] text-[clamp(0.7rem,2vw,0.8rem)] font-medium text-gray-400 hover:text-white transition-colors uppercase tracking-[0.1em]"
                         >
-                          <HelpCircle className="w-3.5 h-3.5" />
-                          <span>Help Center</span>
+                          <span>How it works</span>
                         </button>
                       </div>
 
@@ -1185,6 +1356,12 @@ const App: React.FC = () => {
             setShowKycModal(true);
           }}
         />
+
+        {/* How It Works Modal */}
+        <HowItWorksModal
+          isOpen={showHowItWorks}
+          onClose={() => setShowHowItWorks(false)}
+        />
       </div>
     </InactivityHandler>
   );
@@ -1225,50 +1402,6 @@ const getLeagueTitleUtil = (id: string) => {
   }
 };
 
-const AssetRouteWrapper: React.FC<{
-  allAssets: Team[];
-  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
-  handleNavigate: (league: League) => void;
-  previousLeague: League;
-}> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
-  const { market, name } = useParams();
-  const navigate = useNavigate();
-  const asset = useMemo(() => {
-    // Find asset by both market and name for accurate matching
-    return allAssets.find(
-      (a) =>
-        a.name.toLowerCase().replace(/\s+/g, "-") === name &&
-        a.market?.toLowerCase() === market?.toLowerCase(),
-    );
-  }, [allAssets, name, market]);
-
-  if (allAssets.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">Loading asset data...</p>
-      </div>
-    );
-  }
-
-  if (!asset) {
-    return <Navigate to="/" replace />;
-  }
-
-  return (
-    <AssetPage
-      asset={asset}
-      onBack={() => {
-        navigate(-1);
-      }}
-      onSelectOrder={handleSelectOrder}
-      onNavigateToIndex={(market) => {
-        // Navigate to the index/league page for this market
-        handleNavigate(market as League);
-      }}
-    />
-  );
-};
 
 const LeagueRouteWrapper: React.FC<{
   teams: Team[];
@@ -1287,89 +1420,91 @@ const LeagueRouteWrapper: React.FC<{
   handleViewAsset,
   loading,
 }) => {
-  // Use URL param for the league to prevent flash when navigating away
-  const { leagueId } = useParams();
-  const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+    const navigate = useNavigate();
+    // Use URL param for the league to prevent flash when navigating away
+    const { leagueId } = useParams();
+    const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
 
-  if (loading && teams.length === 0) {
+    if (loading && teams.length === 0) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+          <p className="text-gray-400">Loading market statistics...</p>
+        </div>
+      );
+    }
     return (
-      <div className="h-full flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">Loading market statistics...</p>
+      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+        {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+        <div className="w-full xl:flex-[2] flex flex-col">
+          {/* Header aligned with order book */}
+          <div className="flex-shrink-0">
+            <Header
+              title={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+              seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
+              onBack={() => navigate(-1)}
+            />
+          </div>
+
+          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
+            {/* Fixed Header - Responsive padding and text */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+              <div className="text-left">Asset</div>
+              <div>Sell</div>
+              <div>Buy</div>
+            </div>
+
+            {/* Scrollable List */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+              {sortedTeams.map((team) => (
+                <OrderBookRow
+                  key={team.id}
+                  team={team}
+                  onSelectOrder={handleSelectOrder}
+                  onViewAsset={handleViewAsset}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+        <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+          {/* AI Analysis */}
+          <div className="flex-shrink-0">
+            <AIAnalysis
+              teams={teams}
+              leagueName={getLeagueTitleUtil(displayLeague)}
+            />
+          </div>
+
+          {/* Did You Know (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <DidYouKnow
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* On This Day (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <OnThisDay
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* News Feed */}
+          <div className="flex-shrink-0 pb-4 xl:pb-0">
+            <NewsFeed topic={displayLeague as any} />
+          </div>
+        </div>
       </div>
     );
-  }
-  return (
-    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
-      {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
-      <div className="w-full xl:flex-[2] flex flex-col">
-        {/* Header aligned with order book */}
-        <div className="flex-shrink-0">
-          <Header
-            title={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-            seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
-            seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
-            seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-          />
-        </div>
-
-        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
-          {/* Fixed Header - Responsive padding and text */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-            <div className="text-left">Asset</div>
-            <div>Sell</div>
-            <div>Buy</div>
-          </div>
-
-          {/* Scrollable List */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-            {sortedTeams.map((team) => (
-              <OrderBookRow
-                key={team.id}
-                team={team}
-                onSelectOrder={handleSelectOrder}
-                onViewAsset={handleViewAsset}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
-      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
-        {/* AI Analysis */}
-        <div className="flex-shrink-0">
-          <AIAnalysis
-            teams={teams}
-            leagueName={getLeagueTitleUtil(displayLeague)}
-          />
-        </div>
-
-        {/* Did You Know (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <DidYouKnow
-            assetName={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-          />
-        </div>
-
-        {/* On This Day (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <OnThisDay
-            assetName={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-          />
-        </div>
-
-        {/* News Feed */}
-        <div className="flex-shrink-0 pb-4 xl:pb-0">
-          <NewsFeed topic={displayLeague as any} />
-        </div>
-      </div>
-    </div>
-  );
-};
+  };
 
 export default App;
