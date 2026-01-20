@@ -16,7 +16,12 @@ if (!process.env.CI) {
 }
 
 // KYC Status type
-type KycStatus = "approved" | "rejected" | "resubmission_requested" | "started" | "pending";
+type KycStatus =
+  | "approved"
+  | "rejected"
+  | "resubmission_requested"
+  | "started"
+  | "pending";
 
 // KYC Status update type
 type KycStatusUpdate = {
@@ -39,7 +44,11 @@ type KycStatusResponse = {
 // Types for the adapter
 type SupabaseFixture = {
   client: SupabaseClient;
-  createUser: (email: string, password: string, fullName?: string) => Promise<any | null>;
+  createUser: (
+    email: string,
+    password: string,
+    fullName?: string,
+  ) => Promise<any | null>;
   getEmailOtp: (email: string) => Promise<string | null>;
   getWhatsAppOtp: (email: string) => Promise<string | null>;
   getUserByEmail: (email: string) => Promise<any | null>;
@@ -55,7 +64,7 @@ type SupabaseFixture = {
 
 // Create Supabase client
 const createSupabaseClient = (): SupabaseClient => {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
@@ -99,7 +108,11 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
     const adapter: SupabaseFixture = {
       client,
 
-      createUser: async (email: string, password: string, fullName: string = 'Test User') => {
+      createUser: async (
+        email: string,
+        password: string,
+        fullName: string = "Test User",
+      ) => {
         try {
           // Create user in Supabase Auth
           const { data, error } = await client.auth.admin.createUser({
@@ -114,27 +127,37 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
           }
 
           const authUser = data.user;
-          console.log(`[Supabase] Created auth user: ${email} (${authUser.id})`);
+          console.log(
+            `[Supabase] Created auth user: ${email} (${authUser.id})`,
+          );
 
           // Also create in public.users table (app's user table)
           const { data: publicUser, error: publicError } = await client
-            .from('users')
-            .upsert({
-              auth_user_id: authUser.id,
-              email: email.toLowerCase(),
-              full_name: fullName,
-              email_verified: true,
-              whatsapp_verified: true,
-              created_at: new Date().toISOString(),
-            }, { onConflict: 'email' })
+            .from("users")
+            .upsert(
+              {
+                auth_user_id: authUser.id,
+                email: email.toLowerCase(),
+                full_name: fullName,
+                email_verified: true,
+                whatsapp_verified: true,
+                created_at: new Date().toISOString(),
+              },
+              { onConflict: "email" },
+            )
             .select()
             .single();
 
           if (publicError) {
-            console.error('[Supabase] Error creating public.users entry:', publicError);
+            console.error(
+              "[Supabase] Error creating public.users entry:",
+              publicError,
+            );
             // Still return auth user even if public.users insert fails
           } else {
-            console.log(`[Supabase] Created public.users entry: ${publicUser?.id}`);
+            console.log(
+              `[Supabase] Created public.users entry: ${publicUser?.id}`,
+            );
           }
 
           return authUser;
@@ -445,7 +468,12 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
       updateKycStatus: async (
         email: string,
         status: {
-          kycStatus: "approved" | "rejected" | "resubmission_requested" | "started" | "pending";
+          kycStatus:
+            | "approved"
+            | "rejected"
+            | "resubmission_requested"
+            | "started"
+            | "pending";
           applicantId?: string;
           level?: string;
           coolingOffUntil?: string;
@@ -502,7 +530,10 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
               });
 
             if (insertError) {
-              console.error("[Supabase] Error creating compliance record:", insertError);
+              console.error(
+                "[Supabase] Error creating compliance record:",
+                insertError,
+              );
               return false;
             }
             console.log(`[Supabase] Created compliance record for: ${email}`);
@@ -514,10 +545,15 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
               .eq("user_id", userId);
 
             if (updateError) {
-              console.error("[Supabase] Error updating compliance:", updateError);
+              console.error(
+                "[Supabase] Error updating compliance:",
+                updateError,
+              );
               return false;
             }
-            console.log(`[Supabase] Updated KYC status to ${status.kycStatus} for: ${email}`);
+            console.log(
+              `[Supabase] Updated KYC status to ${status.kycStatus} for: ${email}`,
+            );
           }
 
           return true;
@@ -532,7 +568,10 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
        * @param email User's email
        * @param fullName Verified full name
        */
-      updateVerifiedName: async (email: string, fullName: string): Promise<boolean> => {
+      updateVerifiedName: async (
+        email: string,
+        fullName: string,
+      ): Promise<boolean> => {
         try {
           const { error: updateError } = await client
             .from("users")
@@ -540,11 +579,16 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
             .eq("email", email.toLowerCase());
 
           if (updateError) {
-            console.error("[Supabase] Error updating verified name:", updateError);
+            console.error(
+              "[Supabase] Error updating verified name:",
+              updateError,
+            );
             return false;
           }
 
-          console.log(`[Supabase] Updated full_name to: ${fullName} for: ${email}`);
+          console.log(
+            `[Supabase] Updated full_name to: ${fullName} for: ${email}`,
+          );
           return true;
         } catch (err) {
           console.error("[Supabase] Error updating verified name:", err);
@@ -556,7 +600,9 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
        * Get KYC compliance status for a user
        * @param email User's email
        */
-      getKycStatus: async (email: string): Promise<{
+      getKycStatus: async (
+        email: string,
+      ): Promise<{
         kycStatus: string;
         applicantId: string | null;
         level: string | null;
@@ -577,7 +623,9 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
 
           const { data: compliance, error: complianceError } = await client
             .from("user_compliance")
-            .select("kyc_status, sumsub_applicant_id, sumsub_level, cooling_off_until, kyc_reviewed_at")
+            .select(
+              "kyc_status, sumsub_applicant_id, sumsub_level, cooling_off_until, kyc_reviewed_at",
+            )
             .eq("user_id", userData.id)
             .maybeSingle();
 

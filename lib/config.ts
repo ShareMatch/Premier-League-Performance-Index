@@ -5,24 +5,22 @@
 // Support both Vite (import.meta.env) and Node.js (process.env) environments
 const getEnv = (key: string, fallback: string) => {
   // Check if we're in a Vite environment (browser)
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
+  if (typeof import.meta !== "undefined" && import.meta.env) {
     return import.meta.env[key] || fallback;
   }
   // Otherwise use Node.js environment (Playwright tests)
   return process.env[key] || fallback;
 };
 
-export const SUPABASE_URL = getEnv('VITE_SUPABASE_URL', 'https://ylenuqnyvhbnumxzhzgh.supabase.co');
-export const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZW51cW55dmhibnVteHpoemdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTQ0OTksImV4cCI6MjA4MTc5MDQ5OX0.MI7kx0RLoMELEImKnaNeZf1vjURLpjS6PpwA99KQZ50');
+export const SUPABASE_URL = getEnv("VITE_SUPABASE_URL", "");
+export const SUPABASE_ANON_KEY = getEnv("VITE_SUPABASE_ANON_KEY", "");
 
 // SendGrid API config
-export const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
-
+export const SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
 
 /**
  * Application Configuration
- * 
+ *
  * Central place for all configurable settings.
  * Change values here to update behavior across the app.
  */

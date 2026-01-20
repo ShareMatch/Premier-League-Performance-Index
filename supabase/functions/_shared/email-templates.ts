@@ -2,115 +2,138 @@
 // Separate templates for different email types
 
 export interface OtpEmailParams {
-    logoImageUrl: string;
-    userFullName: string;
-    otpCode: string;
-    expiryMinutes: number;
+  logoImageUrl: string;
+  userFullName: string;
+  otpCode: string;
+  expiryMinutes: number;
 }
 
 export interface ForgotPasswordEmailParams {
-    logoImageUrl: string;
-    userFullName: string;
-    resetLink: string;
-    expiryMinutes: number;
+  logoImageUrl: string;
+  userFullName: string;
+  resetLink: string;
+  expiryMinutes: number;
 }
 
 export interface OrderConfirmationEmailParams {
-    logoImageUrl: string;
-    userFullName: string;
-    orderId: string;
-    assetName: string;
-    side: "buy" | "sell";
-    units: number;
-    pricePerUnit: number;
-    totalAmount: number;
+  logoImageUrl: string;
+  userFullName: string;
+  orderId: string;
+  assetName: string;
+  side: "buy" | "sell";
+  units: number;
+  pricePerUnit: number;
+  totalAmount: number;
 }
 
 /**
  * Generate OTP verification email HTML
  */
 export function generateOtpEmailHtml(params: OtpEmailParams): string {
-    const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
-    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+  const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
+  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? "s" : ""}`;
 
-    return OTP_VERIFICATION_TEMPLATE
-        .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-        .replace(/##OTP_CODE##/g, otpCode)
-        .replace(/##EXPIRY_TIME##/g, expiryText);
+  return OTP_VERIFICATION_TEMPLATE.replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+    .replace(/##OTP_CODE##/g, otpCode)
+    .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate OTP verification email subject
  */
 export function generateOtpEmailSubject(otpCode: string): string {
-    return `${otpCode} is your ShareMatch verification code`;
+  return `${otpCode} is your ShareMatch verification code`;
 }
 
 /**
  * Generate forgot password email HTML (legacy - with personalization)
  */
-export function generateForgotPasswordEmailHtml(params: ForgotPasswordEmailParams): string {
-    const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
-    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
+export function generateForgotPasswordEmailHtml(
+  params: ForgotPasswordEmailParams,
+): string {
+  const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
+  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? "s" : ""}`;
 
-    return FORGOT_PASSWORD_TEMPLATE
-        .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-        .replace(/##RESET_LINK##/g, resetLink)
-        .replace(/##EXPIRY_TIME##/g, expiryText);
+  return FORGOT_PASSWORD_TEMPLATE.replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+    .replace(/##RESET_LINK##/g, resetLink)
+    .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate forgot password email subject
  */
 export function generateForgotPasswordEmailSubject(): string {
-    return `Reset your ShareMatch password`;
+  return `Reset your ShareMatch password`;
 }
 
 /**
  * Build password reset email HTML - simplified version with magic link
  */
-export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-    const logoUrl = logoImageUrl || "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
-    return PASSWORD_RESET_TEMPLATE
-        .replace(/\${magicLink}/g, magicLink)
-        .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
+export function buildResetEmailHTML(
+  magicLink: string,
+  logoImageUrl?: string,
+): string {
+  const logoUrl =
+    logoImageUrl ||
+    "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
+  return PASSWORD_RESET_TEMPLATE.replace(/\${magicLink}/g, magicLink).replace(
+    /##LOGO_IMAGE_URL##/g,
+    logoUrl,
+  );
 }
 
 /**
  * Generate order confirmation email HTML
  */
-export function generateOrderConfirmationEmailHtml(params: OrderConfirmationEmailParams): string {
-    const { logoImageUrl, userFullName, orderId, assetName, side, units, pricePerUnit, totalAmount } = params;
+export function generateOrderConfirmationEmailHtml(
+  params: OrderConfirmationEmailParams,
+): string {
+  const {
+    logoImageUrl,
+    userFullName,
+    orderId,
+    assetName,
+    side,
+    units,
+    pricePerUnit,
+    totalAmount,
+  } = params;
 
-    // Format currency
-    const formatCurrency = (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const formatNumber = (num: number) => num.toLocaleString('en-US');
+  // Format currency
+  const formatCurrency = (amount: number) =>
+    `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatNumber = (num: number) => num.toLocaleString("en-US");
 
-    const sideText = side === "buy" ? "Buy" : "Sell";
-    const sideColor = side === "buy" ? "#10b981" : "#ef4444";
-    const totalLabel = side === "buy" ? "Total Paid" : "Total Received";
+  const sideText = side === "buy" ? "Buy" : "Sell";
+  const sideColor = side === "buy" ? "#10b981" : "#ef4444";
+  const totalLabel = side === "buy" ? "Total Paid" : "Total Received";
 
-    return ORDER_CONFIRMATION_TEMPLATE
-        .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-        .replace(/##ORDER_ID##/g, orderId)
-        .replace(/##ASSET_NAME##/g, assetName)
-        .replace(/##SIDE_TEXT##/g, sideText)
-        .replace(/##SIDE_COLOR##/g, sideColor)
-        .replace(/##UNITS##/g, formatNumber(units))
-        .replace(/##PRICE_PER_UNIT##/g, formatCurrency(pricePerUnit))
-        .replace(/##TOTAL_LABEL##/g, totalLabel)
-        .replace(/##TOTAL_AMOUNT##/g, formatCurrency(totalAmount));
+  return ORDER_CONFIRMATION_TEMPLATE.replace(
+    /##LOGO_IMAGE_URL##/g,
+    logoImageUrl,
+  )
+    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+    .replace(/##ORDER_ID##/g, orderId)
+    .replace(/##ASSET_NAME##/g, assetName)
+    .replace(/##SIDE_TEXT##/g, sideText)
+    .replace(/##SIDE_COLOR##/g, sideColor)
+    .replace(/##UNITS##/g, formatNumber(units))
+    .replace(/##PRICE_PER_UNIT##/g, formatCurrency(pricePerUnit))
+    .replace(/##TOTAL_LABEL##/g, totalLabel)
+    .replace(/##TOTAL_AMOUNT##/g, formatCurrency(totalAmount));
 }
 
 /**
  * Generate order confirmation email subject
  */
-export function generateOrderConfirmationEmailSubject(orderId: string, side: "buy" | "sell"): string {
-    const action = side === "buy" ? "Purchase" : "Sale";
-    return `Order Confirmed: ${action} #${orderId}`;
+export function generateOrderConfirmationEmailSubject(
+  orderId: string,
+  side: "buy" | "sell",
+): string {
+  const action = side === "buy" ? "Purchase" : "Sale";
+  return `Order Confirmed: ${action} #${orderId}`;
 }
 
 // ============================================
@@ -123,6 +146,8 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <title>ShareMatch Verification Code</title>
     <style>
         /* Base styles for email clients */
@@ -130,6 +155,11 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+        }
+
+        .root{
+        color-scheme: light only;
+        supported-color-schemes: light;
         }
 
         html, body {
@@ -141,7 +171,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
@@ -150,7 +180,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 
         /* Solid Background */
         .gradient-bg {
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
@@ -281,6 +311,18 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                 font-size: 11px !important;
             }
         }
+
+            /* Default (light mode) */
+            .brand-color {
+                color: #33E6A3;
+            }
+
+            /* Dark mode override */
+            @media (prefers-color-scheme: dark) {
+                .brand-color {
+                color: #33E6A3 !important;
+                }
+            }
 
         /* Mobile M - 375px */
         @media only screen and (min-width: 321px) and (max-width: 375px) {
@@ -513,14 +555,14 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #33E6A3 !important; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #33E6A3 !important; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #33E6A3 !important;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -585,20 +627,22 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <title>Reset Your ShareMatch Password</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
         .gradient-bg {
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
         .container { max-width: 600px; width: 100%; border-radius: 12px; overflow: hidden; text-align: left; margin: 0 auto; }
@@ -623,6 +667,20 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         .reset-button:hover { opacity: 0.9; }
         .footer { padding: 20px 40px; text-align: center; font-size: 14px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px; }
         
+        /* Default (light mode) */
+        .brand-color {
+            color: #33E6A3;
+        }
+
+        /* Dark mode override */
+        @media (prefers-color-scheme: dark) {
+            .brand-color {
+            color: #33E6A3 !important;
+            }
+        }
+
+
+
         /* Responsive */
         @media only screen and (max-width: 425px) {
             body { padding: 10px !important; }
@@ -638,12 +696,12 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #33E6A3 !important; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #33E6A3 !important; margin: 0; padding: 0;">
         <tr><td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td></tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #33E6A3 !important;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
                             <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
@@ -711,6 +769,8 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <title>Password Reset Email - ShareMatch</title>
     <style>
         /* Base styles for email clients */
@@ -729,7 +789,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
@@ -738,7 +798,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 
         /* Solid Background */
         .gradient-bg {
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
         
@@ -794,6 +854,18 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
             padding: 15px 0;
             margin: 20px 0;
             text-align: center;
+        }
+
+        /* Default (light mode) */
+        .brand-color {
+            color: #33E6A3;
+        }
+
+        /* Dark mode override */
+        @media (prefers-color-scheme: dark) {
+            .brand-color {
+            color: #33E6A3 !important;
+            }
         }
         
         .reset-button {
@@ -1101,14 +1173,14 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #33E6A3 !important; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #33E6A3 !important; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #33E6A3 !important;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -1172,19 +1244,21 @@ const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <title>Order Confirmed - ShareMatch</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             line-height: 1.6;
             padding: 20px 0;
         }
         .container {
             max-width: 600px;
             width: 100%;
-            background-color: #005430;
+            background-color: #33E6A3 !important;
             border-radius: 16px;
             overflow: hidden;
             margin: 0 auto;
@@ -1214,6 +1288,18 @@ const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
         .divider { border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px; }
         .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; }
         .footer { text-align: center; font-size: 12px; opacity: 0.6; margin-top: 40px; }
+
+        /* Default (light mode) */
+        .brand-color {
+            color: #33E6A3;
+        }
+
+        /* Dark mode override */
+        @media (prefers-color-scheme: dark) {
+            .brand-color {
+            color: #33E6A3 !important;
+            }
+        }
         
         @media only screen and (max-width: 480px) {
             .container { padding: 20px; border-radius: 12px; }
