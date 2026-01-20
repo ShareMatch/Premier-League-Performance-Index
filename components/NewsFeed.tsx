@@ -109,7 +109,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
 
   const getTitle = (topic: string) => {
-    return `ShareMatch ${topic === "Global" ? "" : topic + " "}News Wire`;
+    return `ShareMatch News Wire`;
   };
 
   const title = getTitle(topic);

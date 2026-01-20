@@ -73,33 +73,50 @@ const ChatBot: React.FC = () => {
 
   return (
     <>
-      {/* Floating Action Button */}
-      <button
-        onClick={toggleChat}
-        className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-[#003820] to-[#00A651] shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 group ${
-          isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
-        }`}
-        aria-label="Open AI Chat"
+      <div
+        className={`fixed z-50 flex flex-col-reverse items-center gap-[clamp(0.5rem,1.5vh,0.75rem)] bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+          }`}
       >
-        <img
-          src="/speech-bubble-5-svgrepo-com.svg"
-          alt="Message"
-          className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:scale-110 transition-transform duration-300"
-        />
+        {/* Floating Action Button */}
+        <button
+          onClick={toggleChat}
+          className="relative w-[clamp(3rem,8vw,3.5rem)] h-[clamp(3rem,8vw,3.5rem)] rounded-full bg-gradient-to-r from-[#003820] to-[#00A651] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center group"
+          aria-label="Open AI Chat"
+        >
+          <img
+            src="/speech-bubble-5-svgrepo-com.svg"
+            alt="Message"
+            className="w-[clamp(1.25rem,4vw,1.5rem)] h-[clamp(1.25rem,4vw,1.5rem)] text-white transition-transform duration-300"
+          />
 
-        {/* Pulse animation */}
-        <span className="absolute w-full h-full rounded-full bg-[#00A651] animate-ping opacity-20 pointer-events-none" />
-      </button>
+          {/* Pulse animation */}
+          <span className="absolute w-full h-full rounded-full bg-[#00A651] animate-ping opacity-20 pointer-events-none" />
+        </button>
+
+        {/* Persistent Desktop Label (Tooltip Style) */}
+        <div className="hidden sm:flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+          <div className="bg-[#0B1221] backdrop-blur-xl border border-white/10 rounded-xl px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.4rem,1vh,0.6rem)] shadow-2xl relative">
+            <div className="flex items-center">
+              <span className="text-[clamp(0.75rem,2vw,0.85rem)] font-semibold text-white tracking-wide uppercase whitespace-nowrap">
+                Talk to me
+              </span>
+            </div>
+
+            {/* Bottom Arrow matching InfoTooltip style */}
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0B1221] border-r border-b border-white/10 rotate-45" />
+          </div>
+        </div>
+      </div>
 
       {/* Chat Window */}
       {isOpen && (
         <div
           className="fixed z-50 transition-all duration-300 bg-gray-900 shadow-2xl border border-gray-700 overflow-hidden
             /* Mobile: centered, nearly full screen */
-            inset-x-3 bottom-3 top-auto rounded-2xl
+            inset-x-[clamp(0.75rem,3vw,1rem)] bottom-[clamp(0.5rem,3vw,0.8rem)] top-auto rounded-[clamp(1rem,4vw,1.5rem)]
             /* Desktop: bottom right corner */
-            sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:rounded-2xl
-            h-[85vh] sm:h-[550px]"
+            sm:inset-auto sm:bottom-[clamp(1rem,4vh,1.5rem)] sm:right-[clamp(1rem,4vw,1.5rem)] sm:w-[clamp(320px,30vw,400px)] sm:rounded-2xl
+            h-[clamp(400px,80vh,600px)] sm:h-[clamp(450px,55vh,550px)]"
           style={{
             maxHeight: "calc(100vh - 24px)",
           }}

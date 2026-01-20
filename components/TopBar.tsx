@@ -35,6 +35,7 @@ import {
   verifyWhatsAppOtp,
 } from "../lib/api";
 import type { VerificationRequiredData } from "./auth/LoginModal";
+import HowItWorksModal from "./HowItWorksModal";
 
 interface TopBarProps {
   wallet: WalletType | null;
@@ -114,6 +115,7 @@ const TopBar: React.FC<TopBarProps> = ({
   const [showEditEmailModal, setShowEditEmailModal] = useState(false);
   const [pendingVerification, setPendingVerification] =
     useState<PendingVerification | null>(null);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Edit mode state for SignUpModal
   const [isEditMode, setIsEditMode] = useState(false);
@@ -371,7 +373,7 @@ const TopBar: React.FC<TopBarProps> = ({
         className="h-14 lg:h-20 bg-[#005430] border-b border-[#004225] flex items-center justify-between px-3 lg:px-6 flex-shrink-0 transition-colors z-50 relative shadow-sm"
       >
         {/* Mobile Search Overlay */}
-        {isMobileSearchOpen ? (
+        {user && isMobileSearchOpen ? (
           <div className="absolute inset-0 bg-[#005430] z-[60] flex items-center px-3 gap-2 animate-in fade-in slide-in-from-top-2">
             <Search className="h-5 w-5 text-gray-400" />
             <input
@@ -399,9 +401,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   isListening ? "Stop voice search" : "Start voice search"
                 }
                 data-testid="topbar-voice-search-mobile"
-                className={`text-gray-400 ${
-                  isListening ? "text-[#005430] animate-pulse" : ""
-                }`}
+                className={`text-gray-400 ${isListening ? "text-[#005430] animate-pulse" : ""
+                  }`}
               >
                 <Mic className={`h-5 w-5 ${isListening ? "text-white" : ""}`} />
               </button>
@@ -460,89 +461,105 @@ const TopBar: React.FC<TopBarProps> = ({
             </div>
 
             {/* Mobile Search Trigger Icon */}
-            <button
-              className="lg:hidden ml-auto mr-3 text-white/80 hover:text-white"
-              onClick={() => setIsMobileSearchOpen(true)}
-              data-testid="mobile-search-button"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            {user && (
+              <button
+                className="lg:hidden ml-auto mr-3 text-white/80 hover:text-white"
+                onClick={() => setIsMobileSearchOpen(true)}
+                data-testid="mobile-search-button"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            )}
 
-            {/* Center: Search Bar (Desktop) */}
-            <div className="hidden lg:flex flex-1 max-w-xl mx-6 relative z-50">
-              <div className="relative w-full group">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    isListening ? "Listening..." : "Find assets and indices..."
-                  }
-                  className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
-                  data-testid="desktop-search-input"
-                />
-
-                {/* Search Actions */}
-                {searchQuery ? (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#005430]"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={startListening}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+            {/* Center: Search Bar & Info (Desktop) */}
+            <div className="hidden lg:flex items-center flex-1 max-w-xl mx-6 relative z-50">
+              {user && (
+                <div className="relative flex-1 group mr-3">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={
                       isListening
+                        ? "Listening..."
+                        : "Find assets and indices..."
+                    }
+                    className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
+                    data-testid="desktop-search-input"
+                  />
+
+                  {/* Search Actions */}
+                  {searchQuery ? (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#005430]"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={startListening}
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
                         ? "text-[#005430]"
                         : "text-gray-400 hover:text-gray-200"
-                    }`}
+                        }`}
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
+                  )}
+
+                  {/* Search Results Dropdown */}
+                  {searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-md shadow-xl overflow-hidden max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-1">
+                      {searchResults.map((asset) => (
+                        <button
+                          key={asset.id}
+                          onClick={() => handleSearchResultClick(asset)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors flex items-center justify-between group"
+                        >
+                          <span className="text-sm text-gray-800 font-medium">
+                            {asset.name}
+                          </span>
+                          {asset.market && (
+                            <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                              {asset.market}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Actions Area (How it works & Help) */}
+              <div className={`flex items-center gap-4 ${!user ? 'mx-auto' : ''}`}>
+                {user && onHelpCenterClick && (
+                  <button
+                    onClick={onHelpCenterClick}
+                    aria-label="Help Center"
+                    className="text-white/60 hover:text-white transition-colors flex-shrink-0"
+                    data-testid="topbar-help-center"
                   >
-                    <Mic className="h-4 w-4" />
+                    <HelpCircle className="w-[clamp(1.1rem,2.2vw,1.35rem)] h-[clamp(1.1rem,2.2vw,1.35rem)] transition-colors" />
                   </button>
                 )}
-
-                {/* Search Results Dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-md shadow-xl overflow-hidden max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-1">
-                    {searchResults.map((asset) => (
-                      <button
-                        key={asset.id}
-                        onClick={() => handleSearchResultClick(asset)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors flex items-center justify-between group"
-                      >
-                        <span className="text-sm text-gray-800 font-medium">
-                          {asset.name}
-                        </span>
-                        {asset.market && (
-                          <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                            {asset.market}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {onHelpCenterClick && (
                 <button
-                  onClick={onHelpCenterClick}
-                  aria-label="Help Center"
-                  className="ml-3 text-white/70 hover:text-white transition-colors"
-                  data-testid="topbar-help-center"
+                  onClick={() => setShowHowItWorks(true)}
+                  className="flex items-center py-1.5 text-[clamp(0.5rem,1.5vw,0.95rem)] text-white/90 hover:text-white transition-colors tracking-widest whitespace-nowrap"
+                  data-testid="topbar-how-it-works"
                 >
-                  <HelpCircle className="w-6 h-6" />
+                  How it works
                 </button>
-              )}
+              </div>
             </div>
           </>
         )}
 
         {/* Right: Date, Balance, Avatar */}
-        <div className="flex items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-1">
           {/* Date - Desktop Only */}
           {/* <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
             <span className="text-xs font-medium">
@@ -553,6 +570,16 @@ const TopBar: React.FC<TopBarProps> = ({
           {/* Auth Buttons */}
           {!user && (
             <div className="flex items-center gap-1 sm:gap-2">
+              {onHelpCenterClick && (
+                <button
+                  onClick={onHelpCenterClick}
+                  aria-label="Help Center"
+                  className="text-white/70 hover:text-white transition-colors flex-shrink-0"
+                  data-testid="topbar-help-center"
+                >
+                  <HelpCircle className="w-[clamp(1.25rem,2.5vw,1.5rem)] h-[clamp(1.25rem,2.5vw,1.5rem)] transition-colors" />
+                </button>
+              )}
               <button
                 onClick={() => setShowLoginModal(true)}
                 className="px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold text-white bg-[#2e3742] hover:bg-[#3e4856] rounded-[2px] transition-colors uppercase tracking-wide border-b-2 border-black/20"
@@ -577,9 +604,8 @@ const TopBar: React.FC<TopBarProps> = ({
           {user && !isPasswordRecovery && (
             <div ref={balanceRef} className="hidden lg:relative lg:block">
               <button
-                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${
-                  isBalanceOpen ? "bg-[#003820]" : ""
-                }`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsBalanceOpen(!isBalanceOpen);
@@ -591,9 +617,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 text-white/70 transition-transform ${
-                    isBalanceOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -632,9 +657,8 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 aria-label="Open user menu"
                 data-testid="topbar-user-avatar-desktop"
-                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${
-                  isAvatarOpen ? "bg-[#004225] text-white" : ""
-                }`}
+                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsAvatarOpen(!isAvatarOpen);
@@ -716,9 +740,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   {formatCurrency(balance)}
                 </span>
                 <ChevronDown
-                  className={`h-3 w-3 text-white/70 transition-transform ${
-                    isBalanceOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -821,6 +844,12 @@ const TopBar: React.FC<TopBarProps> = ({
           )}
         </div>
       </div>
+
+      {/* Terms & Risk Modals */}
+      <HowItWorksModal
+        isOpen={showHowItWorks}
+        onClose={() => setShowHowItWorks(false)}
+      />
 
       {/* Login Modal */}
       <LoginModal

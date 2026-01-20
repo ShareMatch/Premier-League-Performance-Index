@@ -111,29 +111,31 @@ const Portfolio: React.FC<PortfolioProps> = ({
               )}
             </div>
 
-            <div className="flex-1 flex justify-between items-center min-w-0">
-              <div className="min-w-0 mr-1 flex-1">
-                <div className="font-semibold text-gray-200 text-[clamp(11px,1.2vw,14px)] leading-tight group-hover:text-white transition-colors break-words">
+            <div className="flex-1 flex justify-between items-center min-w-0 gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-gray-200 text-[clamp(0.75rem,2.5vw,0.875rem)] leading-tight group-hover:text-white transition-colors truncate">
                   {holding.asset?.name || holding.asset_name || "Unknown Asset"}
                 </div>
-                <div className="text-[clamp(10px,1vw,11px)] text-gray-500 mt-0.5">
-                  {holding.quantity} units
-                </div>
-                <div className="text-[clamp(9px,1vw,10px)] bg-[#005430] text-white px-1.5 py-0.5 rounded inline-block mt-1">
-                  {getMarketName(holding.market)}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className="text-[clamp(0.6rem,1.5vw,0.6875rem)] text-gray-500 font-medium leading-none">
+                    {holding.quantity} units
+                  </div>
+                  <div className="w-fit text-[clamp(0.5rem,1.2vw,0.625rem)] bg-[#005430]/40 text-emerald-400 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                    {holding.market}
+                  </div>
                 </div>
               </div>
 
-              <div className="text-right flex-shrink-0 ml-2">
-                <div className="text-[clamp(12px,1.2vw,14px)] bg-[#005430] text-white px-2 py-0.5 rounded font-bold inline-block font-mono">
+              <div className="text-right flex-shrink-0">
+                <div className="text-[clamp(0.75rem,2.5vw,0.875rem)] bg-[#005430] text-white px-2 py-0.5 rounded font-bold inline-block font-mono">
                   {formatCurrency(holding.quantity * holding.currentPrice)}
                 </div>
                 <div className="flex flex-col items-end mt-1 gap-0.5">
-                  <div className="text-[clamp(10px,1vw,11px)] text-gray-500 font-mono">
+                  <div className="text-[clamp(0.6rem,1.5vw,0.6875rem)] text-gray-500 font-mono">
                     @ {formatCurrency(holding.currentPrice)}
                   </div>
                   {/* Price Change Indicator */}
-                  <div className={`flex items-center gap-0.5 text-[clamp(9px,1vw,10px)] font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`flex items-center gap-0.5 text-[clamp(0.6rem,1.5vw,0.6875rem)] font-bold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
                     {isPositive ? <FaCaretUp className="w-2.5 h-2.5" /> : <FaCaretDown className="w-2.5 h-2.5" />}
                     <span>${formatNumberWithCommas(Math.abs(changeAmount))}</span>
                   </div>

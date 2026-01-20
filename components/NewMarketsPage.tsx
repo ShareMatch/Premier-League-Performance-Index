@@ -41,18 +41,18 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
     <div className="h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)]">
           <button
             onClick={() => onNavigate("HOME")}
             aria-label="Back to home"
             data-testid="new-markets-back"
-            className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+            className="p-1 rounded-full hover:bg-white/5 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />
           </button>
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+            <h2 className="text-[clamp(1rem,4vw,1.125rem)] font-bold text-white flex items-center gap-[clamp(0.25rem,1vw,0.5rem)]">
+              <TrendingUp className="w-[clamp(0.875rem,3vw,1rem)] h-[clamp(0.875rem,3vw,1rem)] text-green-500" />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                 Trending Markets
               </span>
