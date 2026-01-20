@@ -164,9 +164,28 @@ export const SPL_TEAMS: Team[] = [
 ];
 
 export const F1_TEAMS: Team[] = [
-    { id: '401', name: "Lando Norris", bid: 77.8, offer: 70.4, lastChange: 'none', color: '#6B7280', category: 'f1', market: "F1" },
-    { id: '402', name: "Oscar Piastri", bid: 6.2, offer: 5.6, lastChange: 'none', color: '#6B7280', category: 'f1', market: "F1" },
-    { id: '403', name: "Max Verstappen", bid: 22.8, offer: 20.7, lastChange: 'none', color: '#6B7280', category: 'f1', market: "F1" },
+    { id: '401', name: "Lando Norris", bid: 17.5, offer: 15.8, lastChange: 'none', color: '#FF8000', category: 'f1', market: "F1" },
+    { id: '402', name: "Oscar Piastri", bid: 12.4, offer: 11.2, lastChange: 'none', color: '#FF8000', category: 'f1', market: "F1" },
+    { id: '403', name: "Max Verstappen", bid: 28.0, offer: 25.3, lastChange: 'none', color: '#0600EF', category: 'f1', market: "F1" },
+    { id: '524', name: "George Russell", bid: 30.0, offer: 27.1, lastChange: 'none', color: '#00D2BE', category: 'f1', market: "F1" },
+    { id: '525', name: "Fernando Alonso", bid: 13.1, offer: 11.9, lastChange: 'none', color: '#006F62', category: 'f1', market: "F1" },
+    { id: '526', name: "Kimi Antonelli", bid: 9.5, offer: 8.6, lastChange: 'none', color: '#00D2BE', category: 'f1', market: "F1" },
+    { id: '527', name: "Charles Leclerc", bid: 4.0, offer: 3.7, lastChange: 'none', color: '#DC0000', category: 'f1', market: "F1" },
+    { id: '528', name: "Lewis Hamilton", bid: 2.6, offer: 2.3, lastChange: 'none', color: '#DC0000', category: 'f1', market: "F1" },
+    { id: '529', name: "Carlos Sainz", bid: 2.1, offer: 1.9, lastChange: 'none', color: '#005AFF', category: 'f1', market: "F1" },
+    { id: '530', name: "Alex Albon", bid: 1.6, offer: 1.4, lastChange: 'none', color: '#005AFF', category: 'f1', market: "F1" },
+    { id: '531', name: "Lance Stroll", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#006F62', category: 'f1', market: "F1" },
+    { id: '532', name: "Pierre Gasly", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#0090FF', category: 'f1', market: "F1" },
+    { id: '533', name: "Nico Hulkenberg", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#B6BABD', category: 'f1', market: "F1" },
+    { id: '534', name: "Isack Hadjar", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#3671C6', category: 'f1', market: "F1" },
+    { id: '535', name: "Oliver Bearman", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#B6BABD', category: 'f1', market: "F1" },
+    { id: '536', name: "Gabriel Bortoleto", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#B6BABD', category: 'f1', market: "F1" },
+    { id: '537', name: "Liam Lawson", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#3671C6', category: 'f1', market: "F1" },
+    { id: '538', name: "Esteban Ocon", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#B6BABD', category: 'f1', market: "F1" },
+    { id: '539', name: "Arvid Lindblad", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#3671C6', category: 'f1', market: "F1" },
+    { id: '540', name: "Valtteri Bottas", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#000000', category: 'f1', market: "F1" },
+    { id: '541', name: "Franco Colapinto", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#005AFF', category: 'f1', market: "F1" },
+    { id: '542', name: "Sergio Perez", bid: 0.2, offer: 0.1, lastChange: 'none', color: '#3671C6', category: 'f1', market: "F1" },
 ];
 
 export const NBA_TEAMS: Team[] = [
