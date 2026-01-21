@@ -77,35 +77,26 @@ const ChatBot: React.FC = () => {
         className={`fixed z-50 flex items-center gap-3 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
           }`}
       >
-        {/* Persistent Desktop Label (Redesigned matching TrendingCarousel Live Badge) */}
+        {/* Persistent Desktop Label - Clean Styling */}
         <div
           className="
-    relative
-    hidden sm:flex
-    items-center
-    gap-[clamp(0.125rem,0.5vw,0.25rem)]
-    px-[clamp(0.375rem,1vw,0.5rem)]
-    py-[clamp(0.125rem,0.5vw,0.25rem)]
-    bg-green-500/10
-    rounded-[clamp(0.125rem,0.5vw,0.25rem)]
-    border border-green-500/20
-    flex-shrink-0
-    animate-in fade-in slide-in-from-right-2 duration-700 delay-300
-
-    after:content-['']
-    after:absolute
-    after:top-1/2
-    after:right-[-0.4rem]
-    after:-translate-y-1/2
-    after:border-y-[0.35rem]
-    after:border-y-transparent
-    after:border-l-[0.4rem]
-    after:border-l-green-500/20
-  "
+            relative
+            hidden sm:flex
+            items-center
+            gap-2
+            px-2
+            py-1
+            flex-shrink-0
+            animate-in fade-in slide-in-from-right-4 duration-1000 delay-300
+            group
+          "
         >
-          <span className="text-[clamp(0.45rem,0.9vw,0.625rem)] text-green-500 font-bold uppercase tracking-wide whitespace-nowrap">
-            Talk to me
+          <span className="text-[clamp(0.65rem,0.8vw,0.75rem)] text-emerald-400/80 font-bold uppercase tracking-widest whitespace-nowrap">
+            Need help?
           </span>
+
+          {/* Subtle pointer (Right Side) */}
+          <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-emerald-400/40 ml-1" />
         </div>
 
 
@@ -130,41 +121,43 @@ const ChatBot: React.FC = () => {
       {isOpen && (
         <div
           className="fixed z-50 transition-all duration-300 bg-gray-900 shadow-2xl border border-gray-700 overflow-hidden
-            /* Mobile: centered, nearly full screen */
-            inset-x-[clamp(0.75rem,3vw,1rem)] bottom-[clamp(0.5rem,3vw,0.8rem)] top-auto rounded-[clamp(1rem,4vw,1.5rem)]
+            /* Mobile: centered, bottom fixed */
+            inset-x-[clamp(0.75rem,3vw,1rem)] bottom-0 top-auto rounded-t-[clamp(1rem,4vw,1.5rem)] rounded-b-0
             /* Desktop: bottom right corner */
             sm:inset-auto sm:bottom-[clamp(1rem,4vh,1.5rem)] sm:right-[clamp(1rem,4vw,1.5rem)] sm:w-[clamp(320px,30vw,400px)] sm:rounded-2xl
             h-[clamp(400px,80vh,600px)] sm:h-[clamp(450px,55vh,550px)]"
           style={{
-            maxHeight: "calc(100vh - 24px)",
+            maxHeight: "85vh",
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-[#0B1221] via-[#003820] to-[#0B1221] border-b border-gray-700">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#00A651]/20 flex items-center justify-center">
-                <img
-                  src="/speech-bubble-5-svgrepo-com.svg"
-                  alt="Message"
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white group-hover:scale-110 transition-transform duration-300"
-                />
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5 bg-[#0B1221]/95 backdrop-blur-xl border-b border-gray-800 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <img
+                    src="/speech-bubble-5-svgrepo-com.svg"
+                    alt="Message"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400"
+                  />
+                </div>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-gray-900 animate-pulse" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-xs sm:text-sm">
+                <h3 className="text-white font-bold text-xs sm:text-sm tracking-tight">
                   ShareMatch AI Assistant
                 </h3>
-                <span className="text-[9px] sm:text-[10px] text-green-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                  Online
+                <span className="text-[10px] text-emerald-400/80 font-medium">
+                  Always available to help
                 </span>
               </div>
             </div>
             <button
               onClick={handleClose}
-              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
+              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
               aria-label="Close"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 

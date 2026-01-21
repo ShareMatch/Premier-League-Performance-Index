@@ -74,12 +74,10 @@
     background-color: #021a1a;
     background-image:
         linear-gradient(#021a1a, #021a1a),
-        linear-gradient(
-            90deg,
+        linear-gradient(90deg,
             rgba(255, 255, 255, 0) 0%,
             rgba(255, 255, 255, 0.6) 50%,
-            rgba(255, 255, 255, 0) 100%
-        );
+            rgba(255, 255, 255, 0) 100%);
     background-origin: border-box;
     background-clip: padding-box, border-box;
     border: 1px solid transparent;
@@ -154,14 +152,17 @@ iframe[src*="sumsub"] {
 
 /* Gentle breathing animation for asset avatars */
 @keyframes avatar-breathe {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.12);
-  }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.12);
+    }
 }
 
 .avatar-breathe {
-  animation: avatar-breathe 4s ease-in-out infinite;
+    animation: avatar-breathe 4s ease-in-out infinite;
 }

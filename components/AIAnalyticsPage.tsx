@@ -55,7 +55,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 backdrop-blur-sm">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="flex gap-2 flex-wrap justify-center">
-                            {(['EPL', 'F1', 'SPL', 'UCL', 'NBA', 'NFL', 'T20'] as const).map(market => (
+                            {(['EPL', 'F1', 'SPL', 'UCL', 'NBA', 'NFL', 'T20', 'ISL'] as const).map(market => (
                                 <button
                                     key={market}
                                     onClick={() => setSelectedMarket(market)}

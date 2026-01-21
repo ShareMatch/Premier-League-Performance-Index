@@ -265,6 +265,9 @@ const App: React.FC = () => {
     totalAmount: number;
   }>(null);
 
+  // Guest Mobile Navigation State
+  const [activeHoverMenu, setActiveHoverMenu] = useState<string | null>(null);
+
   // Refs to track current state for subscription callbacks
   const userRef = useRef(user);
   const publicUserIdRef = useRef(publicUserId);
@@ -516,8 +519,8 @@ const App: React.FC = () => {
             asset_id: ta.asset_id, // Keep reference to static asset
             name: staticAsset.name,
             team: staticAsset.team,
-            bid: Number(ta.sell_price), // Sell price is bid
-            offer: Number(ta.buy_price), // Buy price is offer
+            bid: Number(ta.sell), // Sell price is bid
+            offer: Number(ta.buy), // Buy price is offer
             lastChange: "none" as const, // TODO: Calculate from price history
             color: ta.primary_color || staticAsset.color,
             logo_url:
@@ -542,7 +545,7 @@ const App: React.FC = () => {
             season_start_date: ta.market_index_seasons.start_date,
             season_end_date: ta.market_index_seasons.end_date,
             season_stage: ta.stage || ta.market_index_seasons.stage,
-            units: Number(ta.total_trading_units),
+            units: Number(ta.units),
             short_code: ta.short_code,
           };
         })
@@ -817,7 +820,8 @@ const App: React.FC = () => {
 
     // Check if user is logged in
     if (!user) {
-      setTriggerLoginModal(true);
+      setAlertMessage("You need to login to continue");
+      setAlertOpen(true);
       return;
     }
 
@@ -1031,6 +1035,8 @@ const App: React.FC = () => {
                   triggerSignUpModal={triggerSignUpModal}
                   onTriggerSignUpHandled={() => setTriggerSignUpModal(false)}
                   onHelpCenterClick={() => setShowHelpCenter(true)}
+                  activeHoverMenu={activeHoverMenu}
+                  setActiveHoverMenu={setActiveHoverMenu}
                 />
 
                 {/* AI Analytics Banner */}
@@ -1052,7 +1058,9 @@ const App: React.FC = () => {
                     onLeagueChange={handleNavigate}
                     allAssets={allAssets}
                     onHelpCenterClick={() => setShowHelpCenter(true)}
+                    onHowItWorksClick={() => setShowHowItWorks(true)}
                     onViewAsset={handleViewAsset}
+                    isLoggedIn={!!user}
                   />
 
                   {/* Content Container (Main + Right Panel) */}
@@ -1063,6 +1071,38 @@ const App: React.FC = () => {
                         ref={mainContentRef}
                         className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto"
                       >
+                        {/* Mobile Navigation Row (Below TopBar) - Only for not logged in and ONLY on mobile */}
+                        {/* {!user && (
+                          <div className="lg:hidden w-full flex items-center justify-center gap-2 px-4 h-5 border-b border-gray-800 shadow-sm flex-shrink-0 mt-0">
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "who-we-are" ? null : "who-we-are")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "who-we-are"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              About Us
+                            </button>
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "how-it-works" ? null : "how-it-works")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "how-it-works"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              How it works
+                            </button>
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "shariah" ? null : "shariah")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "shariah"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              Shariah
+                            </button>
+                          </div>
+                        )} */}
                         <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                           {/* Main content wrapper - grows to fill space */}
                           <div className="flex-1">
@@ -1206,11 +1246,12 @@ const App: React.FC = () => {
                       </div>
 
                       {/* Mobile How It Works Bar - Fixed above Ticker */}
-                      <div className="md:hidden flex-shrink-0 bg-[#0B1221] border-t border-gray-800">
+                      <div className="md:hidden flex-shrink-0 bg-[#0B1221] px-4 py-2 border-t border-gray-800">
                         <button
                           onClick={() => setShowHowItWorks(true)}
-                          className="w-full flex items-center justify-center gap-2 py-[clamp(0.5rem,1.5vh,0.75rem)] text-[clamp(0.7rem,2vw,0.8rem)] font-medium text-gray-400 hover:text-white transition-colors uppercase tracking-[0.1em]"
+                          className="w-full h-9 flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[0.7rem] font-bold text-emerald-400 hover:bg-emerald-500/20 active:scale-[0.98] transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                         >
+                          <HelpCircle className="w-3.5 h-3.5" />
                           <span>How it works</span>
                         </button>
                       </div>
