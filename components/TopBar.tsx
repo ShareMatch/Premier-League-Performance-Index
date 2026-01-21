@@ -53,6 +53,8 @@ interface TopBarProps {
   triggerSignUpModal?: boolean;
   onTriggerSignUpHandled?: () => void;
   onHelpCenterClick?: () => void;
+  activeHoverMenu?: string | null;
+  setActiveHoverMenu?: (menuId: string | null) => void;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -95,6 +97,8 @@ const TopBar: React.FC<TopBarProps> = ({
   triggerSignUpModal,
   onTriggerSignUpHandled,
   onHelpCenterClick,
+  activeHoverMenu: propsActiveHoverMenu,
+  setActiveHoverMenu: propsSetActiveHoverMenu,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -116,7 +120,12 @@ const TopBar: React.FC<TopBarProps> = ({
   const [pendingVerification, setPendingVerification] =
     useState<PendingVerification | null>(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [activeHoverMenu, setActiveHoverMenu] = useState<string | null>(null);
+
+  // Use props for activeHoverMenu if provided, otherwise fallback to internal state (for safety)
+  const [internalActiveHoverMenu, setInternalActiveHoverMenu] = useState<string | null>(null);
+  const activeHoverMenu = propsActiveHoverMenu !== undefined ? propsActiveHoverMenu : internalActiveHoverMenu;
+  const setActiveHoverMenu = propsSetActiveHoverMenu || setInternalActiveHoverMenu;
+
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = (menuId: string) => {
@@ -471,76 +480,84 @@ const TopBar: React.FC<TopBarProps> = ({
                 alt="ShareMatch"
                 className="h-8 lg:h-16 w-auto object-contain"
               />
-              <div
-                className="hidden lg:flex items-center gap-4 h-full"
-                onMouseLeave={handleMouseLeave}
-              >
-                <div className="relative h-full flex items-center">
-                  <button
-                    onMouseEnter={() => handleMouseEnter("who-we-are")}
-                    className={`
-        px-[clamp(0.75rem,2vw,1.1rem)]
-        py-[clamp(0.25rem,1vw,0.5rem)]
-        text-[clamp(0.625rem,1vw,0.75rem)]
-        rounded-full
-        font-semibold
-        tracking-wide
-        transition-colors
-        duration-200
+              {!user && (
+                <div
+                  className="hidden lg:flex items-center gap-4 h-full"
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="relative h-full flex items-center">
+                    <button
+                      onMouseEnter={() => handleMouseEnter("who-we-are")}
+                      className={`
+        px-[clamp(0.75rem,2vw,1.5rem)]
+    py-[clamp(0.25rem,1vw,0.5rem)]
+    text-[clamp(0.625rem,1vw,0.75rem)]
+    rounded-full
+    text-white
+    font-semibold
+    bg-transparent
+    tracking-wide
+    transition-colors
+    duration-200
         ${activeHoverMenu === "who-we-are"
-                        ? "text-white bg-white/10"
-                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+                          ? "text-white bg-white/10"
+                          : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
       `}
-                    data-testid="topbar-who-we-are"
-                  >
-                    About Us
-                  </button>
-                </div>
+                      data-testid="topbar-who-we-are"
+                    >
+                      About Us
+                    </button>
+                  </div>
 
-                <div className="relative h-full flex items-center">
-                  <button
-                    onMouseEnter={() => handleMouseEnter("how-it-works")}
-                    className={`
-        px-[clamp(0.75rem,2vw,1.1rem)]
-        py-[clamp(0.25rem,1vw,0.5rem)]
-        text-[clamp(0.625rem,1vw,0.75rem)]
-        rounded-full
-        font-semibold
-        tracking-wide
-        transition-colors
-        duration-200
+                  <div className="relative h-full flex items-center">
+                    <button
+                      onMouseEnter={() => handleMouseEnter("how-it-works")}
+                      className={`
+        px-[clamp(0.75rem,2vw,1.5rem)]
+    py-[clamp(0.25rem,1vw,0.5rem)]
+    text-[clamp(0.625rem,1vw,0.75rem)]
+    rounded-full
+    text-white
+    font-semibold
+    bg-transparent
+    tracking-wide
+    transition-colors
+    duration-200
         ${activeHoverMenu === "how-it-works"
-                        ? "text-white bg-white/10"
-                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+                          ? "text-white bg-white/10"
+                          : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
       `}
-                    data-testid="topbar-how-it-works"
-                  >
-                    What We Offer
-                  </button>
-                </div>
+                      data-testid="topbar-how-it-works"
+                    >
+                      What We Offer
+                    </button>
+                  </div>
 
-                <div className="relative h-full flex items-center">
-                  <button
-                    onMouseEnter={() => handleMouseEnter("shariah")}
-                    className={`
-        px-[clamp(0.75rem,2vw,1.1rem)]
-        py-[clamp(0.25rem,1vw,0.5rem)]
-        text-[clamp(0.625rem,1vw,0.75rem)]
-        rounded-full
-        font-semibold
-        tracking-wide
-        transition-colors
-        duration-200
+                  <div className="relative h-full flex items-center">
+                    <button
+                      onMouseEnter={() => handleMouseEnter("shariah")}
+                      className={`
+        px-[clamp(0.75rem,2vw,1.5rem)]
+    py-[clamp(0.25rem,1vw,0.5rem)]
+    text-[clamp(0.625rem,1vw,0.75rem)]
+    rounded-full
+    text-white
+    font-semibold
+    bg-transparent
+    tracking-wide
+    transition-colors
+    duration-200
         ${activeHoverMenu === "shariah"
-                        ? "text-white bg-white/10"
-                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+                          ? "text-white bg-white/10"
+                          : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
       `}
-                    data-testid="topbar-shariah"
-                  >
-                    Shariah Compliant
-                  </button>
+                      data-testid="topbar-shariah"
+                    >
+                      Shariah Compliant
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </>
         )}
@@ -554,12 +571,32 @@ const TopBar: React.FC<TopBarProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search markets..."
-                className="w-full bg-[#004225] border border-[#006035] rounded-full py-2 pl-10 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all font-medium"
+                placeholder="Search..."
+                className="w-full bg-black/20 border-none rounded-lg py-1.5 pl-10 pr-10 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium"
               />
+              {/* Desktop Clear/Mic Actions */}
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    className="text-white/40 hover:text-white transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={startListening}
+                    aria-label={isListening ? "Stop voice search" : "Start voice search"}
+                    className={`transition-colors ${isListening ? "text-red-500 animate-pulse" : "text-white/40 hover:text-white"}`}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               {/* Search Results Dropdown - Desktop */}
               {searchResults.length > 0 && searchQuery && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
                   {searchResults.map((asset) => (
                     <button
                       key={asset.id}
@@ -568,11 +605,11 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <div className="flex flex-col">
                         <span className="text-white font-bold text-sm">{asset.name}</span>
-                        <span className="text-xs text-gray-500 font-medium">
+                        <span className="text-xs text-gray-400 font-medium">
                           {asset.market || "Market"} Index
                         </span>
                       </div>
-                      <span className="text-[9px] bg-brand-primary text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest">
+                      <span className="text-[9px] bg-[#005430] text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest">
                         View
                       </span>
                     </button>
@@ -585,14 +622,16 @@ const TopBar: React.FC<TopBarProps> = ({
 
         {/* Right: Date, Balance, Avatar */}
         <div className="flex items-center gap-1">
-          {/* Mobile Search Button */}
-          <button
-            onClick={() => setIsMobileSearchOpen(true)}
-            className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
-            aria-label="Open search"
-          >
-            <Search className="h-5 w-5" />
-          </button>
+          {/* Mobile Search Button - Only for logged in */}
+          {user && (
+            <button
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
+              aria-label="Open search"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+          )}
 
           {/* Date - Desktop Only */}
           {/* <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
@@ -901,6 +940,16 @@ const TopBar: React.FC<TopBarProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        setIsAvatarOpen(false);
+                        onHelpCenterClick?.();
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                    >
+                      <HelpCircle className="h-4 w-4" /> Help
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
                         signOut();
                       }}
                       className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
@@ -915,25 +964,28 @@ const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
+      {/* Mobile Navigation Row moved to App.tsx to make it not sticky */}
+
       <div
         className={`fixed inset-0 z-[48] bg-black/40 backdrop-blur-sm transition-opacity duration-500 ${activeHoverMenu ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
+        onClick={() => setActiveHoverMenu(null)}
         aria-hidden="true"
       />
 
       <div
-        className={`fixed top-14 lg:top-20 left-0 right-0 z-[49] bg-[#005430]/50 backdrop-blur-xl border-b border-white/10 transition-all duration-500 overflow-hidden ${activeHoverMenu ? "max-h-[500px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-4 pointer-events-none"
-          }`}
+        className={`fixed left-0 right-0 z-[49] bg-[#005430]/30 backdrop-blur-xl border-b border-white/10 transition-all duration-500 overflow-hidden ${activeHoverMenu ? "max-h-[600px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-4 pointer-events-none"
+          } top-14 lg:top-20`}
         onMouseEnter={() => activeHoverMenu && handleMouseEnter(activeHoverMenu)}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="px-[clamp(4rem,11vw,20rem)] py-12">
+        <div className="px-6 sm:px-12 lg:px-[clamp(4rem,11vw,20rem)] py-8 sm:py-12">
           {activeHoverMenu === "how-it-works" && (
             <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="flex-1 max-w-2xl">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">What We Offer</h3>
-                <p className="text-white font-semibold text-2xl mb-4 leading-tight">Unique Seasonal Performance Tokens</p>
-                <p className="text-gray-300 text-lg leading-relaxed">
+                <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-widest mb-4 sm:mb-6">What We Offer</h3>
+                <p className="text-white font-semibold text-xl sm:text-2xl mb-4 leading-tight">Unique Seasonal Performance Tokens</p>
+                <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">
                   We offer unique Seasonal Performance Tokens for top-tier leagues like EPL, NBA, and F1. Trade these tokens in real-time as performance indexes shift based on real-world outcomes, giving you a chance to capitalize on your expertise.
                 </p>
               </div>
@@ -943,9 +995,9 @@ const TopBar: React.FC<TopBarProps> = ({
           {activeHoverMenu === "who-we-are" && (
             <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="flex-1 max-w-2xl">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">About Us</h3>
-                <p className="text-white font-semibold text-2xl mb-4 leading-tight">A Cutting-edge Performance Market</p>
-                <p className="text-gray-300 text-lg leading-relaxed">
+                <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-widest mb-4 sm:mb-6">About Us</h3>
+                <p className="text-white font-semibold text-xl sm:text-2xl mb-4 leading-tight">A Cutting-edge Performance Market</p>
+                <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">
                   ShareMatch is a cutting-edge digital performance index market. We create a dynamic environment where sports knowledge meets technical analysis, allowing you to engage with the performance of your favorite teams and athletes globally.
                 </p>
               </div>
@@ -955,9 +1007,9 @@ const TopBar: React.FC<TopBarProps> = ({
           {activeHoverMenu === "shariah" && (
             <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="flex-1 max-w-2xl">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">Shariah Compliant</h3>
-                <p className="text-white font-semibold text-2xl mb-4 leading-tight">Built on Ethics & Transparency</p>
-                <p className="text-gray-300 text-lg leading-relaxed">
+                <h3 className="text-[10px] font-semibold text-white/50 uppercase tracking-widest mb-4 sm:mb-6">Shariah Compliant</h3>
+                <p className="text-white font-semibold text-xl sm:text-2xl mb-4 leading-tight">Built on Ethics & Transparency</p>
+                <p className="text-gray-300 text-sm sm:text-lg leading-relaxed">
                   Sustainability and ethics are at our core. Our platform is built on transparency and fairness, utilizing real market data to ensure a non-speculative, skill-based experience that strictly adheres to Shariah compliance guidelines.
                 </p>
               </div>

@@ -21,7 +21,9 @@ interface SidebarProps {
   onLeagueChange: (league: League) => void;
   allAssets: Team[];
   onHelpCenterClick?: () => void;
+  onHowItWorksClick?: () => void;
   onViewAsset?: (asset: Team) => void;
+  isLoggedIn?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -31,7 +33,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLeagueChange,
   allAssets,
   onHelpCenterClick,
+  onHowItWorksClick,
   onViewAsset,
+  isLoggedIn = false,
 }) => {
   const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<string[]>([
@@ -148,14 +152,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         data-testid="sidebar"
         className={`
-        fixed lg:static inset-y-0 left-0 z-40
-        w-64 lg:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
+        fixed lg:static top-14 lg:top-0 bottom-0 left-0 z-40
+        w-[clamp(14rem,20vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}
       >
-        <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1 mt-4 flex flex-col">
-          <div className="flex-1 space-y-1">
+
+        <nav className="flex-1 overflow-y-auto px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.25rem,1vh,0.5rem)] space-y-[clamp(0.125rem,0.5vh,0.25rem)] mt-[clamp(0.5rem,2vh,1rem)] lg:mt-0 flex flex-col">
+          <div className="flex-1 space-y-[clamp(0.125rem,0.5vh,0.25rem)]">
             {menuItems.map((item) => (
               <div key={item.label}>
                 {item.subItems ? (
@@ -165,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       .toLowerCase()
                       .replace(/\s+/g, "-")}`}
                     className={`
-                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,0.8vh,0.5rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium transition-colors
                     ${item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
@@ -176,9 +181,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       }
                   `}
                   >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                    <div className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
+                      <item.icon className="w-[clamp(1rem,1.2vw,1.25rem)] h-[clamp(1rem,1.2vw,1.25rem)]" />
+                      <span className="truncate">{item.label}</span>
                       {item.badge && (
                         <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-800 text-gray-500 rounded border border-gray-700">
                           {item.badge}
@@ -194,11 +199,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ) : !item.id ? (
                   <button
                     onClick={(e) => e.preventDefault()}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                    className="w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,0.8vh,0.5rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium transition-colors text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                   >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                    <div className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
+                      <item.icon className="w-[clamp(1rem,1.2vw,1.25rem)] h-[clamp(1rem,1.2vw,1.25rem)]" />
+                      <span className="truncate">{item.label}</span>
                       {item.badge && (
                         <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-800 text-gray-500 rounded border border-gray-700">
                           {item.badge}
@@ -224,7 +229,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       item.id && onLeagueChange(item.id as any);
                     }}
                     className={`
-                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,0.8vh,0.5rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium transition-colors
                     ${item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
@@ -236,38 +241,38 @@ const Sidebar: React.FC<SidebarProps> = ({
                   `}
                     data-testid={item.testId}
                   >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                    <div className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
+                      <item.icon className="w-[clamp(1rem,1.2vw,1.25rem)] h-[clamp(1rem,1.2vw,1.25rem)]" />
+                      <span className="truncate">{item.label}</span>
                     </div>
                   </Link>
                 )}
 
                 {/* Level 1 Submenu */}
                 {item.subItems && expandedItems.includes(item.label) && (
-                  <div className="ml-9 mt-1 space-y-1 border-l border-gray-800 pl-3">
+                  <div className="ml-[clamp(1.5rem,2.5vw,2.25rem)] mt-[clamp(0.125rem,0.2vh,0.25rem)] space-y-[clamp(0.125rem,0.2vh,0.25rem)] border-l border-gray-800 pl-[clamp(0.5rem,1vw,0.75rem)]">
                     {item.subItems.map((subItem: any) => (
                       <div key={subItem.label}>
                         {subItem.subItems ? (
                           <button
                             onClick={() => toggleExpand(subItem.label)}
                             className={`
-                            w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
+                            w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.5vh,0.4rem)] rounded-lg text-[clamp(0.7rem,0.85vw,0.8rem)] transition-colors
                             ${(subItem as any).active
                                 ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
                                 : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
                               }
                           `}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.5rem)]">
                               <span className="whitespace-nowrap">
                                 {subItem.label}
                               </span>
                             </div>
                             {expandedItems.includes(subItem.label) ? (
-                              <ChevronDown className="w-3 h-3" />
+                              <ChevronDown className="w-[clamp(0.6rem,0.8vw,0.75rem)] h-[clamp(0.6rem,0.8vw,0.75rem)]" />
                             ) : (
-                              <ChevronRight className="w-3 h-3" />
+                              <ChevronRight className="w-[clamp(0.6rem,0.8vw,0.75rem)] h-[clamp(0.6rem,0.8vw,0.75rem)]" />
                             )}
                           </button>
                         ) : (
@@ -293,7 +298,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               setIsOpen(false);
                             }}
                             className={`
-                            w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors
+                            w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.5vh,0.4rem)] rounded-lg text-[clamp(0.7rem,0.85vw,0.8rem)] transition-colors
                             ${(subItem as any).badge || (subItem as any).disabled
                                 ? "cursor-not-allowed opacity-60 text-gray-400"
                                 : (subItem as any).active
@@ -302,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                               }
                           `}
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.5rem)]">
                               <span className="whitespace-nowrap">
                                 {subItem.label}
                               </span>
@@ -318,7 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         {/* Level 2 Submenu */}
                         {subItem.subItems &&
                           expandedItems.includes(subItem.label) && (
-                            <div className="ml-3 mt-1 space-y-1 border-l border-gray-800 pl-3">
+                            <div className="ml-[clamp(0.5rem,1vw,0.75rem)] mt-[clamp(0.125rem,0.2vh,0.25rem)] space-y-[clamp(0.125rem,0.2vh,0.25rem)] border-l border-gray-800 pl-[clamp(0.5rem,1vw,0.75rem)]">
                               {subItem.subItems.map((deepItem: any) => (
                                 <Link
                                   key={deepItem.label}
@@ -331,7 +336,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     onLeagueChange(deepItem.id as any);
                                   }}
                                   className={`
-                                w-full text-left px-3 py-2 rounded-lg text-xs transition-colors block
+                                w-full text-left px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.4vh,0.35rem)] rounded-lg text-[clamp(0.65rem,0.75vw,0.75rem)] transition-colors block
                                 ${deepItem.active
                                       ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
                                       : (deepItem as any).badge
@@ -360,16 +365,28 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
           </div>
 
-          {/* Help Center Button - Always at bottom */}
-          {onHelpCenterClick && (
-            <div className="pt-4 mt-auto border-t border-gray-800">
+          {/* Help Center / How It Works Button - Always at bottom */}
+          {!isLoggedIn && onHelpCenterClick && (
+            <div className="pt-[clamp(0.25rem,1vh,0.75rem)] mt-auto border-t border-gray-800">
               <button
                 onClick={onHelpCenterClick}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
+                className="w-full flex items-center gap-[clamp(0.5rem,1vw,0.75rem)] px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,1vh,0.75rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
                 data-testid="sidebar-help-center"
               >
-                <HelpCircle className="w-5 h-5" />
+                <HelpCircle className="w-[clamp(1rem,1.2vw,1.25rem)] h-[clamp(1rem,1.2vw,1.25rem)]" />
                 <span>Help Center</span>
+              </button>
+            </div>
+          )}
+
+          {isLoggedIn && onHowItWorksClick && (
+            <div className="pt-[clamp(0.25rem,1vh,0.75rem)] mt-auto border-t border-gray-800">
+              <button
+                onClick={onHowItWorksClick}
+                className="w-full flex items-center justify-center gap-[clamp(0.5rem,1vw,0.75rem)] px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,1vh,0.75rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
+                data-testid="sidebar-how-it-works"
+              >
+                <span>How It Works</span>
               </button>
             </div>
           )}
