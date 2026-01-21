@@ -529,7 +529,7 @@ const App: React.FC = () => {
             category: category,
             market: market,
             market_trading_asset_id: ta.id,
-            is_settled: ta.is_settled || ta.market_index_seasons.is_settled,
+            is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
                 "en-US",

@@ -250,65 +250,59 @@ export const fetchTradingAssets = async () => {
     const { data, error } = await supabase
         .from('market_index_trading_assets')
         .select(`
-      id,
-      asset_id,
-      market_index_season_id,
-      buy,
-      sell,
-      units,
-      status,
-      is_settled,
-      settlement_price,
-      stage,
-      avatar_class,
-      primary_color,
-      secondary_color,
-      short_code,
-      created_at,
-      updated_at,
-
-      assets!market_trading_assets_asset_id_fkey (
-        id,
-        name,
-        team,
-        logo_url,
-        color,
-        type
-      ),
-
-      market_index_seasons!market_index_trading_assets_market_index_season_id_fkey (
-        id,
-        status,
-        is_settled,
-        season_token,
-        start_date,
-        end_date,
-        stage,
-        settlement_price,
-        settled_at,
-
-        market_indexes (
-          id,
-          name,
-          token,
-          description,
-
-          markets (
             id,
-            name,
-            market_token,
+            asset_id,
+            buy,
+            sell,
             status,
-
-            market_sub_groups (
-              name,
-              market_groups (
-                name
-              )
+            units,
+            is_settled,
+            settlement_price,
+            stage,
+            avatar_class,
+            primary_color,
+            secondary_color,
+            short_code,
+            created_at,
+            updated_at,
+            market_index_season_id,
+            assets!inner (
+                name,
+                team,
+                logo_url,
+                color,
+                type
+            ),
+            market_index_seasons!inner (
+                id,
+                status,
+                is_settled,
+                season_token,
+                start_date,
+                end_date,
+                stage,
+                settlement_price,
+                settled_at,
+                market_indexes!inner (
+                    id,
+                    name,
+                    token,
+                    description,
+                    markets!inner (
+                        id,
+                        name,
+                        market_token,
+                        status,
+                        market_sub_groups!inner (
+                            name,
+                            market_groups!inner (
+                                name
+                            )
+                        )
+                    )
+                )
             )
-          )
-        )
-      )
-    `)
+        `)
         .eq('status', 'active')
         .order('created_at', { ascending: true });
 
@@ -482,7 +476,7 @@ export const fetchSettledAssets = async () => {
                 buy: settlementPrice,
                 sell: settlementPrice,
                 status: 'settled',
-                total_trading_units: 0,
+                units: 0,
                 settled_at: season.settled_at,
                 created_at: season.created_at,
                 updated_at: season.settled_at || season.updated_at,
