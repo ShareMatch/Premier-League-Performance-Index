@@ -40,8 +40,10 @@ const TEAM_LOGOS: Record<string, string> = {
     'Lance Stroll': 'https://logo.clearbit.com/astonmartinf1.com',
 };
 
+const R2_AVATAR_BASE_URL = "https://assets.rwa.sharematch.me/avatars";
+
 /**
- * Generate avatar URL for assets using local SVG files
+ * Generate avatar URL for assets hosted in R2 via trading asset ID
  * @param tradingAssetId - The trading asset ID (UUID from market_index_trading_assets table)
  * @returns Avatar URL or null if not available
  */
@@ -60,7 +62,7 @@ export const getAvatarUrl = (tradingAssetId: string | undefined): string | null 
     }
 
     const filename = `${actualId}.svg`;
-    return `/avatars/${filename}`;
+    return `${R2_AVATAR_BASE_URL}/${filename}`;
 };
 
 /**
