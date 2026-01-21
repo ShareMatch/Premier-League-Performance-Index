@@ -252,8 +252,8 @@ export const fetchTradingAssets = async () => {
         .select(`
             id,
             asset_id,
-            buy_price,
-            sell_price,
+            buy,
+            sell,
             status,
             total_trading_units,
             is_settled,
