@@ -516,8 +516,8 @@ const App: React.FC = () => {
             asset_id: ta.asset_id, // Keep reference to static asset
             name: staticAsset.name,
             team: staticAsset.team,
-            bid: Number(ta.sell_price), // Sell price is bid
-            offer: Number(ta.buy_price), // Buy price is offer
+            bid: Number(ta.sell), // Sell price is bid
+            offer: Number(ta.buy), // Buy price is offer
             lastChange: "none" as const, // TODO: Calculate from price history
             color: ta.primary_color || staticAsset.color,
             logo_url:
@@ -526,7 +526,7 @@ const App: React.FC = () => {
             category: category,
             market: market,
             market_trading_asset_id: ta.id,
-            is_settled: ta.is_settled || ta.market_index_seasons.is_settled,
+            is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
                 "en-US",
@@ -542,7 +542,7 @@ const App: React.FC = () => {
             season_start_date: ta.market_index_seasons.start_date,
             season_end_date: ta.market_index_seasons.end_date,
             season_stage: ta.stage || ta.market_index_seasons.stage,
-            units: Number(ta.total_trading_units),
+            units: Number(ta.units),
             short_code: ta.short_code,
           };
         })
