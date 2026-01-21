@@ -1,5 +1,6 @@
 import os
 import json
+import argparse
 import psycopg2
 from dotenv import load_dotenv
 
@@ -20,9 +21,9 @@ ICONS_DIR = os.path.join(TEMPLATES_DIR, "icons")
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-OUTPUT_BASE_DIR = os.path.join(PROJECT_ROOT, "public", "avatars")
+DEFAULT_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "public", "avatars")
 
-os.makedirs(OUTPUT_BASE_DIR, exist_ok=True)
+os.makedirs(DEFAULT_OUTPUT_DIR, exist_ok=True)
 
 
 # --------------------------------------------------
@@ -46,6 +47,16 @@ def get_initials(name: str) -> str:
 
 def fallback_white(value: str | None) -> str:
     return value if value else "#FFFFFF"
+
+
+# Default mapping from market tokens to asset classes
+MARKET_CLASS_MAP = {
+    "F1": "motorsport",
+    "NBA": "basketball",
+    "NFL": "american_football",
+    "Eurovision": "music",
+    "T20": "cricket",
+}
 
 
 def load_icon(asset_class: str, icon_map: dict) -> str:
@@ -82,10 +93,38 @@ def load_template(asset_class: str) -> str:
     raise RuntimeError(f"No template found for asset_class '{asset_class}'")
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate trading asset avatars from the reference database."
+    )
+    parser.add_argument(
+        "--market-token",
+        dest="market_token",
+        help="Optional comma-separated market_token filter (e.g., F1, EPL).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        default=DEFAULT_OUTPUT_DIR,
+        help="Directory to write generated SVGs (default: public/avatars).",
+    )
+    return parser.parse_args()
+
+
 # --------------------------------------------------
 # Main
 # --------------------------------------------------
 def main():
+    args = parse_args()
+    output_base_dir = os.path.abspath(args.output_dir)
+    os.makedirs(output_base_dir, exist_ok=True)
+
+    market_token_filters = (
+        [token.strip() for token in args.market_token.split(",") if token.strip()]
+        if args.market_token
+        else None
+    )
+
     config = load_config()
     icon_map = config.get("icons", {})
     default_class = config.get("default_class", "football")
@@ -93,13 +132,12 @@ def main():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
-    cur.execute(
-        """
+    query = """
         SELECT
             mita.id,
             a.name,
-            mita.primary_asset_color,
-            mita.secondary_asset_color,
+            a.primary_color,
+            a.secondary_color,
             mita.avatar_class,
             m.market_token
         FROM market_index_trading_assets mita
@@ -111,9 +149,16 @@ def main():
           ON mi.id = mis.market_index_id
         JOIN markets m
           ON m.id = mi.market_id
-        WHERE mita.status IN ('active', 'settled');
+        WHERE mita.status IN ('active', 'settled')
     """
-    )
+
+    params = []
+    if market_token_filters:
+        placeholders = ",".join(["%s"] * len(market_token_filters))
+        query += f" AND m.market_token IN ({placeholders})"
+        params.extend(market_token_filters)
+
+    cur.execute(query, params)
 
     rows = cur.fetchall()
     print(f"🎨 Found {len(rows)} active trading assets")
@@ -136,12 +181,10 @@ def main():
             print(f"⚠️ Skipping {name} (missing market token)")
             continue
 
-        # Determin Asset Class
-        # 1. Use explicit class from DB
-        # 2. Fallback to global default
+        # Determine Asset Class preference
         asset_class = db_asset_class
         if not asset_class:
-            asset_class = default_class
+            asset_class = MARKET_CLASS_MAP.get(market_token) or default_class
 
         # Verify we have an icon for this class
         if asset_class not in icon_map:
@@ -179,7 +222,7 @@ def main():
         template = template_cache[asset_class]
         icon_svg = icon_cache[asset_class]
 
-        output_dir = OUTPUT_BASE_DIR
+        output_dir = output_base_dir
         os.makedirs(output_dir, exist_ok=True)
 
         svg = (
