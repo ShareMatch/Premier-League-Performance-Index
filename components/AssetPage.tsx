@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Share2,
@@ -7,6 +7,7 @@ import {
   BarChart3,
   DollarSign,
   Check,
+  Copy,
 } from "lucide-react";
 import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import PriceVolumeChart from "./PriceVolumeChart";
@@ -34,8 +35,10 @@ const AssetPage: React.FC<AssetPageProps> = ({
   onNavigateToIndex,
 }) => {
   const [period, setPeriod] = useState<"1h" | "24h" | "7d" | "All">("24h");
-  const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop' } | null>(null);
+  const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop'; copied: boolean } | null>(null);
   const { favorites, toggleFavorite } = useFavorites();
+  const desktopShareRef = useRef<HTMLDivElement>(null);
+  const mobileShareRef = useRef<HTMLDivElement>(null);
 
   // Prioritize asset_id (static ID) for watchlist so it sticks across leagues
   const watchId = asset.asset_id || asset.id;
@@ -79,29 +82,74 @@ const AssetPage: React.FC<AssetPageProps> = ({
   }, [asset.name]);
 
   const handleShare = async (type: 'mobile' | 'desktop') => {
-    // If we have a short_code already, we can go instant
+    // If tooltip is already open for this type, close it
+    if (shareConfig?.type === type) {
+      setShareConfig(null);
+      return;
+    }
+
+    let shareUrl = '';
     if (asset.short_code) {
-      const shareUrl = `${window.location.origin}/a/${asset.short_code}`;
+      shareUrl = `${window.location.origin}/a/${asset.short_code}`;
+    } else {
       try {
-        await navigator.clipboard.writeText(shareUrl);
-        setShareConfig({ url: shareUrl, type });
-        setTimeout(() => setShareConfig(null), 3000);
-        return; // Done! No delay.
+        shareUrl = await generateShareLink(asset.id);
       } catch (err) {
-        console.error("Clipboard error:", err);
+        console.error("Share error:", err);
+        return;
       }
     }
 
-    // Fallback to generating one if missing
+    // Attempt native share on mobile if supported
+    if (type === 'mobile' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `ShareMatch | ${asset.name}`,
+          text: `Check out the performance index for ${asset.name} on ShareMatch!`,
+          url: shareUrl,
+        });
+        return; // Successfully shared via native UI
+      } catch (err) {
+        // Only fallback to tooltip if it wasn't a user cancellation
+        if ((err as Error).name === 'AbortError') return;
+        console.error("Native share error:", err);
+      }
+    }
+
+    // Fallback to custom tooltip for desktop or unsupported mobile browsers
+    setShareConfig({ url: shareUrl, type, copied: false });
+  };
+
+  const copyToClipboard = async (url: string) => {
     try {
-      const shareUrl = await generateShareLink(asset.id);
-      await navigator.clipboard.writeText(shareUrl);
-      setShareConfig({ url: shareUrl, type });
-      setTimeout(() => setShareConfig(null), 3000);
+      await navigator.clipboard.writeText(url);
+      setShareConfig(prev => prev ? { ...prev, copied: true } : null);
+      setTimeout(() => setShareConfig(null), 2500);
     } catch (err) {
-      console.error("Share error:", err);
+      console.error("Clipboard error:", err);
     }
   };
+
+  useEffect(() => {
+    if (!shareConfig) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const desktopRef = desktopShareRef.current;
+      const mobileRef = mobileShareRef.current;
+
+      const isOutsideDesktop = desktopRef && !desktopRef.contains(event.target as Node);
+      const isOutsideMobile = mobileRef && !mobileRef.contains(event.target as Node);
+
+      if (shareConfig.type === 'desktop' && isOutsideDesktop) {
+        setShareConfig(null);
+      } else if (shareConfig.type === 'mobile' && isOutsideMobile) {
+        setShareConfig(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [shareConfig]);
 
   return (
     <div
@@ -180,7 +228,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 className={`w-4 h-4 ${isInWatchlist ? "fill-yellow-400" : ""}`}
               />
             </button>
-            <div className="relative">
+            <div className="relative" ref={mobileShareRef}>
               <button
                 onClick={() => handleShare('mobile')}
                 className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
@@ -190,20 +238,28 @@ const AssetPage: React.FC<AssetPageProps> = ({
 
               {shareConfig?.type === 'mobile' && (
                 <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-2.5 py-1.5 shadow-2xl relative min-w-[max-content] max-w-[calc(100vw-2rem)]">
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <Check className="w-2.5 h-2.5 text-emerald-500" />
-                        <span className="text-[9px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
-                          Link Copied!
+                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-2.5 py-2 shadow-2xl relative min-w-[200px] max-w-[calc(100vw-2rem)]">
+                    {shareConfig.copied ? (
+                      <div className="flex items-center gap-1.5 py-1">
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-[10px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
+                          Copied to Clipboard!
                         </span>
                       </div>
-                      {shareConfig.url && (
-                        <span className="text-[10px] text-emerald-400/80 font-mono break-all sm:whitespace-nowrap">
+                    ) : (
+                      <div className="flex items-center gap-2 bg-black/40 rounded p-1.5 border border-white/5">
+                        <span className="text-[10px] text-emerald-400 font-mono truncate flex-1">
                           {shareConfig.url}
                         </span>
-                      )}
-                    </div>
+                        <button
+                          onClick={() => copyToClipboard(shareConfig.url)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors text-emerald-500 flex-shrink-0"
+                          title="Copy to clipboard"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                     {/* Arrow */}
                     <div className="absolute -top-1 right-3 w-2 h-2 bg-[#0B1221] border-l border-t border-emerald-500/30 rotate-45" />
                   </div>
@@ -396,7 +452,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 className={`w-5 h-5 ${isInWatchlist ? "fill-yellow-400" : ""}`}
               />
             </button>
-            <div className="relative">
+            <div className="relative" ref={desktopShareRef}>
               <button
                 onClick={() => handleShare('desktop')}
                 className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
@@ -407,20 +463,28 @@ const AssetPage: React.FC<AssetPageProps> = ({
 
               {shareConfig?.type === 'desktop' && (
                 <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-3 py-2 shadow-2xl relative min-w-[max-content]">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <Check className="w-3 h-3 text-emerald-500" />
-                        <span className="text-[10px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
-                          Link Copied!
+                  <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-3 py-2.5 shadow-2xl relative min-w-[240px]">
+                    {shareConfig.copied ? (
+                      <div className="flex items-center gap-2 py-1">
+                        <Check className="w-4 h-4 text-emerald-500" />
+                        <span className="text-[11px] font-bold text-white uppercase tracking-widest whitespace-nowrap">
+                          Copied to Clipboard!
                         </span>
                       </div>
-                      {shareConfig.url && (
-                        <span className="text-[10px] text-emerald-400/80 font-mono whitespace-nowrap">
+                    ) : (
+                      <div className="flex items-center gap-2 bg-black/40 rounded-lg p-2 border border-white/5">
+                        <span className="text-[10px] text-emerald-400 font-mono truncate max-w-[160px]">
                           {shareConfig.url}
                         </span>
-                      )}
-                    </div>
+                        <button
+                          onClick={() => copyToClipboard(shareConfig.url)}
+                          className="p-1.5 hover:bg-white/10 rounded-md transition-colors text-emerald-500"
+                          title="Copy to clipboard"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                     {/* Arrow */}
                     <div className="absolute -top-1 right-4 w-2 h-2 bg-[#0B1221] border-l border-t border-emerald-500/30 rotate-45" />
                   </div>

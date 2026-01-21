@@ -148,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         data-testid="sidebar"
         className={`
-        fixed lg:static inset-y-0 left-0 z-50
+        fixed lg:static inset-y-0 left-0 z-40
         w-64 lg:w-[clamp(12rem,18vw,16rem)] bg-[#0B1221] border-r border-gray-800 flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
@@ -219,7 +219,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                               ? "/ai-analytics"
                               : `/market/${item.id}`
                     }
-                    onClick={() => item.id && onLeagueChange(item.id as any)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      item.id && onLeagueChange(item.id as any);
+                    }}
                     className={`
                     w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
                     ${item.id === "AI_ANALYTICS"
@@ -275,13 +278,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 : `/market/${(subItem as any).id}`
                             }
                             onClick={(e) => {
+                              e.preventDefault();
                               if ((subItem as any).badge || (subItem as any).disabled) {
-                                e.preventDefault();
                                 return;
                               }
 
                               if ((subItem as any).asset) {
-                                e.preventDefault();
                                 onViewAsset?.((subItem as any).asset);
                                 setIsOpen(false);
                                 return;
@@ -322,8 +324,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   key={deepItem.label}
                                   to={`/market/${deepItem.id}`}
                                   onClick={(e) => {
+                                    e.preventDefault();
                                     if ((deepItem as any).badge) {
-                                      e.preventDefault();
                                       return;
                                     }
                                     onLeagueChange(deepItem.id as any);

@@ -75,6 +75,7 @@ const AssetRouteWrapper: React.FC<{
   handleNavigate: (league: League) => void;
   previousLeague: League;
 }> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
+  const { user, loading } = useAuth();
   const { market, name } = useParams();
   const navigate = useNavigate();
   const asset = useMemo(() => {
@@ -86,13 +87,17 @@ const AssetRouteWrapper: React.FC<{
     );
   }, [allAssets, name, market]);
 
-  if (allAssets.length === 0) {
+  if (loading || (!allAssets || allAssets.length === 0)) {
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
         <p className="text-gray-400">Loading asset data...</p>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
   }
 
   if (!asset) {
@@ -119,6 +124,7 @@ const ShortAssetRouteWrapper: React.FC<{
   handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
   handleNavigate: (league: League) => void;
 }> = ({ allAssets, handleSelectOrder, handleNavigate }) => {
+  const { user, loading: authLoading } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const [resolving, setResolving] = useState(false);
@@ -194,13 +200,17 @@ const ShortAssetRouteWrapper: React.FC<{
     }
   }, [allAssets, asset, id, navigate]);
 
-  if (allAssets.length === 0 || resolving) {
+  if (authLoading || allAssets.length === 0 || resolving) {
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
         <p className="text-gray-400">{resolving ? "Resolving share link..." : "Loading asset data..."}</p>
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
   }
 
   if (error) {
@@ -633,6 +643,12 @@ const App: React.FC = () => {
   };
 
   const handleViewAsset = (asset: Team) => {
+    // Check if user is logged in
+    if (!user) {
+      setTriggerLoginModal(true);
+      return;
+    }
+
     setSelectedOrder(null); // Close trade slip when viewing an asset page
     setPreviousLeague(activeLeague);
 
@@ -751,12 +767,18 @@ const App: React.FC = () => {
       setSelectedOrder(null);
     }
 
-    if (league === "AI_ANALYTICS") {
-      if (!user) {
-        setAlertMessage("Please login to access the AI Analytics Engine.");
-        setAlertOpen(true);
+    // Auth Protection for specific submenus and AI Analytics
+    if (!user) {
+      // List of public leagues/routes
+      const publicLeagues: League[] = ["HOME", "ALL_MARKETS", "NEW_MARKETS"];
+
+      if (!publicLeagues.includes(league)) {
+        setTriggerLoginModal(true);
         return;
       }
+    }
+
+    if (league === "AI_ANALYTICS") {
       if (!portfolio || portfolio.length === 0) {
         setAlertMessage(
           "Exclusive Access: The AI Analytics Engine is available only to token holders.",
@@ -795,8 +817,7 @@ const App: React.FC = () => {
 
     // Check if user is logged in
     if (!user) {
-      setAlertMessage("Please login to trade.");
-      setAlertOpen(true);
+      setTriggerLoginModal(true);
       return;
     }
 
