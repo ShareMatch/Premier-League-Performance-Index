@@ -648,7 +648,8 @@ const App: React.FC = () => {
   const handleViewAsset = (asset: Team) => {
     // Check if user is logged in
     if (!user) {
-      setTriggerLoginModal(true);
+      setAlertMessage("You need to login to continue");
+      setAlertOpen(true);
       return;
     }
 
@@ -776,7 +777,8 @@ const App: React.FC = () => {
       const publicLeagues: League[] = ["HOME", "ALL_MARKETS", "NEW_MARKETS"];
 
       if (!publicLeagues.includes(league)) {
-        setTriggerLoginModal(true);
+        setAlertMessage("You need to login to continue");
+        setAlertOpen(true);
         return;
       }
     }
@@ -1246,15 +1248,16 @@ const App: React.FC = () => {
                       </div>
 
                       {/* Mobile How It Works Bar - Fixed above Ticker */}
-                      <div className="md:hidden flex-shrink-0 bg-[#0B1221] px-4 py-2 border-t border-gray-800">
-                        <button
-                          onClick={() => setShowHowItWorks(true)}
-                          className="w-full h-9 flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[0.7rem] font-bold text-emerald-400 hover:bg-emerald-500/20 active:scale-[0.98] transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.1)]"
-                        >
-                          <HelpCircle className="w-3.5 h-3.5" />
-                          <span>How it works</span>
-                        </button>
-                      </div>
+                      {!user && (
+                        <div className="md:hidden flex-shrink-0 bg-[#0B1221] px-4 py-2 border-t border-gray-800">
+                          <button
+                            onClick={() => setShowHowItWorks(true)}
+                            className="w-full h-9 flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[0.7rem] font-bold text-emerald-400 hover:bg-emerald-500/20 active:scale-[0.98] transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                          >
+                            <span>How it works</span>
+                          </button>
+                        </div>
+                      )}
 
                       {/* Ticker */}
                       <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">

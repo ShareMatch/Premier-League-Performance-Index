@@ -74,30 +74,32 @@ const ChatBot: React.FC = () => {
   return (
     <>
       <div
-        className={`fixed z-50 flex items-center gap-3 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
+        className={`fixed z-50 flex items-center gap-1 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
           }`}
       >
-        {/* Persistent Desktop Label - Clean Styling */}
+        {/* Persistent Desktop Label - Improved Styling */}
+        {/* Need Help Badge */}
         <div
           className="
-            relative
-            hidden sm:flex
-            items-center
-            gap-2
-            px-2
-            py-1
-            flex-shrink-0
-            animate-in fade-in slide-in-from-right-4 duration-1000 delay-300
-            group
-          "
+    relative
+    hidden sm:flex
+    items-center gap-2
+    px-3 py-1.5
+    rounded-pill
+    bg-[#0B1221]/95
+    backdrop-blur-md
+    border border-emerald-500/30
+    shadow-[0_4px_20px_rgba(0,84,48,0.25)]
+    text-emerald-300
+    text-xs font-medium
+    tracking-wide
+    whitespace-nowrap
+    transition-all duration-300
+  "
         >
-          <span className="text-[clamp(0.65rem,0.8vw,0.75rem)] text-emerald-400/80 font-bold uppercase tracking-widest whitespace-nowrap">
-            Need help?
-          </span>
-
-          {/* Subtle pointer (Right Side) */}
-          <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-emerald-400/40 ml-1" />
+          <span>Need help?</span>
         </div>
+
 
 
         {/* Floating Action Button */}
@@ -120,7 +122,7 @@ const ChatBot: React.FC = () => {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className="fixed z-50 transition-all duration-300 bg-gray-900 shadow-2xl border border-gray-700 overflow-hidden
+          className="fixed z-50 flex flex-col transition-all duration-300 bg-gray-900 shadow-2xl border border-gray-700 overflow-hidden
             /* Mobile: centered, bottom fixed */
             inset-x-[clamp(0.75rem,3vw,1rem)] bottom-0 top-auto rounded-t-[clamp(1rem,4vw,1.5rem)] rounded-b-0
             /* Desktop: bottom right corner */
@@ -131,7 +133,7 @@ const ChatBot: React.FC = () => {
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5 bg-[#0B1221]/95 backdrop-blur-xl border-b border-gray-800 shadow-lg">
+          <div className="flex-shrink-0 flex items-center justify-between px-3 sm:px-4 py-3 sm:py-3.5 bg-[#0B1221]/95 backdrop-blur-xl border-b border-gray-800 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
@@ -147,9 +149,6 @@ const ChatBot: React.FC = () => {
                 <h3 className="text-white font-bold text-xs sm:text-sm tracking-tight">
                   ShareMatch AI Assistant
                 </h3>
-                <span className="text-[10px] text-emerald-400/80 font-medium">
-                  Always available to help
-                </span>
               </div>
             </div>
             <button
@@ -162,7 +161,7 @@ const ChatBot: React.FC = () => {
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 h-[calc(100%-110px)] sm:h-[calc(100%-120px)] scrollbar-hide">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scrollbar-hide">
             {messages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
