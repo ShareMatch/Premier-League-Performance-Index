@@ -250,59 +250,61 @@ export const fetchTradingAssets = async () => {
     const { data, error } = await supabase
         .from('market_index_trading_assets')
         .select(`
-    id,
-    asset_id,
-    buy,
-    sell,
-    units,
-    status,
-    is_settled,
-    settlement_price,
-    stage,
-    avatar_class,
-    primary_color,
-    secondary_color,
-    short_code,
-    created_at,
-    updated_at,
-    market_index_season_id,
-    assets!inner (
-        name,
-        team,
-        logo_url,
-        color,
-        type
-    ),
-    market_index_seasons!inner (
-        id,
-        status,
-        is_settled,
-        season_token,
-        start_date,
-        end_date,
-        stage,
-        settlement_price,
-        settled_at,
-        market_indexes!inner (
             id,
-            name,
-            token,
-            description,
-            markets!inner (
-                id,
+            asset_id,
+            buy_price,
+            sell_price,
+            status,
+            total_trading_units,
+            is_settled,
+            settlement_price,
+            stage,
+            avatar_class,
+            primary_color,
+            secondary_color,
+            short_code,
+            created_at,
+            updated_at,
+            market_index_season_id,
+            assets!inner (
                 name,
-                market_token,
+                team,
+                logo_url,
+                color,
+                type
+            ),
+            market_index_seasons!inner (
+                id,
                 status,
-                market_sub_groups!inner (
+                is_settled,
+                season_token,
+                start_date,
+                end_date,
+                stage,
+                settlement_price,
+                settled_at,
+                market_indexes!inner (
+                    id,
                     name,
-                    market_groups!inner (
-                        name
+                    token,
+                    description,
+                    markets!inner (
+                        id,
+                        name,
+                        market_token,
+                        status,
+                        market_sub_groups!inner (
+                            name,
+                            market_groups!inner (
+                                name
+                            )
+                        )
                     )
                 )
             )
-        )
-    )
-`).eq('status', 'active').order('created_at', { ascending: true });
+        `)
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
 
     if (error) throw error;
     return data;

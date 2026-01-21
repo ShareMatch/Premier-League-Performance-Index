@@ -116,6 +116,19 @@ const TopBar: React.FC<TopBarProps> = ({
   const [pendingVerification, setPendingVerification] =
     useState<PendingVerification | null>(null);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [activeHoverMenu, setActiveHoverMenu] = useState<string | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (menuId: string) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setActiveHoverMenu(menuId);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveHoverMenu(null);
+    }, 150);
+  };
 
   // Edit mode state for SignUpModal
   const [isEditMode, setIsEditMode] = useState(false);
@@ -458,103 +471,129 @@ const TopBar: React.FC<TopBarProps> = ({
                 alt="ShareMatch"
                 className="h-8 lg:h-16 w-auto object-contain"
               />
-            </div>
-
-            {/* Mobile Search Trigger Icon */}
-            {/* <button
-              className="lg:hidden ml-auto mr-3 text-white/80 hover:text-white"
-              onClick={() => setIsMobileSearchOpen(true)}
-              data-testid="mobile-search-button"
-            >
-              <Search className="h-5 w-5" />
-            </button> */}
-
-            {/* Center: Search Bar & Info (Desktop) */}
-            <div className="hidden lg:flex items-center flex-1 max-w-xl mx-6 relative z-50 gap-2">
-              <div className="relative flex-1 group mr-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-[#005430] h-4 w-4 transition-colors pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    isListening
-                      ? "Listening..."
-                      : "Find assets and indices..."
-                  }
-                  className={`w-full pl-10 pr-10 py-2.5 bg-[#004225]/50 border border-[#006035] hover:border-[#007040] focus:bg-white focus:border-white focus:text-gray-900 rounded-[4px] text-sm text-gray-100 placeholder-gray-400 transition-all outline-none shadow-inner`}
-                  data-testid="desktop-search-input"
-                />
-
-                {/* Search Actions */}
-                {searchQuery ? (
+              <div
+                className="hidden lg:flex items-center gap-4 h-full"
+                onMouseLeave={handleMouseLeave}
+              >
+                <div className="relative h-full flex items-center">
                   <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#005430]"
+                    onMouseEnter={() => handleMouseEnter("who-we-are")}
+                    className={`
+        px-[clamp(0.75rem,2vw,1.1rem)]
+        py-[clamp(0.25rem,1vw,0.5rem)]
+        text-[clamp(0.625rem,1vw,0.75rem)]
+        rounded-full
+        font-semibold
+        tracking-wide
+        transition-colors
+        duration-200
+        ${activeHoverMenu === "who-we-are"
+                        ? "text-white bg-white/10"
+                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+      `}
+                    data-testid="topbar-who-we-are"
                   >
-                    <X className="h-4 w-4" />
+                    About Us
                   </button>
-                ) : (
-                  <button
-                    onClick={startListening}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${isListening
-                      ? "text-[#005430]"
-                      : "text-gray-400 hover:text-gray-200"
-                      }`}
-                  >
-                    <Mic className="h-4 w-4" />
-                  </button>
-                )}
+                </div>
 
-                {/* Search Results Dropdown */}
-                {searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-b-md shadow-xl overflow-hidden max-h-80 overflow-y-auto z-50 animate-in fade-in slide-in-from-top-1">
-                    {searchResults.map((asset) => (
-                      <button
-                        key={asset.id}
-                        onClick={() => handleSearchResultClick(asset)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors flex items-center justify-between group"
-                      >
-                        <span className="text-sm text-gray-800 font-medium">
-                          {asset.name}
-                        </span>
-                        {asset.market && (
-                          <span className="text-[10px] uppercase font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                            {asset.market}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4 mx-auto">
-                {/* {onHelpCenterClick && (
+                <div className="relative h-full flex items-center">
                   <button
-                    onClick={onHelpCenterClick}
-                    aria-label="Help Center"
-                    className="text-white/60 hover:text-white transition-colors flex-shrink-0"
-                    data-testid="topbar-help-center"
+                    onMouseEnter={() => handleMouseEnter("how-it-works")}
+                    className={`
+        px-[clamp(0.75rem,2vw,1.1rem)]
+        py-[clamp(0.25rem,1vw,0.5rem)]
+        text-[clamp(0.625rem,1vw,0.75rem)]
+        rounded-full
+        font-semibold
+        tracking-wide
+        transition-colors
+        duration-200
+        ${activeHoverMenu === "how-it-works"
+                        ? "text-white bg-white/10"
+                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+      `}
+                    data-testid="topbar-how-it-works"
                   >
-                    <HelpCircle className="w-[clamp(1.1rem,2.2vw,1.35rem)] h-[clamp(1.1rem,2.2vw,1.35rem)] transition-colors" />
+                    What We Offer
                   </button>
-                )} */}
-                <button
-                  onClick={() => setShowHowItWorks(true)}
-                  className="font-semibold text-gray-200 text-sm truncate group-hover:text-brand-primary transition-colors"
-                  data-testid="topbar-how-it-works"
-                >
-                  How it works
-                </button>
+                </div>
+
+                <div className="relative h-full flex items-center">
+                  <button
+                    onMouseEnter={() => handleMouseEnter("shariah")}
+                    className={`
+        px-[clamp(0.75rem,2vw,1.1rem)]
+        py-[clamp(0.25rem,1vw,0.5rem)]
+        text-[clamp(0.625rem,1vw,0.75rem)]
+        rounded-full
+        font-semibold
+        tracking-wide
+        transition-colors
+        duration-200
+        ${activeHoverMenu === "shariah"
+                        ? "text-white bg-white/10"
+                        : "text-gray-200 bg-transparent hover:bg-white/10 hover:text-white"}
+      `}
+                    data-testid="topbar-shariah"
+                  >
+                    Shariah Compliant
+                  </button>
+                </div>
               </div>
             </div>
           </>
         )}
 
+        {/* Desktop Search - Center (Only for logged in) */}
+        {user && !isPasswordRecovery && (
+          <div className="hidden lg:flex flex-1 max-w-md mx-8 relative">
+            <div className="relative w-full group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 group-focus-within:text-white" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search markets..."
+                className="w-full bg-[#004225] border border-[#006035] rounded-full py-2 pl-10 pr-4 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all font-medium"
+              />
+              {/* Search Results Dropdown - Desktop */}
+              {searchResults.length > 0 && searchQuery && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
+                  {searchResults.map((asset) => (
+                    <button
+                      key={asset.id}
+                      onClick={() => handleSearchResultClick(asset)}
+                      className="w-full text-left px-4 py-3 border-b border-gray-800 last:border-0 flex items-center justify-between hover:bg-gray-800 transition-colors"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-white font-bold text-sm">{asset.name}</span>
+                        <span className="text-xs text-gray-500 font-medium">
+                          {asset.market || "Market"} Index
+                        </span>
+                      </div>
+                      <span className="text-[9px] bg-brand-primary text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest">
+                        View
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Right: Date, Balance, Avatar */}
         <div className="flex items-center gap-1">
+          {/* Mobile Search Button */}
+          <button
+            onClick={() => setIsMobileSearchOpen(true)}
+            className="lg:hidden p-2 text-white/80 hover:text-white transition-colors"
+            aria-label="Open search"
+          >
+            <Search className="h-5 w-5" />
+          </button>
+
           {/* Date - Desktop Only */}
           {/* <div className="hidden lg:flex flex-col items-end mr-2 text-white/80">
             <span className="text-xs font-medium">
@@ -564,7 +603,7 @@ const TopBar: React.FC<TopBarProps> = ({
 
           {/* Auth Buttons */}
           {!user && (
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-3 sm:gap-3">
               {onHelpCenterClick && (
                 <button
                   onClick={onHelpCenterClick}
@@ -578,8 +617,8 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 onClick={() => setShowLoginModal(true)}
                 className="
-    px-[clamp(0.5rem,2vw,1rem)]
-    py-[clamp(0.25rem,1vw,0.375rem)]
+    px-[clamp(0.75rem,2vw,1.5rem)]
+    py-[clamp(0.25rem,1vw,0.5rem)]
     text-[clamp(0.625rem,1vw,0.75rem)]
     rounded-full
     text-white
@@ -588,7 +627,7 @@ const TopBar: React.FC<TopBarProps> = ({
     tracking-wide
     transition-colors
     duration-200
-    hover:bg-white/10
+    bg-white/10
   "
                 data-testid="topbar-login-button"
               >
@@ -871,6 +910,57 @@ const TopBar: React.FC<TopBarProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div
+        className={`fixed inset-0 z-[48] bg-black/40 backdrop-blur-sm transition-opacity duration-500 ${activeHoverMenu ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+        aria-hidden="true"
+      />
+
+      <div
+        className={`fixed top-14 lg:top-20 left-0 right-0 z-[49] bg-[#005430]/50 backdrop-blur-xl border-b border-white/10 transition-all duration-500 overflow-hidden ${activeHoverMenu ? "max-h-[500px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-4 pointer-events-none"
+          }`}
+        onMouseEnter={() => activeHoverMenu && handleMouseEnter(activeHoverMenu)}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className="px-[clamp(4rem,11vw,20rem)] py-12">
+          {activeHoverMenu === "how-it-works" && (
+            <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex-1 max-w-2xl">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">What We Offer</h3>
+                <p className="text-white font-semibold text-2xl mb-4 leading-tight">Unique Seasonal Performance Tokens</p>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  We offer unique Seasonal Performance Tokens for top-tier leagues like EPL, NBA, and F1. Trade these tokens in real-time as performance indexes shift based on real-world outcomes, giving you a chance to capitalize on your expertise.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeHoverMenu === "who-we-are" && (
+            <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex-1 max-w-2xl">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">About Us</h3>
+                <p className="text-white font-semibold text-2xl mb-4 leading-tight">A Cutting-edge Performance Market</p>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  ShareMatch is a cutting-edge digital performance index market. We create a dynamic environment where sports knowledge meets technical analysis, allowing you to engage with the performance of your favorite teams and athletes globally.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeHoverMenu === "shariah" && (
+            <div className="flex animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex-1 max-w-2xl">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">Shariah Compliant</h3>
+                <p className="text-white font-semibold text-2xl mb-4 leading-tight">Built on Ethics & Transparency</p>
+                <p className="text-gray-300 text-lg leading-relaxed">
+                  Sustainability and ethics are at our core. Our platform is built on transparency and fairness, utilizing real market data to ensure a non-speculative, skill-based experience that strictly adheres to Shariah compliance guidelines.
+                </p>
+              </div>
             </div>
           )}
         </div>
