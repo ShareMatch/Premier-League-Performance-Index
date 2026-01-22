@@ -580,14 +580,17 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 );
                               })()}
 
-                              <div className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.5rem,1.5vw,1rem)]">
-                                <h3 className="text-[clamp(0.65rem,2vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight">
+                              <button
+                                onClick={() => onNavigate?.(question.market as League)}
+                                className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.5rem,1.5vw,1rem)] text-left hover:opacity-80 transition-opacity"
+                              >
+                                <h3 className="text-[clamp(0.65rem,2vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight hover:text-brand-primary hover:underline">
                                   {question.question}
                                 </h3>
                                 <div className="text-[clamp(0.45rem,1vw,0.625rem)] text-gray-500 font-mono uppercase tracking-wider mt-[clamp(0.125rem,0.5vw,0.25rem)]">
                                   Vol: {question.volume}
                                 </div>
-                              </div>
+                              </button>
 
                               <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] flex-shrink-0">
                                 {/* Info Tooltip */}
