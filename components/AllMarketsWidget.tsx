@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Team, League } from "../types";
 import { ChevronRight, Globe } from "lucide-react";
 import { FaCaretDown } from "react-icons/fa";
@@ -17,9 +17,17 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
   onViewAsset,
   onSelectOrder,
 }) => {
-  // Show top 3 teams (you might want to verify sorting, here we toggle first 3)
-  // Assuming teams are passed in a reasonable order or we just take the first few
-  const displayTeams = teams.slice(0, 3);
+  // Randomly select 3 teams to display
+  const displayTeams = useMemo(() => {
+    if (teams.length <= 3) return teams;
+    // Fisher-Yates shuffle on a copy, then take first 3
+    const shuffled = [...teams];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, 3);
+  }, [teams]);
 
   const handleViewAll = () => {
     onNavigate("ALL_MARKETS");

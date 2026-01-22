@@ -774,7 +774,7 @@ const App: React.FC = () => {
     // Auth Protection for specific submenus and AI Analytics
     if (!user) {
       // List of public leagues/routes
-      const publicLeagues: League[] = ["HOME", "ALL_MARKETS", "NEW_MARKETS"];
+      const publicLeagues: League[] = ["HOME"];
 
       if (!publicLeagues.includes(league)) {
         setAlertMessage("You need to login to continue");
@@ -1486,10 +1486,16 @@ const LeagueRouteWrapper: React.FC<{
   handleViewAsset,
   loading,
 }) => {
+    const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     // Use URL param for the league to prevent flash when navigating away
     const { leagueId } = useParams();
     const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+
+    // Redirect to home if not logged in
+    if (!authLoading && !user) {
+      return <Navigate to="/" replace />;
+    }
 
     if (loading && teams.length === 0) {
       return (
