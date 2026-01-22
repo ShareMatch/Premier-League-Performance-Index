@@ -9,3 +9,58 @@ entrypoint = "./functions/getVideo/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/getVideo/*.html" ]
+
+[functions.test-get-reset-link]
+enabled = true
+verify_jwt = true
+import_map = "./functions/test-get-reset-link/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/test-get-reset-link/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/test-get-reset-link/*.html" ]
+
+[functions.ai-analysis]
+enabled = true
+verify_jwt = true
+import_map = "./functions/ai-analysis/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ai-analysis/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ai-analysis/*.html" ]
+
+[functions.ai-analytics]
+enabled = true
+verify_jwt = true
+import_map = "./functions/ai-analytics/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ai-analytics/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ai-analytics/*.html" ]
+
+[functions.on-this-day]
+enabled = true
+verify_jwt = true
+import_map = "./functions/on-this-day/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/on-this-day/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/on-this-day/*.html" ]
+
+[functions.did-you-know]
+enabled = true
+verify_jwt = true
+import_map = "./functions/did-you-know/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/did-you-know/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/did-you-know/*.html" ]

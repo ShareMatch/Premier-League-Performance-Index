@@ -256,6 +256,13 @@ export const fetchTradingAssets = async () => {
             sell,
             status,
             units,
+            is_settled,
+            settlement_price,
+            stage,
+            avatar_class,
+            primary_color,
+            secondary_color,
+            short_code,
             created_at,
             updated_at,
             market_index_season_id,
@@ -303,6 +310,7 @@ export const fetchTradingAssets = async () => {
     return data;
 };
 
+
 // Fetch season dates from market_index_seasons table
 // Returns a map of market_token -> { start_date, end_date, stage }
 export interface SeasonDates {
@@ -340,7 +348,7 @@ export const fetchSeasonDates = async (): Promise<Map<string, SeasonDates>> => {
 
     // Create a map of market_token -> season dates
     const seasonDatesMap = new Map<string, SeasonDates>();
-    
+
     for (const season of data || []) {
         // market_indexes is a single object (many-to-one relation)
         const marketIndex = season.market_indexes as any;
@@ -1441,7 +1449,7 @@ export const fetchUserBankingDetails = async (userId: string): Promise<UserBanki
 export const fetchAuthUserData = async () => {
     try {
         const { data, error } = await supabase.auth.getUser();
-        
+
         if (error) {
             console.error('Error fetching auth user:', error);
             return null;
@@ -1490,4 +1498,33 @@ export const fetchLoginHistory = async (userId: string, limit: number = 5) => {
         console.error('Exception fetching login history:', err);
         return [];
     }
+};
+/**
+ * Generate or retrieve a shortened share link for an asset
+ */
+export const generateShareLink = async (assetId: string): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    // We use the anon key for public sharing generation too if needed, 
+    // but usually, it's better to have a session if possible.
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+    };
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/share`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ asset_id: assetId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate share link');
+    }
+
+    // Return the full URL for convenience
+    // In production, /a/:code should be handled by a proxy or redirect rule
+    return `${window.location.origin}/a/${result.short_code}`;
 };

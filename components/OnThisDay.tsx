@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, CalendarDays } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 import { saveAssetFact } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 interface OnThisDayProps {
     assetName: string;
@@ -17,33 +17,16 @@ const OnThisDay: React.FC<OnThisDayProps> = ({ assetName, market, className = ''
         const fetchFact = async () => {
             setLoading(true);
             try {
-                const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-                if (!apiKey) {
-                    setFact(`On this day, ${assetName} fans are engaging with the Performance Index.`);
-                    setLoading(false);
-                    return;
-                }
-
-                const ai = new GoogleGenAI({ apiKey });
-                const today = new Date();
-                const dateString = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-
-                const contextClause = market ? `specifically for ${market}` : 'in sports history';
-                const prompt = `Write a short "On This Day" (${dateString}) historical fact about ${assetName} ${contextClause}.
-Rules:
-1. It MUST be historically accurate for TODAY'S DATE (${dateString}).
-2. If no specific event happened on this exact date for ${assetName}, find a significant event from this WEEK in history.
-3. Keep it to one interesting sentence.
-4. STRICTLY AVOID: politics, war, religion.
-5. Focus on wins, records, signings, or legendary moments.
-Start directly with the fact.`;
-
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.0-flash',
-                    contents: prompt,
+                const { data, error } = await supabase.functions.invoke('on-this-day', {
+                    body: {
+                        assetName,
+                        market
+                    }
                 });
 
-                const generatedFact = response.text || `On this day, ${assetName} continues to make history.`;
+                if (error) throw error;
+
+                const generatedFact = data?.fact || `On this day, ${assetName} continues to make history.`;
                 setFact(generatedFact);
 
                 // We can treat this as a fact to save, maybe prefix with "On This Day:"
@@ -65,36 +48,38 @@ Start directly with the fact.`;
     }, [assetName, market]);
 
     return (
-        <div className={`bg-gradient-to-br from-[#0B1221] to-[#0f192b] border border-gray-800 rounded-xl p-5 relative overflow-hidden group ${className}`}>
+        <div className={`bg-gradient-to-br from-[#0B1221] to-[#0f192b] border border-gray-800 rounded-[clamp(0.5rem,1.5vw,0.75rem)] p-[clamp(0.75rem,2vw,1.25rem)] relative overflow-hidden group ${className}`}>
             {/* Background decorative elements */}
-            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
+            <div className="absolute top-0 right-0 -mr-[clamp(0.75rem,2vw,1rem)] -mt-[clamp(0.75rem,2vw,1rem)] w-[clamp(4rem,12vw,6rem)] h-[clamp(4rem,12vw,6rem)] bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
 
-            <div className="flex items-start gap-3 relative z-10">
-                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 flex-shrink-0">
-                    <Calendar className="w-5 h-5" />
-                </div>
-                <div>
-                    <h3 className="text-white font-bold text-sm mb-2 flex items-center gap-2">
+            <div className="relative z-10">
+                <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] mb-[clamp(0.5rem,1.5vw,0.75rem)]">
+                    <div className="p-[clamp(0.375rem,1vw,0.5rem)] bg-blue-500/10 rounded-[clamp(0.375rem,1vw,0.5rem)] text-blue-500 flex-shrink-0">
+                        <Calendar className="w-[clamp(1rem,2.5vw,1.25rem)] h-[clamp(1rem,2.5vw,1.25rem)]" />
+                    </div>
+                    <h3 className="text-white font-bold text-[clamp(0.7rem,1.75vw,0.875rem)] flex items-center gap-[clamp(0.375rem,1vw,0.5rem)]">
                         On This Day
-                        <span className="text-xs font-normal text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">
+                        <span className="text-[clamp(0.55rem,1.25vw,0.75rem)] font-normal text-gray-400 bg-blue-500/10 px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.0625rem,0.25vw,0.125rem)] rounded-full border border-blue-500/20">
                             {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                     </h3>
+                </div>
 
+                <div className="min-w-0">
                     {loading ? (
-                        <div className="space-y-2 animate-pulse">
-                            <div className="h-3 bg-gray-700/50 rounded w-full"></div>
-                            <div className="h-3 bg-gray-700/50 rounded w-3/4"></div>
+                        <div className="space-y-[clamp(0.375rem,1vw,0.5rem)] animate-pulse">
+                            <div className="h-[clamp(0.625rem,1.5vw,0.75rem)] bg-gray-700/50 rounded w-full"></div>
+                            <div className="h-[clamp(0.625rem,1.5vw,0.75rem)] bg-gray-700/50 rounded w-3/4"></div>
                         </div>
                     ) : (
-                        <p className="text-gray-300 text-xs sm:text-sm leading-relaxed italic">
+                        <p className="text-gray-300 text-[clamp(0.6rem,1.5vw,0.875rem)] leading-relaxed italic">
                             "{fact}"
                         </p>
                     )}
 
-                    <div className="mt-3 flex justify-end">
-                        <span className="text-[10px] text-gray-600 flex items-center gap-1">
-                            <CalendarDays className="w-2 h-2" />
+                    <div className="mt-[clamp(0.5rem,1.5vw,0.75rem)] flex justify-end">
+                        <span className="text-[clamp(0.5rem,1vw,0.625rem)] text-gray-600 flex items-center gap-[clamp(0.125rem,0.5vw,0.25rem)]">
+                            <CalendarDays className="w-[clamp(0.375rem,1vw,0.5rem)] h-[clamp(0.375rem,1vw,0.5rem)]" />
                             AI Historical Event
                         </span>
                     </div>

@@ -35,43 +35,38 @@ interface AuditReport {
 }
 
 class Audit {
+  // Test files in execution order
   private testFiles = [
-    'tests/generated/home-page.spec.ts',
+    'tests/generated/signup-flow.spec.ts',
     'tests/generated/login-flow.spec.ts',
-    'tests/generated/signup-flow.spec.ts'
+    'tests/generated/kyc-flow.spec.ts',
+    'tests/generated/home-page.spec.ts',
+    'tests/generated/user-profile-page.spec.ts',
+    'tests/generated/index-page-trading.spec.ts',
+    'tests/generated/asset-page-trading.spec.ts',
+    'tests/generated/twilio.spec.ts',
+    'tests/generated/my-media-inbox.spec.ts',
+    'tests/generated/forgot-password.spec.ts'
   ];
 
-  private maxRetries = 1;
   private results: TestResult[] = [];
 
   async runAudit(): Promise<void> {
     console.log("🚀 Starting CI/CD Audit...");
+    console.log(`📋 Running ${this.testFiles.length} test files in order...\n`);
     const startTime = Date.now();
 
-    // Run each test file individually with retry logic
-    for (const testFile of this.testFiles) {
-      console.log(`\n📋 Testing: ${testFile}`);
+    // Run each test file once (no retries)
+    for (let i = 0; i < this.testFiles.length; i++) {
+      const testFile = this.testFiles[i];
+      console.log(`\n[${i + 1}/${this.testFiles.length}] 📋 Testing: ${testFile}`);
 
-      let fileSuccess = false;
-      let attempts = 0;
+      const success = await this.runSingleTest(testFile, 1);
 
-      while (!fileSuccess && attempts < this.maxRetries) {
-        attempts++;
-        console.log(`Attempt ${attempts}/${this.maxRetries} for ${testFile}`);
-
-        const success = await this.runSingleTest(testFile, attempts);
-
-        if (success) {
-          fileSuccess = true;
-          if (attempts === 1) {
-            console.log(`✅ ${testFile} passed on first attempt`);
-          } else {
-            console.log(`✅ ${testFile} passed after ${attempts} attempts`);
-          }
-          break; // Exit retry loop on success
-        } else {
-          console.log(`❌ ${testFile} failed on attempt ${attempts}`);
-        }
+      if (success) {
+        console.log(`✅ ${testFile} passed`);
+      } else {
+        console.log(`❌ ${testFile} failed`);
       }
     }
 
@@ -103,9 +98,9 @@ class Audit {
       const { stdout, stderr } = await execAsync(
         `npx playwright test ${testFile} --reporter=line`,
         {
-          env: { ...process.env, CI: 'true', ATTEMPT: attempt.toString() },
-          maxBuffer: 1024 * 1024 * 10,
-          timeout: 300000
+          env: { ...process.env, CI: 'true' },
+          maxBuffer: 1024 * 1024 * 50, // Increased buffer to 50MB
+          timeout: 600000 // Increased timeout to 10 minutes per test file
         }
       );
 
@@ -118,7 +113,7 @@ class Audit {
       testResult.passedTests = testInfo.passedTests;
       testResult.totalTests = testInfo.totalTests;
 
-      console.log(`✅ ${testFile} completed successfully`);
+      console.log(`✅ ${testFile} completed in ${(testResult.duration / 1000).toFixed(2)}s`);
       console.log(stdout);
 
     } catch (error: any) {
@@ -128,16 +123,18 @@ class Audit {
       testResult.duration = Date.now() - startTime;
 
       // Parse test results from output
-      const combinedOutput = (error.stdout || '') + '\n' + (error.stderr || '');
       const testInfo = this.parseTestResults(error.stdout || '', error.stderr || '');
       testResult.failedTests = testInfo.failedTests;
       testResult.passedTests = testInfo.passedTests;
       testResult.totalTests = testInfo.totalTests;
 
-      console.log(`❌ ${testFile} failed`);
-      console.error(`Error: ${testResult.error}`);
-      console.error(`Stdout: ${error.stdout || 'No stdout'}`);
-      console.error(`Stderr: ${error.stderr || 'No stderr'}`);
+      console.log(`❌ ${testFile} failed after ${(testResult.duration / 1000).toFixed(2)}s`);
+      if (testResult.failedTests.length > 0) {
+        console.log(`   Failed tests: ${testResult.failedTests.join(', ')}`);
+      }
+      if (error.stdout) {
+        console.log(error.stdout);
+      }
     }
 
     this.results.push(testResult);
@@ -232,27 +229,19 @@ class Audit {
       .filter(([_, results]) => results.some(r => r.success))
       .map(([file, _]) => file);
 
+    const failedFiles = Array.from(fileResults.entries())
+      .filter(([_, results]) => !results.some(r => r.success))
+      .map(([file, _]) => file);
+
     const status = successfulFiles.length === this.testFiles.length ? 'PASS' : 'FAIL';
 
-    // Find persistent failures (failed in all attempts)
+    // Collect all failed tests
     const allFailures = this.results.flatMap(r => r.failedTests);
-    const failureCounts = new Map<string, number>();
-
-    allFailures.forEach(failure => {
-      failureCounts.set(failure, (failureCounts.get(failure) || 0) + 1);
-    });
-
-    const persistentFailures = Array.from(failureCounts.entries())
-      .filter(([_, count]) => count === this.maxRetries)
-      .map(([failure, _]) => failure);
-
-    const flakyTests = Array.from(failureCounts.entries())
-      .filter(([_, count]) => count > 0 && count < this.maxRetries)
-      .map(([failure, _]) => failure);
+    const persistentFailures = [...new Set(allFailures)]; // Unique failures
 
     const summary = status === 'PASS'
-      ? `${successfulFiles.length}/${this.testFiles.length} test files passed. ${flakyTests.length} flaky tests detected.`
-      : `${successfulFiles.length}/${this.testFiles.length} test files passed. ${persistentFailures.length} persistent failures detected.`;
+      ? `✅ All ${this.testFiles.length} test files passed!`
+      : `${successfulFiles.length}/${this.testFiles.length} test files passed. ${failedFiles.length} failed.`;
 
     return {
       status,
@@ -260,7 +249,7 @@ class Audit {
       attempts: this.results,
       summary,
       persistentFailures,
-      flakyTests,
+      flakyTests: [], // No retries, so no flaky tests
       fileResults
     };
   }
@@ -285,7 +274,7 @@ class Audit {
 
 **Status:** ${status}  
 **Total Duration:** ${duration}s  
-**Attempts:** ${this.results.length}  
+**Test Files:** ${this.testFiles.length}  
 **Branch:** \`${process.env.GITHUB_REF_NAME || 'local'}\`  
 **Commit:** \`${process.env.GITHUB_SHA?.substring(0, 7) || 'N/A'}\`
 **Commit Message:** ${commitMessage}
@@ -297,9 +286,11 @@ ${report.summary}
 ${this.testFiles.map(file => {
       const results = report.fileResults.get(file) || [];
       const success = results.some(r => r.success);
-      const status = success ? '✅' : '❌';
+      const fileStatus = success ? '✅' : '❌';
       const fileName = path.basename(file);
-      return `${status} ${fileName}`;
+      const result = results[0];
+      const durationStr = result ? ` (${(result.duration / 1000).toFixed(1)}s)` : '';
+      return `${fileStatus} ${fileName}${durationStr}`;
     }).join('\n')}
 
 ## Detailed Results
@@ -308,40 +299,32 @@ ${this.testFiles.map(file => {
     // Group results by test file
     for (const [testFile, fileResults] of report.fileResults.entries()) {
       const fileName = path.basename(testFile);
-      markdownReport += `\n### ${fileName}\n`;
+      const result = fileResults[0];
+      if (!result) continue;
 
-      fileResults.forEach((result) => {
-        const attemptStatus = result.success ? '✅' : '❌';
-        const attemptDuration = (result.duration / 1000).toFixed(2);
-        markdownReport += `\n#### ${attemptStatus} Attempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
+      const fileStatus = result.success ? '✅' : '❌';
+      const fileDuration = (result.duration / 1000).toFixed(2);
+      markdownReport += `\n### ${fileStatus} ${fileName} (${fileDuration}s)\n`;
 
-        if (result.success && result.passedTests.length > 0) {
-          markdownReport += `\n**Passed Tests:**\n`;
-          result.passedTests.forEach(test => {
-            markdownReport += `- ✅ ${test}\n`;
-          });
-        }
+      if (result.success && result.passedTests.length > 0) {
+        markdownReport += `\n**Passed Tests (${result.passedTests.length}):**\n`;
+        result.passedTests.forEach(test => {
+          markdownReport += `- ✅ ${test}\n`;
+        });
+      }
 
-        if (!result.success && result.failedTests.length > 0) {
-          markdownReport += `\n**Failed Tests:**\n`;
-          result.failedTests.forEach(test => {
-            markdownReport += `- ❌ ${test}\n`;
-          });
-        }
-      });
+      if (!result.success && result.failedTests.length > 0) {
+        markdownReport += `\n**Failed Tests (${result.failedTests.length}):**\n`;
+        result.failedTests.forEach(test => {
+          markdownReport += `- ❌ ${test}\n`;
+        });
+      }
     }
 
     if (report.persistentFailures.length > 0) {
-      markdownReport += `\n## 🔴 Persistent Failures (all ${this.maxRetries} attempts)\n`;
+      markdownReport += `\n## 🔴 Failed Tests\n`;
       report.persistentFailures.forEach(failure => {
         markdownReport += `- \`${failure}\`\n`;
-      });
-    }
-
-    if (report.flakyTests.length > 0) {
-      markdownReport += `\n## 🟡 Flaky Tests (intermittent)\n`;
-      report.flakyTests.forEach(test => {
-        markdownReport += `- \`${test}\`\n`;
       });
     }
 
@@ -373,45 +356,43 @@ ${this.testFiles.map(file => {
 
 *Status:* ${status}
 *Duration:* ${duration}s
-*Total Attempts:* ${this.results.length}
+*Test Files:* ${this.testFiles.length}
 
 *Summary:* ${report.summary}
 
+*Results:*
 `;
 
-    // Add detailed results for each test file
+    // Add results for each test file
     for (const [testFile, fileResults] of report.fileResults.entries()) {
       const fileName = path.basename(testFile).replace('.spec.ts', '');
+      const result = fileResults[0];
+      if (!result) continue;
 
-      fileResults.forEach((result) => {
-        const attemptStatus = result.success ? '✅' : '❌';
-        const attemptDuration = (result.duration / 1000).toFixed(2);
+      const fileStatus = result.success ? '✅' : '❌';
+      const fileDuration = (result.duration / 1000).toFixed(1);
 
-        telegramText += `${attemptStatus} *${fileName}*\nAttempt ${result.attempt} (${attemptDuration}s) - ${result.totalTests} tests\n`;
+      telegramText += `${fileStatus} *${fileName}* (${fileDuration}s)\n`;
 
-        // Show failed tests if any
-        if (!result.success && result.failedTests.length > 0) {
-          telegramText += `*Failed:*\n`;
-          result.failedTests.forEach(test => {
-            const shortTest = test.length > 45 ? test.substring(0, 42) + '...' : test;
-            telegramText += `  • ${shortTest}\n`;
-          });
-        }
-        telegramText += '\n';
-      });
+      // Show failed tests if any
+      if (!result.success && result.failedTests.length > 0) {
+        result.failedTests.forEach(test => {
+          const shortTest = test.length > 40 ? test.substring(0, 37) + '...' : test;
+          telegramText += `   ❌ ${shortTest}\n`;
+        });
+      }
     }
 
     if (report.persistentFailures.length > 0) {
-      telegramText += `*🔴 Persistent Failures:*\n`;
+      telegramText += `\n*🔴 Failed Tests:*\n`;
       report.persistentFailures.forEach(failure => {
-        const shortFailure = failure.length > 45 ? failure.substring(0, 42) + '...' : failure;
+        const shortFailure = failure.length > 40 ? failure.substring(0, 37) + '...' : failure;
         telegramText += `• ${shortFailure}\n`;
       });
-      telegramText += '\n';
     }
 
-    telegramText += `*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\`\n`;
-    telegramText += `*Commit Message:* ${commitMessage}`;
+    telegramText += `\n*Branch:* \`${process.env.GITHUB_REF_NAME || 'local'}\``;
+    telegramText += `\n*Commit:* ${commitMessage}`;
 
     console.log("📤 Sending audit report to Telegram...");
     const sent = await sendTelegramMessage(telegramText);

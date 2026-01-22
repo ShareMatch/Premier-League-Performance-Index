@@ -1,38 +1,46 @@
 /**
  * Test Planner Agent
- * 
+ *
  * This agent creates test plans (NOT code) based on:
  * - Risk assessment (from RiskAssessor)
  * - Exploration data (from DeepExplorer)
  * - Context from knowledge store (RAG)
  * - Reference test patterns
- * 
+ *
  * Output: Structured test scenarios with steps, expected results,
  * and required data - ready for the CodeGenerator agent.
  */
 
-import * as dotenv from 'dotenv';
-import type { RiskAssessment } from './risk-assessor';
-import type { ExplorationState } from './intelligent-deep-explorer';
-import type { TestPattern } from './knowledge-store';
-import { KnowledgeStore, getKnowledgeStore } from './knowledge-store';
+import * as dotenv from "dotenv";
+import type { RiskAssessment } from "./risk-assessor";
+import type { ExplorationState } from "./explorer";
+import type { TestPattern } from "./knowledge-store";
+import { KnowledgeStore, getKnowledgeStore } from "./knowledge-store";
 
 dotenv.config();
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'openai/gpt-oss-120b';
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
 // Types for test plans
 export interface TestStep {
   order: number;
-  action: 'navigate' | 'click' | 'fill' | 'select' | 'check' | 'wait' | 'verify' | 'api_verify';
+  action:
+    | "navigate"
+    | "click"
+    | "fill"
+    | "select"
+    | "check"
+    | "wait"
+    | "verify"
+    | "api_verify";
   target?: string; // Selector or description
   value?: string; // Value to fill or select
   description: string;
 }
 
 export interface TestAssertion {
-  type: 'visible' | 'hidden' | 'text' | 'url' | 'api_response' | 'database';
+  type: "visible" | "hidden" | "text" | "url" | "api_response" | "database";
   target: string;
   expected: string;
   description: string;
@@ -41,7 +49,7 @@ export interface TestAssertion {
 export interface TestScenario {
   id: string;
   name: string;
-  type: 'happy_path' | 'negative' | 'edge_case' | 'security' | 'performance';
+  type: "happy_path" | "negative" | "edge_case" | "security" | "performance";
   priority: number; // 1-5 where 1 is highest
   preconditions: string[];
   steps: TestStep[];
@@ -76,18 +84,18 @@ async function callGroq(prompt: string): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
-    throw new Error('GROQ_API_KEY not configured');
+    throw new Error("GROQ_API_KEY not configured");
   }
 
   const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: GROQ_MODEL,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       max_tokens: 8000, // Increased to avoid JSON truncation
     }),
@@ -99,7 +107,7 @@ async function callGroq(prompt: string): Promise<string> {
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content || '';
+  return data.choices[0]?.message?.content || "";
 }
 
 /**
@@ -113,7 +121,7 @@ export class TestPlanner {
    */
   async init(): Promise<void> {
     this.knowledgeStore = await getKnowledgeStore();
-    console.log('[TestPlanner] Initialized with knowledge store');
+    console.log("[TestPlanner] Initialized with knowledge store");
   }
 
   /**
@@ -124,10 +132,14 @@ export class TestPlanner {
     explorationState?: ExplorationState,
     options?: PlannerOptions
   ): Promise<TestPlan> {
-    console.log(`\n📝 [TestPlanner] Creating plan for: ${riskAssessment.featureName}`);
-    
+    console.log(
+      `\n📝 [TestPlanner] Creating plan for: ${riskAssessment.featureName}`
+    );
+
     if (options?.excludeFeatures?.length) {
-      console.log(`   ⏭️  Excluding features: ${options.excludeFeatures.join(', ')}`);
+      console.log(
+        `   ⏭️  Excluding features: ${options.excludeFeatures.join(", ")}`
+      );
     }
 
     if (!this.knowledgeStore) {
@@ -153,7 +165,10 @@ export class TestPlanner {
     // (LLMs don't reliably follow exclusion instructions)
     if (options?.excludeFeatures?.length) {
       const beforeCount = scenarios.length;
-      scenarios = this.filterExcludedScenarios(scenarios, options.excludeFeatures);
+      scenarios = this.filterExcludedScenarios(
+        scenarios,
+        options.excludeFeatures
+      );
       const removedCount = beforeCount - scenarios.length;
       if (removedCount > 0) {
         console.log(`   🗑️  Removed ${removedCount} excluded scenarios`);
@@ -161,16 +176,21 @@ export class TestPlanner {
     }
 
     // If scenarios are insufficient, generate more from exploration data
-    const minScenarios = options?.minScenarioCount || riskAssessment.testingRecommendations.scenarioCount || 5;
+    const minScenarios =
+      options?.minScenarioCount ||
+      riskAssessment.testingRecommendations.scenarioCount ||
+      5;
     if (scenarios.length < minScenarios && explorationState) {
-      console.log(`   ⚠️  Only ${scenarios.length} scenarios, need ${minScenarios}. Generating from exploration...`);
+      console.log(
+        `   ⚠️  Only ${scenarios.length} scenarios, need ${minScenarios}. Generating from exploration...`
+      );
       const explorationScenarios = this.generateScenariosFromExploration(
         riskAssessment.featureName,
         explorationState,
         options?.excludeFeatures || []
       );
       // Add exploration scenarios that don't duplicate existing ones
-      const existingIds = new Set(scenarios.map(s => s.id));
+      const existingIds = new Set(scenarios.map((s) => s.id));
       for (const scenario of explorationScenarios) {
         if (!existingIds.has(scenario.id) && scenarios.length < minScenarios) {
           scenarios.push(scenario);
@@ -194,7 +214,9 @@ export class TestPlanner {
     };
 
     console.log(`   Created ${scenarios.length} scenarios`);
-    console.log(`   Types: ${[...new Set(scenarios.map(s => s.type))].join(', ')}`);
+    console.log(
+      `   Types: ${[...new Set(scenarios.map((s) => s.type))].join(", ")}`
+    );
 
     return plan;
   }
@@ -203,31 +225,33 @@ export class TestPlanner {
    * Gather context from knowledge store
    */
   private async gatherContext(featureName: string): Promise<string> {
-    if (!this.knowledgeStore) return '';
+    if (!this.knowledgeStore) return "";
 
     // Get relevant test patterns
-    const patterns = await this.knowledgeStore.getTestPatternsForFeature(featureName);
+    const patterns = await this.knowledgeStore.getTestPatternsForFeature(
+      featureName
+    );
 
     // Get relevant explorations
     const explorations = await this.knowledgeStore.query(
       `Feature ${featureName} elements interactions`,
-      'exploration',
+      "exploration",
       10
     );
 
-    let context = '';
+    let context = "";
 
     if (patterns.length > 0) {
-      context += '\n## Reference Test Patterns:\n';
+      context += "\n## Reference Test Patterns:\n";
       for (const p of patterns as TestPattern[]) {
-        context += `- ${p.testName}: ${p.steps.join(' → ')}\n`;
+        context += `- ${p.testName}: ${p.steps.join(" → ")}\n`;
       }
     }
 
     if (explorations.length > 0) {
-      context += '\n## Explored Elements:\n';
+      context += "\n## Explored Elements:\n";
       for (const e of explorations) {
-        if (e.type === 'exploration') {
+        if (e.type === "exploration") {
           context += `- ${e.elementType}: ${e.selector} - ${e.text}\n`;
         }
       }
@@ -241,23 +265,23 @@ export class TestPlanner {
    */
   private determineScenarioTypes(
     risk: RiskAssessment
-  ): Array<TestScenario['type']> {
-    const types: Array<TestScenario['type']> = ['happy_path'];
+  ): Array<TestScenario["type"]> {
+    const types: Array<TestScenario["type"]> = ["happy_path"];
 
     if (risk.testingRecommendations.includeNegativeTests) {
-      types.push('negative');
+      types.push("negative");
     }
 
     if (risk.testingRecommendations.includeEdgeCases) {
-      types.push('edge_case');
+      types.push("edge_case");
     }
 
     if (risk.testingRecommendations.includeSecurityTests) {
-      types.push('security');
+      types.push("security");
     }
 
     if (risk.testingRecommendations.includePerformanceTests) {
-      types.push('performance');
+      types.push("performance");
     }
 
     return types;
@@ -272,19 +296,21 @@ export class TestPlanner {
     excludeFeatures: string[]
   ): TestScenario[] {
     const scenarios: TestScenario[] = [];
-    const excludePatterns = new Set(excludeFeatures.map(f => f.toLowerCase()));
-    
+    const excludePatterns = new Set(
+      excludeFeatures.map((f) => f.toLowerCase())
+    );
+
     // Add login/signup patterns
-    if (excludePatterns.has('login') || excludePatterns.has('login-modal')) {
-      excludePatterns.add('log in');
-      excludePatterns.add('sign in');
+    if (excludePatterns.has("login") || excludePatterns.has("login-modal")) {
+      excludePatterns.add("log in");
+      excludePatterns.add("sign in");
     }
-    if (excludePatterns.has('signup') || excludePatterns.has('signup-modal')) {
-      excludePatterns.add('sign up');
-      excludePatterns.add('join now');
-      excludePatterns.add('register');
+    if (excludePatterns.has("signup") || excludePatterns.has("signup-modal")) {
+      excludePatterns.add("sign up");
+      excludePatterns.add("join now");
+      excludePatterns.add("register");
     }
-    
+
     // Group elements by type and category for scenario generation
     const navButtons: string[] = [];
     const actionButtons: string[] = [];
@@ -294,11 +320,11 @@ export class TestPlanner {
     const sportButtons: string[] = [];
     const inputs: string[] = [];
     const links: string[] = [];
-    
+
     for (const [selector, info] of explorationState.discoveredSelectors) {
-      const desc = (info.description || '').toLowerCase();
+      const desc = (info.description || "").toLowerCase();
       const sel = selector.toLowerCase();
-      
+
       // Skip excluded elements
       let isExcluded = false;
       for (const pattern of excludePatterns) {
@@ -308,251 +334,425 @@ export class TestPlanner {
         }
       }
       if (isExcluded) continue;
-      
+
       const text = info.description || selector;
-      
-      if (info.elementType === 'button') {
+
+      if (info.elementType === "button") {
         // Categorize buttons
         if (/buy|purchase/i.test(text)) {
           buyButtons.push(text);
         } else if (/sell/i.test(text)) {
           sellButtons.push(text);
-        } else if (/home|sports|football|basketball|motorsport|cricket|golf|events|help/i.test(text)) {
+        } else if (
+          /home|sports|football|basketball|motorsport|cricket|golf|events|help/i.test(
+            text
+          )
+        ) {
           navButtons.push(text);
-        } else if (/arsenal|man city|bayern|thunder|nuggets|rockets|villa|league/i.test(text)) {
+        } else if (
+          /arsenal|man city|bayern|thunder|nuggets|rockets|villa|league/i.test(
+            text
+          )
+        ) {
           teamButtons.push(text);
-        } else if (/premier league|champions league|world cup|pro league|super league/i.test(text)) {
+        } else if (
+          /premier league|champions league|world cup|pro league|super league/i.test(
+            text
+          )
+        ) {
           sportButtons.push(text);
         } else {
           actionButtons.push(text);
         }
-      } else if (info.elementType === 'input') {
+      } else if (info.elementType === "input") {
         inputs.push(text);
-      } else if (info.elementType === 'link') {
+      } else if (info.elementType === "link") {
         links.push(text);
       }
     }
-    
+
     // 1. Page load test
     scenarios.push({
-      id: 'page-load',
+      id: "page-load",
       name: `${featureName} loads successfully`,
-      type: 'happy_path',
+      type: "happy_path",
       priority: 1,
       preconditions: [],
       steps: [
-        { order: 1, action: 'navigate', target: '/', description: `Navigate to ${featureName}` },
-        { order: 2, action: 'wait', description: 'Wait for page to load' },
+        {
+          order: 1,
+          action: "navigate",
+          target: "/",
+          description: `Navigate to ${featureName}`,
+        },
+        { order: 2, action: "wait", description: "Wait for page to load" },
       ],
       assertions: [
-        { type: 'visible', target: 'body', expected: 'true', description: 'Page content is visible' },
+        {
+          type: "visible",
+          target: "body",
+          expected: "true",
+          description: "Page content is visible",
+        },
       ],
       testData: {},
       cleanup: [],
-      tags: ['smoke', 'navigation'],
+      tags: ["smoke", "navigation"],
     });
-    
+
     // 2. Navigation buttons test
     if (navButtons.length > 0) {
       for (let i = 0; i < Math.min(navButtons.length, 10); i++) {
         scenarios.push({
           id: `nav-${i + 1}`,
           name: `Navigate via ${navButtons[i]} button`,
-          type: 'happy_path',
+          type: "happy_path",
           priority: 2,
-          preconditions: ['User is on home page'],
+          preconditions: ["User is on home page"],
           steps: [
-            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-            { order: 2, action: 'click', target: navButtons[i], description: `Click ${navButtons[i]}` },
-            { order: 3, action: 'wait', description: 'Wait for navigation' },
+            {
+              order: 1,
+              action: "navigate",
+              target: "/",
+              description: "Navigate to home page",
+            },
+            {
+              order: 2,
+              action: "click",
+              target: navButtons[i],
+              description: `Click ${navButtons[i]}`,
+            },
+            { order: 3, action: "wait", description: "Wait for navigation" },
           ],
           assertions: [
-            { type: 'visible', target: 'body', expected: 'true', description: 'Page loads after navigation' },
+            {
+              type: "visible",
+              target: "body",
+              expected: "true",
+              description: "Page loads after navigation",
+            },
           ],
           testData: {},
           cleanup: [],
-          tags: ['navigation', 'menu'],
+          tags: ["navigation", "menu"],
         });
       }
     }
-    
+
     // 3. Sport/League selection tests
     if (sportButtons.length > 0) {
       for (let i = 0; i < Math.min(sportButtons.length, 5); i++) {
         scenarios.push({
           id: `sport-${i + 1}`,
           name: `Select ${sportButtons[i]}`,
-          type: 'happy_path',
+          type: "happy_path",
           priority: 2,
-          preconditions: ['User is on home page'],
+          preconditions: ["User is on home page"],
           steps: [
-            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-            { order: 2, action: 'click', target: sportButtons[i], description: `Click ${sportButtons[i]}` },
-            { order: 3, action: 'wait', description: 'Wait for content to update' },
+            {
+              order: 1,
+              action: "navigate",
+              target: "/",
+              description: "Navigate to home page",
+            },
+            {
+              order: 2,
+              action: "click",
+              target: sportButtons[i],
+              description: `Click ${sportButtons[i]}`,
+            },
+            {
+              order: 3,
+              action: "wait",
+              description: "Wait for content to update",
+            },
           ],
           assertions: [
-            { type: 'visible', target: 'body', expected: 'true', description: 'League content loads' },
+            {
+              type: "visible",
+              target: "body",
+              expected: "true",
+              description: "League content loads",
+            },
           ],
           testData: {},
           cleanup: [],
-          tags: ['sports', 'selection'],
+          tags: ["sports", "selection"],
         });
       }
     }
-    
+
     // 4. Team selection tests
     if (teamButtons.length > 0) {
       for (let i = 0; i < Math.min(teamButtons.length, 5); i++) {
         scenarios.push({
           id: `team-${i + 1}`,
           name: `View ${teamButtons[i]} details`,
-          type: 'happy_path',
+          type: "happy_path",
           priority: 2,
-          preconditions: ['User is on home page'],
+          preconditions: ["User is on home page"],
           steps: [
-            { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-            { order: 2, action: 'click', target: teamButtons[i], description: `Click ${teamButtons[i]}` },
-            { order: 3, action: 'wait', description: 'Wait for team details' },
+            {
+              order: 1,
+              action: "navigate",
+              target: "/",
+              description: "Navigate to home page",
+            },
+            {
+              order: 2,
+              action: "click",
+              target: teamButtons[i],
+              description: `Click ${teamButtons[i]}`,
+            },
+            { order: 3, action: "wait", description: "Wait for team details" },
           ],
           assertions: [
-            { type: 'visible', target: 'body', expected: 'true', description: 'Team details visible' },
+            {
+              type: "visible",
+              target: "body",
+              expected: "true",
+              description: "Team details visible",
+            },
           ],
           testData: {},
           cleanup: [],
-          tags: ['team', 'details'],
+          tags: ["team", "details"],
         });
       }
     }
-    
+
     // 5. Buy button tests
     if (buyButtons.length > 0) {
       scenarios.push({
-        id: 'buy-flow',
-        name: 'Buy button interaction',
-        type: 'happy_path',
+        id: "buy-flow",
+        name: "Buy button interaction",
+        type: "happy_path",
         priority: 1,
-        preconditions: ['User is on home page'],
+        preconditions: ["User is on home page"],
         steps: [
-          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'click', target: buyButtons[0], description: `Click ${buyButtons[0]}` },
-          { order: 3, action: 'wait', description: 'Wait for buy modal/action' },
+          {
+            order: 1,
+            action: "navigate",
+            target: "/",
+            description: "Navigate to home page",
+          },
+          {
+            order: 2,
+            action: "click",
+            target: buyButtons[0],
+            description: `Click ${buyButtons[0]}`,
+          },
+          {
+            order: 3,
+            action: "wait",
+            description: "Wait for buy modal/action",
+          },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'Buy action triggers' },
+          {
+            type: "visible",
+            target: "body",
+            expected: "true",
+            description: "Buy action triggers",
+          },
         ],
         testData: {},
         cleanup: [],
-        tags: ['trading', 'buy'],
+        tags: ["trading", "buy"],
       });
     }
-    
+
     // 6. Sell button tests
     if (sellButtons.length > 0) {
       scenarios.push({
-        id: 'sell-flow',
-        name: 'Sell button interaction',
-        type: 'happy_path',
+        id: "sell-flow",
+        name: "Sell button interaction",
+        type: "happy_path",
         priority: 1,
-        preconditions: ['User is on home page'],
+        preconditions: ["User is on home page"],
         steps: [
-          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'click', target: sellButtons[0], description: `Click ${sellButtons[0]}` },
-          { order: 3, action: 'wait', description: 'Wait for sell modal/action' },
+          {
+            order: 1,
+            action: "navigate",
+            target: "/",
+            description: "Navigate to home page",
+          },
+          {
+            order: 2,
+            action: "click",
+            target: sellButtons[0],
+            description: `Click ${sellButtons[0]}`,
+          },
+          {
+            order: 3,
+            action: "wait",
+            description: "Wait for sell modal/action",
+          },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'Sell action triggers' },
+          {
+            type: "visible",
+            target: "body",
+            expected: "true",
+            description: "Sell action triggers",
+          },
         ],
         testData: {},
         cleanup: [],
-        tags: ['trading', 'sell'],
+        tags: ["trading", "sell"],
       });
     }
-    
+
     // 7. View All test
-    const viewAllButton = actionButtons.find(b => /view all/i.test(b));
+    const viewAllButton = actionButtons.find((b) => /view all/i.test(b));
     if (viewAllButton) {
       scenarios.push({
-        id: 'view-all',
-        name: 'View All expands content',
-        type: 'happy_path',
+        id: "view-all",
+        name: "View All expands content",
+        type: "happy_path",
         priority: 2,
-        preconditions: ['User is on home page'],
+        preconditions: ["User is on home page"],
         steps: [
-          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'click', target: viewAllButton, description: 'Click View All' },
-          { order: 3, action: 'wait', description: 'Wait for expanded content' },
+          {
+            order: 1,
+            action: "navigate",
+            target: "/",
+            description: "Navigate to home page",
+          },
+          {
+            order: 2,
+            action: "click",
+            target: viewAllButton,
+            description: "Click View All",
+          },
+          {
+            order: 3,
+            action: "wait",
+            description: "Wait for expanded content",
+          },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'More content visible' },
+          {
+            type: "visible",
+            target: "body",
+            expected: "true",
+            description: "More content visible",
+          },
         ],
         testData: {},
         cleanup: [],
-        tags: ['navigation', 'content'],
+        tags: ["navigation", "content"],
       });
     }
-    
+
     // 8. Responsive test
     scenarios.push({
-      id: 'responsive',
+      id: "responsive",
       name: `${featureName} is responsive`,
-      type: 'edge_case',
+      type: "edge_case",
       priority: 3,
       preconditions: [],
       steps: [
-        { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-        { order: 2, action: 'wait', description: 'Check mobile viewport' },
+        {
+          order: 1,
+          action: "navigate",
+          target: "/",
+          description: "Navigate to home page",
+        },
+        { order: 2, action: "wait", description: "Check mobile viewport" },
       ],
       assertions: [
-        { type: 'visible', target: 'body', expected: 'true', description: 'Page renders on mobile' },
+        {
+          type: "visible",
+          target: "body",
+          expected: "true",
+          description: "Page renders on mobile",
+        },
       ],
-      testData: { viewport: '375x667' },
+      testData: { viewport: "375x667" },
       cleanup: [],
-      tags: ['responsive', 'mobile'],
+      tags: ["responsive", "mobile"],
     });
-    
+
     // 9. Search test if input exists
-    const searchInput = inputs.find(i => i.toLowerCase().includes('search') || i.toLowerCase().includes('find'));
+    const searchInput = inputs.find(
+      (i) =>
+        i.toLowerCase().includes("search") || i.toLowerCase().includes("find")
+    );
     if (searchInput) {
       scenarios.push({
-        id: 'search',
-        name: 'Search functionality',
-        type: 'happy_path',
+        id: "search",
+        name: "Search functionality",
+        type: "happy_path",
         priority: 2,
-        preconditions: ['User is on home page'],
+        preconditions: ["User is on home page"],
         steps: [
-          { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-          { order: 2, action: 'fill', target: searchInput, value: 'Arsenal', description: 'Enter search term' },
-          { order: 3, action: 'wait', description: 'Wait for search results' },
+          {
+            order: 1,
+            action: "navigate",
+            target: "/",
+            description: "Navigate to home page",
+          },
+          {
+            order: 2,
+            action: "fill",
+            target: searchInput,
+            value: "Arsenal",
+            description: "Enter search term",
+          },
+          { order: 3, action: "wait", description: "Wait for search results" },
         ],
         assertions: [
-          { type: 'visible', target: 'body', expected: 'true', description: 'Search results displayed' },
+          {
+            type: "visible",
+            target: "body",
+            expected: "true",
+            description: "Search results displayed",
+          },
         ],
-        testData: { searchTerm: 'Arsenal' },
+        testData: { searchTerm: "Arsenal" },
         cleanup: [],
-        tags: ['search', 'input'],
+        tags: ["search", "input"],
       });
     }
-    
+
     // 10. Negative test - disabled buttons
     scenarios.push({
-      id: 'disabled-buttons',
-      name: 'Disabled buttons are not clickable',
-      type: 'negative',
+      id: "disabled-buttons",
+      name: "Disabled buttons are not clickable",
+      type: "negative",
       priority: 3,
-      preconditions: ['User is on home page'],
+      preconditions: ["User is on home page"],
       steps: [
-        { order: 1, action: 'navigate', target: '/', description: 'Navigate to home page' },
-        { order: 2, action: 'verify', target: 'button:disabled', description: 'Find disabled buttons' },
+        {
+          order: 1,
+          action: "navigate",
+          target: "/",
+          description: "Navigate to home page",
+        },
+        {
+          order: 2,
+          action: "verify",
+          target: "button:disabled",
+          description: "Find disabled buttons",
+        },
       ],
       assertions: [
-        { type: 'visible', target: 'button:disabled', expected: 'true', description: 'Disabled buttons exist' },
+        {
+          type: "visible",
+          target: "button:disabled",
+          expected: "true",
+          description: "Disabled buttons exist",
+        },
       ],
       testData: {},
       cleanup: [],
-      tags: ['negative', 'ui'],
+      tags: ["negative", "ui"],
     });
-    
-    console.log(`   ✅ Generated ${scenarios.length} scenarios from exploration data`);
+
+    console.log(
+      `   ✅ Generated ${scenarios.length} scenarios from exploration data`
+    );
     return scenarios;
   }
 
@@ -565,43 +765,49 @@ export class TestPlanner {
     excludeFeatures: string[]
   ): TestScenario[] {
     // Build regex patterns for matching
-    const patterns = excludeFeatures.map(f => f.toLowerCase());
-    
+    const patterns = excludeFeatures.map((f) => f.toLowerCase());
+
     // Also add common variations
     const allPatterns = new Set(patterns);
-    if (patterns.some(p => p.includes('login') || p.includes('signin'))) {
-      allPatterns.add('login');
-      allPatterns.add('log in');
-      allPatterns.add('sign in');
-      allPatterns.add('signin');
-      allPatterns.add('authentication');
-      allPatterns.add('authenticate');
-      allPatterns.add('credentials');
+    if (patterns.some((p) => p.includes("login") || p.includes("signin"))) {
+      allPatterns.add("login");
+      allPatterns.add("log in");
+      allPatterns.add("sign in");
+      allPatterns.add("signin");
+      allPatterns.add("authentication");
+      allPatterns.add("authenticate");
+      allPatterns.add("credentials");
     }
-    if (patterns.some(p => p.includes('signup') || p.includes('register'))) {
-      allPatterns.add('signup');
-      allPatterns.add('sign up');
-      allPatterns.add('register');
-      allPatterns.add('registration');
-      allPatterns.add('create account');
-      allPatterns.add('new account');
+    if (patterns.some((p) => p.includes("signup") || p.includes("register"))) {
+      allPatterns.add("signup");
+      allPatterns.add("sign up");
+      allPatterns.add("register");
+      allPatterns.add("registration");
+      allPatterns.add("create account");
+      allPatterns.add("new account");
     }
 
-    return scenarios.filter(scenario => {
+    return scenarios.filter((scenario) => {
       const nameLC = scenario.name.toLowerCase();
-      const tagsLC = scenario.tags.map(t => t.toLowerCase());
-      const stepsText = scenario.steps.map(s => s.description.toLowerCase()).join(' ');
-      
+      const tagsLC = scenario.tags.map((t) => t.toLowerCase());
+      const stepsText = scenario.steps
+        .map((s) => s.description.toLowerCase())
+        .join(" ");
+
       // Check if scenario matches any exclusion pattern
       for (const pattern of allPatterns) {
-        if (nameLC.includes(pattern) || 
-            tagsLC.some(t => t.includes(pattern)) ||
-            stepsText.includes(pattern)) {
-          console.log(`      ❌ Excluding scenario: "${scenario.name}" (matches: ${pattern})`);
+        if (
+          nameLC.includes(pattern) ||
+          tagsLC.some((t) => t.includes(pattern)) ||
+          stepsText.includes(pattern)
+        ) {
+          console.log(
+            `      ❌ Excluding scenario: "${scenario.name}" (matches: ${pattern})`
+          );
           return false;
         }
       }
-      
+
       return true;
     });
   }
@@ -611,24 +817,28 @@ export class TestPlanner {
    */
   private async generateScenarios(
     risk: RiskAssessment,
-    scenarioTypes: Array<TestScenario['type']>,
+    scenarioTypes: Array<TestScenario["type"]>,
     context: string,
     explorationState?: ExplorationState,
     excludeFeatures?: string[]
   ): Promise<TestScenario[]> {
     // Format discovered selectors with emphasis on USING THEM
     const discoveredSelectors = explorationState
-      ? Array.from(explorationState.discoveredSelectors.entries())
-          .map(([sel, info]) => ({
+      ? Array.from(explorationState.discoveredSelectors.entries()).map(
+          ([sel, info]) => ({
             selector: sel,
             type: info.elementType,
-            description: info.description || '',
-          }))
+            description: info.description || "",
+          })
+        )
       : [];
 
-    const explorationInfo = discoveredSelectors.length > 0
-      ? `\n## DISCOVERED SELECTORS (YOU MUST USE ONLY THESE - DO NOT INVENT SELECTORS):
-${discoveredSelectors.map(s => `- ${s.type}: "${s.selector}" - ${s.description}`).join('\n')}
+    const explorationInfo =
+      discoveredSelectors.length > 0
+        ? `\n## DISCOVERED SELECTORS (YOU MUST USE ONLY THESE - DO NOT INVENT SELECTORS):
+${discoveredSelectors
+  .map((s) => `- ${s.type}: "${s.selector}" - ${s.description}`)
+  .join("\n")}
 
 ⚠️ CRITICAL: Only use selectors from the list above. Do NOT invent data-testid values that are not listed.
 If you need a selector for an element not in the list, use generic Playwright locators like:
@@ -637,29 +847,41 @@ If you need a selector for an element not in the list, use generic Playwright lo
 - page.getByPlaceholder('placeholder text')
 - page.locator('button:has-text("text")')
 `
-      : '';
+        : "";
 
     // Build exclusion warning if features should be excluded
     const exclusionWarning = excludeFeatures?.length
-      ? `\n## IMPORTANT - DO NOT INCLUDE THESE FEATURES (already tested separately):\n${excludeFeatures.map(f => `- ${f}`).join('\n')}\nDo NOT generate any scenarios related to: ${excludeFeatures.join(', ')}\n`
-      : '';
+      ? `\n## IMPORTANT - DO NOT INCLUDE THESE FEATURES (already tested separately):\n${excludeFeatures
+          .map((f) => `- ${f}`)
+          .join(
+            "\n"
+          )}\nDo NOT generate any scenarios related to: ${excludeFeatures.join(
+          ", "
+        )}\n`
+      : "";
 
     // Only include auth context for auth-related features
     const featureLower = risk.featureName.toLowerCase();
-    const isAuthFeature = featureLower.includes('login') || featureLower.includes('signup') || 
-                          featureLower.includes('auth') || featureLower.includes('register');
-    
-    const authContext = isAuthFeature ? `
+    const isAuthFeature =
+      featureLower.includes("login") ||
+      featureLower.includes("signup") ||
+      featureLower.includes("auth") ||
+      featureLower.includes("register");
+
+    const authContext = isAuthFeature
+      ? `
 ## Auth-specific Selectors (only for login/signup features):
 - Login modal: data-testid="login-modal"
 - Signup modal: data-testid="signup-modal"
 - Email input (login): #login-email
 - Password input (login): #login-password
 - Error messages: .text-red-400 or .text-red-500
-` : '';
+`
+      : "";
 
     // Build example based on feature type
-    const exampleScenario = isAuthFeature ? `
+    const exampleScenario = isAuthFeature
+      ? `
     {
       "id": "login_valid_credentials",
       "name": "Login with valid email and password",
@@ -677,7 +899,8 @@ If you need a selector for an element not in the list, use generic Playwright lo
       "testData": { "email": "test@example.com", "password": "TestPassword123!" },
       "cleanup": [],
       "tags": ["auth", "login"]
-    }` : `
+    }`
+      : `
     {
       "id": "page_loads_correctly",
       "name": "Page loads and displays main content",
@@ -702,9 +925,9 @@ If you need a selector for an element not in the list, use generic Playwright lo
 ${risk.reasoning}
 ${exclusionWarning}
 ## Risk Level: ${risk.riskLevel}
-Risk Factors: ${risk.factors.map(f => f.factor).join(', ')}
+Risk Factors: ${risk.factors.map((f) => f.factor).join(", ")}
 
-## Required Scenario Types: ${scenarioTypes.join(', ')}
+## Required Scenario Types: ${scenarioTypes.join(", ")}
 Total scenarios needed: ${risk.testingRecommendations.scenarioCount}
 
 ${context}
@@ -741,29 +964,31 @@ Respond ONLY with valid JSON:
 
       if (jsonMatch) {
         let jsonStr = jsonMatch[0];
-        
+
         // Try to fix common JSON issues from LLM
         try {
           const parsed = JSON.parse(jsonStr);
           return parsed.scenarios || [];
         } catch (parseError) {
           console.log(`   [LLM] JSON parse error, attempting recovery...`);
-          
+
           // Try to extract just the scenarios array
-          const scenariosMatch = jsonStr.match(/"scenarios"\s*:\s*\[([\s\S]*?)\](?=\s*[,}]|$)/);
+          const scenariosMatch = jsonStr.match(
+            /"scenarios"\s*:\s*\[([\s\S]*?)\](?=\s*[,}]|$)/
+          );
           if (scenariosMatch) {
             try {
               // Clean up truncated JSON by finding valid objects
               const scenariosContent = scenariosMatch[1];
               const validScenarios: TestScenario[] = [];
-              
+
               // Split by },{ and try to parse each scenario
               const scenarioParts = scenariosContent.split(/\}\s*,\s*\{/);
               for (let i = 0; i < scenarioParts.length; i++) {
                 let part = scenarioParts[i].trim();
-                if (!part.startsWith('{')) part = '{' + part;
-                if (!part.endsWith('}')) part = part + '}';
-                
+                if (!part.startsWith("{")) part = "{" + part;
+                if (!part.endsWith("}")) part = part + "}";
+
                 try {
                   const scenario = JSON.parse(part);
                   if (scenario.id && scenario.name) {
@@ -773,9 +998,11 @@ Respond ONLY with valid JSON:
                   // Skip invalid scenario
                 }
               }
-              
+
               if (validScenarios.length > 0) {
-                console.log(`   [LLM] Recovered ${validScenarios.length} scenarios from malformed JSON`);
+                console.log(
+                  `   [LLM] Recovered ${validScenarios.length} scenarios from malformed JSON`
+                );
                 return validScenarios;
               }
             } catch {
@@ -798,45 +1025,99 @@ Respond ONLY with valid JSON:
   private createFallbackScenarios(risk: RiskAssessment): TestScenario[] {
     const featureLower = risk.featureName.toLowerCase();
 
-    if (featureLower.includes('login')) {
+    if (featureLower.includes("login")) {
       return [
         {
-          id: 'login_happy_path',
-          name: 'Login with valid credentials',
-          type: 'happy_path',
+          id: "login_happy_path",
+          name: "Login with valid credentials",
+          type: "happy_path",
           priority: 1,
-          preconditions: ['User exists', 'User is verified'],
+          preconditions: ["User exists", "User is verified"],
           steps: [
-            { order: 1, action: 'navigate', target: '/?action=login', description: 'Open login page' },
-            { order: 2, action: 'fill', target: '#login-email', value: '{email}', description: 'Enter email' },
-            { order: 3, action: 'fill', target: '#login-password', value: '{password}', description: 'Enter password' },
-            { order: 4, action: 'click', target: 'button:has-text("Login")', description: 'Click login' },
+            {
+              order: 1,
+              action: "navigate",
+              target: "/?action=login",
+              description: "Open login page",
+            },
+            {
+              order: 2,
+              action: "fill",
+              target: "#login-email",
+              value: "{email}",
+              description: "Enter email",
+            },
+            {
+              order: 3,
+              action: "fill",
+              target: "#login-password",
+              value: "{password}",
+              description: "Enter password",
+            },
+            {
+              order: 4,
+              action: "click",
+              target: 'button:has-text("Login")',
+              description: "Click login",
+            },
           ],
           assertions: [
-            { type: 'hidden', target: '[data-testid="login-modal"]', expected: 'closed', description: 'Modal closes' },
+            {
+              type: "hidden",
+              target: '[data-testid="login-modal"]',
+              expected: "closed",
+              description: "Modal closes",
+            },
           ],
-          testData: { email: 'test@example.com', password: 'TestPassword123!' },
+          testData: { email: "test@example.com", password: "TestPassword123!" },
           cleanup: [],
-          tags: ['login', 'auth'],
+          tags: ["login", "auth"],
         },
         {
-          id: 'login_invalid_credentials',
-          name: 'Login with invalid credentials shows error',
-          type: 'negative',
+          id: "login_invalid_credentials",
+          name: "Login with invalid credentials shows error",
+          type: "negative",
           priority: 2,
           preconditions: [],
           steps: [
-            { order: 1, action: 'navigate', target: '/?action=login', description: 'Open login page' },
-            { order: 2, action: 'fill', target: '#login-email', value: 'nonexistent@test.com', description: 'Enter invalid email' },
-            { order: 3, action: 'fill', target: '#login-password', value: 'wrongpassword', description: 'Enter wrong password' },
-            { order: 4, action: 'click', target: 'button:has-text("Login")', description: 'Click login' },
+            {
+              order: 1,
+              action: "navigate",
+              target: "/?action=login",
+              description: "Open login page",
+            },
+            {
+              order: 2,
+              action: "fill",
+              target: "#login-email",
+              value: "nonexistent@test.com",
+              description: "Enter invalid email",
+            },
+            {
+              order: 3,
+              action: "fill",
+              target: "#login-password",
+              value: "wrongpassword",
+              description: "Enter wrong password",
+            },
+            {
+              order: 4,
+              action: "click",
+              target: 'button:has-text("Login")',
+              description: "Click login",
+            },
           ],
           assertions: [
-            { type: 'visible', target: 'text="Invalid login credentials"', expected: 'error shown', description: 'Error message appears' },
+            {
+              type: "visible",
+              target: 'text="Invalid login credentials"',
+              expected: "error shown",
+              description: "Error message appears",
+            },
           ],
           testData: {},
           cleanup: [],
-          tags: ['login', 'negative'],
+          tags: ["login", "negative"],
         },
       ];
     }
@@ -844,13 +1125,18 @@ Respond ONLY with valid JSON:
     // Generic fallback
     return [
       {
-        id: `${risk.featureName.toLowerCase().replace(/\s+/g, '_')}_happy_path`,
+        id: `${risk.featureName.toLowerCase().replace(/\s+/g, "_")}_happy_path`,
         name: `${risk.featureName} - Happy Path`,
-        type: 'happy_path',
+        type: "happy_path",
         priority: 1,
         preconditions: [],
         steps: [
-          { order: 1, action: 'navigate', target: '/', description: 'Open app' },
+          {
+            order: 1,
+            action: "navigate",
+            target: "/",
+            description: "Open app",
+          },
         ],
         assertions: [],
         testData: {},
@@ -866,22 +1152,33 @@ Respond ONLY with valid JSON:
   private determineFixtures(scenarios: TestScenario[]): string[] {
     const fixtures = new Set<string>();
 
-    fixtures.add('page'); // Always needed
+    fixtures.add("page"); // Always needed
 
     for (const scenario of scenarios) {
       // Check for database operations
-      if (scenario.preconditions.some(p => p.includes('database') || p.includes('exists'))) {
-        fixtures.add('supabaseAdapter');
+      if (
+        scenario.preconditions.some(
+          (p) => p.includes("database") || p.includes("exists")
+        )
+      ) {
+        fixtures.add("supabaseAdapter");
       }
 
       // Check for API verifications
-      if (scenario.assertions.some(a => a.type === 'api_response' || a.type === 'database')) {
-        fixtures.add('supabaseAdapter');
+      if (
+        scenario.assertions.some(
+          (a) => a.type === "api_response" || a.type === "database"
+        )
+      ) {
+        fixtures.add("supabaseAdapter");
       }
 
       // Check for KYC/Sumsub
-      if (scenario.tags.includes('kyc') || scenario.name.toLowerCase().includes('kyc')) {
-        fixtures.add('sumsub');
+      if (
+        scenario.tags.includes("kyc") ||
+        scenario.name.toLowerCase().includes("kyc")
+      ) {
+        fixtures.add("sumsub");
       }
     }
 
@@ -895,8 +1192,8 @@ Respond ONLY with valid JSON:
     const setup: string[] = [];
     const lower = featureName.toLowerCase();
 
-    if (lower.includes('login') || lower.includes('signup')) {
-      setup.push('Clean up test user if exists');
+    if (lower.includes("login") || lower.includes("signup")) {
+      setup.push("Clean up test user if exists");
     }
 
     return setup;
@@ -909,8 +1206,8 @@ Respond ONLY with valid JSON:
     const cleanup: string[] = [];
     const lower = featureName.toLowerCase();
 
-    if (lower.includes('signup') || lower.includes('register')) {
-      cleanup.push('Delete created test user');
+    if (lower.includes("signup") || lower.includes("register")) {
+      cleanup.push("Delete created test user");
     }
 
     return cleanup;
@@ -926,21 +1223,29 @@ Respond ONLY with valid JSON:
 
     for (const scenario of plan.scenarios) {
       const pattern: TestPattern = {
-        type: 'test_pattern',
+        type: "test_pattern",
         featureName: plan.featureName,
         testName: scenario.name,
-        steps: scenario.steps.map(s => `${s.action}: ${s.target || ''} ${s.value || ''}`),
-        assertions: scenario.assertions.map(a => `${a.type}: ${a.target}`),
+        steps: scenario.steps.map(
+          (s) => `${s.action}: ${s.target || ""} ${s.value || ""}`
+        ),
+        assertions: scenario.assertions.map((a) => `${a.type}: ${a.target}`),
         selectors: scenario.steps
-          .filter(s => s.target && s.target.startsWith('[') || s.target?.startsWith('#'))
-          .map(s => s.target!),
-        sourceFile: 'generated',
+          .filter(
+            (s) =>
+              (s.target && s.target.startsWith("[")) ||
+              s.target?.startsWith("#")
+          )
+          .map((s) => s.target!),
+        sourceFile: "generated",
       };
 
       await this.knowledgeStore!.storeTestPattern(pattern);
     }
 
-    console.log(`   Stored ${plan.scenarios.length} patterns in knowledge store`);
+    console.log(
+      `   Stored ${plan.scenarios.length} patterns in knowledge store`
+    );
   }
 
   /**
@@ -954,13 +1259,13 @@ Respond ONLY with valid JSON:
 **Description:** ${plan.description}
 
 ## Required Fixtures
-${plan.requiredFixtures.map(f => `- \`${f}\``).join('\n')}
+${plan.requiredFixtures.map((f) => `- \`${f}\``).join("\n")}
 
 ## Shared Setup
-${plan.sharedSetup.map(s => `- ${s}`).join('\n') || '_None_'}
+${plan.sharedSetup.map((s) => `- ${s}`).join("\n") || "_None_"}
 
 ## Shared Cleanup
-${plan.sharedCleanup.map(c => `- ${c}`).join('\n') || '_None_'}
+${plan.sharedCleanup.map((c) => `- ${c}`).join("\n") || "_None_"}
 
 ---
 
@@ -970,29 +1275,38 @@ ${plan.sharedCleanup.map(c => `- ${c}`).join('\n') || '_None_'}
 
     for (const scenario of plan.scenarios) {
       const typeIcon = {
-        happy_path: '✅',
-        negative: '❌',
-        edge_case: '⚠️',
-        security: '🔒',
-        performance: '⚡',
+        happy_path: "✅",
+        negative: "❌",
+        edge_case: "⚠️",
+        security: "🔒",
+        performance: "⚡",
       }[scenario.type];
 
       md += `### ${typeIcon} ${scenario.name}
 **ID:** \`${scenario.id}\`
 **Type:** ${scenario.type}
 **Priority:** ${scenario.priority}
-**Tags:** ${scenario.tags.map(t => `\`${t}\``).join(', ')}
+**Tags:** ${scenario.tags.map((t) => `\`${t}\``).join(", ")}
 
 #### Preconditions
-${scenario.preconditions.map(p => `- ${p}`).join('\n') || '_None_'}
+${scenario.preconditions.map((p) => `- ${p}`).join("\n") || "_None_"}
 
 #### Steps
 | # | Action | Target | Value | Description |
 |---|--------|--------|-------|-------------|
-${scenario.steps.map(s => `| ${s.order} | ${s.action} | ${s.target || '-'} | ${s.value || '-'} | ${s.description} |`).join('\n')}
+${scenario.steps
+  .map(
+    (s) =>
+      `| ${s.order} | ${s.action} | ${s.target || "-"} | ${s.value || "-"} | ${
+        s.description
+      } |`
+  )
+  .join("\n")}
 
 #### Assertions
-${scenario.assertions.map(a => `- **${a.type}:** ${a.target} → ${a.expected}`).join('\n')}
+${scenario.assertions
+  .map((a) => `- **${a.type}:** ${a.target} → ${a.expected}`)
+  .join("\n")}
 
 #### Test Data
 \`\`\`json
@@ -1016,4 +1330,3 @@ export function createTestPlanner(): TestPlanner {
 }
 
 export default TestPlanner;
-

@@ -56,7 +56,7 @@ serve(async (req: Request) => {
     // NOTE: Don't use origin header as it might be from a different domain making the API call
     const baseUrl = body.redirectUrl || publicUrl;
     const cleanBaseUrl = baseUrl.replace(/\/$/, "").split("#")[0].split("?")[0];
-    
+
     console.log("🔵 [forgot-password] Redirect URL from body:", body.redirectUrl);
     console.log("🔵 [forgot-password] Base URL for redirect:", cleanBaseUrl);
 
@@ -104,7 +104,7 @@ serve(async (req: Request) => {
     }
 
     // Build the email HTML using the simplified template
-    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
+    const logoImageUrl = "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
     const emailHtml = buildResetEmailHTML(resetLink, logoImageUrl);
     const emailSubject = "Reset your ShareMatch password";
 

@@ -40,7 +40,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         setError(null);
         const status = await getKycUserStatus(userId);
         setKycData(status);
-        
+
         // If forceUpdateMode is true and user is approved, show confirmation dialog
         // Explain that updating documents requires re-verification
         if (forceUpdateMode && status.kyc_status === 'approved') {
@@ -48,7 +48,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
           setLoading(false);
           return;
         }
-        
+
         // Determine initial view based on status
         switch (status.kyc_status) {
           case 'approved':
@@ -159,7 +159,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-700">
           <div className="flex items-center gap-3">
             <ShieldCheck className="w-6 h-6 text-[#005430]" />
             <h2 className="text-xl font-semibold text-white">Identity Verification</h2>
@@ -197,7 +197,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
           ) : view === 'approved' ? (
             <ApprovedView onClose={onClose} />
           ) : view === 'cooling_off' ? (
-            <CoolingOffView coolingOffUntil={kycData?.cooling_off_until} onClose={onClose} />
+            <CoolingOffView coolingOffUntil={kycData?.cooling_off_until ?? null} onClose={onClose} />
           ) : view === 'rejected' ? (
             <RejectedView
               kycData={kycData}
@@ -211,7 +211,7 @@ export const KYCModal: React.FC<KYCModalProps> = ({
               onClose={onClose}
             />
           ) : view === 'update_confirm' ? (
-            <UpdateConfirmView 
+            <UpdateConfirmView
               onProceed={handleResetAndUpdate}
               onClose={onClose}
               isResetting={resetting}
@@ -232,41 +232,41 @@ export const KYCModal: React.FC<KYCModalProps> = ({
 
 // Intro View - explains what KYC is and why it's needed
 const IntroView: React.FC<{ onStart: () => void }> = ({ onStart }) => (
-  <div className="p-8 text-center">
-    <div className="w-20 h-20 bg-[#005430]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-      <ShieldCheck className="w-10 h-10 text-[#005430]" />
+  <div className="p-4 md:p-8 text-center">
+    <div className="w-16 h-16 md:w-20 md:h-20 bg-[#005430]/20 rounded-full flex items-center justify-center mx-auto mb-4 md:mb-6">
+      <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-[#005430]" />
     </div>
 
-    <h3 className="text-2xl font-bold text-white mb-4">
+    <h3 className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-4">
       Verify Your Identity
     </h3>
 
-    <p className="text-gray-400 mb-8 max-w-md mx-auto">
+    <p className="text-sm md:text-base text-gray-400 mb-6 md:mb-8 max-w-md mx-auto">
       To ensure a secure trading environment and comply with regulations,
       we need to verify your identity before you can start trading.
     </p>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-      <div className="p-4 bg-gray-800/50 rounded-xl">
-        <div className="text-2xl mb-2">📄</div>
-        <div className="text-sm text-gray-300">Government ID</div>
-        <div className="text-xs text-gray-500">Passport or ID card</div>
+    <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8 max-w-2xl mx-auto">
+      <div className="p-2 md:p-4 bg-gray-800/50 rounded-xl">
+        <div className="text-xl md:text-2xl mb-1 md:mb-2">📄</div>
+        <div className="text-xs md:text-sm text-gray-300 font-medium">Government ID</div>
+        <div className="hidden md:block text-xs text-gray-500">Passport or ID card</div>
       </div>
-      <div className="p-4 bg-gray-800/50 rounded-xl">
-        <div className="text-2xl mb-2">🤳</div>
-        <div className="text-sm text-gray-300">Selfie</div>
-        <div className="text-xs text-gray-500">Quick photo verification</div>
+      <div className="p-2 md:p-4 bg-gray-800/50 rounded-xl">
+        <div className="text-xl md:text-2xl mb-1 md:mb-2">🤳</div>
+        <div className="text-xs md:text-sm text-gray-300 font-medium">Selfie</div>
+        <div className="hidden md:block text-xs text-gray-500">Quick photo verification</div>
       </div>
-      <div className="p-4 bg-gray-800/50 rounded-xl">
-        <div className="text-2xl mb-2">⏱️</div>
-        <div className="text-sm text-gray-300">~2 Minutes</div>
-        <div className="text-xs text-gray-500">Quick & easy process</div>
+      <div className="p-2 md:p-4 bg-gray-800/50 rounded-xl">
+        <div className="text-xl md:text-2xl mb-1 md:mb-2">⏱️</div>
+        <div className="text-xs md:text-sm text-gray-300 font-medium">~2 Minutes</div>
+        <div className="hidden md:block text-xs text-gray-500">Quick & easy process</div>
       </div>
     </div>
 
     <button
       onClick={onStart}
-      className="px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors"
+      className="w-full md:w-auto px-8 py-3 bg-[#005430] text-white rounded-full font-semibold hover:bg-[#005430]/90 transition-colors shadow-lg shadow-[#005430]/20"
     >
       Start Verification
     </button>
@@ -500,7 +500,7 @@ const ResubmissionView: React.FC<{
 };
 
 // Update Confirm View - for approved users who want to update documents
-const UpdateConfirmView: React.FC<{ 
+const UpdateConfirmView: React.FC<{
   onProceed: () => void;
   onClose: () => void;
   isResetting?: boolean;
@@ -514,21 +514,21 @@ const UpdateConfirmView: React.FC<{
         <AlertTriangle className="w-10 h-10 text-blue-500" />
       )}
     </div>
-    
+
     <h3 className="text-2xl font-bold text-white mb-4">
       {isResetting ? 'Resetting Verification...' : 'Update Your Documents'}
     </h3>
-    
+
     {isResetting ? (
       <p className="text-gray-400 mb-8 max-w-md mx-auto">
-        Please wait while we reset your verification status. 
+        Please wait while we reset your verification status.
         This will only take a moment.
       </p>
     ) : (
       <>
         <p className="text-gray-400 mb-6 max-w-md mx-auto">
-          Your identity is currently verified. If you need to update your documents 
-          (e.g., expired ID, address change), your verification will be temporarily 
+          Your identity is currently verified. If you need to update your documents
+          (e.g., expired ID, address change), your verification will be temporarily
           reset while we review the new documents.
         </p>
 

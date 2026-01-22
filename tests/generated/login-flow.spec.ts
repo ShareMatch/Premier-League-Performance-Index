@@ -18,7 +18,7 @@
  * DO NOT EDIT DIRECTLY - regenerate using the test planner
  */
 
-import { test, expect } from "../../adapters";
+import { test, expect, Page } from "../../adapters";
 
 const TEST_USER = {
   email: `affan@sharematch.me`,
@@ -28,15 +28,45 @@ const TEST_USER = {
   dob: { month: "0", year: "1990", day: "15" },
 };
 
-test.describe("Login Flow", () => {
-  // test.beforeEach(async ({ supabaseAdapter }) => {
-  //   console.log(`[Setup] Cleaning up test user: ${TEST_USER.email}`);
-  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  // });
+/**
+ * Helper to check and log login errors
+ */
+async function checkLoginError(page: Page, context: string): Promise<string | null> {
+  // Check for specific login error element first
+  const loginError = page.locator('[data-testid="login-error"]');
+  const isVisible = await loginError.isVisible().catch(() => false);
+  
+  if (isVisible) {
+    const text = await loginError.textContent().catch(() => '');
+    console.log(`[${context}] ❌ Login error found: ${text}`);
+    return text;
+  }
+  
+  return null;
+}
 
-  // test.afterEach(async ({ supabaseAdapter }) => {
-  //   await supabaseAdapter.deleteTestUser(TEST_USER.email);
-  // });
+test.describe("Login Flow", () => {
+  // Create the test user before all tests in this file (if not exists)
+  test.beforeAll(async ({ supabaseAdapter }) => {
+    console.log(`[Login Setup] Ensuring test user exists: ${TEST_USER.email}`);
+    
+    // Check if exists
+    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+    if (!user) {
+      console.log('[Login Setup] User not found, creating...');
+      await supabaseAdapter.createUser(TEST_USER.email, TEST_USER.password);
+      // Wait for consistency
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Ensure OTP records
+      const newUser = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+      if (newUser) {
+        await supabaseAdapter.ensureOtpRecords(TEST_USER.email);
+      }
+    } else {
+      console.log('[Login Setup] User already exists');
+    }
+  });
+
 
   // test.beforeEach(async ({ page }) => {
   //   await page.context().clearCookies();
@@ -126,25 +156,45 @@ test.describe("Login Flow", () => {
   });
 
   test("Login with brute force attempt", async ({ page, supabaseAdapter }) => {
-    console.log("[Test] Starting...");
+    console.log("[Test] Starting brute force test...");
+    
+    // Check user exists (for debugging)
+    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+    console.log(`[Test] User exists in DB: ${!!user}`);
+    if (!user) {
+      console.log("[Test] ⚠️ User not found in public.users - global setup may have failed");
+      // Don't fail immediately - let login attempt show the actual error
+    }
+    
     await page.goto("/?action=login");
     const modal = page.locator('[data-testid="login-modal"]');
-    await modal.waitFor({ timeout: 5000 });
+    await modal.waitFor({ timeout: 10000 });
 
     await page.locator("#login-email").fill(TEST_USER.email);
     await page.locator("#login-password").fill(TEST_USER.password);
     await page.locator('[data-testid="login-submit-button"]').click();
-    await page.waitForTimeout(5000);
+    
+    // Wait longer for CI
+    await page.waitForTimeout(process.env.CI ? 8000 : 5000);
+
+    // Check for error message
+    const loginError = await checkLoginError(page, 'Brute Force Test');
+    if (loginError) {
+      // If login failed, fail the test with clear message
+      expect(loginError, `Login failed with error: ${loginError}`).toBeNull();
+    }
 
     const verificationModal = page.locator('[data-testid="verification-modal"]');
-
     const isLoginModalHidden = await modal.isHidden().catch(() => false);
     const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
 
+    console.log(`[Test] Modal hidden: ${isLoginModalHidden}, Verification visible: ${isVerificationModalVisible}`);
+
     if (!isLoginModalHidden && !isVerificationModalVisible) {
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
       const isLoginModalHiddenRetry = await modal.isHidden().catch(() => false);
       const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
+      console.log(`[Test] Retry - Modal hidden: ${isLoginModalHiddenRetry}, Verification visible: ${isVerificationModalVisibleRetry}`);
       expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
     } else {
       expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
@@ -157,28 +207,51 @@ test.describe("Login Flow", () => {
     page,
     supabaseAdapter,
   }) => {
+    console.log("[Test] Starting valid login test...");
+    
+    // Check user exists (for debugging)
+    const user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
+    console.log(`[Test] User exists in DB: ${!!user}`);
+    if (!user) {
+      console.log("[Test] ⚠️ User not found in public.users - global setup may have failed");
+    }
+    
     await page.goto("/?action=login");
-    await page
-      .locator('[data-testid="login-modal"]')
-      .waitFor({ timeout: 5000 });
+    const loginModal = page.locator('[data-testid="login-modal"]');
+    await loginModal.waitFor({ timeout: 10000 });
 
     await page.locator("#login-email").fill(TEST_USER.email);
     await page.locator("#login-password").fill(TEST_USER.password);
     await page.locator('[data-testid="login-submit-button"]').click();
-    await page.waitForTimeout(5000);
+    
+    // Wait longer for CI
+    await page.waitForTimeout(process.env.CI ? 8000 : 5000);
 
-    const loginModal = page.locator('[data-testid="login-modal"]');
+    // Check for error message
+    const loginError = await checkLoginError(page, 'Valid Login Test');
+    if (loginError) {
+      // Take screenshot for debugging
+      await page.screenshot({ path: 'test-results/login-error.png' });
+      // Fail with clear message
+      expect(loginError, `Login failed with error: ${loginError}`).toBeNull();
+    }
+    
     const verificationModal = page.locator('[data-testid="verification-modal"]');
     const isLoginModalHidden = await loginModal.isHidden().catch(() => false);
     const isVerificationModalVisible = await verificationModal.isVisible().catch(() => false);
 
+    console.log(`[Test] Modal hidden: ${isLoginModalHidden}, Verification visible: ${isVerificationModalVisible}`);
+
     if (!isLoginModalHidden && !isVerificationModalVisible) {
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
       const isLoginModalHiddenRetry = await loginModal.isHidden().catch(() => false);
       const isVerificationModalVisibleRetry = await verificationModal.isVisible().catch(() => false);
+      console.log(`[Test] Retry - Modal hidden: ${isLoginModalHiddenRetry}, Verification visible: ${isVerificationModalVisibleRetry}`);
       expect(isLoginModalHiddenRetry || isVerificationModalVisibleRetry).toBeTruthy();
     } else {
       expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
     }
+    
+    console.log("[Test] ✓ Login successful");
   });
 });

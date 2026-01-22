@@ -25,7 +25,6 @@ interface AllMarketsPageProps {
 }
 
 const CATEGORIES = [
-  { id: "ALL", label: "All Index Tokens" },
   {
     id: "football",
     label: "Football",
@@ -69,7 +68,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   onViewAsset,
   onSelectOrder,
 }) => {
-  const [activeCategory, setActiveCategory] = useState("ALL");
+  const [activeCategory, setActiveCategory] = useState("football");
   const [activeFilters, setActiveFilters] = useState<string[]>(["ALL"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,7 +78,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const [pageCache, setPageCache] = useState<Record<number, Team[]>>({});
   const [isDragging, setIsDragging] = useState(false);
-
 
   const ITEMS_PER_PAGE = 10;
 
@@ -171,7 +169,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     const activeCatIds = new Set(activeTeams.map((t) => t.category));
 
     return CATEGORIES.filter((cat) => {
-      if (cat.id === "ALL") return true; // Always show "All"
       return activeCatIds.has(cat.id as any);
     });
   }, [teams]);
@@ -190,7 +187,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     setPageCache({});
     setCurrentPage(1);
   }, [activeCategory, activeFilters, searchQuery]);
-
 
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -221,9 +217,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     };
   }, []);
 
-
-
-
   // Pagination loading and caching logic
   useEffect(() => {
     // If page is already in cache, don't show loading
@@ -231,8 +224,6 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       setIsLoading(false);
       return;
     }
-
-
 
     // Otherwise, simulate a fetch/load for the new page
     setIsLoading(true);
@@ -293,15 +284,17 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   return (
     <div className="h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 gap-4">
-        <div className="flex items-center gap-3 shrink-0">
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 gap-[clamp(0.5rem,2vw,1rem)]">
+        <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)] shrink-0">
           <button
             onClick={() => onNavigate("HOME")}
-            className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+            aria-label="Back to home"
+            data-testid="all-markets-back"
+            className="p-1 rounded-full hover:bg-white/5 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />
           </button>
-          <h1 className="text-xl font-bold font-sans whitespace-nowrap">
+          <h1 className="text-[clamp(1.125rem,4vw,1.5rem)] font-bold font-sans whitespace-nowrap">
             Index Tokens
           </h1>
         </div>
@@ -323,7 +316,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex items-center gap-2 pb-1 scrollbar-hide select-none
-        ${openDropdown ? "overflow-x-hidden touch-none" : "overflow-x-auto touch-pan-x"}`}
+        ${openDropdown
+              ? "overflow-x-hidden touch-none"
+              : "overflow-x-auto touch-pan-x"
+            }`}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
             setIsDragging(false);
@@ -381,7 +377,9 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               >
                 <DropdownMenu.Trigger asChild>
                   <div
-                    className={isDragging ? "pointer-events-none" : "cursor-pointer"}
+                    className={
+                      isDragging ? "pointer-events-none" : "cursor-pointer"
+                    }
                   >
                     {pillButton}
                   </div>

@@ -2,69 +2,138 @@
 // Separate templates for different email types
 
 export interface OtpEmailParams {
-  logoImageUrl: string;
-  userFullName: string;
-  otpCode: string;
-  expiryMinutes: number;
+    logoImageUrl: string;
+    userFullName: string;
+    otpCode: string;
+    expiryMinutes: number;
 }
 
 export interface ForgotPasswordEmailParams {
-  logoImageUrl: string;
-  userFullName: string;
-  resetLink: string;
-  expiryMinutes: number;
+    logoImageUrl: string;
+    userFullName: string;
+    resetLink: string;
+    expiryMinutes: number;
+}
+
+export interface OrderConfirmationEmailParams {
+    logoImageUrl: string;
+    userFullName: string;
+    orderId: string;
+    assetName: string;
+    side: "buy" | "sell";
+    units: number;
+    pricePerUnit: number;
+    totalAmount: number;
 }
 
 /**
  * Generate OTP verification email HTML
  */
 export function generateOtpEmailHtml(params: OtpEmailParams): string {
-  const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
-  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
-  
-  return OTP_VERIFICATION_TEMPLATE
-    .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-    .replace(/##OTP_CODE##/g, otpCode)
-    .replace(/##EXPIRY_TIME##/g, expiryText);
+    const { logoImageUrl, userFullName, otpCode, expiryMinutes } = params;
+    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? "s" : ""}`;
+
+    return OTP_VERIFICATION_TEMPLATE.replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+        .replace(/##OTP_CODE##/g, otpCode)
+        .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate OTP verification email subject
  */
 export function generateOtpEmailSubject(otpCode: string): string {
-  return `${otpCode} is your ShareMatch verification code`;
+    return `${otpCode} is your ShareMatch verification code`;
 }
 
 /**
  * Generate forgot password email HTML (legacy - with personalization)
  */
-export function generateForgotPasswordEmailHtml(params: ForgotPasswordEmailParams): string {
-  const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
-  const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? 's' : ''}`;
-  
-  return FORGOT_PASSWORD_TEMPLATE
-    .replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
-    .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
-    .replace(/##RESET_LINK##/g, resetLink)
-    .replace(/##EXPIRY_TIME##/g, expiryText);
+export function generateForgotPasswordEmailHtml(
+    params: ForgotPasswordEmailParams,
+): string {
+    const { logoImageUrl, userFullName, resetLink, expiryMinutes } = params;
+    const expiryText = `${expiryMinutes} minute${expiryMinutes !== 1 ? "s" : ""}`;
+
+    return FORGOT_PASSWORD_TEMPLATE.replace(/##LOGO_IMAGE_URL##/g, logoImageUrl)
+        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+        .replace(/##RESET_LINK##/g, resetLink)
+        .replace(/##EXPIRY_TIME##/g, expiryText);
 }
 
 /**
  * Generate forgot password email subject
  */
 export function generateForgotPasswordEmailSubject(): string {
-  return `Reset your ShareMatch password`;
+    return `Reset your ShareMatch password`;
 }
 
 /**
  * Build password reset email HTML - simplified version with magic link
  */
-export function buildResetEmailHTML(magicLink: string, logoImageUrl?: string): string {
-  const logoUrl = logoImageUrl || "https://sharematch.me/white_wordmark_logo_on_black_copy-removebg-preview.png";
-  return PASSWORD_RESET_TEMPLATE
-    .replace(/\${magicLink}/g, magicLink)
-    .replace(/##LOGO_IMAGE_URL##/g, logoUrl);
+export function buildResetEmailHTML(
+    magicLink: string,
+    logoImageUrl?: string,
+): string {
+    const logoUrl =
+        logoImageUrl ||
+        "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
+    return PASSWORD_RESET_TEMPLATE.replace(/\${magicLink}/g, magicLink).replace(
+        /##LOGO_IMAGE_URL##/g,
+        logoUrl,
+    );
+}
+
+/**
+ * Generate order confirmation email HTML
+ */
+export function generateOrderConfirmationEmailHtml(
+    params: OrderConfirmationEmailParams,
+): string {
+    const {
+        logoImageUrl,
+        userFullName,
+        orderId,
+        assetName,
+        side,
+        units,
+        pricePerUnit,
+        totalAmount,
+    } = params;
+
+    // Format currency
+    const formatCurrency = (amount: number) =>
+        `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const formatNumber = (num: number) => num.toLocaleString("en-US");
+
+    const sideText = side === "buy" ? "Buy" : "Sell";
+    const sideColor = side === "buy" ? "#10b981" : "#ef4444";
+    const totalLabel = side === "buy" ? "Total Paid" : "Total Received";
+
+    return ORDER_CONFIRMATION_TEMPLATE.replace(
+        /##LOGO_IMAGE_URL##/g,
+        logoImageUrl,
+    )
+        .replace(/##USER_FULL_NAME##/g, userFullName || "Valued User")
+        .replace(/##ORDER_ID##/g, orderId)
+        .replace(/##ASSET_NAME##/g, assetName)
+        .replace(/##SIDE_TEXT##/g, sideText)
+        .replace(/##SIDE_COLOR##/g, sideColor)
+        .replace(/##UNITS##/g, formatNumber(units))
+        .replace(/##PRICE_PER_UNIT##/g, formatCurrency(pricePerUnit))
+        .replace(/##TOTAL_LABEL##/g, totalLabel)
+        .replace(/##TOTAL_AMOUNT##/g, formatCurrency(totalAmount));
+}
+
+/**
+ * Generate order confirmation email subject
+ */
+export function generateOrderConfirmationEmailSubject(
+    orderId: string,
+    side: "buy" | "sell",
+): string {
+    const action = side === "buy" ? "Purchase" : "Sale";
+    return `Order Confirmed: ${action} #${orderId}`;
 }
 
 // ============================================
@@ -95,17 +164,17 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #FFFFFF;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
 
-        /* Solid Background */
+        /* Card Background - Lighter green for dark/light mode consistency */
         .gradient-bg {
-            background-color: #005430;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
         /* Main Container */
@@ -467,14 +536,14 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #FFFFFF; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #FFFFFF; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -520,7 +589,7 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                     <!-- Footer Section -->
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -545,15 +614,15 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #FFFFFF;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
         .gradient-bg {
-            background-color: #005430;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         .container { max-width: 600px; width: 100%; border-radius: 12px; overflow: hidden; text-align: left; margin: 0 auto; }
         table[role="presentation"] { width: 100%; height: auto; }
@@ -592,12 +661,12 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #FFFFFF; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #FFFFFF; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr><td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td></tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
                             <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
@@ -647,7 +716,7 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
                     </tr>
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -682,17 +751,17 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #FFFFFF;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
 
-        /* Solid Background */
+        /* Card Background - Lighter green for dark/light mode consistency */
         .gradient-bg {
-            background-color: #005430;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         /* Main Container */
@@ -1054,14 +1123,14 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #FFFFFF; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #FFFFFF; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -1106,7 +1175,7 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
                     <!-- Footer Section -->
                     <tr>
                         <td class="footer" style="padding: 20px 40px; text-align: center; font-size: 18px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px;">
-                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2025 ShareMatch. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 18px; color: #FFFFFF;">&copy; 2026 ShareMatch. All rights reserved.</p>
                         </td>
                     </tr>
             </table>
@@ -1117,4 +1186,123 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
         </tr>
       </table>
     </body>
+</html>`;
+
+// Order Confirmation Template
+const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - ShareMatch</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+            padding: 20px 0;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #007848;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 0 auto;
+            color: #FFFFFF;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .logo-section { text-align: center; margin-bottom: 30px; }
+        .logo-image { max-width: 280px; height: auto; }
+        .success-icon { text-align: center; margin-bottom: 20px; }
+        .title { text-align: center; font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+        .subtitle { text-align: center; font-size: 14px; opacity: 0.8; margin-bottom: 30px; }
+        .summary-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .label { opacity: 0.8; }
+        .value { font-weight: 600; }
+        .value-mono { font-family: monospace; }
+        .divider { border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px; }
+        .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; }
+        .footer { text-align: center; font-size: 12px; opacity: 0.6; margin-top: 40px; }
+        
+        @media only screen and (max-width: 480px) {
+            .container { padding: 20px; border-radius: 12px; }
+            .title { font-size: 24px; }
+        }
+    </style>
+</head>
+<body style="background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center">
+                <div class="container">
+                    <div class="logo-section">
+                        <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image">
+                    </div>
+                    
+                    <div class="success-icon">
+                        <img src="https://img.icons8.com/ios-filled/100/ffffff/checked-checkbox.png" width="60" height="60" alt="Success">
+                    </div>
+                    
+                    <h1 class="title">Order Confirmed</h1>
+                    <p class="subtitle">Dear ##USER_FULL_NAME##, your transaction has been successfully completed.</p>
+                    
+                    <div class="summary-card">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Order ID</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-family: monospace; color: #FFFFFF;">##ORDER_ID##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Asset Token</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 600; color: #FFFFFF;">##ASSET_NAME##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Type</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 700; color: ##SIDE_COLOR##;">##SIDE_TEXT##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Units</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##UNITS##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Price / Unit</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##PRICE_PER_UNIT##</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 12px;">
+                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_LABEL##</td>
+                                            <td align="right" style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_AMOUNT##</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <p style="text-align: center; font-size: 13px; opacity: 0.9;">If you have any questions, please contact our support team.</p>
+                    
+                    <div class="footer">
+                        &copy; 2026 ShareMatch. All rights reserved.
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
 </html>`;

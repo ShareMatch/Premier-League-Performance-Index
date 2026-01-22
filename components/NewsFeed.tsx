@@ -1,349 +1,435 @@
-import React, { useState, useEffect } from 'react';
-import { Newspaper, X, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Newspaper, X, Sparkles, RefreshCw } from "lucide-react";
 import { GoogleGenAI } from "@google/genai";
-import { supabase } from '../lib/supabase';
+import { supabase } from "../lib/supabase";
 
 interface NewsItem {
-    id: string; // Changed to string for UUID
-    headline: string;
-    source: string;
-    published_at: string;
-    url?: string;
+  id: string; // Changed to string for UUID
+  headline: string;
+  source: string;
+  published_at: string;
+  url?: string;
 }
 
 const HARAM_KEYWORDS = [
-    "gambling", "betting", "wager", "wagers", "stake", "stakes", "odds", "line",
-    "lines", "bookie", "bookmaker", "picks", "action", "parlay", "teaser",
-    "future", "futures", "prop bet", "prop bets", "spread", "spreads",
-    "over/under", "o/u", "payout", "risk-free", "vegas", "las vegas",
-    "promo code", "promocode", "deposit match", "bonus", "bonuses",
-    "free bet", "freebets", "sign-up offer", "welcome offer", "welcome bonus",
-    "offer code", "credit", "credits", "guaranteed winnings", "cash back",
-    "daily fantasy", "dfs", "draftkings", "fanduel", "sleeper", "casino",
-    "poker", "slot", "slots", "roulette", "blackjack", "lotto", "lottery",
-    "moneyline", "wine", "beer", "alcohol"
+  "gambling",
+  "betting",
+  "wager",
+  "wagers",
+  "stake",
+  "stakes",
+  "odds",
+  "line",
+  "lines",
+  "bookie",
+  "bookmaker",
+  "picks",
+  "action",
+  "parlay",
+  "teaser",
+  "future",
+  "futures",
+  "prop bet",
+  "prop bets",
+  "spread",
+  "spreads",
+  "over/under",
+  "o/u",
+  "payout",
+  "risk-free",
+  "vegas",
+  "las vegas",
+  "promo code",
+  "promocode",
+  "deposit match",
+  "bonus",
+  "bonuses",
+  "free bet",
+  "freebets",
+  "sign-up offer",
+  "welcome offer",
+  "welcome bonus",
+  "offer code",
+  "credit",
+  "credits",
+  "guaranteed winnings",
+  "cash back",
+  "daily fantasy",
+  "dfs",
+  "draftkings",
+  "fanduel",
+  "sleeper",
+  "casino",
+  "poker",
+  "slot",
+  "slots",
+  "roulette",
+  "blackjack",
+  "lotto",
+  "lottery",
+  "moneyline",
+  "wine",
+  "beer",
+  "alcohol",
 ];
 
 const isHaram = (text: string): boolean => {
-    const lowerText = text.toLowerCase();
-    return HARAM_KEYWORDS.some(keyword => {
-        // For multi-word phrases or terms with special chars, use simple inclusion
-        if (keyword.includes(' ') || keyword.includes('/') || keyword.includes('-')) {
-            return lowerText.includes(keyword);
-        }
-        // For single words, use word boundary to avoid false positives (e.g. 'line' in 'online')
-        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-        return regex.test(lowerText);
-    });
+  const lowerText = text.toLowerCase();
+  return HARAM_KEYWORDS.some((keyword) => {
+    // For multi-word phrases or terms with special chars, use simple inclusion
+    if (
+      keyword.includes(" ") ||
+      keyword.includes("/") ||
+      keyword.includes("-")
+    ) {
+      return lowerText.includes(keyword);
+    }
+    // For single words, use word boundary to avoid false positives (e.g. 'line' in 'online')
+    const regex = new RegExp(`\\b${keyword}\\b`, "i");
+    return regex.test(lowerText);
+  });
 };
 
 interface NewsFeedProps {
-    topic?: string;
-    showHeader?: boolean;
-    className?: string;
+  topic?: string;
+  showHeader?: boolean;
+  className?: string;
 }
 
-const NewsFeed: React.FC<NewsFeedProps> = ({ topic = 'Global', showHeader = true, className = '' }) => {
-    const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-    const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-    const [summary, setSummary] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [isUpdating, setIsUpdating] = useState(false);
+const NewsFeed: React.FC<NewsFeedProps> = ({
+  topic = "Global",
+  showHeader = true,
+  className = "",
+}) => {
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
-    const getTitle = (topic: string) => {
-        return `ShareMatch ${topic === 'Global' ? '' : topic + ' '}News Wire`;
-    };
+  const getTitle = (topic: string) => {
+    return `ShareMatch News Wire`;
+  };
 
-    const title = getTitle(topic);
-    const promptContext = topic === 'F1' ? 'Formula 1' :
-        topic === 'NBA' ? 'Basketball' :
-            topic === 'NFL' ? 'American Football' :
-                topic === 'Eurovision' ? 'Eurovision Song Contest' : 'Football';
+  const title = getTitle(topic);
+  const promptContext =
+    topic === "F1"
+      ? "Formula 1"
+      : topic === "NBA"
+        ? "Basketball"
+        : topic === "NFL"
+          ? "American Football"
+          : topic === "Eurovision"
+            ? "Eurovision Song Contest"
+            : "Football";
 
-    const fetchNews = async () => {
-        setLoading(true);
-        try {
-            // 1. Fetch existing news from DB
-            const { data, error } = await supabase
-                .from('news_articles')
-                .select('*')
-                .eq('topic', topic)
-                .order('published_at', { ascending: false })
-                .limit(10);
+  const fetchNews = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch existing news from DB
+      const { data, error } = await supabase
+        .from("news_articles")
+        .select("*")
+        .eq("topic", topic)
+        .order("published_at", { ascending: false })
+        .limit(10);
 
-            if (error) throw error;
+      if (error) throw error;
 
-            const isRelevant = (text: string, topic: string): boolean => {
-                // If Global, everything is relevant
-                if (topic === 'Global') return true;
+      const isRelevantToAsset = (text: string, topic: string): boolean => {
+        const lowerText = text.toLowerCase();
 
-                // Check if the topic appears in the text
-                const lowerText = text.toLowerCase();
-                const lowerTopic = topic.toLowerCase();
+        // If topic is like "team:Arsenal:Premier League"
+        let assetName = topic.startsWith("team:") ? topic.split(":")[1] : topic;
 
-                // Direct match
-                if (lowerText.includes(lowerTopic)) return true;
+        if (!assetName) return false;
 
-                // SPECIAL LOGIC FOR INDEXES/LEAGUES
-                // If topic is a league (e.g. "Premier League", "NBA"), allow team names or generic terms
-                // For now, we simple check if the text contains common terms if the topic is a known league
-                if (lowerTopic.includes('premier league') || lowerTopic.includes('epl')) {
-                    const eplKeywords = ['liverpool', 'arsenal', 'man city', 'manchester', 'chelsea', 'tottenham', 'spurs', 'aston villa', 'newcastle', 'west ham', 'brighton', 'fulham', 'brentford', 'palace', 'everton', 'forest', 'wolves', 'leicester', 'southampton', 'ipswich', 'football', 'soccer'];
-                    if (eplKeywords.some(k => lowerText.includes(k))) return true;
-                }
+        const lowerAsset = assetName.toLowerCase();
 
-                if (lowerTopic.includes('nba')) {
-                    // Basic check for "basketball" or common teams if needed, but NBA usually appears in headline
-                    if (lowerText.includes('basketball') || lowerText.includes('lakers') || lowerText.includes('celtics')) return true;
-                }
+        // Simple match for asset full name or first word
+        const matchesFullName = lowerText.includes(lowerAsset);
+        const matchesFirstWord = lowerText.includes(lowerAsset.split(" ")[0]);
 
-                // Split topic for partial match (e.g. "Orlando Magic" matches "Magic")
-                const topicParts = lowerTopic.split(' ').filter(part => part.length > 2); // Ignore "FC", "The" etc
-                if (topicParts.some(part => lowerText.includes(part))) return true;
+        return matchesFullName || matchesFirstWord;
+      };
 
-                return false;
-            };
+      // ... inside fetchNews ...
 
-            // ... inside fetchNews ...
+      if (data && data.length > 0) {
+        // Filter for Sharia compliance AND Relevance
+        const filteredData = data.filter((item) => {
+          const text = (
+            item.headline +
+            " " +
+            (item.source || "")
+          ).toLowerCase();
 
-            if (data && data.length > 0) {
-                // Filter for Sharia compliance AND Relevance
-                const filteredData = data.filter(item => {
-                    const text = (item.headline + ' ' + (item.source || '')).toLowerCase();
-                    // 1. Must NOT be Haram
-                    if (isHaram(text)) return false;
-                    // 2. Must be Relevant to the topic
-                    if (!isRelevant(item.headline, topic)) return false;
+          // 1. Must NOT be Haram
+          if (isHaram(text)) return false;
 
-                    return true;
-                });
-                setNewsItems(filteredData);
-            }
+          // 2. Must be Relevant to the asset
+          if (
+            !isRelevantToAsset(item.headline + " " + (item.source || ""), topic)
+          )
+            return false;
 
-            // 2. Check if update is needed (Lazy Update)
-            const { data: updateData } = await supabase
-                .from('news_updates')
-                .select('last_updated_at')
-                .eq('topic', topic)
-                .single();
+          return true;
+        });
 
-            const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
-            const lastUpdated = updateData?.last_updated_at ? new Date(updateData.last_updated_at) : null;
+        setNewsItems(filteredData);
+      }
 
-            if (!lastUpdated || lastUpdated < sixHoursAgo) {
-                triggerUpdate();
-            }
+      // 2. Check if update is needed (Lazy Update)
+      const { data: updateData } = await supabase
+        .from("news_updates")
+        .select("last_updated_at")
+        .eq("topic", topic)
+        .single();
 
-        } catch (err) {
-            console.error('Error fetching news:', err);
-            setError('Failed to load news.');
-        } finally {
-            setLoading(false);
-        }
-    };
+      const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+      const lastUpdated = updateData?.last_updated_at
+        ? new Date(updateData.last_updated_at)
+        : null;
 
-    const triggerUpdate = async () => {
-        setIsUpdating(true);
-        try {
-            const { data, error } = await supabase.functions.invoke('fetch-news', {
-                body: {
-                    topic,
-                    apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-                    // force: true // Removed to re-enable caching
-                }
-            });
+      if (!lastUpdated || lastUpdated < sixHoursAgo) {
+        triggerUpdate();
+      }
+    } catch (err) {
+      console.error("Error fetching news:", err);
+      setError("Failed to load news.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            if (error) throw error;
+  const triggerUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-news", {
+        body: {
+          topic,
+          apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+          // force: true // Removed to re-enable caching
+        },
+      });
 
-            if (data?.dbStatus === 'updated' || data?.updated) {
-                // Refetch to get new items
-                const { data: newData } = await supabase
-                    .from('news_articles')
-                    .select('*')
-                    .eq('topic', topic)
-                    .order('published_at', { ascending: false })
-                    .limit(10);
+      if (error) throw error;
 
-                if (newData) setNewsItems(newData);
-            } else {
-                setDebugMessage(JSON.stringify(data, null, 2));
-            }
+      if (data?.dbStatus === "updated" || data?.updated) {
+        // Refetch to get new items
+        const { data: newData } = await supabase
+          .from("news_articles")
+          .select("*")
+          .eq("topic", topic)
+          .order("published_at", { ascending: false })
+          .limit(10);
 
-            if (data?.error || data?.dbStatus === 'empty') {
-                setDebugMessage(JSON.stringify(data, null, 2));
-            }
-        } catch (err: any) {
-            console.error('Error updating news:', err);
-            setDebugMessage(`Client Error: ${err.message || JSON.stringify(err)}`);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
+        if (newData) setNewsItems(newData);
+      } else {
+        setDebugMessage(JSON.stringify(data, null, 2));
+      }
 
-    // DEBUG STATE
-    const [debugMessage, setDebugMessage] = useState<string>("");
+      if (data?.error || data?.dbStatus === "empty") {
+        setDebugMessage(JSON.stringify(data, null, 2));
+      }
+    } catch (err: any) {
+      console.error("Error updating news:", err);
+      setDebugMessage(`Client Error: ${err.message || JSON.stringify(err)}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchNews();
-    }, [topic]);
+  // DEBUG STATE
+  const [debugMessage, setDebugMessage] = useState<string>("");
 
-    const handleNewsClick = async (item: NewsItem) => {
-        setSelectedNews(item);
-        setSummary('');
-        setLoading(true); // Re-use loading state for modal or create separate one? 
-        // Let's create a local loading state for the modal to avoid hiding the feed
-        // Actually, let's just use a separate state variable for summary loading
-    };
+  useEffect(() => {
+    fetchNews();
+  }, [topic]);
 
-    // Separate loading state for summary
-    const [summaryLoading, setSummaryLoading] = useState(false);
+  const handleNewsClick = async (item: NewsItem) => {
+    setSelectedNews(item);
+    setSummary("");
+    setLoading(true); // Re-use loading state for modal or create separate one?
+    // Let's create a local loading state for the modal to avoid hiding the feed
+    // Actually, let's just use a separate state variable for summary loading
+  };
 
-    const generateSummary = async (item: NewsItem) => {
-        setSummaryLoading(true);
-        try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('API Key not found.');
+  // Separate loading state for summary
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
-            const ai = new GoogleGenAI({ apiKey });
-            const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
+  const generateSummary = async (item: NewsItem) => {
+    setSummaryLoading(true);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("API Key not found.");
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash',
-                contents: prompt,
-            });
+      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
 
-            setSummary(response.text || 'No summary generated.');
-        } catch (err: any) {
-            console.error(err);
-            setSummary('Failed to generate summary.');
-        } finally {
-            setSummaryLoading(false);
-        }
-    };
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: prompt,
+      });
 
-    // Trigger summary generation when modal opens
-    useEffect(() => {
-        if (selectedNews) {
-            generateSummary(selectedNews);
-        }
-    }, [selectedNews]);
+      setSummary(response.text || "No summary generated.");
+    } catch (err: any) {
+      console.error(err);
+      setSummary("Failed to generate summary.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
-    const closeModal = () => {
-        setSelectedNews(null);
-        setSummary('');
-    };
+  // Trigger summary generation when modal opens
+  useEffect(() => {
+    if (selectedNews) {
+      generateSummary(selectedNews);
+    }
+  }, [selectedNews]);
 
-    const formatTime = (dateString: string) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+  const closeModal = () => {
+    setSelectedNews(null);
+    setSummary("");
+  };
 
-        if (diffInHours < 1) return 'Just now';
-        if (diffInHours < 24) return `${diffInHours}h ago`;
-        return `${Math.floor(diffInHours / 24)}d ago`;
-    };
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
 
-    return (
-        <>
-            <div data-testid="news-feed" className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || 'h-48 sm:h-50 md:h-48 lg:h-60 xl:h-60'}`}>
-                {showHeader && (
-                    <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
-                        <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
-                        <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">{title}</h3>
-                        {isUpdating && <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />}
-                        <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">LIVE</span>
-                    </div>
+    if (diffInHours < 1) return "Just now";
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return `${Math.floor(diffInHours / 24)}d ago`;
+  };
+
+  return (
+    <>
+      <div
+        data-testid="news-feed"
+        className={`bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col ${className || "h-48 sm:h-50 md:h-48 lg:h-60 xl:h-60"}`}
+      >
+        {showHeader && (
+          <div className="p-2 sm:p-3 border-b border-gray-700 bg-gray-800/50 flex items-center gap-1.5 sm:gap-2">
+            <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white flex-shrink-0" />
+            <h3 className="font-bold text-gray-200 text-xs sm:text-sm truncate flex-1">
+              {title}
+            </h3>
+            {isUpdating && (
+              <RefreshCw className="w-3 h-3 text-gray-400 animate-spin flex-shrink-0" />
+            )}
+            <span className="text-[8px] sm:text-[10px] bg-red-500/20 text-red-400 px-1 sm:px-1.5 py-0.5 rounded animate-pulse flex-shrink-0">
+              LIVE
+            </span>
+          </div>
+        )}
+        <div className="flex-1 overflow-hidden relative group">
+          <div className="absolute inset-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scrollbar-hide">
+            {loading && newsItems.length === 0 ? (
+              <div className="text-center text-gray-500 text-xs sm:text-sm py-4">
+                Loading news...
+              </div>
+            ) : newsItems.length === 0 ? (
+              <div className="text-center text-gray-500 text-xs sm:text-sm py-4 flex flex-col gap-2">
+                <span>No news available.</span>
+                {debugMessage && (
+                  <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
+                    DEBUG: {debugMessage}
+                  </pre>
                 )}
-                <div className="flex-1 overflow-hidden relative group">
-                    <div className="absolute inset-0 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-4 scrollbar-hide">
-                        {loading && newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-xs sm:text-sm py-4">Loading news...</div>
-                        ) : newsItems.length === 0 ? (
-                            <div className="text-center text-gray-500 text-xs sm:text-sm py-4 flex flex-col gap-2">
-                                <span>No news available.</span>
-                                {debugMessage && (
-                                    <pre className="text-[10px] text-left bg-black/50 p-2 rounded overflow-auto max-h-40 whitespace-pre-wrap font-mono text-red-300">
-                                        DEBUG: {debugMessage}
-                                    </pre>
-                                )}
-                            </div>
-                        ) : (
-                            newsItems.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="border-b border-gray-700/50 last:border-0 pb-2 sm:pb-3 last:pb-0 cursor-pointer group/item"
-                                    onClick={() => handleNewsClick(item)}
-                                >
-                                    <p className="text-xs sm:text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
-                                        {item.headline}
-                                    </p>
-                                    <div className="flex justify-between mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-500">
-                                        <span className="truncate max-w-[50%]">{item.source}</span>
-                                        <span className="flex-shrink-0">{formatTime(item.published_at)}</span>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
+              </div>
+            ) : (
+              newsItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="border-b border-gray-700/50 last:border-0 pb-2 sm:pb-3 last:pb-0 cursor-pointer group/item"
+                  onClick={() => handleNewsClick(item)}
+                >
+                  <p className="text-xs sm:text-sm font-medium text-gray-300 group-hover/item:text-white transition-colors line-clamp-2">
+                    {item.headline}
+                  </p>
+                  <div className="flex justify-between mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-gray-500">
+                    <span className="truncate max-w-[50%]">{item.source}</span>
+                    <span className="flex-shrink-0">
+                      {formatTime(item.published_at)}
+                    </span>
+                  </div>
                 </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* AI Summary Modal - Responsive */}
+      {selectedNews && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200"
+          data-testid="news-summary-modal-overlay"
+        >
+          <div
+            className="max-w-[92vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto scrollbar-hide"
+            style={{
+              borderRadius: "12px",
+              background: "rgba(4, 34, 34, 0.60)",
+              backdropFilter: "blur(40px)",
+              WebkitBackdropFilter: "blur(40px)",
+            }}
+            data-testid="news-summary-modal"
+          >
+            {/* Header - Compact on mobile */}
+            <div
+              className="px-2.5 sm:px-5 py-2 sm:py-4 flex justify-between items-center sticky top-0 z-10"
+              style={{
+                background: "#021A1A",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <h3 className="font-bold text-white flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base">
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
+                AI News Summary
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+                data-testid="news-summary-close-button"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             </div>
 
-            {/* AI Summary Modal - Responsive */}
-            {selectedNews && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200" data-testid="news-summary-modal-overlay">
-                    <div
-                        className="max-w-[92vw] sm:max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto scrollbar-hide"
-                        style={{
-                            borderRadius: '12px',
-                            background: 'rgba(4, 34, 34, 0.60)',
-                            backdropFilter: 'blur(40px)',
-                            WebkitBackdropFilter: 'blur(40px)',
-                        }}
-                        data-testid="news-summary-modal"
-                    >
-                        {/* Header - Compact on mobile */}
-                        <div
-                            className="px-2.5 sm:px-5 py-2 sm:py-4 flex justify-between items-center sticky top-0 z-10"
-                            style={{
-                                background: '#021A1A',
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                            }}
-                        >
-                            <h3 className="font-bold text-white flex items-center gap-1 sm:gap-2 text-[11px] sm:text-base">
-                                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#005430] flex-shrink-0" />
-                                AI News Summary
-                            </h3>
-                            <button onClick={closeModal} className="text-gray-400 hover:text-white transition-colors flex-shrink-0" data-testid="news-summary-close-button">
-                                <X className="w-4 h-4 sm:w-5 sm:h-5" />
-                            </button>
-                        </div>
+            {/* Content - Compact on mobile */}
+            <div className="p-2.5 sm:p-6">
+              <h4 className="font-bold text-[11px] sm:text-lg text-white mb-2 sm:mb-4 leading-tight">
+                {selectedNews.headline}
+              </h4>
 
-                        {/* Content - Compact on mobile */}
-                        <div className="p-2.5 sm:p-6">
-                            <h4 className="font-bold text-[11px] sm:text-lg text-white mb-2 sm:mb-4 leading-tight">{selectedNews.headline}</h4>
-
-                            {summaryLoading ? (
-                                <div className="space-y-1.5 sm:space-y-3 animate-pulse">
-                                    <div className="h-2 bg-white/10 rounded w-full"></div>
-                                    <div className="h-2 bg-white/10 rounded w-5/6"></div>
-                                    <div className="h-2 bg-white/10 rounded w-4/5"></div>
-                                </div>
-                            ) : (
-                                <p className="text-gray-200 text-[10px] sm:text-sm leading-relaxed">
-                                    {summary}
-                                </p>
-                            )}
-
-                            <div className="mt-3 sm:mt-6 pt-2 sm:pt-4 border-t border-white/10 flex justify-end">
-                                <span className="text-[9px] sm:text-xs text-gray-400">Powered by Google Gemini</span>
-                            </div>
-                        </div>
-                    </div>
+              {summaryLoading ? (
+                <div className="space-y-1.5 sm:space-y-3 animate-pulse">
+                  <div className="h-2 bg-white/10 rounded w-full"></div>
+                  <div className="h-2 bg-white/10 rounded w-5/6"></div>
+                  <div className="h-2 bg-white/10 rounded w-4/5"></div>
                 </div>
-            )}
-        </>
-    );
+              ) : (
+                <p className="text-gray-200 text-[10px] sm:text-sm leading-relaxed">
+                  {summary}
+                </p>
+              )}
+
+              <div className="mt-3 sm:mt-6 pt-2 sm:pt-4 border-t border-white/10 flex justify-end">
+                <span className="text-[9px] sm:text-xs text-gray-400">
+                  Powered by Google Gemini
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 };
 
 export default NewsFeed;

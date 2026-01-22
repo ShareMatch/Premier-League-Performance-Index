@@ -19,6 +19,15 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
   onSelectOrder,
   seasonDatesMap,
 }) => {
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Artificial delay to show skeleton loader
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
   // No extra loading state needed, HotQuestions handles its own skeleton if needed via props or check
   // Actually, user wants no loader delay here, so we just remove the state logic that forced a delay.
   // If the data (teams) is not ready, HotQuestions will show partial or empty.
@@ -32,16 +41,18 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
     <div className="h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)]">
           <button
             onClick={() => onNavigate("HOME")}
-            className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+            aria-label="Back to home"
+            data-testid="new-markets-back"
+            className="p-1 rounded-full hover:bg-white/5 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" />
+            <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />
           </button>
           <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+            <h2 className="text-[clamp(1rem,4vw,1.125rem)] font-bold text-white flex items-center gap-[clamp(0.25rem,1vw,0.5rem)]">
+              <TrendingUp className="w-[clamp(0.875rem,3vw,1rem)] h-[clamp(0.875rem,3vw,1rem)] text-green-500" />
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
                 Trending Markets
               </span>
@@ -51,7 +62,6 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
                 className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
               />
             </h2>
-
           </div>
         </div>
       </div>
@@ -67,7 +77,7 @@ const NewMarketsPage: React.FC<NewMarketsPageProps> = ({
           limit={0} // Show all
           showHeader={false}
           enableAnimation={false}
-          isLoading={false}
+          isLoading={isLoading || teams.length === 0}
         />
       </div>
     </div>
