@@ -9,11 +9,15 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   const [input, setInput] = useState('');
 
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !disabled) {
       onSend(input.trim());
       setInput('');
+      // Maintain focus
+      setTimeout(() => inputRef.current?.focus(), 0);
     }
   };
 
@@ -25,14 +29,22 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-2.5 sm:p-3 border-t border-gray-700 bg-gray-800/50">
+    <form onSubmit={handleSubmit} className="flex-shrink-0 flex gap-2 p-2 sm:p-2 border-t border-gray-700 bg-gray-800/50">
       <input
+        ref={inputRef}
         type="text"
+        autoFocus
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={() => {
+          // Robust focus maintenance for mobile keyboards
+          if (!disabled && inputRef.current) {
+            // We don't want to force focus ALWAYS (user might want to close keyboard), 
+            // but we want it to persist after action.
+          }
+        }}
         placeholder="Type a message..."
-        disabled={disabled}
         className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-700/50 border border-gray-600 rounded-full text-base sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00A651]/50 focus:border-[#00A651] disabled:opacity-50"
       />
       <button

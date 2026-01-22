@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 import { restrictedCors } from "../_shared/cors.ts";
+import { sendSendgridEmail } from "../_shared/sendgrid.ts";
+import { generateOrderConfirmationEmailHtml, generateOrderConfirmationEmailSubject } from "../_shared/email-templates.ts";
 
 type TradeDirection = "buy" | "sell";
 
@@ -75,6 +77,54 @@ serve(async (req) => {
         JSON.stringify({ error: error.message || "Failed to place trade" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // ── SEND CONFIRMATION EMAIL ─────────────────────────────
+    try {
+      const sendgridApiKey = Deno.env.get("SENDGRID_API_KEY");
+      const sendgridFromEmail = Deno.env.get("SENDGRID_FROM_EMAIL");
+
+      if (sendgridApiKey && sendgridFromEmail && authContext.publicUser.email) {
+        // Fetch asset and user details for the email
+        const [assetRes, userRes] = await Promise.all([
+          authContext.supabase
+            .from("market_index_trading_assets")
+            .select("assets!inner(name)")
+            .eq("id", payload.marketTradingAssetId)
+            .single(),
+          authContext.supabase
+            .from("users")
+            .select("full_name")
+            .eq("id", userId)
+            .single()
+        ]);
+
+        const assetName = assetRes.data?.assets?.name || "Unknown Asset";
+        const userFullName = userRes.data?.full_name || "Valued User";
+        const orderId = data?.orderId || `ORD-${Date.now()}`;
+
+        const emailHtml = generateOrderConfirmationEmailHtml({
+          logoImageUrl: "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png",
+          userFullName,
+          orderId,
+          assetName,
+          side: payload.direction,
+          units: payload.quantity,
+          pricePerUnit: payload.price,
+          totalAmount: payload.totalCost
+        });
+
+        await sendSendgridEmail({
+          apiKey: sendgridApiKey,
+          from: sendgridFromEmail,
+          to: authContext.publicUser.email,
+          subject: generateOrderConfirmationEmailSubject(orderId, payload.direction),
+          html: emailHtml
+        });
+      }
+    } catch (emailErr) {
+      // Don't fail the trade if email fails, just log it
+      console.error("Failed to send confirmation email:", emailErr);
     }
 
     return new Response(JSON.stringify(data), {

@@ -279,6 +279,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors z-30"
+          aria-label="Close"
           data-testid="login-close-button"
         >
           <X className="w-5 h-5" strokeWidth={2} />
@@ -375,10 +376,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </button>
               </div>
 
-              
-
               {error && (
-                <p className="text-center text-red-400 font-sans text-sm">
+                <p className="text-center text-red-400 font-sans text-sm"
+                   data-testid="login-error"
+                >
                   {error}
                 </p>
               )}
@@ -433,6 +434,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 type="button"
                 onClick={() => setShowHelp(true)}
                 className="flex items-center justify-center gap-1.5 text-gray-400 hover:text-white transition-colors text-xs"
+                data-testid="login-help-button"
               >
                 <HelpCircle className="w-3.5 h-3.5" />
                 <span>Need help logging in?</span>

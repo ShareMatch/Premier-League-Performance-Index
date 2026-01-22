@@ -1,18 +1,32 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Routes, Route, useNavigate, useLocation, useParams, Navigate } from "react-router-dom";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  useParams,
+  Navigate,
+} from "react-router-dom";
 import { Team, Order, Wallet, Position, Transaction, League } from "./types";
 import { supabase } from "./lib/supabase";
 import Header from "./components/Header";
 import TopBar from "./components/TopBar";
 import RightPanel from "./components/RightPanel";
 import Ticker from "./components/Ticker";
-import { Menu, X, Loader2 } from "lucide-react";
+import { Menu, X, Loader2, HelpCircle, ArrowLeft } from "lucide-react";
 import NewsFeed from "./components/NewsFeed";
 import HomeDashboard from "./components/HomeDashboard";
 import OrderBookRow from "./components/OrderBookRow";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import AIAnalysis from "./components/AIAnalysis";
+import OrderConfirmationModal from "./components/OrderConfirmationModal";
 // Lazy load AIAnalyticsPage to prevent load-time crashes from GenAI SDK
 const AIAnalyticsPage = React.lazy(
   () => import("./components/AIAnalyticsPage"),
@@ -53,6 +67,177 @@ import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
 import HelpCenterModal from "./components/HelpCenterModal";
+import HowItWorksModal from "./components/HowItWorksModal";
+
+const AssetRouteWrapper: React.FC<{
+  allAssets: Team[];
+  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
+  handleNavigate: (league: League) => void;
+  previousLeague: League;
+}> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
+  const { user, loading } = useAuth();
+  const { market, name } = useParams();
+  const navigate = useNavigate();
+  const asset = useMemo(() => {
+    // Find asset by both market and name for accurate matching
+    return allAssets.find(
+      (a) =>
+        a.name.toLowerCase().replace(/\s+/g, "-") === name &&
+        a.market?.toLowerCase() === market?.toLowerCase(),
+    );
+  }, [allAssets, name, market]);
+
+  if (loading || (!allAssets || allAssets.length === 0)) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+        <p className="text-gray-400">Loading asset data...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!asset) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <AssetPage
+      asset={asset}
+      onBack={() => {
+        navigate(-1);
+      }}
+      onSelectOrder={handleSelectOrder}
+      onNavigateToIndex={(market) => {
+        // Navigate to the index/league page for this market
+        handleNavigate(market as League);
+      }}
+    />
+  );
+};
+
+const ShortAssetRouteWrapper: React.FC<{
+  allAssets: Team[];
+  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
+  handleNavigate: (league: League) => void;
+}> = ({ allAssets, handleSelectOrder, handleNavigate }) => {
+  const { user, loading: authLoading } = useAuth();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [resolving, setResolving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const asset = useMemo(() => {
+    // Find asset by ID (string comparison)
+    return allAssets.find((a) => a.id.toString() === id);
+  }, [allAssets, id]);
+
+  useEffect(() => {
+    // If not a direct asset ID match, it's likely a short code
+    if (allAssets.length > 0 && !asset && id) {
+      const resolveShortCode = async () => {
+        setResolving(true);
+        try {
+          // In a real browser, the Edge Function might 301, 
+          // but here we can call it and follow or use the result.
+          // Since our Edge Function GET /share?code=ABC redirects, 
+          // we can just use the mapping logic or update the function to return JSON if requested.
+
+          // Actually, we'll do a direct lookup to keep it fast
+          const { data, error: lookupError } = await supabase
+            .from("market_index_trading_assets")
+            .select(`
+              id,
+              assets!inner (name),
+              market_index_seasons!inner (
+                market_indexes!inner (
+                  markets!inner (market_token)
+                )
+              )
+            `)
+            .eq("short_code", id)
+            .maybeSingle();
+
+          if (lookupError || !data) {
+            setError("Link not found");
+            return;
+          }
+
+          const ta = data as any;
+
+          if (!ta) {
+            setError("Link details not found");
+            return;
+          }
+
+          // Supabase joins can sometimes return arrays depending on the schema inference
+          const assetObj = Array.isArray(ta.assets) ? ta.assets[0] : ta.assets;
+          const season = Array.isArray(ta.market_index_seasons) ? ta.market_index_seasons[0] : ta.market_index_seasons;
+          const marketIndex = Array.isArray(season?.market_indexes) ? season.market_indexes[0] : season?.market_indexes;
+          const marketObj = Array.isArray(marketIndex?.markets) ? marketIndex.markets[0] : marketIndex?.markets;
+
+          const slug = assetObj?.name?.toLowerCase().replace(/\s+/g, "-");
+          const market = marketObj?.market_token;
+
+          if (!slug || !market) {
+            setError("Invalid asset data");
+            return;
+          }
+
+          // Redirect to the canonical asset URL
+          navigate(`/asset/${market}/${slug}`, { replace: true });
+        } catch (err) {
+          console.error("Resolve error:", err);
+          setError("Failed to resolve link");
+        } finally {
+          setResolving(false);
+        }
+      };
+      resolveShortCode();
+    }
+  }, [allAssets, asset, id, navigate]);
+
+  if (authLoading || allAssets.length === 0 || resolving) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+        <p className="text-gray-400">{resolving ? "Resolving share link..." : "Loading asset data..."}</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <p className="text-red-400 mb-4">{error}</p>
+        <button onClick={() => navigate("/")} className="text-brand-primary hover:underline">
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
+  if (!asset) {
+    // This could be the gap between lookup and navigation
+    return null;
+  }
+
+  return (
+    <AssetPage
+      asset={asset}
+      onBack={() => navigate(-1)}
+      onSelectOrder={handleSelectOrder}
+      onNavigateToIndex={(market) => handleNavigate(market as League)}
+    />
+  );
+};
 
 const App: React.FC = () => {
   const { user, loading, signOut } = useAuth();
@@ -62,6 +247,7 @@ const App: React.FC = () => {
   const [previousLeague, setPreviousLeague] = useState<League>("HOME");
   const [allAssets, setAllAssets] = useState<Team[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   // Supabase State
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -70,6 +256,17 @@ const App: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
+  const [confirmationData, setConfirmationData] = useState<null | {
+    orderId: string;
+    assetName: string;
+    side: "buy" | "sell";
+    units: number;
+    pricePerUnit: number;
+    totalAmount: number;
+  }>(null);
+
+  // Guest Mobile Navigation State
+  const [activeHoverMenu, setActiveHoverMenu] = useState<string | null>(null);
 
   // Refs to track current state for subscription callbacks
   const userRef = useRef(user);
@@ -96,6 +293,14 @@ const App: React.FC = () => {
   const [sellErrorAssetName, setSellErrorAssetName] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top on navigation changes
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   // Right Panel visibility (for mobile/tablet overlay)
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -134,9 +339,9 @@ const App: React.FC = () => {
     };
   }, [showRightPanel]);
 
-
   // Help Center Modal visibility
   const [showHelpCenter, setShowHelpCenter] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   // Triggers for opening auth modals from HelpCenterModal (passed to TopBar)
   const [triggerLoginModal, setTriggerLoginModal] = useState(false);
@@ -155,7 +360,9 @@ const App: React.FC = () => {
       setActiveLeague(league);
     } else if (path.startsWith("/asset/")) {
       const slug = path.split("/")[2];
-      const asset = allAssets.find(a => a.name.toLowerCase().replace(/\s+/g, '-') === slug);
+      const asset = allAssets.find(
+        (a) => a.name.toLowerCase().replace(/\s+/g, "-") === slug,
+      );
       if (asset?.market) {
         setActiveLeague(asset.market as League);
       }
@@ -315,14 +522,14 @@ const App: React.FC = () => {
             bid: Number(ta.sell), // Sell price is bid
             offer: Number(ta.buy), // Buy price is offer
             lastChange: "none" as const, // TODO: Calculate from price history
-            color: staticAsset.color,
+            color: ta.primary_color || staticAsset.color,
             logo_url:
               getLogoUrl(staticAsset.name, category, ta.id) ||
               staticAsset.logo_url,
             category: category,
             market: market,
             market_trading_asset_id: ta.id,
-            is_settled: ta.market_index_seasons.is_settled,
+            is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
                 "en-US",
@@ -337,8 +544,9 @@ const App: React.FC = () => {
             season_status: ta.market_index_seasons.status,
             season_start_date: ta.market_index_seasons.start_date,
             season_end_date: ta.market_index_seasons.end_date,
-            season_stage: ta.market_index_seasons.stage,
+            season_stage: ta.stage || ta.market_index_seasons.stage,
             units: Number(ta.units),
+            short_code: ta.short_code,
           };
         })
         .filter(Boolean) as Team[];
@@ -352,26 +560,32 @@ const App: React.FC = () => {
   useEffect(() => {
     if (user) {
       // Pass both auth_user_id and email for better fallback support
-      getPublicUserId(user.id, user.email).then((userId) => {
-        if (userId) {
-          setPublicUserId(userId);
-        } else {
-          // No user record found or session invalid - this indicates incomplete registration or session issue
-          // Sign out the user for security
-          supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
-          // Don't show alert during automatic sign-out to avoid spam
+      getPublicUserId(user.id, user.email)
+        .then((userId) => {
+          if (userId) {
+            setPublicUserId(userId);
+          } else {
+            // No user record found or session invalid - this indicates incomplete registration or session issue
+            // Sign out the user for security
+            supabase.auth
+              .signOut()
+              .catch((err) => console.error("Error signing out:", err));
+            // Don't show alert during automatic sign-out to avoid spam
+            setPublicUserId(null);
+            setKycStatus(null);
+            setKycChecked(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking user registration:", error);
+          // If there's an error checking, sign out to be safe
+          supabase.auth
+            .signOut()
+            .catch((err) => console.error("Error signing out:", err));
           setPublicUserId(null);
           setKycStatus(null);
           setKycChecked(false);
-        }
-      }).catch((error) => {
-        console.error('Error checking user registration:', error);
-        // If there's an error checking, sign out to be safe
-        supabase.auth.signOut().catch(err => console.error('Error signing out:', err));
-        setPublicUserId(null);
-        setKycStatus(null);
-        setKycChecked(false);
-      });
+        });
     } else {
       setPublicUserId(null);
       setKycStatus(null);
@@ -432,11 +646,19 @@ const App: React.FC = () => {
   };
 
   const handleViewAsset = (asset: Team) => {
+    // Check if user is logged in
+    if (!user) {
+      setAlertMessage("You need to login to continue");
+      setAlertOpen(true);
+      return;
+    }
+
     setSelectedOrder(null); // Close trade slip when viewing an asset page
     setPreviousLeague(activeLeague);
 
-    const slug = asset.name.toLowerCase().replace(/\s+/g, '-');
-    navigate(`/asset/${slug}`);
+    const slug = asset.name.toLowerCase().replace(/\s+/g, "-");
+    const market = asset.market?.toLowerCase() || "unknown";
+    navigate(`/asset/${market}/${slug}`);
 
     // Sync sidebar active league with the asset's market if available
     if (asset.market) {
@@ -497,21 +719,23 @@ const App: React.FC = () => {
     const portfolioSubscription = subscribeToPortfolio(publicUserId, () => {
       // Guard: only update if user is still logged in (check refs for current state)
       if (userRef.current && publicUserIdRef.current) {
-        fetchPortfolio(publicUserIdRef.current).then(setPortfolio).catch((error) => {
-          console.error('Error updating portfolio via subscription:', error);
-        });
+        fetchPortfolio(publicUserIdRef.current)
+          .then(setPortfolio)
+          .catch((error) => {
+            console.error("Error updating portfolio via subscription:", error);
+          });
       }
     });
 
     const assetsSubscription = subscribeToAssets(() => {
       loadAssets().catch((error) => {
-        console.error('Error updating assets via subscription:', error);
+        console.error("Error updating assets via subscription:", error);
       });
     });
 
     const tradingAssetsSubscription = subscribeToTradingAssets(() => {
       loadAssets().catch((error) => {
-        console.error('Error updating trading assets via subscription:', error);
+        console.error("Error updating trading assets via subscription:", error);
       });
     });
 
@@ -547,12 +771,19 @@ const App: React.FC = () => {
       setSelectedOrder(null);
     }
 
-    if (league === "AI_ANALYTICS") {
-      if (!user) {
-        setAlertMessage("Please login to access the AI Analytics Engine.");
+    // Auth Protection for specific submenus and AI Analytics
+    if (!user) {
+      // List of public leagues/routes
+      const publicLeagues: League[] = ["HOME"];
+
+      if (!publicLeagues.includes(league)) {
+        setAlertMessage("You need to login to continue");
         setAlertOpen(true);
         return;
       }
+    }
+
+    if (league === "AI_ANALYTICS") {
       if (!portfolio || portfolio.length === 0) {
         setAlertMessage(
           "Exclusive Access: The AI Analytics Engine is available only to token holders.",
@@ -569,6 +800,9 @@ const App: React.FC = () => {
       return;
     }
 
+    // Set activeLeague BEFORE navigating to prevent flash of wrong state
+    setActiveLeague(league);
+
     if (league === "HOME") {
       navigate("/");
     } else if (league === "ALL_MARKETS") {
@@ -578,8 +812,6 @@ const App: React.FC = () => {
     } else {
       navigate(`/market/${league}`);
     }
-
-    setActiveLeague(league);
   };
 
   const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
@@ -590,7 +822,7 @@ const App: React.FC = () => {
 
     // Check if user is logged in
     if (!user) {
-      setAlertMessage("Please login to trade.");
+      setAlertMessage("You need to login to continue");
       setAlertOpen(true);
       return;
     }
@@ -642,10 +874,10 @@ const App: React.FC = () => {
     if (!selectedOrder || !wallet || !publicUserId) return;
 
     try {
-      // Recompute the correct price based on the final selected side
       const team = selectedOrder.team;
       const priceForSide = side === "buy" ? team.offer : team.bid;
 
+      // Execute real trade
       const result = await placeTrade(
         publicUserId,
         team.market_trading_asset_id || team.id,
@@ -654,11 +886,32 @@ const App: React.FC = () => {
         quantity,
       );
 
-      // Refresh portfolio and wallet after trade
-      await loadUserData();
+      // ── SUCCESS PATH ───────────────────────────────────────
+      // Prepare confirmation data and show modal IMMEDIATELY
+      setConfirmationData({
+        orderId: result?.orderId || `ORD-${Date.now()}`, // use real ID if backend returns it
+        assetName: team.name,
+        side,
+        units: quantity,
+        pricePerUnit: priceForSide,
+        totalAmount:
+          side === "buy"
+            ? quantity * priceForSide
+            : quantity * priceForSide * (1 - 0.05), // adjust if fee logic changes
+      });
+
+      // Show confirmation modal immediately
+      setShowConfirmationModal(true);
+
+      // Close trade slip
       setSelectedOrder(null);
-    } catch (error) {
-      setAlertMessage("Trade failed. Please try again.");
+      setShowRightPanel(false); // especially important on mobile
+
+      // Refresh data in the background (don't wait)
+      loadUserData();
+    } catch (error: any) {
+      console.error("Trade error:", error);
+      setAlertMessage(error.message || "Trade failed. Please try again.");
       setAlertOpen(true);
     }
   };
@@ -714,7 +967,9 @@ const App: React.FC = () => {
               loading ? (
                 <div className="h-screen bg-gray-900 text-white flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-                  <p className="text-gray-400 font-sans">Verifying session...</p>
+                  <p className="text-gray-400 font-sans">
+                    Verifying session...
+                  </p>
                 </div>
               ) : user ? (
                 <MyDetailsPage
@@ -781,15 +1036,20 @@ const App: React.FC = () => {
                   onTriggerLoginHandled={() => setTriggerLoginModal(false)}
                   triggerSignUpModal={triggerSignUpModal}
                   onTriggerSignUpHandled={() => setTriggerSignUpModal(false)}
+                  onHelpCenterClick={() => setShowHelpCenter(true)}
+                  activeHoverMenu={activeHoverMenu}
+                  setActiveHoverMenu={setActiveHoverMenu}
                 />
 
                 {/* AI Analytics Banner */}
-                <div className="w-full">
-                  <AIAnalyticsBanner
-                    onClick={handleAIAnalyticsClick}
-                    isActive={activeLeague === "AI_ANALYTICS"}
-                  />
-                </div>
+                {user && (
+                  <div className="w-full">
+                    <AIAnalyticsBanner
+                      onClick={handleAIAnalyticsClick}
+                      isActive={activeLeague === "AI_ANALYTICS"}
+                    />
+                  </div>
+                )}
 
                 {/* Main Layout: Sidebar + Content */}
                 <div className="flex-1 flex overflow-hidden">
@@ -800,13 +1060,51 @@ const App: React.FC = () => {
                     onLeagueChange={handleNavigate}
                     allAssets={allAssets}
                     onHelpCenterClick={() => setShowHelpCenter(true)}
+                    onHowItWorksClick={() => setShowHowItWorks(true)}
+                    onViewAsset={handleViewAsset}
+                    isLoggedIn={!!user}
                   />
 
                   {/* Content Container (Main + Right Panel) */}
                   <div className="flex-1 flex overflow-hidden">
                     {/* Center Content */}
                     <div className="flex-1 flex flex-col min-w-0 relative">
-                      <div className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto">
+                      <div
+                        ref={mainContentRef}
+                        className="flex-1 p-4 sm:p-6 md:p-8 scrollbar-hide overflow-y-auto"
+                      >
+                        {/* Mobile Navigation Row (Below TopBar) - Only for not logged in and ONLY on mobile */}
+                        {/* {!user && (
+                          <div className="lg:hidden w-full flex items-center justify-center gap-2 px-4 h-5 border-b border-gray-800 shadow-sm flex-shrink-0 mt-0">
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "who-we-are" ? null : "who-we-are")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "who-we-are"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              About Us
+                            </button>
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "how-it-works" ? null : "how-it-works")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "how-it-works"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              How it works
+                            </button>
+                            <button
+                              onClick={() => setActiveHoverMenu(activeHoverMenu === "shariah" ? null : "shariah")}
+                              className={`px-3 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider transition-all duration-200 ${activeHoverMenu === "shariah"
+                                ? "bg-white text-[#005430] shadow-lg"
+                                : "text-white/80 bg-white/5"
+                                }`}
+                            >
+                              Shariah
+                            </button>
+                          </div>
+                        )} */}
                         <div className="max-w-5xl mx-auto flex flex-col min-h-full">
                           {/* Main content wrapper - grows to fill space */}
                           <div className="flex-1">
@@ -826,7 +1124,28 @@ const App: React.FC = () => {
                               <Route
                                 path="/markets"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>}>
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="space-y-3 p-4">
+                                        {/* Skeleton Header */}
+                                        <div className="flex items-center gap-3 mb-6">
+                                          <div className="w-8 h-8 bg-gray-800 rounded-full animate-pulse" />
+                                          <div className="h-8 w-48 bg-gray-800 rounded animate-pulse" />
+                                        </div>
+                                        {/* Skeleton List */}
+                                        <div className="flex flex-col gap-3">
+                                          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                                            (i) => (
+                                              <div
+                                                key={i}
+                                                className="h-20 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse w-full"
+                                              />
+                                            ),
+                                          )}
+                                        </div>
+                                      </div>
+                                    }
+                                  >
                                     <AllMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -839,7 +1158,25 @@ const App: React.FC = () => {
                               <Route
                                 path="/new-markets"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>}>
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="space-y-4 p-4">
+                                        {/* Skeleton Header */}
+                                        <div className="h-8 w-48 bg-gray-800 rounded animate-pulse mb-6" />
+                                        {/* Skeleton Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                                            (i) => (
+                                              <div
+                                                key={i}
+                                                className="h-48 bg-gray-800/40 rounded-xl border border-gray-700/50 animate-pulse"
+                                              />
+                                            ),
+                                          )}
+                                        </div>
+                                      </div>
+                                    }
+                                  >
                                     <NewMarketsPage
                                       teams={allAssets}
                                       onNavigate={handleNavigate}
@@ -853,18 +1190,51 @@ const App: React.FC = () => {
                               <Route
                                 path="/ai-analytics"
                                 element={
-                                  <React.Suspense fallback={<div className="h-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#00A651]" /></div>}>
+                                  <React.Suspense
+                                    fallback={
+                                      <div className="h-full flex items-center justify-center">
+                                        <Loader2 className="w-8 h-8 animate-spin text-[#00A651]" />
+                                      </div>
+                                    }
+                                  >
                                     <AIAnalyticsPage teams={allAssets} />
                                   </React.Suspense>
                                 }
                               />
                               <Route
-                                path="/asset/:name"
-                                element={<AssetRouteWrapper allAssets={allAssets} handleSelectOrder={handleSelectOrder} handleNavigate={handleNavigate} previousLeague={previousLeague} />}
+                                path="/asset/:market/:name"
+                                element={
+                                  <AssetRouteWrapper
+                                    allAssets={allAssets}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleNavigate={handleNavigate}
+                                    previousLeague={previousLeague}
+                                  />
+                                }
+                              />
+                              <Route
+                                path="/a/:id"
+                                element={
+                                  <ShortAssetRouteWrapper
+                                    allAssets={allAssets}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleNavigate={handleNavigate}
+                                  />
+                                }
                               />
                               <Route
                                 path="/market/:leagueId"
-                                element={<LeagueRouteWrapper teams={teams} activeLeague={activeLeague} seasonDatesMap={seasonDatesMap} sortedTeams={sortedTeams} handleSelectOrder={handleSelectOrder} handleViewAsset={handleViewAsset} loading={loading} />}
+                                element={
+                                  <LeagueRouteWrapper
+                                    teams={teams}
+                                    activeLeague={activeLeague}
+                                    seasonDatesMap={seasonDatesMap}
+                                    sortedTeams={sortedTeams}
+                                    handleSelectOrder={handleSelectOrder}
+                                    handleViewAsset={handleViewAsset}
+                                    loading={loading}
+                                  />
+                                }
                               />
                             </Routes>
 
@@ -876,6 +1246,18 @@ const App: React.FC = () => {
                           </div>
                         </div>
                       </div>
+
+                      {/* Mobile How It Works Bar - Fixed above Ticker */}
+                      {!user && (
+                        <div className="md:hidden flex-shrink-0 bg-[#0B1221] px-4 py-2 border-t border-gray-800">
+                          <button
+                            onClick={() => setShowHowItWorks(true)}
+                            className="w-full h-9 flex items-center justify-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[0.7rem] font-bold text-emerald-400 hover:bg-emerald-500/20 active:scale-[0.98] transition-all uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                          >
+                            <span>How it works</span>
+                          </button>
+                        </div>
+                      )}
 
                       {/* Ticker */}
                       <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
@@ -889,7 +1271,7 @@ const App: React.FC = () => {
 
                     {/* Right Panel Desktop */}
                     {user && (
-                      <div className="hidden xl:block h-full">
+                      <div className="hidden lg:block h-full">
                         <RightPanel
                           portfolio={portfolio}
                           transactions={transactions}
@@ -915,7 +1297,7 @@ const App: React.FC = () => {
                 {/* Right Panel Mobile */}
                 {user && (
                   <div
-                    className={`2xl:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"}`}
+                    className={`lg:hidden fixed top-14 lg:top-20 bottom-0 right-0 z-40 transform transition-transform duration-300 ease-in-out h-[calc(100vh-3.5rem)] lg:h-[calc(100vh-5rem)] overflow-hidden ${showRightPanel ? "translate-x-0" : "translate-x-full"}`}
                   >
                     <RightPanel
                       portfolio={portfolio}
@@ -957,7 +1339,7 @@ const App: React.FC = () => {
         {/* Overlay for right panel on mobile/tablet */}
         {showRightPanel && (
           <div
-            className="fixed inset-0 bg-black/50 z-30 2xl:hidden touch-none"
+            className="fixed inset-0 bg-black/50 z-30 lg:hidden touch-none"
             onClick={() => {
               setShowRightPanel(false);
               setSelectedOrder(null); // Clear order so TradeSlip remounts fresh
@@ -981,7 +1363,6 @@ const App: React.FC = () => {
           />
         )}
 
-
         {/* Access Denied Modal (AI Analytics) */}
         <AccessDeniedModal
           isOpen={showAccessDeniedModal}
@@ -1004,6 +1385,22 @@ const App: React.FC = () => {
           message={alertMessage}
         />
 
+        {confirmationData && (
+          <OrderConfirmationModal
+            isOpen={showConfirmationModal}
+            onClose={() => {
+              setShowConfirmationModal(false);
+              setConfirmationData(null); // clean up
+            }}
+            orderId={confirmationData.orderId}
+            assetName={confirmationData.assetName}
+            side={confirmationData.side}
+            units={confirmationData.units}
+            pricePerUnit={confirmationData.pricePerUnit}
+            totalAmount={confirmationData.totalAmount}
+          />
+        )}
+
         {/* AI Chatbot - Fixed position bottom right */}
         <ChatBot />
 
@@ -1024,6 +1421,12 @@ const App: React.FC = () => {
             setShowHelpCenter(false);
             setShowKycModal(true);
           }}
+        />
+
+        {/* How It Works Modal */}
+        <HowItWorksModal
+          isOpen={showHowItWorks}
+          onClose={() => setShowHowItWorks(false)}
         />
       </div>
     </InactivityHandler>
@@ -1065,41 +1468,6 @@ const getLeagueTitleUtil = (id: string) => {
   }
 };
 
-const AssetRouteWrapper: React.FC<{
-  allAssets: Team[];
-  handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
-  handleNavigate: (league: League) => void;
-  previousLeague: League;
-}> = ({ allAssets, handleSelectOrder, handleNavigate, previousLeague }) => {
-  const { name } = useParams();
-  const navigate = useNavigate();
-  const asset = useMemo(() => {
-    return allAssets.find(a => a.name.toLowerCase().replace(/\s+/g, '-') === name);
-  }, [allAssets, name]);
-
-  if (allAssets.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">Loading asset data...</p>
-      </div>
-    );
-  }
-
-  if (!asset) {
-    return <Navigate to="/" replace />;
-  }
-
-  return (
-    <AssetPage
-      asset={asset}
-      onBack={() => {
-        navigate(-1);
-      }}
-      onSelectOrder={handleSelectOrder}
-    />
-  );
-};
 
 const LeagueRouteWrapper: React.FC<{
   teams: Team[];
@@ -1109,86 +1477,106 @@ const LeagueRouteWrapper: React.FC<{
   handleSelectOrder: (team: Team, type: "buy" | "sell") => void;
   handleViewAsset: (asset: Team) => void;
   loading: boolean;
-}> = ({ teams, activeLeague, seasonDatesMap, sortedTeams, handleSelectOrder, handleViewAsset, loading }) => {
-  if (loading && teams.length === 0) {
+}> = ({
+  teams,
+  activeLeague,
+  seasonDatesMap,
+  sortedTeams,
+  handleSelectOrder,
+  handleViewAsset,
+  loading,
+}) => {
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    // Use URL param for the league to prevent flash when navigating away
+    const { leagueId } = useParams();
+    const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+
+    // Redirect to home if not logged in
+    if (!authLoading && !user) {
+      return <Navigate to="/" replace />;
+    }
+
+    if (loading && teams.length === 0) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+          <p className="text-gray-400">Loading market statistics...</p>
+        </div>
+      );
+    }
     return (
-      <div className="h-full flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">Loading market statistics...</p>
+      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+        {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+        <div className="w-full xl:flex-[2] flex flex-col">
+          {/* Header aligned with order book */}
+          <div className="flex-shrink-0">
+            <Header
+              title={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+              seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
+              onBack={() => navigate(-1)}
+            />
+          </div>
+
+          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
+            {/* Fixed Header - Responsive padding and text */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+              <div className="text-left">Asset</div>
+              <div>Sell</div>
+              <div>Buy</div>
+            </div>
+
+            {/* Scrollable List */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+              {sortedTeams.map((team) => (
+                <OrderBookRow
+                  key={team.id}
+                  team={team}
+                  onSelectOrder={handleSelectOrder}
+                  onViewAsset={handleViewAsset}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+        <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+          {/* AI Analysis */}
+          <div className="flex-shrink-0">
+            <AIAnalysis
+              teams={teams}
+              leagueName={getLeagueTitleUtil(displayLeague)}
+            />
+          </div>
+
+          {/* Did You Know (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <DidYouKnow
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* On This Day (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <OnThisDay
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* News Feed */}
+          <div className="flex-shrink-0 pb-4 xl:pb-0">
+            <NewsFeed topic={displayLeague as any} />
+          </div>
+        </div>
       </div>
     );
-  }
-  return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-stretch">
-      {/* Left Column: Header + Order Book (full width on mobile, 2/3 on desktop) */}
-      <div className="w-full lg:flex-[2] flex flex-col">
-        {/* Header aligned with order book */}
-        <div className="flex-shrink-0">
-          <Header
-            title={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
-            seasonStartDate={seasonDatesMap.get(activeLeague)?.start_date}
-            seasonEndDate={seasonDatesMap.get(activeLeague)?.end_date}
-            seasonStage={seasonDatesMap.get(activeLeague)?.stage || undefined}
-          />
-        </div>
-
-        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 lg:h-[36.6rem] xl:h-[36rem]">
-          {/* Fixed Header - Responsive padding and text */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-            <div className="text-left">Asset</div>
-            <div>Sell</div>
-            <div>Buy</div>
-          </div>
-
-          {/* Scrollable List */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-            {sortedTeams.map((team) => (
-              <OrderBookRow
-                key={team.id}
-                team={team}
-                onSelectOrder={handleSelectOrder}
-                onViewAsset={handleViewAsset}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: AI & News (full width on mobile, 1/3 on desktop) */}
-      <div className="w-full lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:overflow-y-auto scrollbar-hide lg:pr-2 mt-2 lg:mt-6">
-        {/* AI Analysis */}
-        <div className="flex-shrink-0">
-          <AIAnalysis
-            teams={teams}
-            leagueName={getLeagueTitleUtil(activeLeague)}
-          />
-        </div>
-
-        {/* Did You Know (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <DidYouKnow
-            assetName={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
-          />
-        </div>
-
-        {/* On This Day (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <OnThisDay
-            assetName={getLeagueTitleUtil(activeLeague)}
-            market={activeLeague}
-          />
-        </div>
-
-        {/* News Feed */}
-        <div className="flex-shrink-0 pb-4 xl:pb-0">
-          <NewsFeed topic={activeLeague as any} />
-        </div>
-      </div>
-    </div>
-  );
-};
+  };
 
 export default App;

@@ -181,7 +181,7 @@ serve(async (req: Request) => {
           .from("users")
           .update({ email: currentEmail })
           .eq("id", user.id);
-        
+
         return new Response(
           JSON.stringify({ error: "Failed to update authentication email." }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -190,7 +190,7 @@ serve(async (req: Request) => {
     }
 
     // Get optional config
-    const logoImageUrl = Deno.env.get("LOGO_IMAGE_URL") ?? "https://rwa.sharematch.me/logos/mobile-header-logo-matched.png";
+    const logoImageUrl = "https://rwa.sharematch.me/logos/white_wordmark_logo_on_green-no-bg.png";
 
     // Generate email content using template
     const emailHtml = generateOtpEmailHtml({

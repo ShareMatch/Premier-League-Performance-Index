@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import type { SeasonDates } from "../lib/api";
 import type { Team, League } from "../types";
 import {
@@ -20,7 +20,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
-  ReferenceDot,
 } from "recharts";
 import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
@@ -67,7 +66,7 @@ const generateAssetHistory = (
   basePrice: number,
   period: "1h" | "24h" | "7d" | "1M" | "All" = "24h",
   assetName?: string,
-  startDate?: Date
+  startDate?: Date,
 ): HistoryPoint[] => {
   const data: HistoryPoint[] = [];
   const now = new Date();
@@ -101,7 +100,7 @@ const generateAssetHistory = (
       interval = 24 * 60 * 60 * 1000;
       if (startDate) {
         const daysSinceStart = Math.ceil(
-          (now.getTime() - startDate.getTime()) / interval
+          (now.getTime() - startDate.getTime()) / interval,
         );
         points = Math.max(1, daysSinceStart);
       } else {
@@ -154,7 +153,7 @@ const generateAssetHistory = (
 
 // Convert TimeRange to period format
 const convertTimeRangeToPeriod = (
-  range: TimeRange
+  range: TimeRange,
 ): "1h" | "24h" | "7d" | "1M" | "All" => {
   switch (range) {
     case "1D":
@@ -174,7 +173,7 @@ const convertTimeRangeToPeriod = (
 const generateMultiTokenHistory = (
   tokens: IndexToken[],
   range: TimeRange,
-  startDate?: Date
+  startDate?: Date,
 ) => {
   const period = convertTimeRangeToPeriod(range);
 
@@ -182,12 +181,12 @@ const generateMultiTokenHistory = (
     tokens[0].price,
     period,
     tokens[0].name,
-    startDate
+    startDate,
   );
   const otherHistories = tokens
     .slice(1)
     .map((token) =>
-      generateAssetHistory(token.price, period, token.name, startDate)
+      generateAssetHistory(token.price, period, token.name, startDate),
     );
 
   return baseHistory.map((point, idx) => {
@@ -213,7 +212,8 @@ interface TrendingCarouselProps {
   seasonDatesMap?: Map<string, SeasonDates>;
   onViewAsset?: (asset: Team) => void;
   onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
-  onCurrentTeamsChange?: (teamIds: string[]) => void
+  onCurrentTeamsChange?: (teamIds: string[]) => void;
+  onNavigate?: (league: League) => void;
 }
 
 const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
@@ -222,6 +222,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
   onViewAsset,
   onSelectOrder,
   onCurrentTeamsChange,
+  onNavigate,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -229,7 +230,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
   const [activeHover, setActiveHover] = useState<{
     chartId: string;
     index: number;
-    coordX?: number;
   } | null>(null);
 
   const DEFAULT_COLORS = ["#17B76E", "#FFBF00", "#E24A3F"];
@@ -258,7 +258,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         market: "NBA",
         fullName: "NBA",
         question: "Top NBA Finals?",
-        icon: <Activity className="w-3 h-3 text-orange-400" />,
+        icon: <Activity className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-orange-400" />,
         color: "from-orange-500/20 to-amber-500/20",
         borderColor: "group-hover:border-orange-500/50",
       },
@@ -267,7 +267,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         market: "EPL",
         fullName: "England Premier League",
         question: "Premier League Title Race",
-        icon: <Trophy className="w-3 h-3 text-purple-400" />,
+        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-purple-400" />,
         color: "from-purple-500/20 to-blue-500/20",
         borderColor: "group-hover:border-purple-500/50",
       },
@@ -276,7 +276,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         market: "UCL",
         fullName: "Champions League",
         question: "UEFA Champions League Favorites",
-        icon: <Trophy className="w-3 h-3 text-blue-400" />,
+        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-blue-400" />,
         color: "from-blue-600/20 to-indigo-600/20",
         borderColor: "group-hover:border-blue-500/50",
       },
@@ -285,7 +285,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         market: "NFL",
         fullName: "NFL",
         question: "Super Bowl Contenders",
-        icon: <Trophy className="w-3 h-3 text-blue-800" />,
+        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-blue-800" />,
         color: "from-blue-800/20 to-blue-900/20",
         borderColor: "group-hover:border-blue-800/50",
       },
@@ -299,7 +299,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           m.market as League,
           seasonData?.start_date,
           seasonData?.end_date,
-          seasonData?.stage || undefined
+          seasonData?.stage || undefined,
         );
         return info.isOpen;
       })
@@ -347,11 +347,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         : undefined;
       map.set(
         key,
-        generateMultiTokenHistory(question.topTokens, timeRange, startDate)
+        generateMultiTokenHistory(question.topTokens, timeRange, startDate),
       );
     });
     return map;
   }, [questionPool, timeRange, seasonDatesMap]);
+
+
 
   const handleNext = () => {
     if (!isAnimating && questionPool.length > 0) {
@@ -366,17 +368,15 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
       setActiveHover({
         chartId,
         index: e.activeTooltipIndex,
-        coordX: e.activeCoordinate?.x,
       });
     }
   };
-
 
   const handlePrev = () => {
     if (!isAnimating && questionPool.length > 0) {
       setIsAnimating(true);
       setCurrentIndex(
-        (prev) => (prev - 1 + questionPool.length) % questionPool.length
+        (prev) => (prev - 1 + questionPool.length) % questionPool.length,
       );
       setTimeout(() => setIsAnimating(false), 500);
     }
@@ -401,11 +401,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     );
   };
 
-
-
-
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
+    if (active && payload && payload.length && activeHover) {
       return (
         <div
           className="bg-[#0B1221] border border-[#005430] rounded shadow-xl"
@@ -449,7 +446,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     color: entry.color,
                   }}
                 >
-                  <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  <span
+                    style={{
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {token.name}:
                   </span>
                   <span>${Number(entry.value).toFixed(2)}</span>
@@ -463,15 +466,13 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     return null;
   };
 
-
   useEffect(() => {
     if (questionPool.length > 0 && onCurrentTeamsChange) {
       const currentQuestion = questionPool[currentIndex];
-      const currentTeamIds = currentQuestion.topTokens.map(t => t.id);
+      const currentTeamIds = currentQuestion.topTokens.map((t) => t.id);
       onCurrentTeamsChange(currentTeamIds);
     }
   }, [currentIndex, questionPool, onCurrentTeamsChange]);
-
 
   useEffect(() => {
     if (questionPool.length > 0) {
@@ -488,22 +489,33 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
   if (questionPool.length === 0) return null;
 
   return (
-    <div className="space-y-2 sm:space-y-3 md:space-y-4">
-      <div className="flex items-center justify-between px-1 sm:px-1">
-        <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-white flex items-center gap-1 sm:gap-2 flex-wrap">
-          <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-500 flex-shrink-0" />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Trending Markets
-          </span>
-          <img
-            src="/logos/white_icon_on_black-removebg-preview.png"
-            alt="Zap"
-            className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-0.5 sm:ml-1 flex-shrink-0"
-          />
-        </h2>
+    <div className="space-y-[clamp(0.5rem,1.5vw,1rem)]">
+      <div className="flex items-center justify-between px-[clamp(0.25rem,1vw,0.5rem)]">
+        <div className="flex items-center gap-[clamp(0.25rem,1vw,0.5rem)]">
+          <h2 className="text-[clamp(0.75rem,2.5vw,1.25rem)] font-bold text-white flex items-center gap-[clamp(0.25rem,1vw,0.5rem)]">
+            <TrendingUp className="w-[clamp(0.75rem,2vw,1.25rem)] h-[clamp(0.75rem,2vw,1.25rem)] text-green-500 flex-shrink-0" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              Trending Markets
+            </span>
+            <img
+              src="/logos/white_icon_on_black-removebg-preview.png"
+              alt="Zap"
+              className="w-[clamp(0.875rem,3vw,1.5rem)] h-[clamp(0.875rem,3vw,1.5rem)] object-contain animate-pulse ml-[clamp(0.125rem,0.5vw,0.25rem)] flex-shrink-0"
+            />
+          </h2>
+        </div>
+
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate("NEW_MARKETS")}
+            className="text-[clamp(0.625rem,1.5vw,0.75rem)] font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-[clamp(0.125rem,0.5vw,0.25rem)] self-center mt-[clamp(0.5rem,1.5vw,0.75rem)]"
+          >
+            View All <ChevronRight className="w-[clamp(0.625rem,1.5vw,0.75rem)] h-[clamp(0.625rem,1.5vw,0.75rem)]" />
+          </button>
+        )}
       </div>
 
-      <div className="relative bg-slate-900 rounded-lg sm:rounded-xl md:rounded-2xl border border-gray-800 overflow-hidden max-w-7xl mx-auto">
+      <div className="relative bg-slate-900 rounded-[clamp(0.5rem,1.5vw,1rem)] border border-gray-800 overflow-hidden max-w-7xl mx-auto">
         <div
           className="flex w-full transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -515,40 +527,44 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
             // Calculate right padding for XAxis dynamically
             const xAxisRightPadding = (() => {
               if (chartData.length === 0) return 40;
-              const fontSize = window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10;
+              const fontSize =
+                window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 9 : 10;
               const font = `${fontSize}px sans-serif`;
               const canvas = document.createElement("canvas");
               const context = canvas.getContext("2d");
               if (!context) return 40;
 
               context.font = font;
-              const maxWidth = Math.max(...chartData.map((d) => context.measureText(d.time).width));
+              const maxWidth = Math.max(
+                ...chartData.map((d) => context.measureText(d.time).width),
+              );
               return Math.ceil(maxWidth) + 45; // add extra padding
             })();
 
             return (
               <div
                 key={question.id}
-                className="w-full flex-shrink-0 grid grid-cols-1 lg:grid-cols-2"
+                className="w-full flex-shrink-0 grid grid-cols-1 xl:grid-cols-2"
               >
                 {/* Left Column - Question Card */}
-                <div className="p-[clamp(0.375rem,1.2vw,2rem)] flex bg-[#0b1221]">
+                <div className="p-[clamp(0.375rem,1.5vw,1.5rem)] flex bg-[#0b1221]">
                   <div className="w-full">
                     <div
-                      className={`group relative bg-[#0b1221] rounded-lg sm:rounded-xl border p-[clamp(0.375rem,0.9vw,0.75rem)] transition-all duration-300 hover:bg-gray-800/10 hover:shadow-xl ${question.borderColor} border-gray-800 h-full flex flex-col justify-between`}
+                      className={`group relative bg-[#0b1221] rounded-[clamp(0.375rem,1vw,0.75rem)] border p-[clamp(0.375rem,1.2vw,1rem)] transition-all duration-300 hover:bg-gray-800/10 hover:shadow-xl ${question.borderColor} border-gray-800 h-full flex flex-col justify-between`}
                     >
                       <div
-                        className={`absolute inset-0 rounded-xl bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}
+                        className={`absolute inset-0 rounded-[clamp(0.375rem,1vw,0.75rem)] bg-gradient-to-br ${question.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500 pointer-events-none`}
                       />
-                      <div className="relative z-10 flex flex-col h-full gap-8">
-                        <div className="flex flex-col gap-1.5 sm:gap-2 md:gap-2 lg:gap-1.5">
-                          <div className="flex justify-between items-center gap-1.5 sm:gap-2">
-                            <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] md:gap-3 overflow-visible min-w-0 min-h-0 flex-1 ml-[clamp(0.25rem,1vw,0.5rem)]">
+                      <div className="relative z-10 flex flex-col h-full gap-[clamp(1rem,3vw,2rem)]">
+                        <div className="flex flex-col gap-[clamp(0.375rem,1vw,0.5rem)]">
+                          <div className="flex justify-between items-center gap-[clamp(0.375rem,1vw,0.5rem)]">
+                            <div className="flex items-center gap-[clamp(0.5rem,2vw,1rem)] overflow-visible min-w-0 min-h-0 flex-1 ml-[clamp(0.25rem,1vw,0.5rem)]">
                               {(() => {
                                 const indexAvatarUrl = getIndexAvatarUrl(
-                                  question.market
+                                  question.market,
                                 );
-                                const avatarSizeClass = "w-[clamp(3.5rem,10vw,5rem)] h-[clamp(3.5rem,10vw,5rem)] flex-shrink-0";
+                                const avatarSizeClass =
+                                  "w-[clamp(2.5rem,8vw,4.5rem)] h-[clamp(2.5rem,8vw,4.5rem)] flex-shrink-0";
                                 return indexAvatarUrl ? (
                                   <img
                                     src={indexAvatarUrl}
@@ -556,34 +572,34 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                     className={`${avatarSizeClass}`}
                                   />
                                 ) : (
-                                  <div className={`${avatarSizeClass} flex items-center justify-center bg-gray-800/50 rounded-lg`}>
+                                  <div
+                                    className={`${avatarSizeClass} flex items-center justify-center bg-gray-800/50 rounded-[clamp(0.25rem,0.75vw,0.5rem)]`}
+                                  >
                                     {question.icon}
                                   </div>
                                 );
                               })()}
 
-                              <div className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.75rem,2vw,1.25rem)]">
-                                <h3 className="text-[clamp(0.75rem,2.5vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight line-clamp-2">
+                              <div className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.5rem,1.5vw,1rem)]">
+                                <h3 className="text-[clamp(0.65rem,2vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight">
                                   {question.question}
                                 </h3>
-                                <div className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 font-mono uppercase tracking-wider mt-1">
+                                <div className="text-[clamp(0.45rem,1vw,0.625rem)] text-gray-500 font-mono uppercase tracking-wider mt-[clamp(0.125rem,0.5vw,0.25rem)]">
                                   Vol: {question.volume}
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+                              <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.375rem)] flex-shrink-0">
                                 {/* Info Tooltip */}
-                                <InfoTooltip
-                                  text={tooltipText}
-                                />
+                                <InfoTooltip text={tooltipText} />
 
                                 {/* Live Badge */}
-                                <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-500/10 rounded border border-green-500/20 flex-shrink-0">
+                                <div className="flex items-center gap-[clamp(0.125rem,0.5vw,0.25rem)] px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] bg-green-500/10 rounded-[clamp(0.125rem,0.5vw,0.25rem)] border border-green-500/20 flex-shrink-0">
                                   <div className="relative">
-                                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full" />
-                                    <div className="absolute inset-0 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-ping" />
+                                    <div className="w-[clamp(0.25rem,0.5vw,0.375rem)] h-[clamp(0.25rem,0.5vw,0.375rem)] bg-green-500 rounded-full" />
+                                    <div className="absolute inset-0 w-[clamp(0.25rem,0.5vw,0.375rem)] h-[clamp(0.25rem,0.5vw,0.375rem)] bg-green-500 rounded-full animate-ping" />
                                   </div>
-                                  <span className="text-[8px] sm:text-[9px] md:text-[10px] text-green-500 font-bold uppercase tracking-wide">
+                                  <span className="text-[clamp(0.45rem,0.9vw,0.625rem)] text-green-500 font-bold uppercase tracking-wide">
                                     Live
                                   </span>
                                 </div>
@@ -592,42 +608,42 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-[clamp(0.1rem,1.5vw,0.5rem)]">
+                        <div className="flex flex-col gap-[clamp(0.25rem,0.75vw,0.5rem)]">
                           {question.topTokens.map((token) => (
                             <div
                               key={token.id}
-                              className="flex items-center justify-between bg-gray-900/40 border border-gray-800/50 rounded-lg py-1 sm:py-1.5 px-2 sm:px-3 hover:bg-gray-800/60 transition-all cursor-pointer group/row text-xs sm:text-sm"
+                              className="flex items-center justify-between bg-gray-900/40 border border-gray-800/50 rounded-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.25rem,0.75vw,0.375rem)] px-[clamp(0.5rem,1.25vw,0.75rem)] hover:bg-gray-800/60 transition-all cursor-pointer group/row"
                             >
-                              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                              <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] min-w-0 flex-shrink">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     if (onViewAsset) onViewAsset(token.team);
                                   }}
-                                  className="text-[9px] sm:text-xs md:text-xs font-bold text-gray-200 truncate hover:text-brand-primary hover:underline transition-all text-left"
+                                  className="text-[clamp(0.5rem,1.25vw,0.75rem)] font-bold text-gray-200 hover:text-brand-primary hover:underline transition-all text-left break-words"
                                 >
                                   {token.name}
                                 </button>
                               </div>
-                              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-                                <div className="flex items-center gap-1 sm:gap-2 flex-wrap sm:flex-nowrap justify-end">
+                              <div className="flex items-center gap-[clamp(0.375rem,1vw,0.75rem)] flex-shrink-0">
+                                <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] flex-wrap justify-end">
                                   <span
-                                    className={`text-[7px] sm:text-[8px] md:text-[10px] font-bold flex items-center gap-0.5 whitespace-nowrap ${token.change >= 0
+                                    className={`text-[clamp(0.4rem,0.9vw,0.625rem)] font-bold flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)] whitespace-nowrap ${token.change >= 0
                                       ? "text-green-400"
                                       : "text-red-400"
                                       }`}
                                   >
                                     {token.change >= 0 ? (
-                                      <FaCaretUp className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
+                                      <FaCaretUp className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
                                     ) : (
-                                      <FaCaretDown className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3" />
+                                      <FaCaretDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
                                     )}
                                     ${token.changeDisplay}
-                                    <span className="ml-0.5">
+                                    <span className="ml-[clamp(0.0625rem,0.25vw,0.125rem)]">
                                       ({timeRange})
                                     </span>
                                   </span>
-                                  <span className="text-[9px] sm:text-xs md:text-sm font-black text-gray-100 min-w-[40px] sm:min-w-[50px] text-right">
+                                  <span className="text-[clamp(0.5rem,1.25vw,0.875rem)] font-black text-gray-100 min-w-[clamp(2rem,5vw,3.125rem)] text-right">
                                     ${token.price.toFixed(2)}
                                   </span>
                                 </div>
@@ -638,7 +654,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                       onSelectOrder(token.team, "buy");
                                     }
                                   }}
-                                  className="bg-[#005430] hover:bg-[#006035] text-white text-[7px] sm:text-[8px] md:text-[10px] font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg transition-all shadow-lg shadow-black/20 uppercase tracking-wider flex-shrink-0"
+                                  className="bg-[#005430] hover:bg-[#006035] text-white text-[clamp(0.4rem,0.9vw,0.625rem)] font-bold px-[clamp(0.5rem,1.25vw,0.75rem)] py-[clamp(0.25rem,0.6vw,0.375rem)] rounded-[clamp(0.25rem,0.75vw,0.5rem)] transition-all shadow-lg shadow-black/20 uppercase tracking-wider flex-shrink-0"
                                 >
                                   Buy
                                 </button>
@@ -652,16 +668,16 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                 </div>
 
                 {/* Right Column - Chart */}
-                <div className="flex bg-[#0b1221] p-[clamp(0.375rem,1.2vw,2rem)]">
-                  <div className="w-full bg-[#0b1221] border border-gray-800 h-full flex flex-col justify-between p-[clamp(0.375rem,1.2vw,0.75rem)] rounded-[clamp(0.375rem,0.75vw,0.5rem)]">
-                    <div className="flex items-center justify-between gap-[clamp(0.375rem,1.5vw,1rem)] mb-[clamp(0.375rem,1vw,0.75rem)]">
+                <div className="flex bg-[#0b1221] p-[clamp(0.375rem,1.5vw,1.5rem)]">
+                  <div className="w-full bg-[#0b1221] border border-gray-800 h-full flex flex-col justify-between p-[clamp(0.375rem,1.25vw,1rem)] rounded-[clamp(0.375rem,1vw,0.75rem)]">
+                    <div className="flex items-center justify-between gap-[clamp(0.25rem,1vw,0.75rem)] mb-[clamp(0.375rem,1.25vw,1rem)] flex-wrap">
                       {/* Left Side: Time Range Buttons */}
-                      <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.375rem)]">
+                      <div className="flex items-center gap-[clamp(0.125rem,0.5vw,0.25rem)]">
                         {(["1D", "1W", "1M", "ALL"] as const).map((r) => (
                           <button
                             key={r}
                             onClick={() => setTimeRange(r)}
-                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.375rem,0.6vw,0.55rem)] px-[clamp(0.25rem,0.7vw,0.6rem)] py-[clamp(0.0625rem,0.35vw,0.25rem)] ${timeRange === r
+                            className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.4rem,0.85vw,0.625rem)] px-[clamp(0.375rem,1vw,0.75rem)] py-[clamp(0.125rem,0.4vw,0.25rem)] ${timeRange === r
                               ? "bg-[#005430] text-white"
                               : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                               }`}
@@ -671,10 +687,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-[clamp(0.375rem,1vw,0.75rem)]">
+                      <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)]">
                         {(() => {
                           const seasonData = seasonDatesMap?.get(
-                            question.market
+                            question.market,
                           );
                           if (!seasonData) return null;
 
@@ -682,8 +698,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           const endDate = new Date(seasonData.end_date);
 
                           return (
-                            <div className="flex items-center uppercase tracking-wider text-gray-400 gap-[clamp(0.25rem,0.75vw,0.5rem)] text-[clamp(0.5rem,0.75vw,0.625rem)]">
-                              <div className="flex items-center gap-[clamp(0.125rem,0.25vw,0.25rem)]">
+                            <div className="flex items-center uppercase tracking-wider text-gray-400 gap-[clamp(0.125rem,0.5vw,0.375rem)] text-[clamp(0.4rem,0.85vw,0.625rem)] flex-wrap justify-center">
+                              <div className="flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)]">
                                 <span className="text-gray-600">Start:</span>
                                 <span className="text-gray-400 whitespace-nowrap">
                                   {startDate.toLocaleDateString("en-GB", {
@@ -693,8 +709,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                   })}
                                 </span>
                               </div>
-                              <div className="bg-gray-600 rounded-full w-[clamp(0.125rem,0.25vw,0.25rem)] h-[clamp(0.125rem,0.25vw,0.25rem)]" />
-                              <div className="flex items-center gap-[clamp(0.125rem,0.25vw,0.25rem)]">
+                              <div className="bg-gray-600 rounded-full w-[clamp(0.125rem,0.35vw,0.25rem)] h-[clamp(0.125rem,0.35vw,0.25rem)]" />
+                              <div className="flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)]">
                                 <span className="text-gray-600">End:</span>
                                 <span className="text-gray-400 whitespace-nowrap">
                                   {endDate.toLocaleDateString("en-GB", {
@@ -714,13 +730,12 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                         <img
                           src="/logos/white_icon_on_black-removebg-preview.png"
                           alt="Logo"
-                          className="object-contain w-[clamp(1rem,2.5vw,2.5rem)] h-[clamp(1rem,2.5vw,2.5rem)]"
+                          className="object-contain w-[clamp(0.875rem,2vw,2rem)] h-[clamp(0.875rem,2vw,2rem)]"
                         />
                       </div>
                     </div>
 
-                    {/* Chart */}
-                    <div className="w-full h-40 sm:h-48 md:h-52 lg:h-56 relative">
+                    <div className="w-full h-[clamp(8rem,25vw,14rem)] relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           data={chartData}
@@ -821,75 +836,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                             cursor={<CustomCursor />}
                           />
 
-                          {/* Render hover labels using ReferenceDot with custom label */}
-                          {activeHover?.chartId === question.id &&
-                            chartData[activeHover.index] &&
-                            question.topTokens.map((token, idx) => {
-                              const value =
-                                chartData[activeHover.index][`token${idx}`];
-                              if (value === undefined) return null;
-
-                              const color =
-                                token.color ||
-                                DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
-
-                              return (
-                                <ReferenceDot
-                                  key={token.id}
-                                  yAxisId="right"
-                                  x={chartData[activeHover.index].time}
-                                  y={value}
-                                  r={window.innerWidth < 640 ? 3 : 4} // smaller dot on mobile
-                                  fill={color}
-                                  stroke="#000"
-                                  strokeWidth={1.5}
-                                  label={(props: any) => {
-                                    const { viewBox } = props;
-                                    if (!viewBox) return null;
-
-                                    const { x, y } = viewBox;
-                                    const coordX = activeHover.coordX || 0;
-
-                                    // show label on left or right
-                                    const showOnRight = coordX < x;
-                                    const xOffset = showOnRight ? (window.innerWidth < 640 ? 6 : 10) : (window.innerWidth < 640 ? -6 : -10);
-                                    const textAnchor = showOnRight ? "start" : "end";
-
-                                    // responsive font sizes
-                                    const nameFontSize = `clamp(6px, 1vw, 9px)`; // min 6px, max 9px
-                                    const valueFontSize = `clamp(8px, 1.2vw, 12px)`; // min 8px, max 12px
-
-                                    return (
-                                      <g>
-                                        <text
-                                          x={x + xOffset}
-                                          y={y - 12}
-                                          fill={color}
-                                          fontSize={nameFontSize}
-                                          fontWeight="700"
-                                          textAnchor={textAnchor}
-                                          style={{ textTransform: "uppercase" }}
-                                        >
-                                          {token.name}
-                                        </text>
-                                        <text
-                                          x={x + xOffset}
-                                          y={y + 4}
-                                          fill={color}
-                                          fontSize={valueFontSize}
-                                          fontWeight="800"
-                                          fontFamily="monospace"
-                                          textAnchor={textAnchor}
-                                        >
-                                          ${Number(value).toFixed(2)}
-                                        </text>
-                                      </g>
-                                    );
-                                  }}
-                                />
-
-                              );
-                            })}
 
                           {/* Lines for each token */}
                           {(() => {
@@ -907,7 +853,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 token.color ||
                                 DEFAULT_COLORS[idx % DEFAULT_COLORS.length];
                               const rank = sortedTokens.findIndex(
-                                (s) => s.originalIdx === idx
+                                (s) => s.originalIdx === idx,
                               );
                               const yShift = (rank - 1) * 18;
 
@@ -928,13 +874,22 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                       dataKey={`token${idx}`}
                                       content={(props: any) => {
                                         const { x, y, index, value } = props;
-                                        if (index !== chartData.length - 1) return null;
+                                        if (index !== chartData.length - 1)
+                                          return null;
 
                                         // responsive font sizes
                                         const nameFontSize =
-                                          window.innerWidth < 640 ? 6 : window.innerWidth < 1024 ? 8 : 9;
+                                          window.innerWidth < 640
+                                            ? 6
+                                            : window.innerWidth < 1024
+                                              ? 8
+                                              : 9;
                                         const valueFontSize =
-                                          window.innerWidth < 640 ? 8 : window.innerWidth < 1024 ? 10 : 12;
+                                          window.innerWidth < 640
+                                            ? 8
+                                            : window.innerWidth < 1024
+                                              ? 10
+                                              : 12;
 
                                         return (
                                           <g>
@@ -944,7 +899,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                               fill={color}
                                               fontSize={nameFontSize}
                                               fontWeight="700"
-                                              style={{ textTransform: "uppercase" }}
+                                              style={{
+                                                textTransform: "uppercase",
+                                              }}
                                             >
                                               {token.name}
                                             </text>
@@ -969,6 +926,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           })()}
                         </ComposedChart>
                       </ResponsiveContainer>
+
                     </div>
                   </div>
                 </div>
@@ -978,15 +936,17 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[#0b1221]">
+        <div className="flex items-center justify-between px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.375rem,1vw,0.5rem)] bg-[#0b1221]">
           <button
             onClick={handlePrev}
             disabled={isAnimating}
-            className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
+            aria-label="Previous carousel item"
+            data-testid="trending-carousel-prev"
+            className="p-[clamp(0.375rem,1vw,0.5rem)] bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
-            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+            <ChevronLeft className="w-[clamp(0.75rem,1.5vw,1rem)] h-[clamp(0.75rem,1.5vw,1rem)]" />
           </button>
-          <div className="flex items-center gap-1 sm:gap-2 px-2">
+          <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] px-[clamp(0.5rem,1vw,0.5rem)]">
             {questionPool.map((_, idx) => (
               <button
                 key={idx}
@@ -997,9 +957,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                     setTimeout(() => setIsAnimating(false), 500);
                   }
                 }}
-                className={`h-1 sm:h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
-                  ? "w-6 sm:w-8 bg-green-500"
-                  : "w-1 sm:w-1.5 bg-gray-600 hover:bg-gray-500"
+                className={`h-[clamp(0.25rem,0.5vw,0.375rem)] rounded-full transition-all duration-300 ${idx === currentIndex
+                  ? "w-[clamp(1.25rem,3vw,2rem)] bg-green-500"
+                  : "w-[clamp(0.25rem,0.5vw,0.375rem)] bg-gray-600 hover:bg-gray-500"
                   }`}
               />
             ))}
@@ -1007,9 +967,11 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           <button
             onClick={handleNext}
             disabled={isAnimating}
-            className="p-1.5 sm:p-2 bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
+            aria-label="Next carousel item"
+            data-testid="trending-carousel-next"
+            className="p-[clamp(0.375rem,1vw,0.5rem)] bg-gray-800/80 hover:bg-gray-700/80 border border-gray-600/50 rounded-full text-white transition-all hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl backdrop-blur-sm flex-shrink-0"
           >
-            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            <ChevronRight className="w-[clamp(0.75rem,1.5vw,1rem)] h-[clamp(0.75rem,1.5vw,1rem)]" />
           </button>
         </div>
       </div>

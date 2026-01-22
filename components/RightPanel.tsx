@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import TradeSlip from "./TradeSlip";
 import Portfolio from "./Portfolio";
+import Watchlist from "./Watchlist";
 import type { Order, Position, Team, Transaction, League } from "../types";
-import { History, Activity, X } from "lucide-react";
+import { History, Activity, X, Star } from "lucide-react";
 
 interface RightPanelProps {
   portfolio: Position[];
@@ -35,14 +36,16 @@ const RightPanel: React.FC<RightPanelProps> = ({
   onClose,
   isMobile = false,
 }) => {
-  const [activeTab, setActiveTab] = useState<"portfolio" | "history">(
+  const [activeTab, setActiveTab] = useState<"portfolio" | "watchlist" | "history">(
     "portfolio"
   );
 
   return (
     <div
       data-testid="right-panel"
-      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile ? "w-80 h-full max-h-full" : "h-full w-[clamp(8rem,30vw,20rem)]"
+      className={`flex flex-col bg-gray-900 border-l border-gray-800 flex-shrink-0 overflow-hidden ${isMobile
+        ? "w-80 h-full max-h-full"
+        : "h-full w-[clamp(240px,22vw,320px)]"
         }`}
     >
       {/* Mobile Header with Close Button - Fixed at top */}
@@ -51,6 +54,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
           <h2 className="text-lg font-bold text-white">Portfolio & History</h2>
           <button
             onClick={onClose}
+            aria-label="Close portfolio panel"
+            data-testid="right-panel-close-button"
             className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -69,7 +74,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 ...selectedOrder,
                 holding:
                   portfolio.find(
-                    (p) => p.market_trading_asset_id === selectedOrder.team.market_trading_asset_id
+                    (p) =>
+                      p.market_trading_asset_id ===
+                      selectedOrder.team.market_trading_asset_id
                   )?.quantity || 0,
               }}
               onClose={onCloseTradeSlip}
@@ -104,20 +111,31 @@ const RightPanel: React.FC<RightPanelProps> = ({
             <History className="w-4 h-4" />
             History
           </button>
+          <button
+            onClick={() => setActiveTab("watchlist")}
+            className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === "watchlist"
+              ? "text-white border-b-2 border-[#005430] bg-gray-800/20"
+              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+              }`}
+            data-testid="right-panel-watchlist-tab"
+          >
+            <Star className="w-4 h-4" />
+            Watchlist
+          </button>
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-[clamp(0.5rem,2vw,1rem)]">
           {activeTab === "portfolio" ? (
             <>
-              <div className="flex flex-col gap-1 mb-4">
-                <h2 className="text-lg font-bold text-gray-200 flex items-center gap-2">
+              <div className="flex flex-col gap-1 mb-[clamp(0.5rem,2vw,1rem)]">
+                <h2 className="text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold text-gray-200 flex items-center gap-2">
                   <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                   Your Portfolio
                 </h2>
-                <p className="text-[10px] text-gray-500 pl-4 font-medium flex items-center gap-1">
+                <p className="text-[clamp(0.55rem,1.2vw,0.6875rem)] text-gray-500 pl-4 font-medium flex items-center gap-1">
                   <span className="w-1 h-1 bg-[#005430] rounded-full inline-block"></span>
-                  Values reflect potential sell price (realisable value)
+                  Values reflect potential sell price
                 </p>
               </div>
               <Portfolio
@@ -128,21 +146,23 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 onViewAsset={onViewAsset}
               />
             </>
-          ) : (
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+          ) : activeTab === "history" ? (
+            <div className="space-y-[clamp(0.5rem,2vw,1rem)]">
+              <h2 className="text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold text-gray-200 mb-[clamp(0.5rem,2vw,1rem)] flex items-center gap-2">
                 <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                 Transaction History
               </h2>
               {transactions.length === 0 ? (
-                <div className="text-gray-500 text-center text-sm py-8">
+                <div className="text-gray-500 text-center text-[clamp(0.75rem,2vw,0.875rem)] py-8">
                   No transaction history available.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {transactions.map((tx) => {
-                    const asset = allAssets.find(a => a.market_trading_asset_id === tx.market_trading_asset_id);
-                    // ... (rest of the map remains the same)
+                    const asset = allAssets.find(
+                      (a) =>
+                        a.market_trading_asset_id === tx.market_trading_asset_id
+                    );
                     return (
                       <div
                         key={tx.id}
@@ -176,12 +196,15 @@ const RightPanel: React.FC<RightPanelProps> = ({
                                   : "bg-red-500/10 text-red-500 border border-red-500/20"
                                 }`}
                             >
-                              {tx.type === "settlement" ? "Settled" : tx.direction}
+                              {tx.type === "settlement"
+                                ? "Settled"
+                                : tx.direction}
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs text-gray-400 mb-2">
                             <span>
-                              {tx.quantity} units @ {tx.price_per_unit.toFixed(2)}
+                              {tx.quantity} units @{" "}
+                              {tx.price_per_unit.toFixed(2)}
                             </span>
                             <span className="text-gray-500">
                               {new Date(tx.created_at).toLocaleDateString()}
@@ -201,6 +224,18 @@ const RightPanel: React.FC<RightPanelProps> = ({
                   <div className="h-20 sm:h-0" />
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="space-y-[clamp(0.5rem,2vw,1rem)]">
+              <h2 className="text-[clamp(0.875rem,2.5vw,1.125rem)] font-bold text-gray-200 mb-[clamp(0.5rem,2vw,1rem)] flex items-center gap-2">
+                <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
+                Watchlist
+              </h2>
+              <Watchlist
+                allAssets={allAssets}
+                onViewAsset={onViewAsset}
+                onSelectAsset={(team, type) => onSelectOrder(team, type)}
+              />
             </div>
           )}
         </div>

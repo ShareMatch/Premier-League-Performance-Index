@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Team, League } from "../types";
 import { getRecentlyViewed } from "../utils/recentlyViewed";
 import { Clock } from "lucide-react";
+import { useAuth } from "./auth/AuthProvider";
 
 interface RecentlyViewedProps {
     onNavigate?: (league: League) => void;
@@ -12,6 +13,7 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
     onNavigate,
     onViewAsset,
 }) => {
+    const { user } = useAuth();
     const [items, setItems] = useState<Team[]>([]);
 
     useEffect(() => {
@@ -36,6 +38,11 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
             window.removeEventListener("recentlyViewedUpdated", handleUpdate);
         };
     }, []);
+
+    // Only show for logged-in users
+    if (!user) {
+        return null;
+    }
 
     if (items.length === 0) {
         return null; // Don't show if empty

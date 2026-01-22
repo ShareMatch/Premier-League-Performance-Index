@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { GoogleGenAI } from "@google/genai";
 import { Eye, EyeOff } from "lucide-react";
 import type { Team } from "../types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { supabase } from "../lib/supabase";
 
 interface AIAnalysisProps {
   teams: Team[];
@@ -39,45 +39,16 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
     setAnalysis("");
     setIsVisible(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error(
-          "API Key not found. Please set VITE_GEMINI_API_KEY in your .env file."
-        );
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-
-      const teamData = teams
-        .slice(0, 10) // Analyze top 10 teams for brevity
-        .map((t) => `${t.name}: ${t.offer.toFixed(1)}`)
-        .join(", ");
-
-      const prompt = `You are a sharp sports betting analyst. 
-            
-            Here are the current market prices (implied probability %) for the ${leagueName} winner: 
-            ${teamData}
-            
-            TASK:
-            1. Use Google Search to find the absolute latest news, injuries, and form for the top contenders in the ${leagueName}.
-            2. Compare the real-world sentiment/news with these market prices.
-            4. Provide a concise, data-driven rationale for each trade based on the *latest* news you found.
-            
-            IMPORTANT: DO NOT mention specific percentage probabilities (%) or specific prices in your text. The user can already see these. Focus purely on the qualitative analysis (injuries, form, news, sentiment) that justifies why the market might be wrong.
-            
-            Keep the response concise (under 150 words) and focused on actionable trading advice.`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          systemInstruction:
-            "You are an expert sports betting analyst. Use Google Search to ground your analysis in real-time data.",
-        },
+      const { data, error } = await supabase.functions.invoke('ai-analysis', {
+        body: {
+          teams: teams.slice(0, 10), // Analyze top 10 teams for brevity
+          leagueName
+        }
       });
 
-      setAnalysis(response.text || "No analysis generated.");
+      if (error) throw error;
+
+      setAnalysis(data?.analysis || "No analysis generated.");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to retrieve analysis. Please try again.");

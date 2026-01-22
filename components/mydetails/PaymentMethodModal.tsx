@@ -65,11 +65,16 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="payment-method-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="payment-method-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -145,6 +150,7 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
             <button
               onClick={onClose}
               className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+              data-testid="payment-method-modal-cancel-button"
             >
               Cancel
             </button>
@@ -161,6 +167,7 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
                   !paymentOptions.find((o) => o.id === selectedMethod)
                     ?.available
                 }
+                data-testid="payment-method-modal-next-button"
               >
                 Next
               </Button>

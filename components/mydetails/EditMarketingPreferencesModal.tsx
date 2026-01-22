@@ -70,11 +70,16 @@ const EditMarketingPreferencesModal: React.FC<
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]">
+      <div
+        className="relative w-full max-w-md bg-[#005430] rounded-xl sm:rounded-modal p-3 sm:p-6 max-h-[95vh] overflow-y-auto scrollbar-hide z-[101]"
+        data-testid="edit-marketing-preferences-modal"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors z-10"
+          aria-label="Close"
+          data-testid="edit-marketing-preferences-modal-close-button"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
@@ -96,6 +101,8 @@ const EditMarketingPreferencesModal: React.FC<
                 setPersonalizedMarketing(true);
               }}
               className="text-white font-semibold hover:underline"
+              aria-label="Subscribe to all communications"
+              data-testid="edit-marketing-preferences-subscribe-all"
             >
               click here
             </button>
@@ -113,6 +120,8 @@ const EditMarketingPreferencesModal: React.FC<
                   key={pref.id}
                   onClick={() => handleTogglePreference(pref.id)}
                   className="flex items-center gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
+                  aria-label={`Toggle ${pref.label}`}
+                  data-testid={`marketing-preference-toggle-${pref.id}`}
                 >
                   {pref.enabled ? (
                     <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0" />
@@ -139,6 +148,8 @@ const EditMarketingPreferencesModal: React.FC<
             <button
               onClick={() => setPersonalizedMarketing(!personalizedMarketing)}
               className="flex items-start gap-2 sm:gap-3 w-full text-left py-1.5 sm:py-2 hover:bg-white/5 rounded-lg px-1.5 sm:px-2 transition-colors"
+              aria-label="Toggle personalized marketing"
+              data-testid="edit-marketing-preferences-personalized-toggle"
             >
               {personalizedMarketing ? (
                 <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white flex-shrink-0 mt-0.5" />
@@ -161,6 +172,7 @@ const EditMarketingPreferencesModal: React.FC<
             <button
               onClick={onClose}
               className="flex-1 py-2 sm:py-2.5 rounded-full border border-brand-emerald500 text-white font-medium font-sans text-xs sm:text-sm hover:bg-brand-emerald500/10 transition-colors"
+              data-testid="edit-marketing-preferences-modal-cancel-button"
             >
               Cancel
             </button>
@@ -174,6 +186,7 @@ const EditMarketingPreferencesModal: React.FC<
               <Button
                 onClick={handleSave}
                 disabled={saving}
+                data-testid="edit-marketing-preferences-modal-save-button"
                 className={`${isButtonHovered ? "opacity-90" : ""}`}
               >
                 {saving ? "Saving..." : "Save"}

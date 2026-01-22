@@ -67,7 +67,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   };
 
   const modal = (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={(e) => {
         e.stopPropagation();
@@ -79,7 +79,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
       {/* Modal Content */}
-      <div 
+      <div
         className="relative bg-[#0B1221] border border-[#005430] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         data-testid="alert-modal"

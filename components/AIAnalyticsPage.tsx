@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from "@google/genai";
 import { Sparkles, AlertTriangle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Team } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AIAnalyticsPageProps {
     teams: Team[];
@@ -12,56 +12,24 @@ interface AIAnalyticsPageProps {
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const [analysis, setAnalysis] = useState<string>('');
     const [loading, setLoading] = useState(false);
-    const [selectedMarket, setSelectedMarket] = useState<'EPL' | 'F1' | 'SPL' | 'UCL' | 'NBA' | 'NFL' | 'T20' | 'Eurovision'>('EPL');
+    const [selectedMarket, setSelectedMarket] = useState<'EPL' | 'F1' | 'SPL' | 'UCL' | 'NBA' | 'NFL' | 'T20'>('EPL');
 
     const getAnalysis = async () => {
         setLoading(true);
         setAnalysis('');
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error('API Key configuration missing.');
-
-            const ai = new GoogleGenAI({ apiKey });
-
-            const marketTeams = teams
-                .filter(t => t.market === selectedMarket)
-                .sort((a, b) => b.offer - a.offer)
-                .slice(0, 8)
-                .map(t => `${t.name} (${t.offer.toFixed(1)}%)`)
-                .join(', ');
-
-            const prompt = `
-        You are an Expert Sports Analyst for the ShareMatch trading platform.
-        
-        Market: ${selectedMarket} Index
-        Current Market Prices: ${marketTeams}
-        
-        TASK:
-        1. Search for the latest breaking news, injuries, and team morale impacting these specific teams/drivers.
-        2. Provide a technical analysis of the market. Focus on fundamentals, performance, and momentum.
-        3. Identify 1 Undervalued Asset and 1 Overvalued Asset based on the divergence between sentiment and current market price.
-        4. Format with clean Markdown (headers, bullet points). Start directly with the analysis title.
-        
-        STRICT TERMINOLOGY GUIDELINES:
-        - DO NOT use religious terms like "Halal", "Islamic", "Sharia", "Haram". The analysis must be compliant in *principle* (ethical, no gambling), but must NOT use the labels.
-        - DO NOT use gambling terms like "bet", "odds", "wager", "gamble". Use "trade", "position", "sentiment", "forecast".
-        - DO NOT use "Win" or "Winner" when referring to the market outcome. Use "Top the Index" or "finish first".
-        - DO NOT provide meta-commentary or conversational openings (e.g., "Okay, here is..."). Start immediately with the content.
-        
-        Style: Professional, insightful, concise, data-driven.
-      `;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.0-flash',
-                contents: prompt,
-                config: {
-                    tools: [{ googleSearch: {} }],
+            const { data, error } = await supabase.functions.invoke('ai-analytics', {
+                body: {
+                    teams: teams.filter(t => t.market === selectedMarket),
+                    selectedMarket
                 }
             });
 
-            setAnalysis(response.text || 'Analysis currently unavailable. Please try again.');
-        } catch (err) {
+            if (error) throw error;
+
+            setAnalysis(data?.analysis || 'Analysis currently unavailable. Please try again.');
+        } catch (err: any) {
             console.error(err);
             setAnalysis('Unable to generate analysis at this time.');
         } finally {
@@ -87,7 +55,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-6 backdrop-blur-sm">
                     <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                         <div className="flex gap-2 flex-wrap justify-center">
-                            {(['EPL', 'F1', 'SPL', 'UCL', 'NBA', 'NFL', 'T20', 'Eurovision'] as const).map(market => (
+                            {(['EPL', 'F1', 'SPL', 'UCL', 'NBA', 'NFL', 'T20', 'ISL'] as const).map(market => (
                                 <button
                                     key={market}
                                     onClick={() => setSelectedMarket(market)}
