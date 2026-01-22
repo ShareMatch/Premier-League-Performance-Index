@@ -11,17 +11,29 @@ interface AllMarketsWidgetProps {
   onSelectOrder?: (team: Team, type: "buy" | "sell") => void;
 }
 
+// Active markets that should be shown (exclude coming soon / hidden markets)
+const ACTIVE_MARKETS = ["EPL", "SPL", "UCL", "WC", "ISL", "NBA", "NFL", "T20"];
+
 const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
   teams,
   onNavigate,
   onViewAsset,
   onSelectOrder,
 }) => {
-  // Randomly select 3 teams to display
+  // Randomly select 3 teams to display from open/active markets only
   const displayTeams = useMemo(() => {
-    if (teams.length <= 3) return teams;
+    // Filter to only active, non-settled assets from open markets
+    const activeTeams = teams.filter(
+      (team) =>
+        !team.is_settled &&
+        team.market &&
+        ACTIVE_MARKETS.includes(team.market)
+    );
+
+    if (activeTeams.length <= 3) return activeTeams;
+
     // Fisher-Yates shuffle on a copy, then take first 3
-    const shuffled = [...teams];
+    const shuffled = [...activeTeams];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];

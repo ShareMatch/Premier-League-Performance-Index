@@ -40,16 +40,10 @@ const AssetPage: React.FC<AssetPageProps> = ({
   const desktopShareRef = useRef<HTMLDivElement>(null);
   const mobileShareRef = useRef<HTMLDivElement>(null);
 
-  // Prioritize asset_id (static ID) for watchlist so it sticks across leagues
-  const watchId = asset.asset_id || asset.id;
+  // Use trading asset id (not asset_id) so each market's version can be favorited separately
+  // e.g., Arsenal in EPL vs Arsenal in UCL are different trading assets
+  const watchId = asset.id;
   const isInWatchlist = favorites.includes(watchId);
-
-  console.log("AssetPage - Watchlist State:", {
-    assetName: asset.name,
-    watchId,
-    isInWatchlist,
-    totalWatchlistCount: favorites.length,
-  });
   // (In a real app this would be fetched)
   const chartData = useMemo(() => {
     const basePrice = asset.offer || 1.0;
