@@ -146,8 +146,6 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
     <title>ShareMatch Verification Code</title>
     <style>
         /* Base styles for email clients */
@@ -155,11 +153,6 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        .root{
-        color-scheme: light only;
-        supported-color-schemes: light;
         }
 
         html, body {
@@ -171,17 +164,17 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430 !important;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
 
-        /* Solid Background */
+        /* Card Background - Lighter green for dark/light mode consistency */
         .gradient-bg {
-            background-color: #005430 !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
 
         /* Main Container */
@@ -311,18 +304,6 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
                 font-size: 11px !important;
             }
         }
-
-            /* Default (light mode) */
-            .brand-color {
-                color: #005430;
-            }
-
-            /* Dark mode override */
-            @media (prefers-color-scheme: dark) {
-                .brand-color {
-                color: #005430 !important;
-                }
-            }
 
         /* Mobile M - 375px */
         @media only screen and (min-width: 321px) and (max-width: 375px) {
@@ -555,14 +536,14 @@ const OTP_VERIFICATION_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430 !important; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430 !important; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430 !important;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -627,23 +608,21 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
     <title>Reset Your ShareMatch Password</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430 !important;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
         .gradient-bg {
-            background-color: #005430 !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         .container { max-width: 600px; width: 100%; border-radius: 12px; overflow: hidden; text-align: left; margin: 0 auto; }
         table[role="presentation"] { width: 100%; height: auto; }
@@ -667,20 +646,6 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         .reset-button:hover { opacity: 0.9; }
         .footer { padding: 20px 40px; text-align: center; font-size: 14px; color: #FFFFFF; border-top: 1px solid rgba(255, 255, 255, 0.2); border-radius: 0 0 12px 12px; }
         
-        /* Default (light mode) */
-        .brand-color {
-            color: #005430;
-        }
-
-        /* Dark mode override */
-        @media (prefers-color-scheme: dark) {
-            .brand-color {
-            color: #005430 !important;
-            }
-        }
-
-
-
         /* Responsive */
         @media only screen and (max-width: 425px) {
             body { padding: 10px !important; }
@@ -696,12 +661,12 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430 !important; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430 !important; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr><td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td></tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430 !important;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
                             <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image" style="display: block; margin: 0 auto; max-width: 280px; height: auto;" onerror="this.style.display='none';">
@@ -755,7 +720,6 @@ const FORGOT_PASSWORD_TEMPLATE = `<!DOCTYPE html>
                         </td>
                     </tr>
                 </table>
-                
             </td>
         </tr>
         <tr><td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td></tr>
@@ -769,8 +733,6 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
     <title>Password Reset Email - ShareMatch</title>
     <style>
         /* Base styles for email clients */
@@ -789,17 +751,17 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430 !important;
+            background-color: #f4f4f4;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             line-height: 1.6;
             padding: 20px 0;
         }
 
-        /* Solid Background */
+        /* Card Background - Lighter green for dark/light mode consistency */
         .gradient-bg {
-            background-color: #005430 !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            background-color: #007848;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         /* Main Container */
@@ -854,18 +816,6 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
             padding: 15px 0;
             margin: 20px 0;
             text-align: center;
-        }
-
-        /* Default (light mode) */
-        .brand-color {
-            color: #005430;
-        }
-
-        /* Dark mode override */
-        @media (prefers-color-scheme: dark) {
-            .brand-color {
-            color: #005430 !important;
-            }
         }
         
         .reset-button {
@@ -1173,14 +1123,14 @@ const PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body style="font-family: 'Inter', sans-serif; background-color: #005430 !important; margin: 0; padding: 20px 0;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #005430 !important; margin: 0; padding: 0;">
+<body style="font-family: 'Inter', sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4; margin: 0; padding: 0;">
         <tr>
             <td style="height: 10px; font-size: 10px; line-height: 10px;">&nbsp;</td>
         </tr>
         <tr>
             <td align="center">
-                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); background-color: #005430 !important;">
+                <table class="container gradient-bg" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); background-color: #007848;">
                     <!-- Logo Section -->
                     <tr>
                         <td align="center" class="logo-section" style="padding-top: 20px; padding-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2);">
@@ -1244,26 +1194,25 @@ const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light only">
-    <meta name="supported-color-schemes" content="light">
     <title>Order Confirmed - ShareMatch</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #005430 !important;
+            background-color: #f4f4f4;
             line-height: 1.6;
             padding: 20px 0;
         }
         .container {
             max-width: 600px;
             width: 100%;
-            background-color: #005430 !important;
+            background-color: #007848;
             border-radius: 16px;
             overflow: hidden;
             margin: 0 auto;
             color: #FFFFFF;
             padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         .logo-section { text-align: center; margin-bottom: 30px; }
         .logo-image { max-width: 280px; height: auto; }
@@ -1288,18 +1237,6 @@ const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
         .divider { border-top: 1px solid rgba(255, 255, 255, 0.2); margin: 12px 0; padding-top: 12px; }
         .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; }
         .footer { text-align: center; font-size: 12px; opacity: 0.6; margin-top: 40px; }
-
-        /* Default (light mode) */
-        .brand-color {
-            color: #005430;
-        }
-
-        /* Dark mode override */
-        @media (prefers-color-scheme: dark) {
-            .brand-color {
-            color: #005430 !important;
-            }
-        }
         
         @media only screen and (max-width: 480px) {
             .container { padding: 20px; border-radius: 12px; }
@@ -1307,59 +1244,65 @@ const ORDER_CONFIRMATION_TEMPLATE = `<!DOCTYPE html>
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="logo-section">
-            <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image">
-        </div>
-        
-        <div class="success-icon">
-            <img src="https://img.icons8.com/ios-filled/100/ffffff/checked-checkbox.png" width="60" height="60" alt="Success">
-        </div>
-        
-        <h1 class="title">Order Confirmed</h1>
-        <p class="subtitle">Dear ##USER_FULL_NAME##, your transaction has been successfully completed.</p>
-        
-        <div class="summary-card">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Order ID</td>
-                    <td align="right" style="padding-bottom: 12px; font-size: 14px; font-family: monospace; color: #FFFFFF;">##ORDER_ID##</td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Asset Token</td>
-                    <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 600; color: #FFFFFF;">##ASSET_NAME##</td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Type</td>
-                    <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 700; color: ##SIDE_COLOR##;">##SIDE_TEXT##</td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Units</td>
-                    <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##UNITS##</td>
-                </tr>
-                <tr>
-                    <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Price / Unit</td>
-                    <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##PRICE_PER_UNIT##</td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 12px;">
+<body style="background-color: #f4f4f4; margin: 0; padding: 20px 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center">
+                <div class="container">
+                    <div class="logo-section">
+                        <img src="##LOGO_IMAGE_URL##" alt="ShareMatch Logo" class="logo-image">
+                    </div>
+                    
+                    <div class="success-icon">
+                        <img src="https://img.icons8.com/ios-filled/100/ffffff/checked-checkbox.png" width="60" height="60" alt="Success">
+                    </div>
+                    
+                    <h1 class="title">Order Confirmed</h1>
+                    <p class="subtitle">Dear ##USER_FULL_NAME##, your transaction has been successfully completed.</p>
+                    
+                    <div class="summary-card">
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
-                                <td style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_LABEL##</td>
-                                <td align="right" style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_AMOUNT##</td>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Order ID</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-family: monospace; color: #FFFFFF;">##ORDER_ID##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Asset Token</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 600; color: #FFFFFF;">##ASSET_NAME##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Type</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; font-weight: 700; color: ##SIDE_COLOR##;">##SIDE_TEXT##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Units</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##UNITS##</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; color: rgba(255,255,255,0.8);">Price / Unit</td>
+                                <td align="right" style="padding-bottom: 12px; font-size: 14px; color: #FFFFFF;">##PRICE_PER_UNIT##</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 12px;">
+                                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_LABEL##</td>
+                                            <td align="right" style="font-size: 16px; font-weight: 700; color: #FFFFFF;">##TOTAL_AMOUNT##</td>
+                                        </tr>
+                                    </table>
+                                </td>
                             </tr>
                         </table>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        
-        <p style="text-align: center; font-size: 13px; opacity: 0.9;">If you have any questions, please contact our support team.</p>
-        
-        <div class="footer">
-            &copy; 2026 ShareMatch. All rights reserved.
-        </div>
-    </div>
+                    </div>
+                    
+                    <p style="text-align: center; font-size: 13px; opacity: 0.9;">If you have any questions, please contact our support team.</p>
+                    
+                    <div class="footer">
+                        &copy; 2026 ShareMatch. All rights reserved.
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>`;
