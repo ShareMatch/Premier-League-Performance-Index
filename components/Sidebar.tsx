@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { League, Team } from "../types";
 import {
   Home,
@@ -13,6 +13,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { fetchMarketHierarchy } from "../lib/api";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -42,6 +43,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     "Sports",
     "Football",
   ]);
+  const [marketHierarchy, setMarketHierarchy] = useState<any[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetchMarketHierarchy()
+      .then((data) => {
+        if (mounted) {
+          setMarketHierarchy(data || []);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load market hierarchy", error);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const toggleExpand = (label: string) => {
     setExpandedItems((prev) =>
@@ -50,6 +68,68 @@ const Sidebar: React.FC<SidebarProps> = ({
         : [...prev, label]
     );
   };
+
+  const activeMarkets = useMemo(() => {
+    const map = new Map<string, { label: string; token: string }>();
+    marketHierarchy.forEach((group) => {
+      const subGroups = group?.market_sub_groups || [];
+      subGroups.forEach((sub) => {
+        const markets = sub?.markets || [];
+        markets.forEach((market: any) => {
+          if (market?.status === "active" && market?.market_token) {
+            map.set(market.market_token.toUpperCase(), {
+              label: market.name || market.market_token,
+              token: market.market_token.toUpperCase(),
+            });
+          }
+        });
+      });
+    });
+    return map;
+  }, [marketHierarchy]);
+
+  const lookupLabel = (token: string, fallback: string) => {
+    const entry = activeMarkets.get(token);
+    return entry?.label || fallback;
+  };
+
+  const createSubItems = (tokens: string[], fallbackLabelMap: Record<string, string>) =>
+    tokens.reduce<any[]>((acc, token) => {
+      if (!activeMarkets.has(token)) return acc;
+      acc.push({
+        label: lookupLabel(token, fallbackLabelMap[token] || token),
+        id: token,
+        active: activeLeague === token,
+      });
+      return acc;
+    }, []);
+
+  const footballOrder = ["EPL", "SPL", "UCL", "WC", "ISL"];
+  const motorsportOrder = ["F1"];
+  const basketballOrder = ["NBA"];
+  const americanFootballOrder = ["NFL"];
+  const cricketOrder = ["T20"];
+  const globalEventsOrder = ["EUROVISION"];
+
+  const labelMap: Record<string, string> = {
+    EPL: "England Premier League",
+    SPL: "Saudi Pro League",
+    UCL: "UEFA Champions League",
+    WC: "FIFA World Cup",
+    ISL: "Indonesia Super League",
+    F1: "Formula 1",
+    NBA: "NBA",
+    NFL: "NFL",
+    T20: "T20 World Cup",
+    EUROVISION: "Eurovision",
+  };
+
+  const footballItems = useMemo(() => createSubItems(footballOrder, labelMap), [activeLeague, activeMarkets]);
+  const motorsportItems = useMemo(() => createSubItems(motorsportOrder, labelMap), [activeLeague, activeMarkets]);
+  const basketballItems = useMemo(() => createSubItems(basketballOrder, labelMap), [activeLeague, activeMarkets]);
+  const americanFootballItems = useMemo(() => createSubItems(americanFootballOrder, labelMap), [activeLeague, activeMarkets]);
+  const cricketItems = useMemo(() => createSubItems(cricketOrder, labelMap), [activeLeague, activeMarkets]);
+  const globalEventsItems = useMemo(() => createSubItems(globalEventsOrder, labelMap), [activeLeague, activeMarkets]);
 
   const menuItems: any[] = [
     {
@@ -65,75 +145,37 @@ const Sidebar: React.FC<SidebarProps> = ({
       subItems: [
         {
           label: "Football",
-          subItems: [
-            {
-              label: "England Premier League",
-              id: "EPL",
-              active: activeLeague === "EPL",
-            },
-            {
-              label: "Saudi Pro League",
-              id: "SPL",
-              active: activeLeague === "SPL",
-            },
-            {
-              label: "UEFA Champions League",
-              id: "UCL",
-              active: activeLeague === "UCL",
-            },
-            {
-              label: "FIFA World Cup",
-              id: "WC",
-              active: activeLeague === "WC",
-            },
-            {
-              label: "Indonesia Super League",
-              id: "ISL",
-              active: activeLeague === "ISL",
-            },
-          ],
+          subItems: footballItems,
         },
         {
           label: "Motorsport",
-          subItems: [
-            { label: "Formula 1", id: "F1", active: activeLeague === "F1" },
-          ],
+          subItems: motorsportItems,
         },
         {
           label: "Basketball",
-          subItems: [
-            { label: "NBA", id: "NBA", active: activeLeague === "NBA" },
-          ],
+          subItems: basketballItems,
         },
         {
           label: "American Football",
-          subItems: [
-            { label: "NFL", id: "NFL", active: activeLeague === "NFL" },
-          ],
+          subItems: americanFootballItems,
         },
         { label: "Golf", badge: "SOON" },
         {
           label: "Cricket",
-          subItems: [
-            {
-              label: "T20 World Cup",
-              id: "T20",
-              active: activeLeague === "T20",
-            },
-          ],
+          subItems: cricketItems,
         },
       ],
     },
     { icon: Gamepad2, label: "E-Sports" },
 
     {
-      icon: Globe,
-      label: "Global Events",
-      subItems: [
-        { label: "Eurovision", badge: "SOON" },
-        { label: "Oscars", badge: "SOON" },
-        { label: "Golden Globes", badge: "SOON" },
-      ],
+        icon: Globe,
+        label: "Global Events",
+        subItems: [
+          ...globalEventsItems,
+          { label: "Oscars", badge: "SOON" },
+          { label: "Golden Globes", badge: "SOON" },
+        ],
     },
   ];
 

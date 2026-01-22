@@ -212,6 +212,9 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
     passwordLongEnough &&
     confirmPassword.length > 0;
 
+  const GENERIC_RESET_ERROR =
+    "Failed to reset password. Please try again or request a new link.";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit || loading) return;
@@ -235,9 +238,8 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       // Go directly to login modal with success message
       onSuccess();
     } catch (err: any) {
-      setError(
-        err.message || "Failed to update password. The link may have expired."
-      );
+      console.error("Password reset error:", err);
+      setError(GENERIC_RESET_ERROR);
       setIsButtonHovered(false);
     } finally {
       setLoading(false);
