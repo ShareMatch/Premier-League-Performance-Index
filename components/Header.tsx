@@ -36,7 +36,7 @@ const Header: React.FC<HeaderProps> = ({
         {onBack && (
           <button
             onClick={onBack}
-            className="lg:hidden p-1 hover:bg-white/5 rounded-full transition-colors flex-shrink-0"
+            className="p-1 hover:bg-white/5 rounded-full transition-colors flex-shrink-0"
             aria-label="Go back"
           >
             <ArrowLeft className="w-[clamp(1rem,4vw,1.25rem)] h-[clamp(1rem,4vw,1.25rem)] text-gray-400" />

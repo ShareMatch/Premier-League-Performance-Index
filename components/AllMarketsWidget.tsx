@@ -3,6 +3,7 @@ import { Team, League } from "../types";
 import { ChevronRight, Globe } from "lucide-react";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretUp } from "react-icons/fa6";
+import { isMarketOpen } from "../utils/marketUtils";
 
 interface AllMarketsWidgetProps {
   teams: Team[];
@@ -12,7 +13,7 @@ interface AllMarketsWidgetProps {
 }
 
 // Active markets that should be shown (exclude coming soon / hidden markets)
-const ACTIVE_MARKETS = ["EPL", "SPL", "UCL", "WC", "ISL", "NBA", "NFL", "T20"];
+// Derived dynamically from open markets below
 
 const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
   teams,
@@ -26,8 +27,10 @@ const AllMarketsWidget: React.FC<AllMarketsWidgetProps> = ({
     const activeTeams = teams.filter(
       (team) =>
         !team.is_settled &&
+        isMarketOpen(team).isOpen &&
         team.market &&
-        ACTIVE_MARKETS.includes(team.market)
+        team.market !== "Eurovision" &&
+        team.category !== "global_events"
     );
 
     if (activeTeams.length <= 3) return activeTeams;
