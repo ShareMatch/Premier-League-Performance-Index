@@ -1,0 +1,92 @@
+name: Pre-fetch News for All Indexes
+
+on:
+  schedule:
+    # Runs every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # STAGING ENVIRONMENT
+  # ═══════════════════════════════════════════════════════════════
+  prefetch-news-staging:
+    runs-on: ubuntu-latest
+    name: Prefetch News (Staging)
+    
+    steps:
+      - name: Trigger Prefetch News Edge Function (Staging)
+        run: |
+          echo "🔄 Triggering prefetch-news function on STAGING..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.SUPABASE_STG_URL }}/functions/v1/prefetch-news" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_STAGING_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            --max-time 300)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Response Code: $HTTP_CODE"
+          echo "Response Body: $BODY"
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Staging news prefetch completed successfully!"
+            echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+          else
+            echo "❌ Staging news prefetch failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Send Telegram Notification on Staging Failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d text="⚠️ News Prefetch Failed (STAGING) - Check GitHub Actions for details"
+          fi
+
+  # ═══════════════════════════════════════════════════════════════
+  # PRODUCTION ENVIRONMENT
+  # ═══════════════════════════════════════════════════════════════
+  prefetch-news-prod:
+    runs-on: ubuntu-latest
+    name: Prefetch News (Production)
+    
+    steps:
+      - name: Trigger Prefetch News Edge Function (Production)
+        run: |
+          echo "🔄 Triggering prefetch-news function on PRODUCTION..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.SUPABASE_PROD_URL }}/functions/v1/prefetch-news" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_PROD_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            --max-time 300)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Response Code: $HTTP_CODE"
+          echo "Response Body: $BODY"
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Production news prefetch completed successfully!"
+            echo "$BODY" | jq '.' 2>/dev/null || echo "$BODY"
+          else
+            echo "❌ Production news prefetch failed with status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Send Telegram Notification on Production Failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d text="🚨 News Prefetch Failed (PRODUCTION) - Check GitHub Actions for details"
+          fi

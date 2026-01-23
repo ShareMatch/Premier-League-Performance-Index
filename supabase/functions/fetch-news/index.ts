@@ -27,29 +27,38 @@ serve(async (req) => {
       Global: "Major global sports headlines today",
     };
 
-    // Helper: date string for recency filter
-    const threeDaysAgo = () => {
-      const d = new Date();
-      d.setDate(d.getDate() - 3);
-      return d.toISOString().split("T")[0];
-    };
+    // Helper: date string for recency filter (24 hours ago)
+    // const oneDayAgo = () => {
+    //   const d = new Date();
+    //   d.setDate(d.getDate() - 1);
+    //   return d.toISOString().split("T")[0];
+    // };
 
     // ── Build effective search query ───────────────────────────────
-    let effectiveSearchQuery = topicMap[topic] || "Sports news today";
+    let effectiveSearchQuery = topicMap[topic] || "Sports news";
 
     if (topic.startsWith("team:")) {
       const parts = topic.split(":");
       const teamName = parts[1]?.trim() || "";
       const leagueCode = parts[2]?.trim() || "";
 
-      const leagueContext =
-        leagueCode && topicMap[leagueCode]
-          ? topicMap[leagueCode]
-          : leagueCode
-            ? `${leagueCode} sports`
-            : "football";
+      // Build context-aware search for the specific team/player
+      const leagueNames: Record<string, string> = {
+        EPL: "Premier League",
+        UCL: "Champions League",
+        SPL: "Saudi Pro League",
+        WC: "FIFA World Cup 2026",
+        F1: "Formula 1 2026 season",
+        NBA: "NBA",
+        NFL: "NFL",
+        T20: "T20 Cricket World Cup",
+        Eurovision: "Eurovision 2026",
+      };
 
-      effectiveSearchQuery = `"${teamName}" ${leagueContext} player news OR transfer OR injury OR performance OR match OR interview OR contract after:${threeDaysAgo()}`;
+      const leagueName = leagueNames[leagueCode] || leagueCode || "sports";
+      
+      // More specific search query for teams/players
+      effectiveSearchQuery = `"${teamName}" ${leagueName} latest news transfers injuries matches performance 2026`;
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -87,37 +96,33 @@ serve(async (req) => {
       tools: [{ googleSearch: {} }],
     });
 
-    const prompt = `Search the web for the most recent news specifically about the asset: ${effectiveSearchQuery}
+    const prompt = `Search the web for recent sports news about: ${effectiveSearchQuery}
 
-Focus exclusively on the asset page and only on the following:
-- Player or team performances directly related to this asset
-- Injuries and recovery updates for players in this asset
-- Confirmed transfers or strong rumors involving this asset from reputable sources
-- Contract negotiations relevant to this asset
-- Manager or coach comments regarding this asset
-- Upcoming matches or fixtures for this asset
+Find 5-8 recent news articles covering:
+- Match results and performances
+- Injuries and recovery updates  
+- Transfer news and rumors
+- Contract negotiations
+- Manager/coach statements
+- Upcoming fixtures and predictions
 
-Rules:
-- STRICTLY only articles from the last 7 days, with highest priority on the last 72 hours
-- Sources MUST be BBC Sport, Sky Sports, The Athletic, ESPN, Goal.com, Marca, AS, L'Equipe, Motorsport.com, Autosport, Formula1.com, NBA.com, NFL.com
-- DO NOT include betting, odds, fantasy sports, casino, or any gambling content
-- NO clickbait, low-quality, or unrelated content
-- ABSOLUTELY do not return anything not directly related to this asset
+RULES:
+- Articles must be from the LAST 24 HOURS
+- Use reputable sports sources (BBC Sport, Sky Sports, ESPN, The Athletic, Goal.com, etc.)
+- NO betting/gambling content
+- NO clickbait or low-quality sources
 
-Output Format:
-- Strictly return **only** a clean JSON array of up to 6 objects
-- Use this exact format and nothing else:
+Strictly output a JSON ARRAY of 5 objects. format:
+        [
+          {
+            "headline": "Article Title",
+            "source": "Publisher Name",
+            "published_at": "ISO date string (must be recent)",
+            "url": "https://link-to-article"
+          }
+        ]
 
-[
-  {
-    "headline": "Article Title",
-    "source": "Publisher Name",
-    "published_at": "YYYY-MM-DDTHH:mm:ssZ",
-    "url": "https://full-article-url"
-  }
-]
-
-No explanations, no markdown, no commentary, no extra text outside the JSON array. NOTHING else.`;
+Return ONLY the JSON array. No text before or after.`;
 
     const result = await model.generateContent(prompt);
     const generatedText = (await result.response).text();
