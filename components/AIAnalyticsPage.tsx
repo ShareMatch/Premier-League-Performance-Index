@@ -13,6 +13,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const [analysis, setAnalysis] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [selectedMarket, setSelectedMarket] = useState<'EPL' | 'F1' | 'SPL' | 'UCL' | 'NBA' | 'NFL' | 'T20'>('EPL');
+    
+    // Store the market and date that the analysis was generated for
+    const [analysisMarket, setAnalysisMarket] = useState<string>('');
+    const [analysisDate, setAnalysisDate] = useState<string>('');
 
     const getAnalysis = async () => {
         setLoading(true);
@@ -28,9 +32,14 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
             if (error) throw error;
 
+            // Store the market and date ONLY when analysis is generated
+            setAnalysisMarket(selectedMarket);
+            setAnalysisDate(new Date().toISOString().split('T')[0]);
             setAnalysis(data?.analysis || 'Analysis currently unavailable. Please try again.');
         } catch (err: any) {
             console.error(err);
+            setAnalysisMarket(selectedMarket);
+            setAnalysisDate(new Date().toISOString().split('T')[0]);
             setAnalysis('Unable to generate analysis at this time.');
         } finally {
             setLoading(false);
@@ -93,10 +102,16 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                 {
                     analysis ? (
                         <div className="bg-gray-900/50 border border-white/10 rounded-xl p-8 shadow-card backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4">
+                            {/* Title - uses the market that was analyzed, not currently selected */}
+                            <h1 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2">
+                                {analysisMarket} Index: Market Analysis - {analysisDate}
+                            </h1>
+                            
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                    h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-white mb-4 border-b border-gray-700 pb-2" {...props} />,
+                                    // Skip h1 since we render title separately
+                                    h1: () => null,
                                     h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-brand-emerald500 mt-6 mb-3" {...props} />,
                                     h3: ({ node, ...props }) => <h3 className="text-lg font-semibold text-white mt-4 mb-2" {...props} />,
                                     p: ({ node, ...props }) => <p className="text-sm text-gray-300 leading-relaxed mb-3" {...props} />,

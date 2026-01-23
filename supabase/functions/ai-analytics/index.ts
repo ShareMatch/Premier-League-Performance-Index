@@ -66,33 +66,50 @@ serve(async (req: Request) => {
       .map((t: any) => `${t.name} (${t.offer.toFixed(1)}%)`)
       .join(', ');
 
-    const prompt = `
-You are an Expert Sports Analyst for the ShareMatch trading platform.
+    const today = new Date().toISOString().split('T')[0];
+    
+    const prompt = `You are an Expert Sports Analyst for the ShareMatch trading platform.
 
 Market: ${selectedMarket} Index
+Date: ${today}
 Current Market Prices: ${marketTeams}
 
 TASK:
-1. Search for the latest breaking news, injuries, and team morale impacting these specific teams/drivers.
-2. Provide a technical analysis of the market. Focus on fundamentals, performance, and momentum.
+1. SEARCH THE WEB for the latest breaking news, injuries, suspensions, and team morale impacting these specific teams/drivers from the last 24-48 hours.
+2. Provide a technical analysis of the market based on current form, fundamentals, performance, and momentum.
 3. Identify 1 Undervalued Asset and 1 Overvalued Asset based on the divergence between sentiment and current market price.
-4. Format with clean Markdown (headers, bullet points). Start directly with the analysis title.
+
+FORMAT RULES:
+- Use clean Markdown with ## for section headers (NOT #)
+- Use bullet points for lists
+- DO NOT include any title or header at the very beginning - start directly with the "## Latest News, Injuries, and Team Morale:" section
+- Keep each team's update to 2-3 sentences max for conciseness
+
+SECTIONS TO INCLUDE (in this exact order):
+## Latest News, Injuries, and Team Morale:
+[For each major team: recent match results, injury updates, transfer news, manager comments - from your web search]
+
+## Technical Analysis:
+[Fundamentals, Performance, Momentum analysis based on current standings and form]
+
+## Undervalued and Overvalued Assets:
+[One undervalued asset with reasoning, one overvalued asset with reasoning]
 
 STRICT TERMINOLOGY GUIDELINES:
-- DO NOT use religious terms like "Halal", "Islamic", "Sharia", "Haram". The analysis must be compliant in *principle* (ethical, no gambling), but must NOT use the labels.
-- DO NOT use gambling terms like "bet", "odds", "wager", "gamble". Use "trade", "position", "sentiment", "forecast".
-- DO NOT use "Win" or "Winner" when referring to the market outcome. Use "Top the Index" or "finish first".
-- DO NOT provide meta-commentary or conversational openings (e.g., "Okay, here is..."). Start immediately with the content.
+- DO NOT use religious terms like "Halal", "Islamic", "Sharia", "Haram"
+- DO NOT use gambling terms like "bet", "odds", "wager", "gamble". Use "trade", "position", "sentiment", "forecast"
+- DO NOT use "Win" or "Winner" when referring to the market outcome. Use "Top the Index" or "finish first"
+- DO NOT provide meta-commentary or conversational openings. Start immediately with the first section.
 
-Style: Professional, insightful, concise, data-driven.
-`;
+Style: Professional, insightful, concise, data-driven.`;
 
-    console.log("🤖 Calling Gemini API with model: gemini-2.0-flash");
+    console.log("🤖 Calling Gemini API with model: gemini-2.5-flash + googleSearch");
     console.log("📝 Prompt length:", prompt.length);
 
     try {
+      // Use flash model WITH googleSearch for real-time news and injury data
       const model = ai.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         tools: [{ googleSearch: {} }],
       });
 
