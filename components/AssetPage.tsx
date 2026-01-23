@@ -20,6 +20,7 @@ import OnThisDay from "./OnThisDay";
 import { getLogoUrl } from "../lib/logoHelper";
 import { useFavorites } from "../hooks/useFavorites";
 import { generateShareLink } from "../lib/api";
+import { isMarketOpen } from "../utils/marketUtils";
 
 interface AssetPageProps {
   asset: Team;
@@ -28,13 +29,10 @@ interface AssetPageProps {
   onNavigateToIndex?: (market: string) => void;
 }
 
-const AssetPage: React.FC<AssetPageProps> = ({
-  asset,
-  onBack,
-  onSelectOrder,
-  onNavigateToIndex,
-}) => {
+const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onNavigateToIndex }) => {
   const [period, setPeriod] = useState<"1h" | "24h" | "7d" | "All">("24h");
+
+  const isMarketClosed = useMemo(() => !isMarketOpen(asset).isOpen, [asset]);
   const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop'; copied: boolean } | null>(null);
   const { favorites, toggleFavorite } = useFavorites();
   const desktopShareRef = useRef<HTMLDivElement>(null);
@@ -263,7 +261,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
           </div>
         </div>
 
-        {/* Mobile Price & Actions - Only for open markets */}
+        {/* Mobile Price & Actions - Only for open markets (UI always shows now) */}
         {!asset.is_settled && (
           <div className="p-2 border-t border-gray-800 bg-[#0B1221]/50">
             <div className="flex items-center justify-between mb-2">
@@ -280,7 +278,8 @@ const AssetPage: React.FC<AssetPageProps> = ({
                         <FaCaretUp className="w-3 h-3" />
                       ) : (
                         <FaCaretDown className="w-3 h-3" />
-                      )}
+                      )
+                      }
                       ${Math.abs(changeAmount).toFixed(2)}
                       <span className="ml-1 text-[9px]">({period})</span>
                     </span>
@@ -314,6 +313,16 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 </span>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Market Closed Banner - Mobile Label */}
+        {!asset.is_settled && isMarketClosed && (
+          <div className="p-4 border-t border-gray-800 bg-[#0B1221]/50 text-center">
+            <span className="inline-block px-4 py-2 text-sm font-bold rounded-lg border bg-amber-500/10 text-amber-500 border-amber-500/30">
+              Market Closed
+            </span>
+            <p className="text-[10px] text-gray-500 mt-2">Trading is currently unavailable for this asset.</p>
           </div>
         )}
       </div>
@@ -359,8 +368,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
                     onClick={() => onNavigateToIndex?.(asset.market!)}
                     className="bg-brand-primary/10 hover:bg-brand-primary/20 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-brand-primary hover:text-brand-primary/90 font-semibold transition-all flex items-center gap-0.5"
                   >
-                    {asset.market} Index
-                    <span className="text-[clamp(0.5rem,1vw,0.625rem)]">→</span>
+                    {asset.market}
                   </button>
                 ) : (
                   <span className="bg-gray-800 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-gray-300">

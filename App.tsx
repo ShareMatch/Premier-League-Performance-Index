@@ -63,6 +63,7 @@ import SellErrorModal from "./components/SellErrorModal";
 import MyDetailsPage from "./components/mydetails/MyDetailsPage";
 import ChatBot from "./components/chatbot/frontend/ChatBot";
 import AlertModal from "./components/AlertModal";
+import { isMarketOpen } from "./utils/marketUtils";
 import AssetPage from "./components/AssetPage";
 import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
@@ -815,8 +816,21 @@ const App: React.FC = () => {
   };
 
   const handleSelectOrder = (team: Team, type: "buy" | "sell") => {
-    // Prevent trading on settled/closed markets
-    if (team.is_settled) {
+    const status = isMarketOpen(team);
+
+    if (!status.isOpen) {
+      let message = "The market for this asset is currently closed. Trading is only available when the market is open.";
+
+      if (status.reason === 'settled') {
+        message = "This market has been settled. Trading is no longer available.";
+      } else if (status.reason === 'not_started' && team.season_start_date) {
+        message = `This market has not opened yet. Trading will be available starting ${new Date(team.season_start_date).toLocaleDateString("en-GB")}.`;
+      } else if (status.reason === 'missing_config') {
+        message = "This market is currently unavailable for trading.";
+      }
+
+      setAlertMessage(message);
+      setAlertOpen(true);
       return;
     }
 
