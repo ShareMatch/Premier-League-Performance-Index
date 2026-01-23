@@ -764,7 +764,7 @@ const App: React.FC = () => {
   //   setSelectedOrder(null);
   // }, [activeLeague]);
 
-  const handleNavigate = (league: League) => {
+  const handleNavigate = (league: League, from?: 'home' | 'all-markets' | 'new-markets') => {
     setIsMobileMenuOpen(false);
 
     // Explicitly close trade slip when navigating
@@ -811,7 +811,8 @@ const App: React.FC = () => {
     } else if (league === "NEW_MARKETS") {
       navigate("/new-markets");
     } else {
-      navigate(`/market/${league}`);
+      // Pass 'from' in state only if it's provided
+      navigate(`/market/${league}`, from ? { state: { from } } : undefined);
     }
   };
 
@@ -1127,7 +1128,7 @@ const App: React.FC = () => {
                                 path="/"
                                 element={
                                   <HomeDashboard
-                                    onNavigate={handleNavigate}
+                                    onNavigate={(league) => handleNavigate(league, 'home')}
                                     teams={allAssets}
                                     onViewAsset={handleViewAsset}
                                     onSelectOrder={handleSelectOrder}
@@ -1162,7 +1163,7 @@ const App: React.FC = () => {
                                   >
                                     <AllMarketsPage
                                       teams={allAssets}
-                                      onNavigate={handleNavigate}
+                                      onNavigate={(league) => handleNavigate(league, 'all-markets')}
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                     />
@@ -1193,7 +1194,7 @@ const App: React.FC = () => {
                                   >
                                     <NewMarketsPage
                                       teams={allAssets}
-                                      onNavigate={handleNavigate}
+                                      onNavigate={(league) => handleNavigate(league, 'new-markets')}
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                       seasonDatesMap={seasonDatesMap}
@@ -1502,9 +1503,31 @@ const LeagueRouteWrapper: React.FC<{
 }) => {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     // Use URL param for the league to prevent flash when navigating away
     const { leagueId } = useParams();
     const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+
+    // Check if we should show the back button based on navigation source
+    const navigationSource = location.state?.from as 'home' | 'all-markets' | 'new-markets' | undefined;
+    const shouldShowBackButton = !!navigationSource;
+
+    // Determine where to navigate back to
+    const handleBack = () => {
+      switch (navigationSource) {
+        case 'home':
+          navigate('/');
+          break;
+        case 'all-markets':
+          navigate('/markets');
+          break;
+        case 'new-markets':
+          navigate('/new-markets');
+          break;
+        default:
+          navigate(-1);
+      }
+    };
 
     // Redirect to home if not logged in
     if (!authLoading && !user) {
@@ -1531,7 +1554,7 @@ const LeagueRouteWrapper: React.FC<{
               seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
               seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
               seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-              onBack={() => navigate(-1)}
+              onBack={shouldShowBackButton ? handleBack : undefined}
             />
           </div>
 

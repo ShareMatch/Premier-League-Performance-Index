@@ -182,12 +182,18 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
                 {asset.name}
               </h1>
               {asset.market ? (
-                <button
-                  onClick={() => onNavigateToIndex?.(asset.market!)}
-                  className="text-[clamp(0.6rem,1.5vw,0.75rem)] text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors font-medium"
-                >
-                  {asset.market} Index
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onNavigateToIndex?.(asset.market!)}
+                    className="text-[clamp(0.6rem,1.5vw,0.75rem)] text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors font-medium"
+                  >
+                    {asset.market}
+                  </button>
+                  <span className="text-gray-500 text-[10px]">•</span>
+                  <span className="font-mono text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">
+                    {asset.id}
+                  </span>
+                </div>
               ) : (
                 <span className="text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">Asset</span>
               )}
@@ -364,12 +370,18 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
               </h1>
               <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] text-[clamp(0.6rem,1.25vw,0.75rem)] text-gray-400 flex-wrap">
                 {asset.market ? (
-                  <button
-                    onClick={() => onNavigateToIndex?.(asset.market!)}
-                    className="bg-brand-primary/10 hover:bg-brand-primary/20 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-brand-primary hover:text-brand-primary/90 font-semibold transition-all flex items-center gap-0.5"
-                  >
-                    {asset.market}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => onNavigateToIndex?.(asset.market!)}
+                      className="bg-brand-primary/10 hover:bg-brand-primary/20 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-brand-primary hover:text-brand-primary/90 font-semibold transition-all flex items-center gap-0.5"
+                    >
+                      {asset.market}
+                    </button>
+                    <span className="text-gray-600">•</span>
+                    <span className="font-mono text-[clamp(0.55rem,1.25vw,0.7rem)]">
+                      {asset.id}
+                    </span>
+                  </>
                 ) : (
                   <span className="bg-gray-800 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-gray-300">
                     Asset

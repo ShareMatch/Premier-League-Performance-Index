@@ -169,13 +169,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: Gamepad2, label: "E-Sports" },
 
     {
-        icon: Globe,
-        label: "Global Events",
-        subItems: [
-          ...globalEventsItems,
-          { label: "Oscars", badge: "SOON" },
-          { label: "Golden Globes", badge: "SOON" },
-        ],
+      icon: Globe,
+      label: "Global Events",
+      subItems: [
+        ...globalEventsItems,
+        { label: "Oscars", badge: "SOON" },
+        { label: "Golden Globes", badge: "SOON" },
+      ],
     },
   ];
 
@@ -428,7 +428,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center justify-center gap-[clamp(0.5rem,1vw,0.75rem)] px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,1vh,0.75rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
                 data-testid="sidebar-how-it-works"
               >
-                <span>how it works ?</span>
+                <span>How it works ?</span>
               </button>
             </div>
           )}
