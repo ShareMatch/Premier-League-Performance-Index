@@ -20,6 +20,7 @@ import OnThisDay from "./OnThisDay";
 import { getLogoUrl } from "../lib/logoHelper";
 import { useFavorites } from "../hooks/useFavorites";
 import { generateShareLink } from "../lib/api";
+import { isMarketOpen } from "../utils/marketUtils";
 
 interface AssetPageProps {
   asset: Team;
@@ -28,28 +29,19 @@ interface AssetPageProps {
   onNavigateToIndex?: (market: string) => void;
 }
 
-const AssetPage: React.FC<AssetPageProps> = ({
-  asset,
-  onBack,
-  onSelectOrder,
-  onNavigateToIndex,
-}) => {
+const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onNavigateToIndex }) => {
   const [period, setPeriod] = useState<"1h" | "24h" | "7d" | "All">("24h");
+
+  const isMarketClosed = useMemo(() => !isMarketOpen(asset).isOpen, [asset]);
   const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop'; copied: boolean } | null>(null);
   const { favorites, toggleFavorite } = useFavorites();
   const desktopShareRef = useRef<HTMLDivElement>(null);
   const mobileShareRef = useRef<HTMLDivElement>(null);
 
-  // Prioritize asset_id (static ID) for watchlist so it sticks across leagues
-  const watchId = asset.asset_id || asset.id;
+  // Use trading asset id (not asset_id) so each market's version can be favorited separately
+  // e.g., Arsenal in EPL vs Arsenal in UCL are different trading assets
+  const watchId = asset.id;
   const isInWatchlist = favorites.includes(watchId);
-
-  console.log("AssetPage - Watchlist State:", {
-    assetName: asset.name,
-    watchId,
-    isInWatchlist,
-    totalWatchlistCount: favorites.length,
-  });
   // (In a real app this would be fetched)
   const chartData = useMemo(() => {
     const basePrice = asset.offer || 1.0;
@@ -190,12 +182,18 @@ const AssetPage: React.FC<AssetPageProps> = ({
                 {asset.name}
               </h1>
               {asset.market ? (
-                <button
-                  onClick={() => onNavigateToIndex?.(asset.market!)}
-                  className="text-[clamp(0.6rem,1.5vw,0.75rem)] text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors font-medium"
-                >
-                  {asset.market} Index
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onNavigateToIndex?.(asset.market!)}
+                    className="text-[clamp(0.6rem,1.5vw,0.75rem)] text-brand-primary hover:text-brand-primary/80 hover:underline transition-colors font-medium"
+                  >
+                    {asset.market}
+                  </button>
+                  <span className="text-gray-500 text-[10px]">•</span>
+                  <span className="font-mono text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">
+                    {asset.id}
+                  </span>
+                </div>
               ) : (
                 <span className="text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">Asset</span>
               )}
@@ -269,7 +267,7 @@ const AssetPage: React.FC<AssetPageProps> = ({
           </div>
         </div>
 
-        {/* Mobile Price & Actions - Only for open markets */}
+        {/* Mobile Price & Actions - Only for open markets (UI always shows now) */}
         {!asset.is_settled && (
           <div className="p-2 border-t border-gray-800 bg-[#0B1221]/50">
             <div className="flex items-center justify-between mb-2">
@@ -286,7 +284,8 @@ const AssetPage: React.FC<AssetPageProps> = ({
                         <FaCaretUp className="w-3 h-3" />
                       ) : (
                         <FaCaretDown className="w-3 h-3" />
-                      )}
+                      )
+                      }
                       ${Math.abs(changeAmount).toFixed(2)}
                       <span className="ml-1 text-[9px]">({period})</span>
                     </span>
@@ -322,23 +321,33 @@ const AssetPage: React.FC<AssetPageProps> = ({
             </div>
           </div>
         )}
+
+        {/* Market Closed Banner - Mobile Label */}
+        {!asset.is_settled && isMarketClosed && (
+          <div className="p-4 border-t border-gray-800 bg-[#0B1221]/50 text-center">
+            <span className="inline-block px-4 py-2 text-sm font-bold rounded-lg border bg-amber-500/10 text-amber-500 border-amber-500/30">
+              Market Closed
+            </span>
+            <p className="text-[10px] text-gray-500 mt-2">Trading is currently unavailable for this asset.</p>
+          </div>
+        )}
       </div>
 
       {/* Desktop Header */}
-      <div className="hidden lg:flex items-center justify-between p-6 border-b border-gray-800 bg-[#0B1221] sticky top-0 z-30">
-        <div className="flex items-center gap-4">
+      <div className="hidden lg:flex flex-wrap items-center justify-between gap-[clamp(0.75rem,2vw,1.5rem)] p-[clamp(0.75rem,2vw,1.5rem)] border-b border-gray-800 bg-[#0B1221] sticky top-0 z-30">
+        <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] min-w-0 flex-shrink">
           <button
             onClick={onBack}
-            className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+            className="p-[clamp(0.375rem,1vw,0.5rem)] hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors flex-shrink-0"
             data-testid="asset-page-back-desktop"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-[clamp(1rem,2vw,1.25rem)] h-[clamp(1rem,2vw,1.25rem)]" />
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] min-w-0">
             {/* Asset Avatar */}
             {avatarUrl ? (
-              <div className="w-20 h-20 rounded-xl flex items-center justify-center avatar-breathe">
+              <div className="w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl flex items-center justify-center avatar-breathe flex-shrink-0">
                 <img
                   src={avatarUrl}
                   alt={`${asset.name} avatar`}
@@ -347,118 +356,118 @@ const AssetPage: React.FC<AssetPageProps> = ({
               </div>
             ) : (
               <div
-                className={`w-20 h-20 rounded-xl ${avatarColor} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10`}
+                className={`w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl ${avatarColor} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10 flex-shrink-0`}
               >
-                <span className="text-xl font-black text-white tracking-tighter">
+                <span className="text-[clamp(0.75rem,2vw,1.25rem)] font-black text-white tracking-tighter">
                   {asset.name?.substring(0, 2).toUpperCase() || "??"}
                 </span>
               </div>
             )}
 
-            <div>
-              <h1 className="text-[clamp(1rem,2.5vw,1.25rem)] font-bold text-white tracking-tight">
+            <div className="min-w-0">
+              <h1 className="text-[clamp(0.875rem,2vw,1.25rem)] font-bold text-white tracking-tight truncate">
                 {asset.name}
               </h1>
-              <div className="flex items-center gap-[clamp(0.375rem,1vw,0.5rem)] text-[clamp(0.65rem,1.5vw,0.75rem)] text-gray-400">
+              <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] text-[clamp(0.6rem,1.25vw,0.75rem)] text-gray-400 flex-wrap">
                 {asset.market ? (
-                  <button
-                    onClick={() => onNavigateToIndex?.(asset.market!)}
-                    className="bg-brand-primary/10 hover:bg-brand-primary/20 px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] rounded-[clamp(0.125rem,0.5vw,0.25rem)] text-brand-primary hover:text-brand-primary/90 font-semibold transition-all flex items-center gap-1"
-                  >
-                    {asset.market} Index
-                    <span className="text-[clamp(0.5rem,1vw,0.625rem)]">→</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => onNavigateToIndex?.(asset.market!)}
+                      className="bg-brand-primary/10 hover:bg-brand-primary/20 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-brand-primary hover:text-brand-primary/90 font-semibold transition-all flex items-center gap-0.5"
+                    >
+                      {asset.market}
+                    </button>
+                    <span className="text-gray-600">•</span>
+                    <span className="font-mono text-[clamp(0.55rem,1.25vw,0.7rem)]">
+                      {asset.id}
+                    </span>
+                  </>
                 ) : (
-                  <span className="bg-gray-800 px-[clamp(0.375rem,1vw,0.5rem)] py-[clamp(0.125rem,0.5vw,0.25rem)] rounded text-gray-300">
+                  <span className="bg-gray-800 px-[clamp(0.25rem,0.75vw,0.5rem)] py-[clamp(0.125rem,0.375vw,0.25rem)] rounded text-gray-300">
                     Asset
                   </span>
                 )}
-                <span>•</span>
-                <span className="font-mono text-[clamp(0.55rem,1.25vw,0.7rem)]">{asset.id}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-end mr-2 min-w-[80px]">
+        <div className="flex items-center gap-[clamp(0.5rem,1.5vw,1rem)] flex-shrink-0">
+          {/* Price Change Indicator */}
+          <div className="flex flex-col items-end">
             {(() => {
-              // Generate mock price change
               const changeAmount = Math.random() * 2 - 0.5;
               const isPositive = changeAmount >= 0;
               return (
                 <span
-                  className={`text-[10px] font-bold flex items-center gap-0.5 ${isPositive ? "text-green-400" : "text-red-400"}`}
+                  className={`text-[clamp(0.5rem,1vw,0.625rem)] font-bold flex items-center gap-0.5 ${isPositive ? "text-green-400" : "text-red-400"}`}
                 >
                   {isPositive ? (
-                    <FaCaretUp className="w-3 h-3" />
+                    <FaCaretUp className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
                   ) : (
-                    <FaCaretDown className="w-3 h-3" />
+                    <FaCaretDown className="w-[clamp(0.5rem,1vw,0.75rem)] h-[clamp(0.5rem,1vw,0.75rem)]" />
                   )}
                   ${Math.abs(changeAmount).toFixed(2)}
-                  <span className="ml-1">({period})</span>
+                  <span className="ml-0.5">({period})</span>
                 </span>
               );
             })()}
           </div>
 
           {asset.is_settled ? (
-            <span className="px-2.5 py-1 text-[10px] sm:text-xs font-bold rounded border bg-amber-500/10 text-amber-500 border-amber-500/30 whitespace-nowrap">
+            <span className="px-[clamp(0.5rem,1vw,0.625rem)] py-[clamp(0.25rem,0.5vw,0.375rem)] text-[clamp(0.5rem,1vw,0.75rem)] font-bold rounded border bg-amber-500/10 text-amber-500 border-amber-500/30 whitespace-nowrap">
               Market Settled
             </span>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)]">
               <button
                 onClick={() => onSelectOrder?.(asset, "buy")}
-                className="w-[clamp(5rem,8vw,6.5rem)] flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-lg p-1.5 transition-all shadow-lg shadow-black/20"
+                className="flex flex-col items-center justify-center bg-[#005430] hover:bg-[#006035] border border-[#005430] rounded-[clamp(0.25rem,0.5vw,0.5rem)] px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.25rem,0.75vw,0.5rem)] transition-all shadow-lg shadow-black/20"
                 data-testid="asset-page-buy-desktop"
               >
-                <span className="text-[clamp(0.5rem,1.2vw,0.55rem)] text-emerald-100/70 font-medium mb-0.5 uppercase tracking-wide">
+                <span className="text-[clamp(0.4rem,0.8vw,0.5rem)] text-emerald-100/70 font-medium uppercase tracking-wide">
                   Buy
                 </span>
-                <span className="text-[clamp(0.875rem,2vw,1rem)] font-bold text-white">
+                <span className="text-[clamp(0.75rem,1.5vw,1rem)] font-bold text-white whitespace-nowrap">
                   ${(asset.offer || 0).toFixed(2)}
                 </span>
               </button>
               <button
                 onClick={() => onSelectOrder?.(asset, "sell")}
-                className="w-[clamp(5rem,8vw,6.5rem)] flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-lg p-1.5 transition-all"
+                className="flex flex-col items-center justify-center bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 hover:border-red-500/40 rounded-[clamp(0.25rem,0.5vw,0.5rem)] px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.25rem,0.75vw,0.5rem)] transition-all"
                 data-testid="asset-page-sell-desktop"
               >
-                <span className="text-[clamp(0.5rem,1.2vw,0.55rem)] text-red-300/70 font-medium mb-0.5 uppercase tracking-wide">
+                <span className="text-[clamp(0.4rem,0.8vw,0.5rem)] text-red-300/70 font-medium uppercase tracking-wide">
                   Sell
                 </span>
-                <span className="text-[clamp(0.875rem,2vw,1rem)] font-bold text-red-400">
+                <span className="text-[clamp(0.75rem,1.5vw,1rem)] font-bold text-red-400 whitespace-nowrap">
                   ${(asset.bid || 0).toFixed(2)}
                 </span>
               </button>
             </div>
           )}
 
-          <div className="h-8 w-px bg-gray-700 mx-2"></div>
+          <div className="h-[clamp(1.5rem,3vw,2rem)] w-px bg-gray-700"></div>
 
-          <div className="flex gap-1">
+          <div className="flex gap-[clamp(0.125rem,0.5vw,0.25rem)]">
             <button
-              onClick={() => {
-                console.log("Watchlist Toggle - ID:", watchId);
-                toggleFavorite(watchId);
-              }}
-              className={`p-2 rounded-lg transition-colors ${isInWatchlist ? "text-yellow-400 bg-yellow-400/10" : "text-gray-400 hover:text-white hover:bg-gray-800"}`}
+              onClick={() => toggleFavorite(watchId)}
+              className={`p-[clamp(0.375rem,1vw,0.5rem)] rounded-lg transition-colors ${isInWatchlist ? "text-yellow-400 bg-yellow-400/10" : "text-gray-400 hover:text-white hover:bg-gray-800"}`}
               title={
                 isInWatchlist ? "Remove from Watchlist" : "Add to Watchlist"
               }
             >
               <Star
-                className={`w-5 h-5 ${isInWatchlist ? "fill-yellow-400" : ""}`}
+                className={`w-[clamp(1rem,2vw,1.25rem)] h-[clamp(1rem,2vw,1.25rem)] ${isInWatchlist ? "fill-yellow-400" : ""}`}
               />
             </button>
             <div className="relative" ref={desktopShareRef}>
               <button
                 onClick={() => handleShare('desktop')}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-[clamp(0.375rem,1vw,0.5rem)] text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
                 title="Share Asset"
               >
-                <Share2 className="w-5 h-5" />
+                <Share2 className="w-[clamp(1rem,2vw,1.25rem)] h-[clamp(1rem,2vw,1.25rem)]" />
               </button>
 
               {shareConfig?.type === 'desktop' && (

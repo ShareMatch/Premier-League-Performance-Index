@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { FaCheck } from "react-icons/fa6";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { isMarketOpen } from "../utils/marketUtils";
 
 interface AllMarketsPageProps {
   teams: Team[];
@@ -24,42 +25,33 @@ interface AllMarketsPageProps {
   onSelectOrder: (team: Team, type: "buy" | "sell") => void;
 }
 
-const CATEGORIES = [
-  {
-    id: "football",
-    label: "Football",
-    markets: [
-      { id: "EPL", label: "Premier League" },
-      { id: "SPL", label: "Saudi Pro League" },
-      { id: "UCL", label: "Champions League" },
-      { id: "FIFA", label: "FIFA World Cup" },
-    ],
-  },
-  {
-    id: "f1",
-    label: "Motorsport",
-    markets: [{ id: "F1", label: "Formula 1" }],
-  },
-  {
-    id: "basketball",
-    label: "Basketball",
-    markets: [{ id: "NBA", label: "NBA" }],
-  },
-  {
-    id: "american_football",
-    label: "American Football",
-    markets: [{ id: "NFL", label: "NFL" }],
-  },
-  {
-    id: "cricket",
-    label: "Cricket",
-    markets: [{ id: "T20", label: "T20 World Cup" }],
-  },
-  {
-    id: "global_events",
-    label: "Global Events",
-    markets: [{ id: "EUROVISION", label: "Eurovision" }],
-  },
+const MARKET_LABELS: Record<string, string> = {
+  EPL: "Premier League",
+  SPL: "Saudi Pro League",
+  UCL: "Champions League",
+  WC: "World Cup",
+  FIFA: "FIFA World Cup",
+  F1: "Formula 1",
+  NBA: "NBA",
+  NFL: "NFL",
+  T20: "T20 World Cup",
+  ISL: "Indonesia Super League",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  football: "Football",
+  f1: "Motorsport",
+  basketball: "Basketball",
+  american_football: "American Football",
+  cricket: "Cricket",
+};
+
+const CATEGORY_ORDER = [
+  "football",
+  "f1",
+  "basketball",
+  "american_football",
+  "cricket",
 ];
 
 const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
@@ -114,9 +106,11 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     // 1. Global visibility filters (Hide settled, closed, or effectively hidden assets)
     let result = teams.filter((t) => {
       // Basic settled/closed checks
-      if (t.is_settled) return false;
-      if (t.season_stage === "settled" || t.season_stage === "closed")
-        return false;
+      const status = isMarketOpen(t);
+      if (!status.isOpen) return false;
+
+      // Explicitly block Global Events / Eurovision
+      if (t.category === "global_events" || t.market === "Eurovision") return false;
 
       // Price-based visibility (settled system usually sets prices to $100 or $0.1)
       // We still show them if they aren't explicitly settled, but here we can be more strict if needed.
@@ -155,22 +149,51 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
     return result;
   }, [teams, activeCategory, activeFilters, searchQuery]);
 
-  // Compute which categories actually have active teams to display in the filter bar
+  // Compute which categories and markets actually have active teams to display in the filter bar
   const visibleCategories = useMemo(() => {
-    // Check which categories have at least one active team
+    // 1. Get all active teams (open)
     const activeTeams = teams.filter((t) => {
-      if (t.is_settled) return false;
-      if (t.season_stage === "settled" || t.season_stage === "closed")
-        return false;
+      const status = isMarketOpen(t);
+      if (!status.isOpen) return false;
       if (t.offer === 100 || t.offer === 0.1) return false;
+
+      // Explicitly block Global Events / Eurovision
+      if (t.category === "global_events" || t.market === "Eurovision") return false;
+
       return true;
     });
 
-    const activeCatIds = new Set(activeTeams.map((t) => t.category));
+    // 2. Group by category
+    const categoriesMap: Record<string, { id: string; label: string; markets: Set<string> }> = {};
 
-    return CATEGORIES.filter((cat) => {
-      return activeCatIds.has(cat.id as any);
+    activeTeams.forEach((t) => {
+      const catId = t.category || "other";
+      if (!categoriesMap[catId]) {
+        categoriesMap[catId] = {
+          id: catId,
+          label: CATEGORY_LABELS[catId] || catId.charAt(0).toUpperCase() + catId.slice(1).replace("_", " "),
+          markets: new Set<string>(),
+        };
+      }
+      if (t.market) {
+        categoriesMap[catId].markets.add(t.market);
+      }
     });
+
+    // 3. Convert to array and sort by CATEGORY_ORDER
+    return CATEGORY_ORDER.filter((id) => categoriesMap[id])
+      .concat(Object.keys(categoriesMap).filter((id) => !CATEGORY_ORDER.includes(id)))
+      .map((id) => {
+        const cat = categoriesMap[id];
+        return {
+          id: cat.id,
+          label: cat.label,
+          markets: Array.from(cat.markets).map((mId) => ({
+            id: mId,
+            label: MARKET_LABELS[mId] || mId,
+          })),
+        };
+      });
   }, [teams]);
 
   // Initial loading simulation
