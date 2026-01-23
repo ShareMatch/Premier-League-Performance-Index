@@ -137,7 +137,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         const parts = topic.split(":");
         assetName = parts[1] || null;
         parentIndexTopic = parts[2] || null;
-        console.log("[NewsFeed] Asset-level topic detected:", { topic, assetName, parentIndexTopic });
       }
 
       // 1. Fetch existing news from DB
@@ -145,7 +144,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       let allData: any[] = [];
       
       if (isAssetLevel && parentIndexTopic) {
-        console.log("[NewsFeed] Fetching from parent index:", parentIndexTopic);
         
         // Fetch from parent index (faster, already cached)
         const { data: indexData, error: indexError } = await supabase
@@ -155,7 +153,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           .order("published_at", { ascending: false })
           .limit(20);
         
-        console.log("[NewsFeed] Parent index result:", { count: indexData?.length, error: indexError });
+        
         
         if (!indexError && indexData) {
           allData = [...indexData];
@@ -169,7 +167,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           .order("published_at", { ascending: false })
           .limit(10);
         
-        console.log("[NewsFeed] Asset-specific result:", { count: assetData?.length, error: assetError });
         
         if (!assetError && assetData) {
           // Merge and dedupe by id
