@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Car, Trophy } from 'lucide-react';
 import type { Team } from '../types';
 import { getLogoUrl } from '../lib/logoHelper';
+import { isMarketOpen } from '../utils/marketUtils';
 
 interface OrderBookRowProps {
   team: Team;

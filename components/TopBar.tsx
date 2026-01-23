@@ -798,12 +798,12 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <FileText className="h-4 w-4" /> Portfolio
                     </button>
-                    <a
+                    {/* <a
                       href="#"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
-                    </a>
+                    </a> */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -921,12 +921,12 @@ const TopBar: React.FC<TopBarProps> = ({
                     >
                       <FileText className="h-4 w-4" /> Portfolio
                     </button>
-                    <a
+                    {/* <a
                       href="#"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
                     >
                       <Shield className="h-4 w-4" /> Rules & Regulations
-                    </a>
+                    </a> */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

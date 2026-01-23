@@ -18,23 +18,11 @@ const Watchlist: React.FC<WatchlistProps> = ({
 }) => {
     const { favorites } = useFavorites();
 
-    // Filter assets matching favorites (by id or asset_id)
-    const favoriteAssets = allAssets.filter(
-        (asset) =>
-            favorites.includes(asset.id) ||
-            (asset.asset_id && favorites.includes(asset.asset_id)),
+    // Filter assets matching favorites by trading asset id
+    // Each market's trading asset (e.g., Arsenal EPL vs Arsenal UCL) is separate
+    const watchlistAssets = allAssets.filter((asset) =>
+        favorites.includes(asset.id)
     );
-
-    // Deduplicate by team name/asset_id
-    const uniqueWatchlist = favoriteAssets.reduce((acc: Team[], current) => {
-        const isDuplicate = acc.some((item) => {
-            if (current.asset_id && item.asset_id)
-                return item.asset_id === current.asset_id;
-            return item.id === current.id;
-        });
-        if (!isDuplicate) return [...acc, current];
-        return acc;
-    }, []);
 
     const handleRowClick = (asset: Team) => {
         if (onViewAsset) {
@@ -45,7 +33,7 @@ const Watchlist: React.FC<WatchlistProps> = ({
         }
     };
 
-    if (uniqueWatchlist.length === 0) {
+    if (watchlistAssets.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
                 <div className="w-12 h-12 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center mb-4">
@@ -63,7 +51,7 @@ const Watchlist: React.FC<WatchlistProps> = ({
 
     return (
         <div className="space-y-3">
-            {uniqueWatchlist.map((asset) => {
+            {watchlistAssets.map((asset) => {
                 // Generate a "stable" mock change based on asset ID for consistency
                 const idSum = asset.id
                     .split("")

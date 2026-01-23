@@ -4,6 +4,10 @@ export interface Team {
   id: string; // Now UUID from market_index_trading_assets
   asset_id?: string; // Reference to static assets table
   name: string;
+
+
+
+  
   team?: string;
   bid: number;
   offer: number;
@@ -25,7 +29,7 @@ export interface Team {
   season_end_date?: string;
   season_stage?: string; // 'open' | 'closed' | 'settled'
   units?: number;
-  short_code?: string;
+  short_code?: string; // Shortened share code for asset
 }
 
 export interface Order {

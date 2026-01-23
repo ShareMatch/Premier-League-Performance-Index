@@ -210,6 +210,13 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     >
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-[clamp(1rem,3vw,1.125rem)] text-gray-200">Transaction Slip</h2>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-white flex-shrink-0 text-2xl font-light py-1"
+          aria-label="Close trade slip"
+        >
+          &times;
+        </button>
       </div>
 
       {/* Buy / Sell toggle - styled like RightPanel tabs */}
@@ -252,13 +259,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
               {leagueName} Performance Index
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white flex-shrink-0 text-lg"
-            aria-label="Close trade slip"
-          >
-            &times;
-          </button>
         </div>
 
         <div className="flex items-center justify-between gap-1.5">
