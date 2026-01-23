@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Newspaper, X, Sparkles, RefreshCw } from "lucide-react";
-import { GoogleGenAI } from "@google/genai";
 import { supabase } from "../lib/supabase";
 
 interface NewsItem {
@@ -127,38 +126,106 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const fetchNews = async () => {
     setLoading(true);
     try {
+      // Determine if this is an asset-level topic (like "team:Arsenal:EPL")
+      const isAssetLevel = topic.startsWith("team:");
+      
+      // For asset-level topics, also fetch from the parent index to get more news faster
+      let parentIndexTopic: string | null = null;
+      let assetName: string | null = null;
+      
+      if (isAssetLevel) {
+        const parts = topic.split(":");
+        assetName = parts[1] || null;
+        parentIndexTopic = parts[2] || null;
+        console.log("[NewsFeed] Asset-level topic detected:", { topic, assetName, parentIndexTopic });
+      }
+
       // 1. Fetch existing news from DB
-      const { data, error } = await supabase
-        .from("news_articles")
-        .select("*")
-        .eq("topic", topic)
-        .order("published_at", { ascending: false })
-        .limit(10);
+      // For asset pages, fetch from BOTH the specific topic AND the parent index
+      let allData: any[] = [];
+      
+      if (isAssetLevel && parentIndexTopic) {
+        console.log("[NewsFeed] Fetching from parent index:", parentIndexTopic);
+        
+        // Fetch from parent index (faster, already cached)
+        const { data: indexData, error: indexError } = await supabase
+          .from("news_articles")
+          .select("*")
+          .eq("topic", parentIndexTopic)
+          .order("published_at", { ascending: false })
+          .limit(20);
+        
+        console.log("[NewsFeed] Parent index result:", { count: indexData?.length, error: indexError });
+        
+        if (!indexError && indexData) {
+          allData = [...indexData];
+        }
+        
+        // Also fetch from specific asset topic (may have dedicated news)
+        const { data: assetData, error: assetError } = await supabase
+          .from("news_articles")
+          .select("*")
+          .eq("topic", topic)
+          .order("published_at", { ascending: false })
+          .limit(10);
+        
+        console.log("[NewsFeed] Asset-specific result:", { count: assetData?.length, error: assetError });
+        
+        if (!assetError && assetData) {
+          // Merge and dedupe by id
+          const existingIds = new Set(allData.map(item => item.id));
+          for (const item of assetData) {
+            if (!existingIds.has(item.id)) {
+              allData.push(item);
+            }
+          }
+        }
+        
+        console.log("[NewsFeed] Total combined news:", allData.length);
+      } else {
+        // For index-level topics, just fetch directly
+        const { data, error } = await supabase
+          .from("news_articles")
+          .select("*")
+          .eq("topic", topic)
+          .order("published_at", { ascending: false })
+          .limit(10);
 
-      if (error) throw error;
+        if (error) throw error;
+        allData = data || [];
+      }
 
-      const isRelevantToAsset = (text: string, topic: string): boolean => {
+      const isRelevantToAsset = (text: string, assetNameParam: string): boolean => {
         const lowerText = text.toLowerCase();
+        const lowerAsset = assetNameParam.toLowerCase().trim();
 
-        // If topic is like "team:Arsenal:Premier League"
-        let assetName = topic.startsWith("team:") ? topic.split(":")[1] : topic;
+        // Check for full name match
+        if (lowerText.includes(lowerAsset)) return true;
 
-        if (!assetName) return false;
+        // Check for hyphenated version (Al Hilal -> Al-Hilal)
+        const hyphenated = lowerAsset.replace(/\s+/g, "-");
+        if (lowerText.includes(hyphenated)) return true;
 
-        const lowerAsset = assetName.toLowerCase();
+        // Check for name without common prefixes (Al, FC, etc.)
+        const withoutPrefix = lowerAsset
+          .replace(/^(al|fc|cf|ac|as|sc|rc|cd|ud|ca|club|sporting|athletic|real|inter)\s+/i, "")
+          .trim();
+        if (withoutPrefix.length > 2 && lowerText.includes(withoutPrefix)) return true;
 
-        // Simple match for asset full name or first word
-        const matchesFullName = lowerText.includes(lowerAsset);
-        const matchesFirstWord = lowerText.includes(lowerAsset.split(" ")[0]);
+        // Check each significant word (skip common short words)
+        const words = lowerAsset.split(/\s+/).filter(w => w.length > 2);
+        for (const word of words) {
+          // Skip common prefixes that appear in many team names
+          if (["the", "and", "city", "united", "town", "club"].includes(word)) continue;
+          if (lowerText.includes(word)) return true;
+        }
 
-        return matchesFullName || matchesFirstWord;
+        return false;
       };
 
-      // ... inside fetchNews ...
-
-      if (data && data.length > 0) {
-        // Filter for Sharia compliance AND Relevance
-        const filteredData = data.filter((item) => {
+      if (allData.length > 0) {
+        // Filter for Sharia compliance AND Relevance (only for asset-level topics)
+        const filteredData = allData.filter((item) => {
           const text = (
             item.headline +
             " " +
@@ -168,19 +235,51 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           // 1. Must NOT be Haram
           if (isHaram(text)) return false;
 
-          // 2. Must be Relevant to the asset
-          if (
-            !isRelevantToAsset(item.headline + " " + (item.source || ""), topic)
-          )
-            return false;
+          // 2. For asset-level topics, check relevance to the specific asset
+          if (isAssetLevel && assetName) {
+            if (!isRelevantToAsset(item.headline + " " + (item.source || ""), assetName)) {
+              return false;
+            }
+          }
 
           return true;
         });
 
-        setNewsItems(filteredData);
+        // Sort by published_at descending and limit to 10
+        filteredData.sort((a, b) => 
+          new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+        );
+        
+        console.log("[NewsFeed] After relevance filter:", { 
+          assetName,
+          beforeFilter: allData.length, 
+          afterFilter: filteredData.length,
+          usingFallback: isAssetLevel && filteredData.length === 0 && allData.length > 0
+        });
+        
+        // If asset-level and no relevant news found, show general league news instead
+        if (isAssetLevel && filteredData.length === 0 && allData.length > 0) {
+          console.log("[NewsFeed] No relevant news for", assetName, "- showing general league news");
+          // Fall back to showing general league news (filtered only for Sharia compliance)
+          const fallbackData = allData.filter((item) => {
+            const text = (item.headline + " " + (item.source || "")).toLowerCase();
+            return !isHaram(text);
+          });
+          fallbackData.sort((a, b) => 
+            new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+          );
+          setNewsItems(fallbackData.slice(0, 10));
+        } else {
+          setNewsItems(filteredData.slice(0, 10));
+        }
+      } else {
+        // No data at all
+        console.log("[NewsFeed] No news data available for topic:", topic);
+        setNewsItems([]);
       }
 
       // 2. Check if update is needed (Lazy Update)
+      // Check freshness for both index and asset-level topics
       const { data: updateData } = await supabase
         .from("news_updates")
         .select("last_updated_at")
@@ -192,8 +291,20 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         ? new Date(updateData.last_updated_at)
         : null;
 
-      if (!lastUpdated || lastUpdated < sixHoursAgo) {
-        triggerUpdate();
+      // For asset-level topics: trigger fetch if no cached news for this specific asset
+      // For index-level topics: trigger if stale (fallback for pre-fetch job)
+      if (isAssetLevel) {
+        // Only fetch if we haven't fetched for this asset before (or it's stale)
+        if (!lastUpdated || lastUpdated < sixHoursAgo) {
+          console.log("[NewsFeed] Triggering on-demand fetch for asset:", assetName);
+          // Fire and forget - don't await (shows fallback news immediately while fetching)
+          triggerUpdate();
+        }
+      } else {
+        // Index-level: trigger if stale
+        if (!lastUpdated || lastUpdated < sixHoursAgo) {
+          triggerUpdate();
+        }
       }
     } catch (err) {
       console.error("Error fetching news:", err);
@@ -206,31 +317,24 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const triggerUpdate = async () => {
     setIsUpdating(true);
     try {
+      console.log("[NewsFeed] Triggering fetch-news for:", topic);
+      
       const { data, error } = await supabase.functions.invoke("fetch-news", {
         body: {
           topic,
-          apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-          // force: true // Removed to re-enable caching
         },
       });
 
       if (error) throw error;
 
+      console.log("[NewsFeed] fetch-news result:", data);
+
       if (data?.dbStatus === "updated" || data?.updated) {
-        // Refetch to get new items
-        const { data: newData } = await supabase
-          .from("news_articles")
-          .select("*")
-          .eq("topic", topic)
-          .order("published_at", { ascending: false })
-          .limit(10);
-
-        if (newData) setNewsItems(newData);
-      } else {
-        setDebugMessage(JSON.stringify(data, null, 2));
-      }
-
-      if (data?.error || data?.dbStatus === "empty") {
+        // Refetch news (will get from both parent index and asset-specific)
+        // Re-run the full fetch logic to properly merge and filter
+        await fetchNews();
+      } else if (data?.error || data?.dbStatus === "empty") {
+        console.log("[NewsFeed] No news found for:", topic);
         setDebugMessage(JSON.stringify(data, null, 2));
       }
     } catch (err: any) {
@@ -262,21 +366,39 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const generateSummary = async (item: NewsItem) => {
     setSummaryLoading(true);
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error("API Key not found.");
-
-      const ai = new GoogleGenAI({ apiKey });
-      const prompt = `Write a short, engaging 3-sentence summary for a news article with the headline: "${item.headline}". Assume it's about ${promptContext}. Focus on the implications for the championship or team performance.`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
+      // Call Edge Function to generate summary (API key is stored server-side)
+      const { data, error } = await supabase.functions.invoke("generate-news-summary", {
+        body: {
+          headline: item.headline,
+          context: promptContext,
+        },
       });
 
-      setSummary(response.text || "No summary generated.");
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to generate summary");
+      }
+
+      if (data?.error) {
+        console.error("Summary generation error:", data.error);
+        setSummary(data.error);
+      } else if (data?.summary) {
+        setSummary(data.summary);
+      } else {
+        setSummary("Summary could not be generated at this time.");
+      }
     } catch (err: any) {
-      console.error(err);
-      setSummary("Failed to generate summary.");
+      console.error("Summary generation error:", err?.message || err);
+      
+      // Provide helpful error message
+      const errorMessage = err?.message?.toLowerCase() || "";
+      if (errorMessage.includes("quota") || errorMessage.includes("rate")) {
+        setSummary("Too many requests. Please try again in a moment.");
+      } else if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+        setSummary("Network error. Please check your connection.");
+      } else {
+        setSummary("Failed to generate summary. Please try again.");
+      }
     } finally {
       setSummaryLoading(false);
     }
