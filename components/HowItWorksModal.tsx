@@ -15,6 +15,12 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({
     const [step, setStep] = useState(0);
     const [isButtonHovered, setIsButtonHovered] = useState(false);
 
+    React.useEffect(() => {
+        if (!isOpen) {
+            setStep(0);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const steps = [
@@ -43,8 +49,6 @@ const HowItWorksModal: React.FC<HowItWorksModalProps> = ({
             setStep(step + 1);
         } else {
             onClose();
-            // Reset for next time
-            setTimeout(() => setStep(0), 300);
         }
     };
 
