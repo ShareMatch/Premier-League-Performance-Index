@@ -199,6 +199,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   disabled={success || saving}
                   className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm disabled:cursor-not-allowed"
                   placeholder="Enter current password"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
@@ -234,6 +235,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   disabled={success || saving}
                   className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm disabled:cursor-not-allowed"
                   placeholder="Enter new password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -269,6 +271,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   disabled={success || saving}
                   className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm disabled:cursor-not-allowed"
                   placeholder="Confirm new password"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
