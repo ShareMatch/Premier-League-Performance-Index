@@ -88,7 +88,7 @@ const AssetRouteWrapper: React.FC<{
     );
   }, [allAssets, name, market]);
 
-  if (loading || (!allAssets || allAssets.length === 0)) {
+  if (loading || !allAssets || allAssets.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
@@ -142,15 +142,16 @@ const ShortAssetRouteWrapper: React.FC<{
       const resolveShortCode = async () => {
         setResolving(true);
         try {
-          // In a real browser, the Edge Function might 301, 
+          // In a real browser, the Edge Function might 301,
           // but here we can call it and follow or use the result.
-          // Since our Edge Function GET /share?code=ABC redirects, 
+          // Since our Edge Function GET /share?code=ABC redirects,
           // we can just use the mapping logic or update the function to return JSON if requested.
 
           // Actually, we'll do a direct lookup to keep it fast
           const { data, error: lookupError } = await supabase
             .from("market_index_trading_assets")
-            .select(`
+            .select(
+              `
               id,
               assets!inner (name),
               market_index_seasons!inner (
@@ -158,7 +159,8 @@ const ShortAssetRouteWrapper: React.FC<{
                   markets!inner (market_token)
                 )
               )
-            `)
+            `,
+            )
             .eq("short_code", id)
             .maybeSingle();
 
@@ -176,9 +178,15 @@ const ShortAssetRouteWrapper: React.FC<{
 
           // Supabase joins can sometimes return arrays depending on the schema inference
           const assetObj = Array.isArray(ta.assets) ? ta.assets[0] : ta.assets;
-          const season = Array.isArray(ta.market_index_seasons) ? ta.market_index_seasons[0] : ta.market_index_seasons;
-          const marketIndex = Array.isArray(season?.market_indexes) ? season.market_indexes[0] : season?.market_indexes;
-          const marketObj = Array.isArray(marketIndex?.markets) ? marketIndex.markets[0] : marketIndex?.markets;
+          const season = Array.isArray(ta.market_index_seasons)
+            ? ta.market_index_seasons[0]
+            : ta.market_index_seasons;
+          const marketIndex = Array.isArray(season?.market_indexes)
+            ? season.market_indexes[0]
+            : season?.market_indexes;
+          const marketObj = Array.isArray(marketIndex?.markets)
+            ? marketIndex.markets[0]
+            : marketIndex?.markets;
 
           const slug = assetObj?.name?.toLowerCase().replace(/\s+/g, "-");
           const market = marketObj?.market_token;
@@ -205,7 +213,9 @@ const ShortAssetRouteWrapper: React.FC<{
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">{resolving ? "Resolving share link..." : "Loading asset data..."}</p>
+        <p className="text-gray-400">
+          {resolving ? "Resolving share link..." : "Loading asset data..."}
+        </p>
       </div>
     );
   }
@@ -218,7 +228,10 @@ const ShortAssetRouteWrapper: React.FC<{
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <p className="text-red-400 mb-4">{error}</p>
-        <button onClick={() => navigate("/")} className="text-brand-primary hover:underline">
+        <button
+          onClick={() => navigate("/")}
+          className="text-brand-primary hover:underline"
+        >
           Go to Home
         </button>
       </div>
@@ -533,9 +546,9 @@ const App: React.FC = () => {
             is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                "en-US",
-                { month: "short", day: "numeric", year: "numeric" },
-              )
+                  "en-US",
+                  { month: "short", day: "numeric", year: "numeric" },
+                )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -764,7 +777,10 @@ const App: React.FC = () => {
   //   setSelectedOrder(null);
   // }, [activeLeague]);
 
-  const handleNavigate = (league: League, from?: 'home' | 'all-markets' | 'new-markets') => {
+  const handleNavigate = (
+    league: League,
+    from?: "home" | "all-markets" | "new-markets",
+  ) => {
     setIsMobileMenuOpen(false);
 
     // Explicitly close trade slip when navigating
@@ -820,13 +836,15 @@ const App: React.FC = () => {
     const status = isMarketOpen(team);
 
     if (!status.isOpen) {
-      let message = "The market for this asset is currently closed. Trading is only available when the market is open.";
+      let message =
+        "The market for this asset is currently closed. Trading is only available when the market is open.";
 
-      if (status.reason === 'settled') {
-        message = "This market has been settled. Trading is no longer available.";
-      } else if (status.reason === 'not_started' && team.season_start_date) {
+      if (status.reason === "settled") {
+        message =
+          "This market has been settled. Trading is no longer available.";
+      } else if (status.reason === "not_started" && team.season_start_date) {
         message = `This market has not opened yet. Trading will be available starting ${new Date(team.season_start_date).toLocaleDateString("en-GB")}.`;
-      } else if (status.reason === 'missing_config') {
+      } else if (status.reason === "missing_config") {
         message = "This market is currently unavailable for trading.";
       }
 
@@ -993,21 +1011,21 @@ const App: React.FC = () => {
                   userData={
                     user
                       ? {
-                        name: user.user_metadata?.full_name || "",
-                        email: user.email || "",
-                        phone: user.user_metadata?.phone || "",
-                        whatsapp: user.user_metadata?.whatsapp_phone || "",
-                        address: user.user_metadata?.address_line || "",
-                        city: user.user_metadata?.city || "",
-                        state: user.user_metadata?.region || "",
-                        country: user.user_metadata?.country || "",
-                        postCode: user.user_metadata?.postal_code || "",
-                        accountName: "",
-                        accountNumber: "",
-                        iban: "",
-                        swiftBic: "",
-                        bankName: "",
-                      }
+                          name: user.user_metadata?.full_name || "",
+                          email: user.email || "",
+                          phone: user.user_metadata?.phone || "",
+                          whatsapp: user.user_metadata?.whatsapp_phone || "",
+                          address: user.user_metadata?.address_line || "",
+                          city: user.user_metadata?.city || "",
+                          state: user.user_metadata?.region || "",
+                          country: user.user_metadata?.country || "",
+                          postCode: user.user_metadata?.postal_code || "",
+                          accountName: "",
+                          accountNumber: "",
+                          iban: "",
+                          swiftBic: "",
+                          bankName: "",
+                        }
                       : undefined
                   }
                   onSignOut={async () => {
@@ -1128,7 +1146,9 @@ const App: React.FC = () => {
                                 path="/"
                                 element={
                                   <HomeDashboard
-                                    onNavigate={(league) => handleNavigate(league, 'home')}
+                                    onNavigate={(league) =>
+                                      handleNavigate(league, "home")
+                                    }
                                     teams={allAssets}
                                     onViewAsset={handleViewAsset}
                                     onSelectOrder={handleSelectOrder}
@@ -1163,7 +1183,9 @@ const App: React.FC = () => {
                                   >
                                     <AllMarketsPage
                                       teams={allAssets}
-                                      onNavigate={(league) => handleNavigate(league, 'all-markets')}
+                                      onNavigate={(league) =>
+                                        handleNavigate(league, "all-markets")
+                                      }
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                     />
@@ -1194,7 +1216,9 @@ const App: React.FC = () => {
                                   >
                                     <NewMarketsPage
                                       teams={allAssets}
-                                      onNavigate={(league) => handleNavigate(league, 'new-markets')}
+                                      onNavigate={(league) =>
+                                        handleNavigate(league, "new-markets")
+                                      }
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                       seasonDatesMap={seasonDatesMap}
@@ -1253,11 +1277,12 @@ const App: React.FC = () => {
                               />
                             </Routes>
 
-                            {activeLeague !== "HOME" && (
-                              <div className="mt-8 flex-shrink-0">
-                                <Footer />
-                              </div>
-                            )}
+                            {activeLeague !== "HOME" &&
+                              activeLeague !== "AI_ANALYTICS" && (
+                                <div className="mt-8 flex-shrink-0">
+                                  <Footer />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1483,7 +1508,6 @@ const getLeagueTitleUtil = (id: string) => {
   }
 };
 
-
 const LeagueRouteWrapper: React.FC<{
   teams: Team[];
   activeLeague: League;
@@ -1501,119 +1525,123 @@ const LeagueRouteWrapper: React.FC<{
   handleViewAsset,
   loading,
 }) => {
-    const { user, loading: authLoading } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
-    // Use URL param for the league to prevent flash when navigating away
-    const { leagueId } = useParams();
-    const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Use URL param for the league to prevent flash when navigating away
+  const { leagueId } = useParams();
+  const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
 
-    // Check if we should show the back button based on navigation source
-    const navigationSource = location.state?.from as 'home' | 'all-markets' | 'new-markets' | undefined;
-    const shouldShowBackButton = !!navigationSource;
+  // Check if we should show the back button based on navigation source
+  const navigationSource = location.state?.from as
+    | "home"
+    | "all-markets"
+    | "new-markets"
+    | undefined;
+  const shouldShowBackButton = !!navigationSource;
 
-    // Determine where to navigate back to
-    const handleBack = () => {
-      switch (navigationSource) {
-        case 'home':
-          navigate('/');
-          break;
-        case 'all-markets':
-          navigate('/markets');
-          break;
-        case 'new-markets':
-          navigate('/new-markets');
-          break;
-        default:
-          navigate(-1);
-      }
-    };
-
-    // Redirect to home if not logged in
-    if (!authLoading && !user) {
-      return <Navigate to="/" replace />;
+  // Determine where to navigate back to
+  const handleBack = () => {
+    switch (navigationSource) {
+      case "home":
+        navigate("/");
+        break;
+      case "all-markets":
+        navigate("/markets");
+        break;
+      case "new-markets":
+        navigate("/new-markets");
+        break;
+      default:
+        navigate(-1);
     }
+  };
 
-    if (loading && teams.length === 0) {
-      return (
-        <div className="h-full flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-          <p className="text-gray-400">Loading market statistics...</p>
-        </div>
-      );
-    }
+  // Redirect to home if not logged in
+  if (!authLoading && !user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (loading && teams.length === 0) {
     return (
-      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
-        {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
-        <div className="w-full xl:flex-[2] flex flex-col">
-          {/* Header aligned with order book */}
-          <div className="flex-shrink-0">
-            <Header
-              title={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
-              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
-              seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-              onBack={shouldShowBackButton ? handleBack : undefined}
-            />
-          </div>
-
-          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
-            {/* Fixed Header - Responsive padding and text */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-              <div className="text-left">Asset</div>
-              <div>Sell</div>
-              <div>Buy</div>
-            </div>
-
-            {/* Scrollable List */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-              {sortedTeams.map((team) => (
-                <OrderBookRow
-                  key={team.id}
-                  team={team}
-                  onSelectOrder={handleSelectOrder}
-                  onViewAsset={handleViewAsset}
-                />
-              ))}
-            </div>
-          </div>
+      <div className="h-full flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+        <p className="text-gray-400">Loading market statistics...</p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+      {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+      <div className="w-full xl:flex-[2] flex flex-col">
+        {/* Header aligned with order book */}
+        <div className="flex-shrink-0">
+          <Header
+            title={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+            seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+            seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+            seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
+            onBack={shouldShowBackButton ? handleBack : undefined}
+          />
         </div>
 
-        {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
-        <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
-          {/* AI Analysis */}
-          <div className="flex-shrink-0">
-            <AIAnalysis
-              teams={teams}
-              leagueName={getLeagueTitleUtil(displayLeague)}
-            />
+        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
+          {/* Fixed Header - Responsive padding and text */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+            <div className="text-left">Asset</div>
+            <div>Sell</div>
+            <div>Buy</div>
           </div>
 
-          {/* Did You Know (Index/League Context) */}
-          <div className="flex-shrink-0">
-            <DidYouKnow
-              assetName={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-            />
-          </div>
-
-          {/* On This Day (Index/League Context) */}
-          <div className="flex-shrink-0">
-            <OnThisDay
-              assetName={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-            />
-          </div>
-
-          {/* News Feed */}
-          <div className="flex-shrink-0 pb-4 xl:pb-0">
-            <NewsFeed topic={displayLeague as any} />
+          {/* Scrollable List */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+            {sortedTeams.map((team) => (
+              <OrderBookRow
+                key={team.id}
+                team={team}
+                onSelectOrder={handleSelectOrder}
+                onViewAsset={handleViewAsset}
+              />
+            ))}
           </div>
         </div>
       </div>
-    );
-  };
+
+      {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+        {/* AI Analysis */}
+        <div className="flex-shrink-0">
+          <AIAnalysis
+            teams={teams}
+            leagueName={getLeagueTitleUtil(displayLeague)}
+          />
+        </div>
+
+        {/* Did You Know (Index/League Context) */}
+        <div className="flex-shrink-0">
+          <DidYouKnow
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+          />
+        </div>
+
+        {/* On This Day (Index/League Context) */}
+        <div className="flex-shrink-0">
+          <OnThisDay
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+          />
+        </div>
+
+        {/* News Feed */}
+        <div className="flex-shrink-0 pb-4 xl:pb-0">
+          <NewsFeed topic={displayLeague as any} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default App;

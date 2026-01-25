@@ -26,14 +26,14 @@ import { parsePhoneNumberFromString, CountryCode } from "libphonenumber-js";
 const isValidPhoneNumber = (
   phoneNumber: string,
   countryCode: string,
-  countryIso: string
+  countryIso: string,
 ): boolean => {
   try {
     if (!phoneNumber.trim()) return false;
     const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, "")}`;
     const parsed = parsePhoneNumberFromString(
       fullNumber,
-      countryIso.toUpperCase() as CountryCode
+      countryIso.toUpperCase() as CountryCode,
     );
     return parsed ? parsed.isValid() : false;
   } catch {
@@ -46,14 +46,14 @@ const isValidPhoneNumber = (
 const normalizePhoneToE164 = (
   phoneNumber: string,
   countryCode: string,
-  countryIso: string
+  countryIso: string,
 ): string => {
   try {
     // Combine country code with phone number
     const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, "")}`;
     const parsed = parsePhoneNumberFromString(
       fullNumber,
-      countryIso.toUpperCase() as CountryCode
+      countryIso.toUpperCase() as CountryCode,
     );
     if (parsed && parsed.isValid()) {
       return parsed.format("E.164");
@@ -70,7 +70,7 @@ const normalizePhoneToE164 = (
 
 // Utility function to parse E.164 phone number into country code and phone number
 const parsePhoneNumber = (
-  phone: string
+  phone: string,
 ): { countryCode: string; phoneNumber: string; countryIso: string } => {
   if (!phone) {
     return { countryCode: "+1", phoneNumber: "", countryIso: "US" };
@@ -230,6 +230,7 @@ const InputField = ({
   icon,
   disabled = false,
   isValidating = false,
+  autocomplete,
 }: {
   label: string;
   name: string;
@@ -242,6 +243,7 @@ const InputField = ({
   icon?: React.ReactNode;
   disabled?: boolean;
   isValidating?: boolean;
+  autocomplete?: string;
 }) => (
   <div className="flex flex-col w-full">
     <label
@@ -251,10 +253,11 @@ const InputField = ({
       {label}
     </label>
     <div
-      className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${error
-        ? "ring-2 ring-red-500"
-        : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-        } ${disabled ? "cursor-not-allowed" : ""}`}
+      className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${
+        error
+          ? "ring-2 ring-red-500"
+          : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+      } ${disabled ? "cursor-not-allowed" : ""}`}
     >
       <input
         id={name}
@@ -266,6 +269,7 @@ const InputField = ({
         onBlur={onBlur}
         placeholder={placeholder}
         className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans"
+        autoComplete="username"
       />
       {isValidating ? (
         <span className="ml-2 flex-shrink-0">
@@ -308,6 +312,7 @@ const PasswordField = ({
   error,
   hint,
   disabled = false,
+  autocomplete,
 }: {
   label: string;
   name: string;
@@ -317,6 +322,7 @@ const PasswordField = ({
   error?: string;
   hint?: string;
   disabled?: boolean;
+  autocomplete?: string;
 }) => {
   const [visible, setVisible] = useState(false);
 
@@ -329,10 +335,11 @@ const PasswordField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${error
-          ? "ring-2 ring-red-500"
-          : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-          } ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all h-9 px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+        } ${disabled ? "cursor-not-allowed" : ""}`}
       >
         <input
           id={name}
@@ -342,8 +349,10 @@ const PasswordField = ({
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${disabled ? "cursor-not-allowed" : ""
-            }`}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${
+            disabled ? "cursor-not-allowed" : ""
+          }`}
+          autoComplete={autocomplete}
         />
         <button
           type="button"
@@ -410,7 +419,7 @@ const PhoneInputField = ({
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.dial_code.includes(search) ||
-      c.code.toLowerCase().includes(search.toLowerCase())
+      c.code.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -422,10 +431,11 @@ const PhoneInputField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 px-4 ${error
-          ? "ring-2 ring-red-500"
-          : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-          } ${disabled ? "cursor-not-allowed" : ""}`}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+        } ${disabled ? "cursor-not-allowed" : ""}`}
         ref={dropdownRef}
       >
         {/* Country Selector */}
@@ -437,8 +447,9 @@ const PhoneInputField = ({
             setSearch("");
           }}
           disabled={disabled}
-          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${disabled ? "cursor-not-allowed" : ""
-            }`}
+          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${
+            disabled ? "cursor-not-allowed" : ""
+          }`}
         >
           <img
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
@@ -446,8 +457,9 @@ const PhoneInputField = ({
             className="w-5 h-4 object-cover rounded"
           />
           <ChevronDown
-            className={`w-3 h-3 text-gray-600 transition-transform ${isOpen ? "rotate-180" : ""
-              }`}
+            className={`w-3 h-3 text-gray-600 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
           />
         </button>
         <span className="text-gray-900 text-xs font-medium mr-2 font-sans">
@@ -461,8 +473,9 @@ const PhoneInputField = ({
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${disabled ? "cursor-not-allowed" : ""
-            }`}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs font-sans ${
+            disabled ? "cursor-not-allowed" : ""
+          }`}
         />
 
         {/* Dropdown */}
@@ -490,8 +503,9 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? "bg-brand-emerald500/10" : ""
-                    }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${
+                    c.code === countryIso ? "bg-brand-emerald500/10" : ""
+                  }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -550,7 +564,7 @@ const CountrySelectField = ({
   const filtered = countries.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.code.toLowerCase().includes(search.toLowerCase())
+      c.code.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -567,10 +581,11 @@ const CountrySelectField = ({
           setIsOpen(!isOpen);
           setSearch("");
         }}
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left relative h-9 px-4 ${error
-          ? "ring-2 ring-red-500"
-          : "focus:ring-2 focus:ring-brand-emerald500"
-          }`}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left relative h-9 px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus:ring-2 focus:ring-brand-emerald500"
+        }`}
       >
         {selectedCountry ? (
           <>
@@ -626,8 +641,9 @@ const CountrySelectField = ({
                     onChange(c.code);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${c.code === value ? "bg-brand-emerald500/10" : ""
-                    }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer ${
+                    c.code === value ? "bg-brand-emerald500/10" : ""
+                  }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -711,10 +727,10 @@ const DatePickerField = ({
 
   const formatted = hasDate
     ? parsed!.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
     : "";
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -737,7 +753,7 @@ const DatePickerField = ({
     if (!day || isDateTooRecent(day)) return;
     const selected = new Date(year, month, day);
     const iso = `${selected.getFullYear()}-${String(
-      selected.getMonth() + 1
+      selected.getMonth() + 1,
     ).padStart(2, "0")}-${String(selected.getDate()).padStart(2, "0")}`;
     onChange(iso);
     setIsOpen(false);
@@ -751,14 +767,16 @@ const DatePickerField = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left h-9 px-4 ${error
-          ? "ring-2 ring-red-500"
-          : "focus:ring-2 focus:ring-brand-emerald500"
-          }`}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all text-left h-9 px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus:ring-2 focus:ring-brand-emerald500"
+        }`}
       >
         <span
-          className={`flex-1 text-xs font-sans ${formatted ? "text-gray-900" : "text-gray-500"
-            }`}
+          className={`flex-1 text-xs font-sans ${
+            formatted ? "text-gray-900" : "text-gray-500"
+          }`}
         >
           {formatted || "Select date of birth"}
         </span>
@@ -842,14 +860,15 @@ const DatePickerField = ({
                   type="button"
                   onClick={() => handleSelect(day)}
                   disabled={!day || tooRecent}
-                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-gray-900 ${!day
-                    ? "invisible"
-                    : tooRecent
-                      ? "text-gray-300 cursor-not-allowed"
-                      : isSelected
-                        ? "bg-brand-emerald500 text-white"
-                        : "hover:bg-gray-100"
-                    }`}
+                  className={`aspect-square rounded-full flex items-center justify-center transition-all text-gray-900 ${
+                    !day
+                      ? "invisible"
+                      : tooRecent
+                        ? "text-gray-300 cursor-not-allowed"
+                        : isSelected
+                          ? "bg-brand-emerald500 text-white"
+                          : "hover:bg-gray-100"
+                  }`}
                 >
                   {day}
                 </button>
@@ -889,16 +908,18 @@ const Checkbox = ({
         id={id}
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${error ? "border-red-500" : "border-white"
-          } bg-transparent transition-all checked:border-white checked:bg-white`}
+        className={`peer cursor-pointer appearance-none w-4 h-4 rounded border ${
+          error ? "border-red-500" : "border-white"
+        } bg-transparent transition-all checked:border-white checked:bg-white`}
       />
       <span className="absolute inset-0 flex items-center justify-center opacity-0 peer-checked:opacity-100 text-brand-primary pointer-events-none">
         <Check size={10} strokeWidth={4} />
       </span>
     </div>
     <span
-      className={`text-xs leading-normal font-sans ${error ? "text-red-400" : "text-white"
-        }`}
+      className={`text-xs leading-normal font-sans ${
+        error ? "text-red-400" : "text-white"
+      }`}
     >
       {children}
     </span>
@@ -939,7 +960,7 @@ interface SignUpModalProps {
   onEditSuccess?: (
     email: string,
     whatsappPhone: string | undefined,
-    formData: FormData
+    formData: FormData,
   ) => void;
 }
 
@@ -1082,13 +1103,15 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
       // Only fetch location if not in edit mode (to avoid overwriting user edits)
       if (!isEditMode) {
-        fetch('https://ipwho.is/')
-          .then(res => res.json())
-          .then(data => {
+        fetch("https://ipwho.is/")
+          .then((res) => res.json())
+          .then((data) => {
             if (data && data.success && data.country_code) {
-              const country = countries.find(c => c.code === data.country_code);
+              const country = countries.find(
+                (c) => c.code === data.country_code,
+              );
               if (country) {
-                setFormData(prev => ({
+                setFormData((prev) => ({
                   ...prev,
                   // Only set if user hasn't typed anything yet (simple check)
                   // Or just set the flags/codes which is usually what users want
@@ -1102,7 +1125,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               }
             }
           })
-          .catch(err => console.error("Failed to fetch location:", err));
+          .catch((err) => console.error("Failed to fetch location:", err));
       }
     }
   }, [isOpen, isEditMode]);
@@ -1146,7 +1169,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
   const handleCountryChange = (
     field: "phone" | "whatsapp",
-    country: Country
+    country: Country,
   ) => {
     setFormData((prev) => {
       const newData = {
@@ -1211,7 +1234,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       !isValidPhoneNumber(
         formData.whatsapp,
         formData.whatsappCode,
-        formData.whatsappIso
+        formData.whatsappIso,
       )
     ) {
       newErrors.whatsapp = "Invalid WhatsApp number";
@@ -1235,7 +1258,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
     try {
       const emailStatus = await checkEmailVerificationStatus(
-        formData.email.toLowerCase()
+        formData.email.toLowerCase(),
       );
 
       if (emailStatus.exists && emailStatus.fullyVerified) {
@@ -1283,7 +1306,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       !isValidPhoneNumber(
         formData.whatsapp,
         formData.whatsappCode,
-        formData.whatsappIso
+        formData.whatsappIso,
       )
     ) {
       newErrors.whatsapp = "Invalid WhatsApp number";
@@ -1300,12 +1323,12 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       const phone = normalizePhoneToE164(
         formData.phone,
         formData.phoneCode,
-        formData.phoneIso
+        formData.phoneIso,
       );
       const whatsappPhone = normalizePhoneToE164(
         formData.whatsapp,
         formData.whatsappCode,
-        formData.whatsappIso
+        formData.whatsappIso,
       );
 
       const result = await updateUserProfile({
@@ -1322,7 +1345,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
           onEditSuccess(
             editData?.email || "",
             result.newWhatsappPhone || whatsappPhone,
-            updatedFormData
+            updatedFormData,
           );
         }
       }
@@ -1346,12 +1369,12 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       const phone = normalizePhoneToE164(
         formData.phone,
         formData.phoneCode,
-        formData.phoneIso
+        formData.phoneIso,
       );
       const whatsappPhone = normalizePhoneToE164(
         formData.whatsapp,
         formData.whatsappCode,
-        formData.whatsappIso
+        formData.whatsappIso,
       );
 
       const payload = {
@@ -1446,14 +1469,16 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
 
         {/* Left Side - Branding */}
         <div
-          className={`hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative ${step === 2 ? "justify-center" : ""
-            }`}
+          className={`hidden md:flex w-5/12 flex-col items-center justify-center p-4 pb-24 relative ${
+            step === 2 ? "justify-center" : ""
+          }`}
         >
           <img
             src="/logos/mobile-header-logo-matched.svg"
             alt="ShareMatch"
-            className={`h-32 object-contain ${step === 2 ? "mt-16 mb-0" : "mb-3"
-              }`}
+            className={`h-32 object-contain ${
+              step === 2 ? "mt-16 mb-0" : "mb-3"
+            }`}
           />
           {step === 1 && (
             <>
@@ -1577,6 +1602,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                         <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                       </svg>
                     }
+                    autocomplete="username"
                   />
                   {/* Password fields */}
                   <PasswordField
@@ -1588,11 +1614,12 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     error={errors.password}
                     hint={
                       formData.password.length > 0 &&
-                        formData.password.length < 8
+                      formData.password.length < 8
                         ? "Must be at least 8 characters"
                         : undefined
                     }
                     data-testid="signup-password-input"
+                    autocomplete="new-password"
                   />
                   <PasswordField
                     label="Confirm Password *"
@@ -1602,6 +1629,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     onChange={handleChange}
                     error={errors.confirmPassword}
                     data-testid="signup-confirm-password-input"
+                    autocomplete="new-password"
                   />
                   {/* Referral code 
                   <InputField
@@ -1743,16 +1771,18 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
               {/* Submit Button */}
               <div className="flex justify-center mt-1">
                 <div
-                  className={`rounded-full transition-all duration-300 ${isButtonHovered ? "shadow-glow" : ""
-                    }`}
+                  className={`rounded-full transition-all duration-300 ${
+                    isButtonHovered ? "shadow-glow" : ""
+                  }`}
                   onMouseEnter={() => setIsButtonHovered(true)}
                   onMouseLeave={() => setIsButtonHovered(false)}
                 >
                   <Button
                     type="submit"
                     disabled={loading}
-                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${isButtonHovered ? "opacity-90" : ""
-                      } !disabled:opacity-100 disabled:cursor-not-allowed`}
+                    className={`px-5 py-1.5 rounded-full flex items-center gap-2 font-medium transition-all duration-300 text-sm font-sans ${
+                      isButtonHovered ? "opacity-90" : ""
+                    } !disabled:opacity-100 disabled:cursor-not-allowed`}
                     variant="white"
                     data-testid={
                       step === 1
