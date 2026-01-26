@@ -18,16 +18,12 @@ const HARAM_KEYWORDS = [
   "stake",
   "stakes",
   "odds",
-  "line",
-  "lines",
   "bookie",
   "bookmaker",
   "picks",
   "action",
   "parlay",
   "teaser",
-  "future",
-  "futures",
   "prop bet",
   "prop bets",
   "spread",
@@ -128,11 +124,11 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     try {
       // Determine if this is an asset-level topic (like "team:Arsenal:EPL")
       const isAssetLevel = topic.startsWith("team:");
-      
+
       // For asset-level topics, also fetch from the parent index to get more news faster
       let parentIndexTopic: string | null = null;
       let assetName: string | null = null;
-      
+
       if (isAssetLevel) {
         const parts = topic.split(":");
         assetName = parts[1] || null;
@@ -142,23 +138,20 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       // 1. Fetch existing news from DB
       // For asset pages, fetch from BOTH the specific topic AND the parent index
       let allData: any[] = [];
-      
+
       if (isAssetLevel && parentIndexTopic) {
-        
         // Fetch from parent index (faster, already cached)
         const { data: indexData, error: indexError } = await supabase
           .from("news_articles")
           .select("*")
           .eq("topic", parentIndexTopic)
           .order("published_at", { ascending: false })
-          .limit(20);
-        
-        
-        
+          .limit(40);
+
         if (!indexError && indexData) {
           allData = [...indexData];
         }
-        
+
         // Also fetch from specific asset topic (may have dedicated news)
         const { data: assetData, error: assetError } = await supabase
           .from("news_articles")
@@ -166,18 +159,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           .eq("topic", topic)
           .order("published_at", { ascending: false })
           .limit(10);
-        
-        
-        if (!assetError && assetData) {
-          // Merge and dedupe by id
-          const existingIds = new Set(allData.map(item => item.id));
-          for (const item of assetData) {
-            if (!existingIds.has(item.id)) {
-              allData.push(item);
-            }
-          }
-        }
-        
+
+        allData = assetData || [];
+
         console.log("[NewsFeed] Total combined news:", allData.length);
       } else {
         // For index-level topics, just fetch directly
@@ -192,87 +176,160 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         allData = data || [];
       }
 
-      const isRelevantToAsset = (text: string, assetNameParam: string): boolean => {
+      const isRelevantToAsset = (
+        text: string,
+        assetNameParam: string,
+      ): boolean => {
         const lowerText = text.toLowerCase();
         const lowerAsset = assetNameParam.toLowerCase().trim();
 
-        // Check for full name match
-        if (lowerText.includes(lowerAsset)) return true;
+        // Extract significant words from team name
+        const commonPrefixes = new Set([
+          "the",
+          "al",
+          "fc",
+          "cf",
+          "ac",
+          "as",
+          "sc",
+          "rc",
+          "cd",
+          "ud",
+          "ca",
+          "club",
+          "sporting",
+          "athletic",
+          "real",
+          "inter",
+        ]);
 
-        // Check for hyphenated version (Al Hilal -> Al-Hilal)
+        const assetWords = lowerAsset
+          .split(/\s+/)
+          .filter((w) => w.length > 2 && !commonPrefixes.has(w));
+
+        if (assetWords.length === 0) return false;
+
+        // METHOD 1: Check for full team name match
+        if (lowerText.includes(lowerAsset)) {
+          return true;
+        }
+
+        // METHOD 2: Check for hyphenated version (Al Hilal -> Al-Hilal)
         const hyphenated = lowerAsset.replace(/\s+/g, "-");
-        if (lowerText.includes(hyphenated)) return true;
+        if (lowerText.includes(hyphenated)) {
+          return true;
+        }
 
-        // Check for name without common prefixes (Al, FC, etc.)
+        // METHOD 3: Check for name without prefix (FC Barcelona -> Barcelona)
         const withoutPrefix = lowerAsset
-          .replace(/^(al|fc|cf|ac|as|sc|rc|cd|ud|ca|club|sporting|athletic|real|inter)\s+/i, "")
+          .replace(
+            /^(al|fc|cf|ac|as|sc|rc|cd|ud|ca|club|sporting|athletic|real|inter)\s+/i,
+            "",
+          )
           .trim();
-        if (withoutPrefix.length > 2 && lowerText.includes(withoutPrefix)) return true;
+        if (withoutPrefix.length > 2 && lowerText.includes(withoutPrefix)) {
+          return true;
+        }
 
-        // Check each significant word (skip common short words)
-        const words = lowerAsset.split(/\s+/).filter(w => w.length > 2);
-        for (const word of words) {
-          // Skip common prefixes that appear in many team names
-          if (["the", "and", "city", "united", "town", "club"].includes(word)) continue;
-          if (lowerText.includes(word)) return true;
+        // METHOD 4: Check for ANY significant word match with word boundaries
+        // This catches partial matches like "Jaguars" from "Jacksonville Jaguars"
+        let hasMatchingWord = false;
+        for (const word of assetWords) {
+          const wordRegex = new RegExp(`\\b${word}\\b`, "i");
+          if (wordRegex.test(lowerText)) {
+            hasMatchingWord = true;
+            break;
+          }
+        }
+
+        if (!hasMatchingWord) {
+          return false; // No match at all
+        }
+
+        // At this point, we have a word match. Now check if it's a FALSE POSITIVE.
+        // Example: "Patriots beat Jaguars" should show on Jaguars page
+        // Example: "Patriots sign new QB" should NOT show on Jaguars page
+
+        // NEGATIVE CHECK: Look for unrelated team context
+        // If multiple different team names appear and ours is just mentioned casually,
+        // it might not be relevant
+
+        // Get list of potential other team mentions (common team name patterns)
+        // This is a heuristic - looking for capital words that might be team names
+        const capitalWordsRegex = /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g;
+        const capitalWords = text.match(capitalWordsRegex) || [];
+
+        // Count how many times words from our team appear vs other potential teams
+        let ourTeamMentions = 0;
+        for (const word of assetWords) {
+          const wordRegex = new RegExp(`\\b${word}\\b`, "gi");
+          const matches = text.match(wordRegex);
+          ourTeamMentions += matches ? matches.length : 0;
+        }
+
+        // If our team is mentioned at least once, consider it relevant
+        // This handles both "Patriots vs Jaguars" AND "Jaguars vs Patriots"
+        if (ourTeamMentions > 0) {
+          return true;
         }
 
         return false;
       };
 
       if (allData.length > 0) {
-        // Filter for Sharia compliance AND Relevance (only for asset-level topics)
+        // Filter for Sharia compliance AND Relevance
         const filteredData = allData.filter((item) => {
-          const text = (
-            item.headline +
-            " " +
-            (item.source || "")
-          ).toLowerCase();
+          const fullText = item.headline + " " + (item.source || "");
+          const lowerText = fullText.toLowerCase();
 
-          // 1. Must NOT be Haram
-          if (isHaram(text)) return false;
+          // 1. Must NOT contain Haram content
+          if (isHaram(lowerText)) {
+            console.log(`[Filter] ❌ Haram: "${item.headline}"`);
+            return false;
+          }
 
-          // 2. For asset-level topics, check relevance to the specific asset
+          // 2. For asset-level topics, check relevance
           if (isAssetLevel && assetName) {
-            if (!isRelevantToAsset(item.headline + " " + (item.source || ""), assetName)) {
+            const isRelevant = isRelevantToAsset(fullText, assetName);
+
+            if (!isRelevant) {
+              console.log(
+                `[Filter] ❌ Not relevant to ${assetName}: "${item.headline}"`,
+              );
               return false;
+            } else {
+              console.log(
+                `[Filter] ✅ Relevant to ${assetName}: "${item.headline}"`,
+              );
             }
           }
 
           return true;
         });
 
-        // Sort by published_at descending and limit to 10
-        filteredData.sort((a, b) => 
-          new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+        // Sort by published_at descending
+        filteredData.sort(
+          (a, b) =>
+            new Date(b.published_at).getTime() -
+            new Date(a.published_at).getTime(),
         );
-        
-        console.log("[NewsFeed] After relevance filter:", { 
+
+        console.log("[NewsFeed] Filtering results:", {
           assetName,
-          beforeFilter: allData.length, 
-          afterFilter: filteredData.length,
-          usingFallback: isAssetLevel && filteredData.length === 0 && allData.length > 0
+          topic,
+          parentIndexTopic,
+          totalFetched: allData.length,
+          afterHaramFilter: allData.filter(
+            (item) =>
+              !isHaram(
+                (item.headline + " " + (item.source || "")).toLowerCase(),
+              ),
+          ).length,
+          afterRelevanceFilter: filteredData.length,
+          topHeadlines: filteredData.slice(0, 5).map((item) => item.headline),
         });
-        
-        // If asset-level and no relevant news found, show general league news instead
-        if (isAssetLevel && filteredData.length === 0 && allData.length > 0) {
-          console.log("[NewsFeed] No relevant news for", assetName, "- showing general league news");
-          // Fall back to showing general league news (filtered only for Sharia compliance)
-          const fallbackData = allData.filter((item) => {
-            const text = (item.headline + " " + (item.source || "")).toLowerCase();
-            return !isHaram(text);
-          });
-          fallbackData.sort((a, b) => 
-            new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
-          );
-          setNewsItems(fallbackData.slice(0, 10));
-        } else {
-          setNewsItems(filteredData.slice(0, 10));
-        }
-      } else {
-        // No data at all
-        console.log("[NewsFeed] No news data available for topic:", topic);
-        setNewsItems([]);
+
+        setNewsItems(filteredData.slice(0, 10));
       }
 
       // 2. Check if update is needed (Lazy Update)
@@ -293,7 +350,10 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       if (isAssetLevel) {
         // Only fetch if we haven't fetched for this asset before (or it's stale)
         if (!lastUpdated || lastUpdated < sixHoursAgo) {
-          console.log("[NewsFeed] Triggering on-demand fetch for asset:", assetName);
+          console.log(
+            "[NewsFeed] Triggering on-demand fetch for asset:",
+            assetName,
+          );
           // Fire and forget - don't await (shows fallback news immediately while fetching)
           triggerUpdate();
         }
@@ -315,7 +375,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     setIsUpdating(true);
     try {
       console.log("[NewsFeed] Triggering fetch-news for:", topic);
-      
+
       const { data, error } = await supabase.functions.invoke("fetch-news", {
         body: {
           topic,
@@ -326,7 +386,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       console.log("[NewsFeed] fetch-news result:", data);
 
-      if (data?.dbStatus === "updated" || data?.updated) {
+      if (!data?.error) {
         // Refetch news (will get from both parent index and asset-specific)
         // Re-run the full fetch logic to properly merge and filter
         await fetchNews();
@@ -364,12 +424,16 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     setSummaryLoading(true);
     try {
       // Call Edge Function to generate summary (API key is stored server-side)
-      const { data, error } = await supabase.functions.invoke("generate-news-summary", {
-        body: {
-          headline: item.headline,
-          context: promptContext,
+      const { data, error } = await supabase.functions.invoke(
+        "generate-news-summary",
+        {
+          body: {
+            headline: item.headline,
+            source: item.source,
+            url: item.url,
+          },
         },
-      });
+      );
 
       if (error) {
         console.error("Edge function error:", error);
@@ -386,12 +450,15 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       }
     } catch (err: any) {
       console.error("Summary generation error:", err?.message || err);
-      
+
       // Provide helpful error message
       const errorMessage = err?.message?.toLowerCase() || "";
       if (errorMessage.includes("quota") || errorMessage.includes("rate")) {
         setSummary("Too many requests. Please try again in a moment.");
-      } else if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      } else if (
+        errorMessage.includes("network") ||
+        errorMessage.includes("fetch")
+      ) {
         setSummary("Network error. Please check your connection.");
       } else {
         setSummary("Failed to generate summary. Please try again.");

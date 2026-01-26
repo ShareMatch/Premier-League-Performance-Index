@@ -4,7 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 
 serve(async (req: Request) => {
-  const corsHeaders = getCorsHeaders(req.headers.get('origin'), true);
+  const corsHeaders = getCorsHeaders(req.headers.get("origin"), true);
 
   // Handle CORS
   if (req.method === "OPTIONS") {
@@ -18,27 +18,29 @@ serve(async (req: Request) => {
     const authResult = await requireAuthUser(req);
     if (authResult.error) {
       console.error("❌ Auth failed:", authResult.error);
-      return new Response(
-        JSON.stringify({ error: authResult.error.message }),
-        {
-          status: authResult.error.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
+      return new Response(JSON.stringify({ error: authResult.error.message }), {
+        status: authResult.error.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("✅ Auth successful for user:", authResult.authUserId);
 
     const { teams, selectedMarket } = await req.json();
-    console.log("📥 Request data - teams count:", teams?.length, "market:", selectedMarket);
+    console.log(
+      "📥 Request data - teams count:",
+      teams?.length,
+      "market:",
+      selectedMarket,
+    );
 
     if (!teams || !selectedMarket) {
       return new Response(
         JSON.stringify({ error: "Missing teams or selectedMarket" }),
         {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -50,8 +52,8 @@ serve(async (req: Request) => {
         JSON.stringify({ error: "API configuration missing" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -64,10 +66,10 @@ serve(async (req: Request) => {
       .sort((a: any, b: any) => b.offer - a.offer)
       .slice(0, 8)
       .map((t: any) => `${t.name} (${t.offer.toFixed(1)}%)`)
-      .join(', ');
+      .join(", ");
 
-    const today = new Date().toISOString().split('T')[0];
-    
+    const today = new Date().toISOString().split("T")[0];
+
     const prompt = `You are an Expert Sports Analyst for the ShareMatch trading platform.
 
 Market: ${selectedMarket} Index
@@ -103,67 +105,88 @@ STRICT TERMINOLOGY GUIDELINES:
 
 Style: Professional, insightful, concise, data-driven.`;
 
-    console.log("🤖 Calling Gemini API with model: gemini-2.5-flash + googleSearch");
+    console.log(
+      "🤖 Calling Gemini API with model: gemini-2.5-flash + googleSearch",
+    );
     console.log("📝 Prompt length:", prompt.length);
 
     try {
       // Use flash model WITH googleSearch for real-time news and injury data
       const model = ai.getGenerativeModel({
-        model: 'gemini-2.5-flash',
+        model: "gemini-2.0-flash",
         tools: [{ googleSearch: {} }],
       });
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
+      // Create a streaming response
+      const streamingResponse = await model.generateContentStream(prompt);
 
-      console.log("🔄 Gemini response received");
-      const analysis = response.text() || 'Analysis currently unavailable. Please try again.';
-      console.log("✅ AI analysis completed, length:", analysis.length);
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of streamingResponse.stream) {
+              const chunkText = chunk.text();
+              if (chunkText) {
+                controller.enqueue(new TextEncoder().encode(chunkText));
+              }
+            }
+            controller.close();
+          } catch (err) {
+            console.error("❌ Streaming error:", err);
+            controller.error(err);
+          }
+        },
+      });
 
-      return new Response(
-        JSON.stringify({ analysis }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
-
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        },
+      });
     } catch (geminiError: any) {
       console.error("❌ Gemini API error:", geminiError.message, geminiError);
-      
+
       // Check if it's a quota error
       const errorMessage = geminiError.message || "";
-      if (errorMessage.includes("quota") || errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED")) {
+      if (
+        errorMessage.includes("quota") ||
+        errorMessage.includes("429") ||
+        errorMessage.includes("RESOURCE_EXHAUSTED")
+      ) {
         return new Response(
-          JSON.stringify({ 
-            analysis: "**AI Analysis Temporarily Unavailable**\n\nThe AI service is currently experiencing high demand. Please try again in a few minutes.\n\n_Tip: The free tier has limited requests per minute and per day. Consider upgrading your Gemini API plan for higher limits._"
+          JSON.stringify({
+            analysis:
+              "**AI Analysis Temporarily Unavailable**\n\nThe AI service is currently experiencing high demand. Please try again in a few minutes.\n\n_Tip: The free tier has limited requests per minute and per day. Consider upgrading your Gemini API plan for higher limits._",
           }),
           {
             status: 200, // Return 200 with a message instead of error
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
-      
+
       return new Response(
-        JSON.stringify({ 
-          analysis: "**Unable to Generate Analysis**\n\nThe AI service encountered an error. Please try again later."
+        JSON.stringify({
+          analysis:
+            "**Unable to Generate Analysis**\n\nThe AI service encountered an error. Please try again later.",
         }),
         {
           status: 200, // Return 200 with fallback message
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
-
   } catch (error) {
     console.error("Error in ai-analytics function:", error);
     return new Response(
       JSON.stringify({ error: "Failed to generate analysis" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      }
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
