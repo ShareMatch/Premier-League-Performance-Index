@@ -1,9 +1,16 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   Sparkles,
   AlertTriangle,
   Send,
   ChevronDown,
+  ChevronRight,
   User,
   ArrowUp,
   Globe,
@@ -41,11 +48,11 @@ const MARKET_LABELS: Record<string, string> = {
 
 // Category configuration with their markets
 const CATEGORIES = [
-  {
-    id: "all",
-    label: "Index Tokens",
-    markets: ["EPL", "SPL", "UCL", "ISL", "F1", "NBA", "NFL", "T20"],
-  },
+  // {
+  //   id: "all",
+  //   label: "Index Tokens",
+  //   markets: ["EPL", "SPL", "UCL", "ISL", "F1", "NBA", "NFL", "T20"],
+  // },
   {
     id: "football",
     label: "Football",
@@ -78,7 +85,6 @@ const SUGGESTED_QUESTIONS = [
   { text: "Which EPL team is most undervalued right now?", market: "EPL" },
   { text: "Analyze the top F1 performers this season", market: "F1" },
   { text: "Compare the Saudi Pro League top 5 teams", market: "SPL" },
-  { text: "Champions League quarter-finals preview", market: "UCL" },
 ];
 
 const InputArea: React.FC<{
@@ -86,7 +92,7 @@ const InputArea: React.FC<{
   inputValue: string;
   setInputValue: (value: string) => void;
   clicked: boolean;
-  setClicked: React.Dispatch<React.SetStateAction<Boolean>>;
+  setClicked: React.Dispatch<React.SetStateAction<boolean>>;
   handleKeyDown: (e: React.KeyboardEvent) => void;
   handleSendMessage: () => void;
   selectedMarket: string;
@@ -113,151 +119,226 @@ const InputArea: React.FC<{
   setOpenDropdown,
   handleCategoryChange,
   handleMarketSelect,
-}) => (
-  <div className="space-y-3">
-    {/* Input Field */}
-    <div className="relative">
-      <input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={`Ask about ${selectedMarket === "ALL" ? currentCategory.label : MARKET_LABELS[selectedMarket] || selectedMarket}...`}
-        disabled={isLoading}
-        className="flex-1 w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-full text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-emerald500/50 focus:border-brand-emerald500 disabled:opacity-50 transition-all pr-12"
-      />
-      <button
-        onClick={() => handleSendMessage()}
-        disabled={!inputValue.trim() || isLoading}
-        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-brand-emerald500 hover:bg-brand-emerald500/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-brand-emerald500/20"
-      >
-        {isLoading ? (
-          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        ) : (
-          <ArrowUp className="w-5 h-5" />
-        )}
-      </button>
-    </div>
+}) => {
+  const displayLabel =
+    selectedMarket === "ALL"
+      ? `${currentCategory.label} • All`
+      : `${currentCategory.label} • ${
+          MARKET_LABELS[selectedMarket] || selectedMarket
+        }`;
 
-    {/* Filters - Now using two dropdowns */}
-    <div className="flex gap-2">
-      {/* Category Dropdown */}
-      <DropdownMenu.Root
-        open={openDropdown === "category"}
-        onOpenChange={(open) => setOpenDropdown(open ? "category" : null)}
-      >
-        <DropdownMenu.Trigger asChild>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0">
-            <span>{currentCategory.label}</span>
-            <ChevronDown
-              className={`w-3 h-3 transition-transform ${openDropdown === "category" ? "rotate-180" : ""}`}
-            />
-          </button>
-        </DropdownMenu.Trigger>
+  return (
+    <div className="w-full">
+      {/* Combined Input Container */}
+      <div className="bg-gray-800/60 border border-gray-700 rounded-2xl">
+        {/* Input Field */}
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`Ask about ${
+              selectedMarket === "ALL"
+                ? currentCategory.label
+                : MARKET_LABELS[selectedMarket] || selectedMarket
+            }...`}
+            disabled={isLoading}
+            className="w-full px-4 py-3 bg-transparent text-sm text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
+          />
+        </div>
 
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
-            sideOffset={8}
-            align="start"
-          >
-            {CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <DropdownMenu.Item
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.id)}
-                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                    isSelected
-                      ? "bg-brand-emerald500 text-white"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                  {isSelected && <FaCheck className="w-3 h-3" />}
-                </DropdownMenu.Item>
-              );
-            })}
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
-
-      {/* Market Dropdown - Only if multiple markets */}
-      {currentCategory.markets.length > 1 && (
-        <DropdownMenu.Root
-          open={openDropdown === "market"}
-          onOpenChange={(open) => setOpenDropdown(open ? "market" : null)}
-        >
+        {/* Filters Row - Inside the same container */}
+        <div className="flex items-center justify-between px-2 pb-1 pt-1">
+          <div className="flex gap-2">
+            <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0">
-              <span>
-                {selectedMarket === "ALL"
-                  ? `All ${currentCategory.label}`
-                  : MARKET_LABELS[selectedMarket] || selectedMarket}
-              </span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${openDropdown === "market" ? "rotate-180" : ""}`}
-              />
+            <button
+              disabled={isLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0 disabled:opacity-50"
+            >
+              <span>{displayLabel}</span>
+              <ChevronDown className="w-3 h-3" />
             </button>
           </DropdownMenu.Trigger>
-
           <DropdownMenu.Portal>
             <DropdownMenu.Content
               className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
               sideOffset={8}
               align="start"
             >
-              <DropdownMenu.Item
-                onClick={() => handleMarketSelect("ALL")}
-                className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                  selectedMarket === "ALL"
-                    ? "bg-brand-emerald500 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <span>All {currentCategory.label}</span>
-                {selectedMarket === "ALL" && <FaCheck className="w-3 h-3" />}
-              </DropdownMenu.Item>
-              <div className="h-px bg-gray-700/50 my-1" />
-              {currentCategory.markets.map((marketId) => {
-                const isSelected = selectedMarket === marketId;
-                return (
-                  <DropdownMenu.Item
-                    key={marketId}
-                    onClick={() => handleMarketSelect(marketId)}
-                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                      isSelected
-                        ? "bg-brand-emerald500 text-white"
+              {CATEGORIES.map((cat) => (
+                <DropdownMenu.Sub key={cat.id}>
+                  <DropdownMenu.SubTrigger
+                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
+                      selectedCategory === cat.id
+                        ? "text-brand-emerald500"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <span>{MARKET_LABELS[marketId] || marketId}</span>
-                    {isSelected && <FaCheck className="w-3 h-3" />}
-                  </DropdownMenu.Item>
-                );
-              })}
+                    <span>{cat.label}</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </DropdownMenu.SubTrigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.SubContent
+                      className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-left ml-1"
+                      sideOffset={0}
+                      alignOffset={-8}
+                      side="right"
+                    >
+                      {cat.markets.map((marketId) => {
+                        const isSelected =
+                          selectedCategory === cat.id &&
+                          selectedMarket === marketId;
+                        return (
+                          <DropdownMenu.Item
+                            key={marketId}
+                            onSelect={() => {
+                              handleCategoryChange(cat.id);
+                              handleMarketSelect(marketId);
+                            }}
+                            className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                              isSelected
+                                ? "bg-brand-emerald500 text-white"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <span>{MARKET_LABELS[marketId] || marketId}</span>
+                            {isSelected && <FaCheck className="w-3 h-3" />}
+                          </DropdownMenu.Item>
+                        );
+                      })}
+                    </DropdownMenu.SubContent>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Sub>
+              ))}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
-      )}
 
-      {/* Web search button */}
-      <button
-        onClick={() => setClicked((prev) => !prev)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0
-        ${
-          clicked
-            ? "bg-[#005430] border-[#005430] text-white" // clicked state
-            : "bg-gray-800 border-gray-700 text-white hover:border-[#005430]/50"
-        }
-      `}
-      >
-        <Globe className="w-4 h-4" />
-        Web Search
-      </button>
+        {/* Web search button
+          <button
+            onClick={() => setClicked((prev) => !prev)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0
+              ${
+                clicked
+                  ? "bg-[#005430] border-[#005430] text-white"
+                  : "bg-gray-800 border-gray-700 text-white hover:border-[#005430]/50"
+              }
+            `}
+          >
+            <Globe className="w-4 h-4" />
+            Web Search
+          </button> */}
+          </div>
+
+          {/* Send button - right side */}
+          <button
+            onClick={() => handleSendMessage()}
+            disabled={!inputValue.trim() || isLoading}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <ArrowUp className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
+  );
+};
+
+const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
+  ({ message }) => {
+    return (
+      <div
+        className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+      >
+        {message.role === "assistant" && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-brand-emerald500" />
+          </div>
+        )}
+
+        <div
+          className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+            message.role === "user"
+              ? "bg-brand-emerald500 text-white rounded-tr-sm"
+              : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
+          }`}
+        >
+          {message.role === "assistant" ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                h1: ({ node, ...props }) => (
+                  <h1
+                    className="text-xl font-bold text-white mb-3 border-b border-gray-700 pb-2"
+                    {...props}
+                  />
+                ),
+                h2: ({ node, ...props }) => (
+                  <h2
+                    className="text-lg font-bold text-brand-emerald500 mt-4 mb-2"
+                    {...props}
+                  />
+                ),
+                h3: ({ node, ...props }) => (
+                  <h3
+                    className="text-base font-semibold text-white mt-3 mb-1.5"
+                    {...props}
+                  />
+                ),
+                p: ({ node, ...props }) => (
+                  <p
+                    className="text-sm text-gray-300 leading-relaxed mb-2"
+                    {...props}
+                  />
+                ),
+                ul: ({ node, ...props }) => (
+                  <ul
+                    className="list-disc list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
+                    {...props}
+                  />
+                ),
+                ol: ({ node, ...props }) => (
+                  <ol
+                    className="list-decimal list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
+                    {...props}
+                  />
+                ),
+                li: ({ node, ...props }) => (
+                  <li className="pl-1 text-sm" {...props} />
+                ),
+                strong: ({ node, ...props }) => (
+                  <strong className="text-white font-semibold" {...props} />
+                ),
+                blockquote: ({ node, ...props }) => (
+                  <blockquote
+                    className="border-l-4 border-brand-emerald500 pl-3 italic text-sm text-gray-400 my-3 bg-gray-900/50 p-2 rounded-r-lg"
+                    {...props}
+                  />
+                ),
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          ) : (
+            <p className="text-sm leading-relaxed">{message.content}</p>
+          )}
+        </div>
+
+        {message.role === "user" && (
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+            <User className="w-4 h-4 text-gray-300" />
+          </div>
+        )}
+      </div>
+    );
+  },
 );
 
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
@@ -268,18 +349,20 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [clicked, setClicked] = useState(false);
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const hasStartedChat = messages.length > 0;
+  const shouldShowBottomInput = hasSentFirstMessage || hasStartedChat;
 
   // Get current category config
   const currentCategory = useMemo(() => {
     return CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
   }, [selectedCategory]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Always scroll to bottom when new messages arrive (especially during streaming)
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -305,6 +388,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const text = messageText || inputValue.trim();
     if (!text || isLoading) return;
 
+    setHasSentFirstMessage(true);
+
     const displayMarket =
       selectedMarket === "ALL"
         ? `All ${currentCategory.label}`
@@ -323,43 +408,91 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     setIsLoading(true);
 
     try {
+      // Get current session for authentication
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error("You must be logged in to use AI Analytics");
+      }
+
       const categoryMarkets = currentCategory.markets;
       const filteredTeams =
         selectedMarket === "ALL"
           ? teams.filter((t) => categoryMarkets.includes(t.market))
           : teams.filter((t) => t.market === selectedMarket);
 
-      const { data, error } = await supabase.functions.invoke("ai-analytics", {
-        body: {
-          teams: filteredTeams,
-          selectedMarket,
-          userQuery: text,
+      const res = await fetch(
+        "https://lbmixnhxerrmecfxdfkx.functions.supabase.co/ai-analytics",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            teams: filteredTeams,
+            selectedMarket,
+            userQuery: text,
+          }),
         },
-      });
+      );
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `Request failed with status ${res.status}`,
+        );
+      }
 
+      if (!res.body) throw new Error("No response body");
+
+      // Prepare assistant message in state
+      const assistantMessageId = `assistant_${Date.now()}`;
       const assistantMessage: ChatMessage = {
-        id: `assistant_${Date.now()}`,
+        id: assistantMessageId,
         role: "assistant",
-        content:
-          data?.analysis || "Analysis currently unavailable. Please try again.",
-        market: displayMarket,
+        content: "",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      // ✅ Direct streaming - update state immediately on every chunk
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        // Update message content directly - no buffering
+        setMessages((prev) => {
+          const updated = [...prev];
+          const idx = updated.findIndex((m) => m.id === assistantMessageId);
+          if (idx !== -1) {
+            updated[idx] = {
+              ...updated[idx],
+              content: updated[idx].content + chunk,
+            };
+          }
+          return updated;
+        });
+      }
     } catch (err: any) {
       console.error(err);
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         role: "assistant",
-        content: "Unable to generate analysis at this time. Please try again.",
+        content: `Error: ${err.message || "Unable to generate analysis at this time."}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
-      inputRef.current?.focus();
     }
   };
 
@@ -387,55 +520,20 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
   return (
     <div className="h-full flex flex-col bg-gray-900 overflow-hidden">
-      {/* Header - Simplified */}
-      {/* <div className="flex-shrink-0 p-4 border-b border-gray-800 bg-gray-900/95 backdrop-blur-xl">
-        <div className="flex items-center gap-3 max-w-4xl mx-auto">
-          <div className="w-10 h-10 rounded-full bg-brand-emerald500/10 flex items-center justify-center ring-1 ring-brand-emerald500/20">
-            <Sparkles className="w-5 h-5 text-brand-emerald500" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">AI Analytics</h1>
-            <p className="text-xs text-gray-500">
-              Powered by real-time market data
-            </p>
-          </div>
-        </div>
-      </div> */}
-
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="max-w-sm sm:max-w-md md:max-w-4xl mx-auto p-4 pb-0">
-          {!hasStartedChat ? (
+      <div
+        className="flex-1 min-h-0 overflow-y-auto scrollbar-hide"
+        style={{ contain: "layout" }}
+        ref={messagesEndRef}
+      >
+        <div className="max-w-sm sm:max-w-md md:max-w-4xl mx-auto p-4">
+          {!shouldShowBottomInput ? (
             /* Initial Welcome State - Input centered */
             <div className="flex flex-col items-center justify-center h-full w-full">
-              <div className="inline-flex items-center justify-center p-4 bg-brand-emerald500/10 rounded-full mb-6 ring-1 ring-brand-emerald500/20">
-                <Sparkles className="w-10 h-10 text-brand-emerald500" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2 text-center">
-                What would you like to analyze?
+              <h2 className="px-1 text-pretty whitespace-pre-wrap text-xl font-semibold text-white mb-10 text-center mt-24">
+              Ask me anything about sports markets, team performance, or
+              player stats.
               </h2>
-              <p className="text-gray-400 text-sm mb-8 text-center max-w-md">
-                Ask me anything about sports markets, team performance, or
-                player stats.
-              </p>
-
-              {/* Suggested Questions Grid */}
-              <div className="grid grid-cols-2 gap-2">
-                {SUGGESTED_QUESTIONS.map((question, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="group w-full p-3 text-left
-             bg-gray-800/50 hover:bg-gray-800
-             border border-gray-700/50 hover:border-brand-emerald500/30
-             rounded-lg transition-all duration-200"
-                  >
-                    <p className="text-xs text-gray-300 group-hover:text-white transition-colors line-clamp-1">
-                      {question.text}
-                    </p>
-                  </button>
-                ))}
-              </div>
 
               {/* Centered Input Area */}
               <div className="w-full mt-8">
@@ -456,127 +554,53 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                   handleCategoryChange={handleCategoryChange}
                   handleMarketSelect={handleMarketSelect}
                 />
+
+                {/* Suggested Questions - Horizontal Pills */}
+                <div className="flex flex-wrap justify-center gap-2 mt-4">
+                  {SUGGESTED_QUESTIONS.map((question, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="px-4 py-2 text-xs text-gray-400 bg-gray-800/40 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200"
+                    >
+                      {question.text}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
             /* Chat Messages */
-            <div className="space-y-4 pb-4">
+            <div className="space-y-4 pb-4 mb-32">
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                >
-                  {message.role === "assistant" && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-brand-emerald500" />
-                    </div>
-                  )}
-
-                  <div
-                    className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
-                      message.role === "user"
-                        ? "bg-brand-emerald500 text-white rounded-tr-sm"
-                        : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
-                    }`}
-                  >
-                    {message.role === "assistant" ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          h1: ({ node, ...props }) => (
-                            <h1
-                              className="text-xl font-bold text-white mb-3 border-b border-gray-700 pb-2"
-                              {...props}
-                            />
-                          ),
-                          h2: ({ node, ...props }) => (
-                            <h2
-                              className="text-lg font-bold text-brand-emerald500 mt-4 mb-2"
-                              {...props}
-                            />
-                          ),
-                          h3: ({ node, ...props }) => (
-                            <h3
-                              className="text-base font-semibold text-white mt-3 mb-1.5"
-                              {...props}
-                            />
-                          ),
-                          p: ({ node, ...props }) => (
-                            <p
-                              className="text-sm text-gray-300 leading-relaxed mb-2"
-                              {...props}
-                            />
-                          ),
-                          ul: ({ node, ...props }) => (
-                            <ul
-                              className="list-disc list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
-                              {...props}
-                            />
-                          ),
-                          ol: ({ node, ...props }) => (
-                            <ol
-                              className="list-decimal list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
-                              {...props}
-                            />
-                          ),
-                          li: ({ node, ...props }) => (
-                            <li className="pl-1 text-sm" {...props} />
-                          ),
-                          strong: ({ node, ...props }) => (
-                            <strong
-                              className="text-white font-semibold"
-                              {...props}
-                            />
-                          ),
-                          blockquote: ({ node, ...props }) => (
-                            <blockquote
-                              className="border-l-4 border-brand-emerald500 pl-3 italic text-sm text-gray-400 my-3 bg-gray-900/50 p-2 rounded-r-lg"
-                              {...props}
-                            />
-                          ),
-                        }}
-                      >
-                        {message.content}
-                      </ReactMarkdown>
-                    ) : (
-                      <p className="text-sm leading-relaxed">
-                        {message.content}
-                      </p>
-                    )}
-                  </div>
-
-                  {message.role === "user" && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                      <User className="w-4 h-4 text-gray-300" />
-                    </div>
-                  )}
-                </div>
+                <ChatMessageBubble key={message.id} message={message} />
               ))}
 
               {/* Loading indicator */}
-              {isLoading && (
-                <div className="flex gap-3 justify-start animate-in fade-in duration-200">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-brand-emerald500" />
-                  </div>
-                  <div className="bg-gray-800/80 px-4 py-3 rounded-2xl rounded-tl-sm border border-gray-700/50">
-                    <div className="flex gap-1.5">
-                      <span
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
+              {isLoading &&
+                messages[messages.length - 1]?.role !== "assistant" && (
+                  <div className="flex gap-3 justify-start animate-in fade-in duration-200">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-brand-emerald500" />
+                    </div>
+                    <div className="bg-gray-800/80 px-4 py-3 rounded-2xl rounded-tl-sm border border-gray-700/50">
+                      <div className="flex gap-1.5">
+                        <span
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <span
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <span
+                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div ref={messagesEndRef} />
             </div>
@@ -584,9 +608,9 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         </div>
       </div>
 
-      {/* Input Container - Sticky Bottom, only after chat starts */}
-      {hasStartedChat && (
-        <div className="flex-shrink-0 bg-gray-900/95 backdrop-blur-xl p-4">
+      {/* Input Container - Sticky Bottom, after first query */}
+      {shouldShowBottomInput && (
+        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-0">
           <div className="max-w-sm sm:max-w-md md:max-w-4xl mx-auto p-4 pb-0">
             <InputArea
               inputRef={inputRef}
