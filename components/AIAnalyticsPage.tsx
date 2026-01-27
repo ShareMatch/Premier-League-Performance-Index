@@ -153,71 +153,73 @@ const InputArea: React.FC<{
         <div className="flex items-center justify-between px-2 pb-1 pt-1">
           <div className="flex gap-2">
             <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <button
-              disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0 disabled:opacity-50"
-            >
-              <span>{displayLabel}</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
-              sideOffset={8}
-              align="start"
-            >
-              {CATEGORIES.map((cat) => (
-                <DropdownMenu.Sub key={cat.id}>
-                  <DropdownMenu.SubTrigger
-                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
-                      selectedCategory === cat.id
-                        ? "text-brand-emerald500"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <span>{cat.label}</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </DropdownMenu.SubTrigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.SubContent
-                      className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-left ml-1"
-                      sideOffset={0}
-                      alignOffset={-8}
-                      side="right"
-                    >
-                      {cat.markets.map((marketId) => {
-                        const isSelected =
-                          selectedCategory === cat.id &&
-                          selectedMarket === marketId;
-                        return (
-                          <DropdownMenu.Item
-                            key={marketId}
-                            onSelect={() => {
-                              handleCategoryChange(cat.id);
-                              handleMarketSelect(marketId);
-                            }}
-                            className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                              isSelected
-                                ? "bg-brand-emerald500 text-white"
-                                : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
-                            <span>{MARKET_LABELS[marketId] || marketId}</span>
-                            {isSelected && <FaCheck className="w-3 h-3" />}
-                          </DropdownMenu.Item>
-                        );
-                      })}
-                    </DropdownMenu.SubContent>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Sub>
-              ))}
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  disabled={isLoading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0 disabled:opacity-50"
+                >
+                  <span>{displayLabel}</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
+                  sideOffset={8}
+                  align="start"
+                >
+                  {CATEGORIES.map((cat) => (
+                    <DropdownMenu.Sub key={cat.id}>
+                      <DropdownMenu.SubTrigger
+                        className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
+                          selectedCategory === cat.id
+                            ? "text-brand-emerald500"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </DropdownMenu.SubTrigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.SubContent
+                          className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-left ml-1"
+                          sideOffset={0}
+                          alignOffset={-8}
+                          side="right"
+                        >
+                          {cat.markets.map((marketId) => {
+                            const isSelected =
+                              selectedCategory === cat.id &&
+                              selectedMarket === marketId;
+                            return (
+                              <DropdownMenu.Item
+                                key={marketId}
+                                onSelect={() => {
+                                  handleCategoryChange(cat.id);
+                                  handleMarketSelect(marketId);
+                                }}
+                                className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                                  isSelected
+                                    ? "bg-brand-emerald500 text-white"
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                }`}
+                              >
+                                <span>
+                                  {MARKET_LABELS[marketId] || marketId}
+                                </span>
+                                {isSelected && <FaCheck className="w-3 h-3" />}
+                              </DropdownMenu.Item>
+                            );
+                          })}
+                        </DropdownMenu.SubContent>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Sub>
+                  ))}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
-        {/* Web search button
+            {/* Web search button
           <button
             onClick={() => setClicked((prev) => !prev)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0
@@ -424,7 +426,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
           : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
-        "https://lbmixnhxerrmecfxdfkx.functions.supabase.co/ai-analytics",
+        "https://bibvtujpesatuxzfkdbl.functions.supabase.co/ai-analytics",
         {
           method: "POST",
           headers: {
@@ -531,8 +533,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             /* Initial Welcome State - Input centered */
             <div className="flex flex-col items-center justify-center h-full w-full">
               <h2 className="px-1 text-pretty whitespace-pre-wrap text-xl font-semibold text-white mb-10 text-center mt-24">
-              Ask me anything about sports markets, team performance, or
-              player stats.
+                Ask me anything about sports markets, team performance, or
+                player stats.
               </h2>
 
               {/* Centered Input Area */}
