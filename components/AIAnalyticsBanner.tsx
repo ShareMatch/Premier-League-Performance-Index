@@ -29,7 +29,7 @@ const AIAnalyticsBanner: React.FC<AIAnalyticsBannerProps> = ({ onClick, isActive
                 <div className="flex flex-col items-start translate-y-[1px]">
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-base md:text-lg tracking-wide uppercase text-gray-200 group-hover:text-white">
-                            AI Analytics Engine
+                            HAL AI Engine
                         </span>
                         <Sparkles className="w-5 h-5 text-[#00A651] animate-pulse" />
 

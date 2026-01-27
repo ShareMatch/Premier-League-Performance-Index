@@ -25,9 +25,6 @@ const Watchlist: React.FC<WatchlistProps> = ({
     );
 
     const handleRowClick = (asset: Team) => {
-        if (onViewAsset) {
-            onViewAsset(asset);
-        }
         if (onSelectAsset) {
             onSelectAsset(asset, "buy");
         }
