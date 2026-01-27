@@ -263,9 +263,18 @@ const InputArea: React.FC<{
                                     : "text-gray-400 hover:text-white hover:bg-white/5"
                                     }`}
                                 >
-                                  <span>
-                                    {MARKET_LABELS[marketId] || marketId}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    {getIndexAvatarUrl(marketId) && (
+                                      <img
+                                        src={getIndexAvatarUrl(marketId)!}
+                                        alt={marketId}
+                                        className="w-5 h-5 object-contain flex-shrink-0"
+                                      />
+                                    )}
+                                    <span>
+                                      {MARKET_LABELS[marketId] || marketId}
+                                    </span>
+                                  </div>
                                   {isSelected && <FaCheck className="w-3 h-3" />}
                                 </DropdownMenu.Item>
                               );
@@ -414,7 +423,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const randomQuestions = useMemo(() => {
     return [...SUGGESTED_QUESTIONS]
       .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
+      .slice(0, 4);
   }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -490,11 +499,11 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         selectedMarket === "ALL_INDEX"
           ? teams
           : selectedMarket === "ALL"
-            ? teams.filter((t) => t.market && categoryMarkets.includes(t.market))
+            ? teams.filter((t) => categoryMarkets.includes(t.market))
             : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
-        "https://bibvtujpesatuxzfkdbl.functions.supabase.co/ai-analytics",
+        "https://lbmixnhxerrmecfxdfkx.functions.supabase.co/ai-analytics",
         {
           method: "POST",
           headers: {
@@ -506,6 +515,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             teams: filteredTeams,
             selectedMarket,
             userQuery: text,
+            chatHistory: messages.length ? messages.slice(-10) : [], // last 10 messages are send to gemini from here
           }),
         },
       );
@@ -603,7 +613,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               <div className="inline-flex items-center justify-center p-3 bg-[#00A651]/10 rounded-full ring-1 ring-[#00A651]/20">
                 <Sparkles className="w-8 h-8 text-[#00A651]" />
               </div>
-              <h2 className="px-1 text-pretty whitespace-pre-wrap text-xl font-medium text-white mb-10 text-center mt-6">
+              <h2 className="px-1 text-pretty whitespace-pre-wrap text-lg font-medium text-white mb-10 text-center mt-6">
                 Ask me anything about sports markets, team performance, or
                 player stats.
               </h2>
@@ -611,19 +621,19 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               {/* Centered Input Area */}
               <div className="w-full mt-8">
                 {/* Suggested Questions - Horizontal Scrollable Row */}
-                <div className="w-full overflow-x-auto scrollbar-hide -mx-4 px-4 overflow-y-hidden">
-                  <div className="flex items-center justify-center gap-3 mb-10 pb-2 min-w-max">
+                <div className="w-full flex justify-center px-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 pb-2 w-full max-w-5xl">
                     {randomQuestions.map((question, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSuggestedQuestion(question)}
-                        className="px-2 py-1 text-xs text-gray-400 bg-gray-800/40 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 flex items-center gap-2 shadow-xl shadow-black/20 group/btn flex-shrink-0"
+                        className="px-4 py-2 text-xs text-start text-gray-400 bg-gray-800/40 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 flex items-center justify-start gap-2 shadow-xl shadow-black/20 group/btn w-full"
                       >
                         {getIndexAvatarUrl(question.market) && (
                           <img
                             src={getIndexAvatarUrl(question.market)!}
                             alt={question.market}
-                            className="w-6 h-6 object-contain flex-shrink-0"
+                            className="w-5 h-5 object-contain flex-shrink-0"
                           />
                         )}
                         <span className="font-medium whitespace-nowrap">{question.text}</span>
