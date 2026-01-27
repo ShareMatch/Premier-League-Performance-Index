@@ -546,9 +546,9 @@ const App: React.FC = () => {
             is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                  "en-US",
-                  { month: "short", day: "numeric", year: "numeric" },
-                )
+                "en-US",
+                { month: "short", day: "numeric", year: "numeric" },
+              )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -659,7 +659,7 @@ const App: React.FC = () => {
     // The modal will be hidden next time they open the app if approved
   };
 
-  const handleViewAsset = (asset: Team) => {
+  const handleViewAsset = (asset: Team, keepOrder: boolean = false) => {
     // Check if user is logged in
     if (!user) {
       setAlertMessage("You need to login to continue");
@@ -667,12 +667,19 @@ const App: React.FC = () => {
       return;
     }
 
-    setSelectedOrder(null); // Close trade slip when viewing an asset page
+    if (!keepOrder) {
+      setSelectedOrder(null); // Close trade slip when viewing an asset page
+    }
     setPreviousLeague(activeLeague);
 
     const slug = asset.name.toLowerCase().replace(/\s+/g, "-");
     const market = asset.market?.toLowerCase() || "unknown";
-    navigate(`/asset/${market}/${slug}`);
+    const targetPath = `/asset/${market}/${slug}`;
+
+    // Only navigate if we're not already there
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
 
     // Sync sidebar active league with the asset's market if available
     if (asset.market) {
@@ -760,6 +767,14 @@ const App: React.FC = () => {
       tradingAssetsSubscription.unsubscribe();
     };
   }, [loadUserData, loadAssets, user, publicUserId]);
+
+  useEffect(() => {
+    const isAssetPage = location.pathname.includes("/asset/") || location.pathname.includes("/a/");
+    if (!isAssetPage) {
+      setSelectedOrder(null);
+      setShowRightPanel(false);
+    }
+  }, [location.pathname]);
 
   // Filter teams when league changes or assets update
   useEffect(() => {
@@ -887,6 +902,9 @@ const App: React.FC = () => {
 
     const holdingValue = type === "sell" ? maxQuantity : 0;
 
+    // Navigate to asset page first
+    handleViewAsset(team, true);
+
     const orderObject = {
       team,
       type,
@@ -896,11 +914,14 @@ const App: React.FC = () => {
       holding: holdingValue, // Current holdings for sell orders
     };
 
-    // Create a completely new object to prevent mutations
-    setSelectedOrder({ ...orderObject });
+    // Use a small timeout to ensure navigation starts before the slip appears
+    setTimeout(() => {
+      // Create a completely new object to prevent mutations
+      setSelectedOrder({ ...orderObject });
 
-    // On mobile/tablet (below 2xl), show the RightPanel overlay
-    setShowRightPanel(true);
+      // On mobile/tablet (below 2xl), show the RightPanel overlay
+      setShowRightPanel(true);
+    }, 50);
   };
 
   const handleConfirmTrade = async (quantity: number, side: "buy" | "sell") => {
@@ -1011,21 +1032,21 @@ const App: React.FC = () => {
                   userData={
                     user
                       ? {
-                          name: user.user_metadata?.full_name || "",
-                          email: user.email || "",
-                          phone: user.user_metadata?.phone || "",
-                          whatsapp: user.user_metadata?.whatsapp_phone || "",
-                          address: user.user_metadata?.address_line || "",
-                          city: user.user_metadata?.city || "",
-                          state: user.user_metadata?.region || "",
-                          country: user.user_metadata?.country || "",
-                          postCode: user.user_metadata?.postal_code || "",
-                          accountName: "",
-                          accountNumber: "",
-                          iban: "",
-                          swiftBic: "",
-                          bankName: "",
-                        }
+                        name: user.user_metadata?.full_name || "",
+                        email: user.email || "",
+                        phone: user.user_metadata?.phone || "",
+                        whatsapp: user.user_metadata?.whatsapp_phone || "",
+                        address: user.user_metadata?.address_line || "",
+                        city: user.user_metadata?.city || "",
+                        state: user.user_metadata?.region || "",
+                        country: user.user_metadata?.country || "",
+                        postCode: user.user_metadata?.postal_code || "",
+                        accountName: "",
+                        accountNumber: "",
+                        iban: "",
+                        swiftBic: "",
+                        bankName: "",
+                      }
                       : undefined
                   }
                   onSignOut={async () => {
@@ -1525,123 +1546,123 @@ const LeagueRouteWrapper: React.FC<{
   handleViewAsset,
   loading,
 }) => {
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  // Use URL param for the league to prevent flash when navigating away
-  const { leagueId } = useParams();
-  const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    // Use URL param for the league to prevent flash when navigating away
+    const { leagueId } = useParams();
+    const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
 
-  // Check if we should show the back button based on navigation source
-  const navigationSource = location.state?.from as
-    | "home"
-    | "all-markets"
-    | "new-markets"
-    | undefined;
-  const shouldShowBackButton = !!navigationSource;
+    // Check if we should show the back button based on navigation source
+    const navigationSource = location.state?.from as
+      | "home"
+      | "all-markets"
+      | "new-markets"
+      | undefined;
+    const shouldShowBackButton = !!navigationSource;
 
-  // Determine where to navigate back to
-  const handleBack = () => {
-    switch (navigationSource) {
-      case "home":
-        navigate("/");
-        break;
-      case "all-markets":
-        navigate("/markets");
-        break;
-      case "new-markets":
-        navigate("/new-markets");
-        break;
-      default:
-        navigate(-1);
+    // Determine where to navigate back to
+    const handleBack = () => {
+      switch (navigationSource) {
+        case "home":
+          navigate("/");
+          break;
+        case "all-markets":
+          navigate("/markets");
+          break;
+        case "new-markets":
+          navigate("/new-markets");
+          break;
+        default:
+          navigate(-1);
+      }
+    };
+
+    // Redirect to home if not logged in
+    if (!authLoading && !user) {
+      return <Navigate to="/" replace />;
     }
-  };
 
-  // Redirect to home if not logged in
-  if (!authLoading && !user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (loading && teams.length === 0) {
+    if (loading && teams.length === 0) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
+          <p className="text-gray-400">Loading market statistics...</p>
+        </div>
+      );
+    }
     return (
-      <div className="h-full flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">Loading market statistics...</p>
+      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+        {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+        <div className="w-full xl:flex-[2] flex flex-col">
+          {/* Header aligned with order book */}
+          <div className="flex-shrink-0">
+            <Header
+              title={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+              seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
+              onBack={shouldShowBackButton ? handleBack : undefined}
+            />
+          </div>
+
+          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
+            {/* Fixed Header - Responsive padding and text */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+              <div className="text-left">Asset</div>
+              <div>Sell</div>
+              <div>Buy</div>
+            </div>
+
+            {/* Scrollable List */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+              {sortedTeams.map((team) => (
+                <OrderBookRow
+                  key={team.id}
+                  team={team}
+                  onSelectOrder={handleSelectOrder}
+                  onViewAsset={handleViewAsset}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+        <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+          {/* AI Analysis */}
+          <div className="flex-shrink-0">
+            <AIAnalysis
+              teams={teams}
+              leagueName={getLeagueTitleUtil(displayLeague)}
+            />
+          </div>
+
+          {/* Did You Know (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <DidYouKnow
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* On This Day (Index/League Context) */}
+          <div className="flex-shrink-0">
+            <OnThisDay
+              assetName={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+            />
+          </div>
+
+          {/* News Feed */}
+          <div className="flex-shrink-0 pb-4 xl:pb-0">
+            <NewsFeed topic={displayLeague as any} />
+          </div>
+        </div>
       </div>
     );
-  }
-  return (
-    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
-      {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
-      <div className="w-full xl:flex-[2] flex flex-col">
-        {/* Header aligned with order book */}
-        <div className="flex-shrink-0">
-          <Header
-            title={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-            seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
-            seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
-            seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-            onBack={shouldShowBackButton ? handleBack : undefined}
-          />
-        </div>
-
-        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
-          {/* Fixed Header - Responsive padding and text */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-            <div className="text-left">Asset</div>
-            <div>Sell</div>
-            <div>Buy</div>
-          </div>
-
-          {/* Scrollable List */}
-          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-            {sortedTeams.map((team) => (
-              <OrderBookRow
-                key={team.id}
-                team={team}
-                onSelectOrder={handleSelectOrder}
-                onViewAsset={handleViewAsset}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
-      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
-        {/* AI Analysis */}
-        <div className="flex-shrink-0">
-          <AIAnalysis
-            teams={teams}
-            leagueName={getLeagueTitleUtil(displayLeague)}
-          />
-        </div>
-
-        {/* Did You Know (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <DidYouKnow
-            assetName={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-          />
-        </div>
-
-        {/* On This Day (Index/League Context) */}
-        <div className="flex-shrink-0">
-          <OnThisDay
-            assetName={getLeagueTitleUtil(displayLeague)}
-            market={displayLeague}
-          />
-        </div>
-
-        {/* News Feed */}
-        <div className="flex-shrink-0 pb-4 xl:pb-0">
-          <NewsFeed topic={displayLeague as any} />
-        </div>
-      </div>
-    </div>
-  );
-};
+  };
 
 export default App;

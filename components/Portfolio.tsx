@@ -53,22 +53,10 @@ const Portfolio: React.FC<PortfolioProps> = ({
   }, [portfolio, allAssets]);
 
   const handleRowClick = (holding: any) => {
-    // Navigate to the Asset Page if onViewAsset is provided
-    if (onViewAsset && holding.asset) {
-      onViewAsset(holding.asset);
-      // Also open the transaction slip (default to Buy)
+    if (holding.asset) {
+      // Open the transaction slip (default to Buy)
+      // This will now automatically handle navigation via App.tsx
       onSelectAsset(holding.asset, "buy");
-    } else {
-      // Fallback to old behavior if onViewAsset is not provided
-      // 1. Navigate to the market
-      if (holding.market && holding.market !== "Unknown") {
-        onNavigate(holding.market as any);
-      }
-
-      // 2. Open the Transaction Slip (Default to Buy)
-      if (holding.asset) {
-        onSelectAsset(holding.asset, "buy");
-      }
     }
   };
 
