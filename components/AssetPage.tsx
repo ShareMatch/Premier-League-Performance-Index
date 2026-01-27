@@ -214,7 +214,6 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
           <div className="flex items-center flex-shrink-0">
             <button
               onClick={() => {
-                console.log("Watchlist Toggle - ID:", watchId);
                 toggleFavorite(watchId);
               }}
               className={`p-1.5 rounded-lg transition-colors ${isInWatchlist ? "text-yellow-400 bg-yellow-400/10" : "text-gray-400 hover:bg-gray-800"}`}

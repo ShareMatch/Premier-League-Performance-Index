@@ -88,7 +88,7 @@ const AssetRouteWrapper: React.FC<{
     );
   }, [allAssets, name, market]);
 
-  if (loading || (!allAssets || allAssets.length === 0)) {
+  if (loading || !allAssets || allAssets.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
@@ -142,15 +142,16 @@ const ShortAssetRouteWrapper: React.FC<{
       const resolveShortCode = async () => {
         setResolving(true);
         try {
-          // In a real browser, the Edge Function might 301, 
+          // In a real browser, the Edge Function might 301,
           // but here we can call it and follow or use the result.
-          // Since our Edge Function GET /share?code=ABC redirects, 
+          // Since our Edge Function GET /share?code=ABC redirects,
           // we can just use the mapping logic or update the function to return JSON if requested.
 
           // Actually, we'll do a direct lookup to keep it fast
           const { data, error: lookupError } = await supabase
             .from("market_index_trading_assets")
-            .select(`
+            .select(
+              `
               id,
               assets!inner (name),
               market_index_seasons!inner (
@@ -158,7 +159,8 @@ const ShortAssetRouteWrapper: React.FC<{
                   markets!inner (market_token)
                 )
               )
-            `)
+            `,
+            )
             .eq("short_code", id)
             .maybeSingle();
 
@@ -176,9 +178,15 @@ const ShortAssetRouteWrapper: React.FC<{
 
           // Supabase joins can sometimes return arrays depending on the schema inference
           const assetObj = Array.isArray(ta.assets) ? ta.assets[0] : ta.assets;
-          const season = Array.isArray(ta.market_index_seasons) ? ta.market_index_seasons[0] : ta.market_index_seasons;
-          const marketIndex = Array.isArray(season?.market_indexes) ? season.market_indexes[0] : season?.market_indexes;
-          const marketObj = Array.isArray(marketIndex?.markets) ? marketIndex.markets[0] : marketIndex?.markets;
+          const season = Array.isArray(ta.market_index_seasons)
+            ? ta.market_index_seasons[0]
+            : ta.market_index_seasons;
+          const marketIndex = Array.isArray(season?.market_indexes)
+            ? season.market_indexes[0]
+            : season?.market_indexes;
+          const marketObj = Array.isArray(marketIndex?.markets)
+            ? marketIndex.markets[0]
+            : marketIndex?.markets;
 
           const slug = assetObj?.name?.toLowerCase().replace(/\s+/g, "-");
           const market = marketObj?.market_token;
@@ -205,7 +213,9 @@ const ShortAssetRouteWrapper: React.FC<{
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-400">{resolving ? "Resolving share link..." : "Loading asset data..."}</p>
+        <p className="text-gray-400">
+          {resolving ? "Resolving share link..." : "Loading asset data..."}
+        </p>
       </div>
     );
   }
@@ -218,7 +228,10 @@ const ShortAssetRouteWrapper: React.FC<{
     return (
       <div className="h-full flex flex-col items-center justify-center py-20">
         <p className="text-red-400 mb-4">{error}</p>
-        <button onClick={() => navigate("/")} className="text-brand-primary hover:underline">
+        <button
+          onClick={() => navigate("/")}
+          className="text-brand-primary hover:underline"
+        >
           Go to Home
         </button>
       </div>
@@ -646,7 +659,7 @@ const App: React.FC = () => {
     // The modal will be hidden next time they open the app if approved
   };
 
-  const handleViewAsset = (asset: Team) => {
+  const handleViewAsset = (asset: Team, keepOrder: boolean = false) => {
     // Check if user is logged in
     if (!user) {
       setAlertMessage("You need to login to continue");
@@ -654,12 +667,19 @@ const App: React.FC = () => {
       return;
     }
 
-    setSelectedOrder(null); // Close trade slip when viewing an asset page
+    if (!keepOrder) {
+      setSelectedOrder(null); // Close trade slip when viewing an asset page
+    }
     setPreviousLeague(activeLeague);
 
     const slug = asset.name.toLowerCase().replace(/\s+/g, "-");
     const market = asset.market?.toLowerCase() || "unknown";
-    navigate(`/asset/${market}/${slug}`);
+    const targetPath = `/asset/${market}/${slug}`;
+
+    // Only navigate if we're not already there
+    if (location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
 
     // Sync sidebar active league with the asset's market if available
     if (asset.market) {
@@ -748,6 +768,14 @@ const App: React.FC = () => {
     };
   }, [loadUserData, loadAssets, user, publicUserId]);
 
+  useEffect(() => {
+    const isAssetPage = location.pathname.includes("/asset/") || location.pathname.includes("/a/");
+    if (!isAssetPage) {
+      setSelectedOrder(null);
+      setShowRightPanel(false);
+    }
+  }, [location.pathname]);
+
   // Filter teams when league changes or assets update
   useEffect(() => {
     if (activeLeague === "HOME") {
@@ -764,7 +792,10 @@ const App: React.FC = () => {
   //   setSelectedOrder(null);
   // }, [activeLeague]);
 
-  const handleNavigate = (league: League, from?: 'home' | 'all-markets' | 'new-markets') => {
+  const handleNavigate = (
+    league: League,
+    from?: "home" | "all-markets" | "new-markets",
+  ) => {
     setIsMobileMenuOpen(false);
 
     // Explicitly close trade slip when navigating
@@ -820,13 +851,15 @@ const App: React.FC = () => {
     const status = isMarketOpen(team);
 
     if (!status.isOpen) {
-      let message = "The market for this asset is currently closed. Trading is only available when the market is open.";
+      let message =
+        "The market for this asset is currently closed. Trading is only available when the market is open.";
 
-      if (status.reason === 'settled') {
-        message = "This market has been settled. Trading is no longer available.";
-      } else if (status.reason === 'not_started' && team.season_start_date) {
+      if (status.reason === "settled") {
+        message =
+          "This market has been settled. Trading is no longer available.";
+      } else if (status.reason === "not_started" && team.season_start_date) {
         message = `This market has not opened yet. Trading will be available starting ${new Date(team.season_start_date).toLocaleDateString("en-GB")}.`;
-      } else if (status.reason === 'missing_config') {
+      } else if (status.reason === "missing_config") {
         message = "This market is currently unavailable for trading.";
       }
 
@@ -869,6 +902,9 @@ const App: React.FC = () => {
 
     const holdingValue = type === "sell" ? maxQuantity : 0;
 
+    // Navigate to asset page first
+    handleViewAsset(team, true);
+
     const orderObject = {
       team,
       type,
@@ -878,11 +914,14 @@ const App: React.FC = () => {
       holding: holdingValue, // Current holdings for sell orders
     };
 
-    // Create a completely new object to prevent mutations
-    setSelectedOrder({ ...orderObject });
+    // Use a small timeout to ensure navigation starts before the slip appears
+    setTimeout(() => {
+      // Create a completely new object to prevent mutations
+      setSelectedOrder({ ...orderObject });
 
-    // On mobile/tablet (below 2xl), show the RightPanel overlay
-    setShowRightPanel(true);
+      // On mobile/tablet (below 2xl), show the RightPanel overlay
+      setShowRightPanel(true);
+    }, 50);
   };
 
   const handleConfirmTrade = async (quantity: number, side: "buy" | "sell") => {
@@ -1128,7 +1167,9 @@ const App: React.FC = () => {
                                 path="/"
                                 element={
                                   <HomeDashboard
-                                    onNavigate={(league) => handleNavigate(league, 'home')}
+                                    onNavigate={(league) =>
+                                      handleNavigate(league, "home")
+                                    }
                                     teams={allAssets}
                                     onViewAsset={handleViewAsset}
                                     onSelectOrder={handleSelectOrder}
@@ -1163,7 +1204,9 @@ const App: React.FC = () => {
                                   >
                                     <AllMarketsPage
                                       teams={allAssets}
-                                      onNavigate={(league) => handleNavigate(league, 'all-markets')}
+                                      onNavigate={(league) =>
+                                        handleNavigate(league, "all-markets")
+                                      }
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                     />
@@ -1194,7 +1237,9 @@ const App: React.FC = () => {
                                   >
                                     <NewMarketsPage
                                       teams={allAssets}
-                                      onNavigate={(league) => handleNavigate(league, 'new-markets')}
+                                      onNavigate={(league) =>
+                                        handleNavigate(league, "new-markets")
+                                      }
                                       onViewAsset={handleViewAsset}
                                       onSelectOrder={handleSelectOrder}
                                       seasonDatesMap={seasonDatesMap}
@@ -1253,11 +1298,12 @@ const App: React.FC = () => {
                               />
                             </Routes>
 
-                            {activeLeague !== "HOME" && (
-                              <div className="mt-8 flex-shrink-0">
-                                <Footer />
-                              </div>
-                            )}
+                            {activeLeague !== "HOME" &&
+                              activeLeague !== "AI_ANALYTICS" && (
+                                <div className="mt-8 flex-shrink-0">
+                                  <Footer />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -1483,7 +1529,6 @@ const getLeagueTitleUtil = (id: string) => {
   }
 };
 
-
 const LeagueRouteWrapper: React.FC<{
   teams: Team[];
   activeLeague: League;
@@ -1509,20 +1554,24 @@ const LeagueRouteWrapper: React.FC<{
     const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
 
     // Check if we should show the back button based on navigation source
-    const navigationSource = location.state?.from as 'home' | 'all-markets' | 'new-markets' | undefined;
+    const navigationSource = location.state?.from as
+      | "home"
+      | "all-markets"
+      | "new-markets"
+      | undefined;
     const shouldShowBackButton = !!navigationSource;
 
     // Determine where to navigate back to
     const handleBack = () => {
       switch (navigationSource) {
-        case 'home':
-          navigate('/');
+        case "home":
+          navigate("/");
           break;
-        case 'all-markets':
-          navigate('/markets');
+        case "all-markets":
+          navigate("/markets");
           break;
-        case 'new-markets':
-          navigate('/new-markets');
+        case "new-markets":
+          navigate("/new-markets");
           break;
         default:
           navigate(-1);
