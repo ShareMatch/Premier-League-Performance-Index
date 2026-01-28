@@ -1631,7 +1631,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     data-testid="signup-confirm-password-input"
                     autocomplete="new-password"
                   />
-                  {/* Referral code 
+                  {/* Referral code
                   <InputField
                     label="Referral Code (Optional)"
                     name="referralCode"
@@ -1747,7 +1747,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                     <span>
                       I agree to the{" "}
                       <a
-                        href="/terms.html"
+                        href="https://sharematch.me/terms-and-conditions"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-white transition-colors"
@@ -1756,7 +1756,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                       </a>{" "}
                       and{" "}
                       <a
-                        href="/privacy.html"
+                        href="https://sharematch.me/privacy-policy"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline hover:text-white transition-colors"

@@ -39,11 +39,11 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
     setAnalysis("");
     setIsVisible(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-analysis', {
+      const { data, error } = await supabase.functions.invoke("ai-analysis", {
         body: {
           teams: teams.slice(0, 10), // Analyze top 10 teams for brevity
-          leagueName
-        }
+          leagueName,
+        },
       });
 
       if (error) throw error;
@@ -66,13 +66,15 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
           disabled={loading}
           className="bg-brand-emerald500/80 hover:bg-[#005430] text-white font-bold py-2 px-4 sm:px-6 rounded-full inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed text-xs sm:text-sm"
         >
-          <SparkleIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${loading ? "animate-spin" : ""}`} />
+          <SparkleIcon
+            className={`w-4 h-4 sm:w-5 sm:h-5 ${loading ? "animate-spin" : ""}`}
+          />
           <span>
             {loading
               ? "Analyzing..."
               : analysis
-              ? "Regenerate"
-              : "Get AI Market Analysis"}
+                ? "Regenerate"
+                : "Get AI Market Analysis"}
           </span>
         </button>
 
@@ -114,17 +116,26 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
             remarkPlugins={[remarkGfm]}
             components={{
               p: (props) => (
-                <p className="text-gray-300 text-xs sm:text-sm mb-2" {...props} />
+                <p
+                  className="text-gray-300 text-xs sm:text-sm mb-2"
+                  {...props}
+                />
               ),
               strong: (props) => (
                 <strong className="text-white font-bold" {...props} />
               ),
               ul: (props) => (
-                <ul className="list-disc ml-4 text-xs sm:text-sm text-gray-300" {...props} />
+                <ul
+                  className="list-disc ml-4 text-xs sm:text-sm text-gray-300"
+                  {...props}
+                />
               ),
               li: (props) => <li className="mb-1" {...props} />,
               h3: (props) => (
-                <h3 className="text-bg-brand-emerald500 text-xs sm:text-sm font-bold mb-2" {...props} />
+                <h3
+                  className="text-bg-brand-emerald500 text-xs sm:text-sm font-bold mb-2"
+                  {...props}
+                />
               ),
             }}
           >
