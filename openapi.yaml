@@ -1,0 +1,222 @@
+openapi: 3.0.3
+
+info:
+  title: ShareMatch RWA Partner API
+  version: 1.0.0
+  description: |
+    Partner API for ShareMatch RWA platform.
+
+    🔐 Authentication
+    - All endpoints require a Bearer API Key
+    - API keys are issued by ShareMatch after onboarding
+    - Keys are scoped (example: subscription:read, offers:write)
+
+servers:
+  - url: https://lbmixnhxerrmecfxdfkx.supabase.co/functions/v1
+
+tags:
+  - name: Authentication
+  - name: Market Index
+  - name: Subscriber APIs
+  - name: Liquidity Provider APIs
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API_KEY
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    MarketIndexSeason:
+      type: object
+      properties:
+        external_ref_code:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+
+    SubscriberIndexAsset:
+      type: object
+      properties:
+        subscriber_asset_code:
+          type: string
+        asset_name:
+          type: string
+        units:
+          type: number
+
+    SubscriberPriceSet:
+      type: object
+      required: [subscriber_asset_code, subscription_price]
+      properties:
+        subscriber_asset_code:
+          type: string
+        subscription_price:
+          type: number
+
+    LPIndexAsset:
+      type: object
+      properties:
+        lp_asset_code:
+          type: string
+        asset_name:
+          type: string
+        available_units:
+          type: number
+        min_price:
+          type: number
+        max_price:
+          type: number
+
+    LPOfferSet:
+      type: object
+      required: [lp_asset_code, available_units, min_price, max_price]
+      properties:
+        lp_asset_code:
+          type: string
+        available_units:
+          type: number
+        min_price:
+          type: number
+        max_price:
+          type: number
+
+security:
+  - BearerAuth: []
+
+paths:
+
+  # =========================
+  # AUTHENTICATION (INFO)
+  # =========================
+  /auth/api-keys:
+    post:
+      tags: [Authentication]
+      summary: Request an API key (documentation only)
+      description: |
+        API keys are issued by ShareMatch after verification.
+        This endpoint documents the expected request structure.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                owner_type:
+                  type: string
+                  enum: [subscriber, lp]
+                requested_scopes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: API key issued
+
+  # =========================
+  # MARKET INDEX (READ)
+  # =========================
+  /market-index-seasons:
+    get:
+      tags: [Market Index]
+      summary: List Market Index Seasons
+      description: Returns all available market index seasons.
+      responses:
+        "200":
+          description: List of market index seasons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketIndexSeason"
+
+  # =========================
+  # SUBSCRIBER APIs
+  # =========================
+  /subscriber/index-assets:
+    get:
+      tags: [Subscriber APIs]
+      summary: Get Subscriber Index Assets (per market index season)
+      parameters:
+        - in: query
+          name: market_index_season_code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscriber assets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriberIndexAsset"
+
+  /subscriber/index-assets/prices:
+    post:
+      tags: [Subscriber APIs]
+      summary: Set Subscription Prices
+      description: Batch update subscription prices for subscriber assets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubscriberPriceSet"
+      responses:
+        "200":
+          description: Prices updated successfully
+
+  # =========================
+  # LIQUIDITY PROVIDER APIs
+  # =========================
+  /lp/index-assets:
+    get:
+      tags: [Liquidity Provider APIs]
+      summary: Get LP Index Assets (per market index season)
+      parameters:
+        - in: query
+          name: market_index_season_code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: LP inventory
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LPIndexAsset"
+
+  /lp/index-assets/offers:
+    post:
+      tags: [Liquidity Provider APIs]
+      summary: Set LP Offers
+      description: Batch update LP offers for index assets.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/LPOfferSet"
+      responses:
+        "200":
+          description: Offers updated successfully

@@ -264,3 +264,29 @@ ADD COLUMN external_subscriber_ref text UNIQUE;
 
 ALTER TABLE liquidity_provider
 ADD COLUMN external_lp_ref text UNIQUE;
+
+create table public.trading_price_history (
+  id uuid not null default gen_random_uuid(),
+
+  market_index_seasons_asset_id uuid not null
+    references market_index_seasons_asset(id),
+
+  price_source text not null
+    check (price_source in ('subscriber', 'lp_offer', 'settlement')),
+
+  subscriber_id uuid null
+    references subscribers(id),
+
+  lp_offers_id uuid null
+    references liquidity_provider_offers(id),
+
+  last_traded_buy_price numeric(20, 8) not null,
+  last_traded_sell_price numeric(20, 8) not null,
+
+  effective_at timestamp with time zone not null default now(),
+
+  constraint trading_price_history_pkey primary key (id),
+
+  constraint one_price_per_asset_per_time
+    unique (market_index_seasons_asset_id, effective_at)
+);

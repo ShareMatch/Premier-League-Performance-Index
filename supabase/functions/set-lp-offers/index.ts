@@ -2,16 +2,13 @@ import { serve } from "https://deno.land/std/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyApiKey } from "../_shared/_auth.ts";
 
-/* ---------------- Supabase Client ---------------- */
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-/* ---------------- Handler ---------------- */
 serve(async (req) => {
   try {
-    /* ---------- API Key Auth ---------- */
     const auth = await verifyApiKey(req, "lp:offers:write");
 
     if (auth.ownerType !== "lp") {
@@ -21,18 +18,30 @@ serve(async (req) => {
       );
     }
 
-    /* ---------- Payload ---------- */
     const body = await req.json();
+    const { market_index_season_code, offers } = body;
 
-    if (!body || !Array.isArray(body.offers) || body.offers.length === 0) {
+    if (!market_index_season_code || !Array.isArray(offers)) {
       return new Response(
         JSON.stringify({ error: "Invalid payload" }),
         { status: 400 }
       );
     }
 
-    /* ---------- Processing ---------- */
-    for (const offer of body.offers) {
+    /* Resolve season */
+    const { data: season, error: seasonError } = await supabase
+      .from("market_index_seasons")
+      .select("id")
+      .eq("external_ref_code", market_index_season_code)
+      .single();
+
+    if (seasonError || !season) {
+      throw new Error("Invalid market index season");
+    }
+
+    let createdOffers = 0;
+
+    for (const offer of offers) {
       const {
         lp_asset_code,
         buy_offer_price,
@@ -40,30 +49,28 @@ serve(async (req) => {
         units
       } = offer;
 
-      if (!lp_asset_code || !units || units <= 0) {
-        continue;
+      if (!lp_asset_code || units <= 0) {
+        throw new Error("Invalid offer payload");
       }
 
-      /* --- Resolve LP asset ownership --- */
-      const { data: lpAssets, error: assetError } = await supabase
+      /* Resolve LP asset */
+      const { data: lpAsset, error: lpAssetError } = await supabase
         .from("liquidity_provider_index_assets")
-        .select("id, market_index_seasons_asset_id")
+        .select("id, market_index_seasons_asset_id, units")
         .eq("external_lp_asset_ref", lp_asset_code)
-        .eq("liquidity_provider_id", auth.ownerId);
+        .eq("liquidity_provider_id", auth.ownerId)
+        .single();
 
-      if (assetError) {
-        console.error(assetError);
-        throw new Error("Failed to resolve LP asset");
+      if (lpAssetError || !lpAsset) {
+        throw new Error(`LP asset not found: ${lp_asset_code}`);
       }
 
-      if (!lpAssets || lpAssets.length === 0) {
-        continue;
+      if (units > lpAsset.units) {
+        throw new Error(`Insufficient units`);
       }
 
-      const lpAsset = lpAssets[0];
-
-      /* --- Create LP Offer --- */
-      const { data: lpOffer, error: offerError } = await supabase
+      /* Insert LP offer */
+      const { data: lpOffer, error: lpOfferError } = await supabase
         .from("liquidity_provider_offers")
         .insert({
           liquidity_provider_index_assets_id: lpAsset.id,
@@ -74,12 +81,11 @@ serve(async (req) => {
         .select()
         .single();
 
-      if (offerError) {
-        console.error(offerError);
+      if (lpOfferError || !lpOffer) {
         throw new Error("Failed to create LP offer");
       }
 
-      /* --- Deactivate previous active offers --- */
+      /* Deactivate previous offers */
       await supabase
         .from("trading_asset_lp_offers")
         .update({
@@ -89,8 +95,8 @@ serve(async (req) => {
         .eq("market_index_seasons_asset_id", lpAsset.market_index_seasons_asset_id)
         .eq("is_active", true);
 
-      /* --- Activate new offer --- */
-      const { error: linkError } = await supabase
+      /* Activate new offer */
+      await supabase
         .from("trading_asset_lp_offers")
         .insert({
           market_index_seasons_asset_id: lpAsset.market_index_seasons_asset_id,
@@ -99,26 +105,29 @@ serve(async (req) => {
           activated_at: new Date().toISOString()
         });
 
-      if (linkError) {
-        console.error(linkError);
-        throw new Error("Failed to activate LP offer");
-      }
+      /* 🔥 UPDATE MISA LIVE PRICES */
+      await supabase
+        .from("market_index_seasons_asset")
+        .update({
+          buy_price: sell_offer_price,   // LP sells → user buys
+          sell_price: buy_offer_price,   // LP buys → user sells
+          last_change: new Date().toISOString()
+        })
+        .eq("id", lpAsset.market_index_seasons_asset_id);
+
+      createdOffers++;
     }
 
-    /* ---------- Success ---------- */
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, createdOffers }),
       { headers: { "Content-Type": "application/json" } }
     );
 
-  } catch (err) {
-    console.error(err);
-
+  } catch (err: any) {
+    console.error("LP OFFER ERROR:", err);
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : "Unauthorized"
-      }),
-      { status: 401 }
+      JSON.stringify({ error: err.message }),
+      { status: 400 }
     );
   }
 });

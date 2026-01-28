@@ -2,16 +2,13 @@ import { serve } from "https://deno.land/std/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyApiKey } from "../_shared/_auth.ts";
 
-/* ---------------- Supabase Client ---------------- */
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-/* ---------------- Handler ---------------- */
 serve(async (req) => {
   try {
-    /* ---------- API Key Auth ---------- */
     const auth = await verifyApiKey(req, "subscription:write");
 
     if (auth.ownerType !== "subscriber") {
@@ -21,19 +18,27 @@ serve(async (req) => {
       );
     }
 
-    /* ---------- Payload ---------- */
     const body = await req.json();
+    const { market_index_season_code, prices } = body;
 
-    if (!body || !Array.isArray(body.prices) || body.prices.length === 0) {
+    if (!market_index_season_code || !Array.isArray(prices)) {
       return new Response(
         JSON.stringify({ error: "Invalid payload" }),
         { status: 400 }
       );
     }
 
-    const prices = body.prices;
+    /* Resolve season */
+    const { data: season, error: seasonError } = await supabase
+      .from("market_index_seasons")
+      .select("id")
+      .eq("external_ref_code", market_index_season_code)
+      .single();
 
-    /* ---------- Processing ---------- */
+    if (seasonError || !season) {
+      throw new Error("Invalid market index season");
+    }
+
     for (const item of prices) {
       if (
         !item.subscriber_asset_code ||
@@ -42,55 +47,43 @@ serve(async (req) => {
         continue;
       }
 
-      /* --- Resolve subscriber → MISA asset IDs --- */
-      const { data: assetRows, error: fetchError } = await supabase
+      /* Resolve subscriber assets → MISA */
+      const { data: assets, error: assetError } = await supabase
         .from("subscriber_index_assets")
         .select("market_index_seasons_asset_id")
         .eq("external_ref_code", item.subscriber_asset_code)
         .eq("subscriber_id", auth.ownerId);
 
-      if (fetchError) {
-        console.error(fetchError);
-        throw new Error("Failed to resolve subscriber asset");
-      }
+      if (assetError) throw assetError;
+      if (!assets || assets.length === 0) continue;
 
-      if (!assetRows || assetRows.length === 0) {
-        continue; // silently skip unknown assets
-      }
+      const misaIds = assets.map(a => a.market_index_seasons_asset_id);
 
-      const misaIds = assetRows.map(
-        (row) => row.market_index_seasons_asset_id
-      );
-
-      /* --- Update MISA subscription price --- */
+      /* Update MISA live prices */
       const { error: updateError } = await supabase
         .from("market_index_seasons_asset")
         .update({
           subscription_price: item.subscription_price,
-          subscribed_at: new Date().toISOString()
+          buy_price: item.subscription_price,
+          sell_price: item.subscription_price,
+          subscribed_at: new Date().toISOString(),
+          last_change: new Date().toISOString()
         })
         .in("id", misaIds);
 
-      if (updateError) {
-        console.error(updateError);
-        throw new Error("Failed to update subscription price");
-      }
+      if (updateError) throw updateError;
     }
 
-    /* ---------- Success ---------- */
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { "Content-Type": "application/json" } }
     );
 
-  } catch (err) {
-    console.error(err);
-
+  } catch (err: any) {
+    console.error("SUBSCRIPTION PRICE ERROR:", err);
     return new Response(
-      JSON.stringify({
-        error: err instanceof Error ? err.message : "Unauthorized"
-      }),
-      { status: 401 }
+      JSON.stringify({ error: err.message }),
+      { status: 400 }
     );
   }
 });

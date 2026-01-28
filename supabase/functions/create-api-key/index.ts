@@ -36,20 +36,22 @@ serve(async (req) => {
     }
 
     /* ---------------- Generate API Key ---------------- */
-    const rawKey =
-      "sm_live_" + crypto.randomUUID().replaceAll("-", "");
-
+    const rawKey = "sm_live_" + crypto.randomUUID().replaceAll("-", "");
     const salt = Deno.env.get("API_KEY_SALT")!;
     const keyHash = await sha256(rawKey + salt);
 
+    /* ---------------- Correct Scopes ---------------- */
+    const scopes =
+      entity_type === "subscriber"
+        ? ["subscription:write", "subscription:read"]
+        : ["lp:offers:write", "lp:offers:read"];
+
     /* ---------------- Store Hash ---------------- */
     const { error } = await supabase.rpc("create_api_key", {
-        p_owner_type: entity_type,
-        p_owner_id: entity_id,
-        p_api_key_hash: keyHash,
-        p_scopes: entity_type === "subscriber"
-          ? ["subscription:write", "subscription:read"]
-          : ["offers:write", "offers:read"]
+      p_owner_type: entity_type,
+      p_owner_id: entity_id,
+      p_api_key_hash: keyHash,
+      p_scopes: scopes
     });
 
     if (error) {
@@ -65,6 +67,7 @@ serve(async (req) => {
       }),
       { headers: { "Content-Type": "application/json" } }
     );
+
   } catch (err) {
     console.error(err);
     return new Response("Server error", { status: 500 });
