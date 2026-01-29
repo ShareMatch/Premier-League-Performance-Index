@@ -18,7 +18,7 @@ async function getAccessToken(): Promise<string> {
       "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
       {
         headers: { "Metadata-Flavor": "Google" },
-      }
+      },
     );
 
     if (res.ok) {
@@ -40,13 +40,11 @@ async function getAccessToken(): Promise<string> {
 }
 
 // Generate JWT and exchange for access token using service account
-async function getAccessTokenFromServiceAccount(
-  serviceAccount: {
-    client_email: string;
-    private_key: string;
-    token_uri: string;
-  }
-): Promise<string> {
+async function getAccessTokenFromServiceAccount(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: "RS256", typ: "JWT" };
   const payload = {
@@ -81,16 +79,18 @@ async function getAccessTokenFromServiceAccount(
     binaryKey,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
 
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
     cryptoKey,
-    new TextEncoder().encode(signatureInput)
+    new TextEncoder().encode(signatureInput),
   );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+  const encodedSignature = btoa(
+    String.fromCharCode(...new Uint8Array(signature)),
+  )
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=/g, "");
@@ -104,7 +104,7 @@ async function getAccessTokenFromServiceAccount(
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    }
+    },
   );
 
   if (!tokenRes.ok) {
@@ -157,16 +157,12 @@ serve(async (req: Request) => {
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
     // Get configuration from environment
     const agentStreamUrl = Deno.env.get("VERTEX_AI_AGENT_STREAM_URL");
-<<<<<<< HEAD
-    const apiKey = Deno.env.get("VERTEX_AI_API_KEY");
-=======
->>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
     const projectId = Deno.env.get("GCP_PROJECT_ID");
     const location = Deno.env.get("GCP_LOCATION") || "us-central1";
     const reasoningEngineId = Deno.env.get("VERTEX_AI_REASONING_ENGINE_ID");
@@ -178,107 +174,94 @@ serve(async (req: Request) => {
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
-<<<<<<< HEAD
-    if (!apiKey) {
-      console.error("❌ Missing API key");
-      return new Response(
-        JSON.stringify({ error: "API key not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("🤖 Calling deployed Vertex AI agent with API key");
-=======
     console.log("🤖 Calling deployed Vertex AI agent");
 
     // Get GCP access token
     const accessToken = await getAccessToken();
->>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
 
     // Prepare team data for context
     const marketTeams = teams
-      .filter((t: { market: string }) => 
-        selectedMarket === "ALL_INDEX" || 
-        selectedMarket === "ALL" || 
-        t.market === selectedMarket
+      .filter(
+        (t: { market: string }) =>
+          selectedMarket === "ALL_INDEX" ||
+          selectedMarket === "ALL" ||
+          t.market === selectedMarket,
       )
       .sort((a: { offer: number }, b: { offer: number }) => b.offer - a.offer)
       .slice(0, 8)
-      .map((t: { name: string; offer: number }) => `${t.name} (${t.offer.toFixed(1)}%)`)
+      .map(
+        (t: { name: string; offer: number }) =>
+          `${t.name} (${t.offer.toFixed(1)}%)`,
+      )
       .join(", ");
 
     const today = new Date().toISOString().split("T")[0];
 
-    // Determine the endpoint URL
-    // If using Vertex AI Agent Engine (Reasoning Engine), construct the proper URL
+    // Determine the endpoint URL - MUST include ?alt=sse for streaming
     let endpoint = agentStreamUrl;
     if (!endpoint && projectId && reasoningEngineId) {
-      endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}:streamQuery`;
+      endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}:streamQuery?alt=sse`;
     }
 
     if (!endpoint) {
       throw new Error("No valid endpoint configured");
     }
 
-<<<<<<< HEAD
-    // Add API key to endpoint URL
-    const endpointWithKey = `${endpoint}${endpoint.includes("?") ? "&" : "?"}key=${apiKey}`;
+    // ✅ FIX: Build message with all context embedded
+    const contextInfo = [];
 
-=======
->>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
-    // Build request payload for Vertex AI Agent Engine
-    // The payload structure depends on your agent's configuration
+    contextInfo.push(
+      `Market context: ${selectedMarket === "ALL_INDEX" ? "All Index Tokens" : selectedMarket}`,
+    );
+    contextInfo.push(`Date: ${today}`);
+    contextInfo.push(`Top teams in market: ${marketTeams}`);
+
+    if (chatHistory.length > 0) {
+      contextInfo.push(`\nRecent conversation:`);
+      chatHistory
+        .slice(-10)
+        .forEach((msg: { role: string; content: string }) => {
+          contextInfo.push(`${msg.role}: ${msg.content}`);
+        });
+    }
+
+    const messageWithContext = `${userQuery}
+
+Context:
+${contextInfo.join("\n")}`;
+
+    // ✅ FIX: Use ADK-specific payload structure
+    // According to Vertex AI Agent Engine docs, the payload must be:
+    // { "class_method": "async_stream_query", "input": { "user_id", "session_id", "message" } }
     const payload = {
-      // User identification for session management
-      user_id: authResult.authUserId,
-      // Include session_id for conversation continuity (short-term memory)
-      ...(sessionId && { session_id: sessionId }),
-      // Input for the agent
+      class_method: "async_stream_query",
       input: {
-        userQuery,
-        selectedMarket,
-        today,
-        marketTeams,
-        // Include recent chat history for context
-        chatHistory: chatHistory.slice(-10).map((msg: { role: string; content: string }) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
+        user_id: authResult.authUserId,
+        ...(sessionId && { session_id: sessionId }),
+        message: messageWithContext,
       },
-      // Alternative flat structure (some agents expect this)
-      userQuery,
-      selectedMarket,
-      today,
-      marketTeams,
-      chatHistory: chatHistory.slice(-10),
     };
 
-    console.log("📤 Request payload:", JSON.stringify({ 
-      user_id: payload.user_id, 
-      session_id: sessionId || "new",
-      selectedMarket,
-      hasHistory: chatHistory.length > 0 
-    }));
+    console.log(
+      "📤 Request payload:",
+      JSON.stringify({
+        class_method: payload.class_method,
+        user_id: payload.input.user_id,
+        session_id: payload.input.session_id || "new",
+        messageLength: payload.input.message.length,
+        hasHistory: chatHistory.length > 0,
+      }),
+    );
 
-<<<<<<< HEAD
-    const response = await fetch(endpointWithKey, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-=======
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
->>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
       },
       body: JSON.stringify(payload),
     });
@@ -286,7 +269,9 @@ serve(async (req: Request) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("❌ Agent request failed:", response.status, errorText);
-      throw new Error(`Agent request failed: ${response.status} - ${errorText}`);
+      throw new Error(
+        `Agent request failed: ${response.status} - ${errorText}`,
+      );
     }
 
     console.log("✅ Agent responded, streaming...");
@@ -296,7 +281,7 @@ serve(async (req: Request) => {
 
     // Create a TransformStream to potentially inject session info
     const { readable, writable } = new TransformStream();
-    
+
     // Start piping the response
     const writer = writable.getWriter();
     const reader = response.body?.getReader();
@@ -305,21 +290,72 @@ serve(async (req: Request) => {
       throw new Error("No response body");
     }
 
-    // Process the stream
+    // Process the stream - parse SSE JSON format
     (async () => {
       try {
-        // If we have a new session ID, prepend it as a special marker
-        // The frontend can extract this from the first chunk
-        if (newSessionId) {
-          const sessionMarker = `<!--SESSION:${newSessionId}-->`;
-          await writer.write(new TextEncoder().encode(sessionMarker));
-        }
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let sessionIdExtracted = false;
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          await writer.write(value);
+
+          // Decode the chunk
+          buffer += decoder.decode(value, { stream: true });
+
+          // Split by newlines to handle multiple JSON objects
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep the incomplete line in buffer
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            try {
+              // Parse the JSON object from the stream
+              const data = JSON.parse(trimmed);
+
+              // Extract session ID from the first response if available
+              if (!sessionIdExtracted && data.session_id) {
+                const sessionMarker = `<!--SESSION:${data.session_id}-->`;
+                await writer.write(new TextEncoder().encode(sessionMarker));
+                sessionIdExtracted = true;
+              }
+
+              // Extract text content from the response
+              if (data.content?.parts) {
+                for (const part of data.content.parts) {
+                  if (part.text) {
+                    // Stream the actual text content to frontend
+                    await writer.write(new TextEncoder().encode(part.text));
+                  }
+                }
+              }
+            } catch (parseError) {
+              // If it's not JSON, it might be a partial chunk or error message
+              console.error("Failed to parse SSE chunk:", trimmed);
+            }
+          }
         }
+
+        // Process any remaining buffer
+        if (buffer.trim()) {
+          try {
+            const data = JSON.parse(buffer.trim());
+            if (data.content?.parts) {
+              for (const part of data.content.parts) {
+                if (part.text) {
+                  await writer.write(new TextEncoder().encode(part.text));
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Failed to parse final buffer:", buffer);
+          }
+        }
+      } catch (error) {
+        console.error("Stream processing error:", error);
       } finally {
         await writer.close();
       }
@@ -337,7 +373,8 @@ serve(async (req: Request) => {
       },
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("❌ Error:", errorMessage);
     return new Response(
       JSON.stringify({
@@ -348,7 +385,7 @@ serve(async (req: Request) => {
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
