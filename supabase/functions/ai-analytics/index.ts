@@ -2,6 +2,119 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 
+// GCP token response interface
+interface GcpTokenResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+}
+
+// Get GCP access token from metadata server (works in Cloud Run/GCE)
+// Falls back to service account key if metadata server unavailable
+async function getAccessToken(): Promise<string> {
+  // Try metadata server first (Cloud Run, GCE, etc.)
+  try {
+    const res = await fetch(
+      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+      {
+        headers: { "Metadata-Flavor": "Google" },
+      }
+    );
+
+    if (res.ok) {
+      const data = (await res.json()) as GcpTokenResponse;
+      return data.access_token;
+    }
+  } catch {
+    // Metadata server not available, try service account
+  }
+
+  // Fallback: Use service account JSON from environment
+  const serviceAccountJson = Deno.env.get("GCP_SERVICE_ACCOUNT_JSON");
+  if (serviceAccountJson) {
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    return await getAccessTokenFromServiceAccount(serviceAccount);
+  }
+
+  throw new Error("No GCP authentication method available");
+}
+
+// Generate JWT and exchange for access token using service account
+async function getAccessTokenFromServiceAccount(
+  serviceAccount: {
+    client_email: string;
+    private_key: string;
+    token_uri: string;
+  }
+): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: serviceAccount.token_uri || "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encodedHeader = btoa(JSON.stringify(header))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+  const encodedPayload = btoa(JSON.stringify(payload))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+
+  // Import private key and sign
+  const pemKey = serviceAccount.private_key;
+  const pemContents = pemKey
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\s/g, "");
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    new TextEncoder().encode(signatureInput)
+  );
+
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+
+  const jwt = `${signatureInput}.${encodedSignature}`;
+
+  // Exchange JWT for access token
+  const tokenRes = await fetch(
+    serviceAccount.token_uri || "https://oauth2.googleapis.com/token",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    }
+  );
+
+  if (!tokenRes.ok) {
+    throw new Error(`Failed to get access token: ${await tokenRes.text()}`);
+  }
+
+  const tokenData = (await tokenRes.json()) as GcpTokenResponse;
+  return tokenData.access_token;
+}
+
 serve(async (req: Request) => {
   const corsHeaders = getCorsHeaders(req.headers.get("origin"), true);
 
@@ -50,7 +163,10 @@ serve(async (req: Request) => {
 
     // Get configuration from environment
     const agentStreamUrl = Deno.env.get("VERTEX_AI_AGENT_STREAM_URL");
+<<<<<<< HEAD
     const apiKey = Deno.env.get("VERTEX_AI_API_KEY");
+=======
+>>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
     const projectId = Deno.env.get("GCP_PROJECT_ID");
     const location = Deno.env.get("GCP_LOCATION") || "us-central1";
     const reasoningEngineId = Deno.env.get("VERTEX_AI_REASONING_ENGINE_ID");
@@ -66,6 +182,7 @@ serve(async (req: Request) => {
       );
     }
 
+<<<<<<< HEAD
     if (!apiKey) {
       console.error("❌ Missing API key");
       return new Response(
@@ -78,6 +195,12 @@ serve(async (req: Request) => {
     }
 
     console.log("🤖 Calling deployed Vertex AI agent with API key");
+=======
+    console.log("🤖 Calling deployed Vertex AI agent");
+
+    // Get GCP access token
+    const accessToken = await getAccessToken();
+>>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
 
     // Prepare team data for context
     const marketTeams = teams
@@ -104,9 +227,12 @@ serve(async (req: Request) => {
       throw new Error("No valid endpoint configured");
     }
 
+<<<<<<< HEAD
     // Add API key to endpoint URL
     const endpointWithKey = `${endpoint}${endpoint.includes("?") ? "&" : "?"}key=${apiKey}`;
 
+=======
+>>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
     // Build request payload for Vertex AI Agent Engine
     // The payload structure depends on your agent's configuration
     const payload = {
@@ -141,10 +267,18 @@ serve(async (req: Request) => {
       hasHistory: chatHistory.length > 0 
     }));
 
+<<<<<<< HEAD
     const response = await fetch(endpointWithKey, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+=======
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+>>>>>>> 6f43f672181d7863a5ceedcc3552f998c5006a2b
       },
       body: JSON.stringify(payload),
     });

@@ -132,6 +132,8 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
           );
 
           // Also create in public.users table (app's user table)
+          // Note: email_verified/whatsapp_verified are NOT columns in users table
+          // Verification status is tracked in user_otp_verification table
           const { data: publicUser, error: publicError } = await client
             .from("users")
             .upsert(
@@ -139,8 +141,6 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
                 auth_user_id: authUser.id,
                 email: email.toLowerCase(),
                 full_name: fullName,
-                email_verified: true,
-                whatsapp_verified: true,
                 created_at: new Date().toISOString(),
               },
               { onConflict: "email" },
@@ -154,10 +154,51 @@ export const test = base.extend<{ supabaseAdapter: SupabaseFixture }>({
               publicError,
             );
             // Still return auth user even if public.users insert fails
-          } else {
-            console.log(
-              `[Supabase] Created public.users entry: ${publicUser?.id}`,
-            );
+            return authUser;
+          }
+          
+          console.log(
+            `[Supabase] Created public.users entry: ${publicUser?.id}`,
+          );
+
+          // Create verification records in user_otp_verification table (mark as verified for tests)
+          const userId = publicUser?.id;
+          if (userId) {
+            // Create email verification record (ignoreDuplicates for idempotency)
+            const { error: emailOtpError } = await client
+              .from("user_otp_verification")
+              .upsert(
+                {
+                  user_id: userId,
+                  channel: "email",
+                  otp_attempts: 0,
+                  verified_at: new Date().toISOString(),
+                },
+                { onConflict: "user_id,channel", ignoreDuplicates: false },
+              );
+
+            if (emailOtpError) {
+              console.error("[Supabase] Error creating email OTP record:", emailOtpError);
+            }
+
+            // Create whatsapp verification record
+            const { error: whatsappOtpError } = await client
+              .from("user_otp_verification")
+              .upsert(
+                {
+                  user_id: userId,
+                  channel: "whatsapp",
+                  otp_attempts: 0,
+                  verified_at: new Date().toISOString(),
+                },
+                { onConflict: "user_id,channel", ignoreDuplicates: false },
+              );
+
+            if (whatsappOtpError) {
+              console.error("[Supabase] Error creating whatsapp OTP record:", whatsappOtpError);
+            }
+
+            console.log(`[Supabase] Created OTP verification records for user: ${userId}`);
           }
 
           return authUser;
