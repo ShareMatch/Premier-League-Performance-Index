@@ -6,14 +6,13 @@
  * Risk Level: HIGH
  *
  * Scenarios:
- *   - Signup with empty fields (negative)
- *   - Signup with invalid email (negative)
- *   - Signup with password mismatch (negative)
- *   - Signup with SQL injection attempt (security)
- *   - Signup with cross-site scripting attempt (security)
- *   - Signup with referral code (edge_case)
- *   - Signup with date of birth (edge_case)
- *   - Complete signup with email and whatsapp verification (positive)
+ * - Signup with empty fields (negative)
+ * - Signup with invalid email (negative)
+ * - Signup with password mismatch (negative)
+ * - Signup with SQL injection attempt (security)
+ * - Signup with cross-site scripting attempt (security)
+ * - Signup with date of birth (edge_case)
+ * - Complete signup with email and whatsapp verification (positive)
  *
  * DO NOT EDIT DIRECTLY - regenerate using the test planner
  */
@@ -71,7 +70,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -110,7 +109,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -152,7 +151,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -196,7 +195,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -213,46 +212,50 @@ test.describe("Signup Flow", () => {
     console.log("[Test] Completed - XSS properly handled");
   });
 
-  test("Signup with referral code", async ({ page, supabaseAdapter }) => {
+  test("Signup with geolocation prefill", async ({ page, supabaseAdapter }) => {
     console.log("[Test] Starting...");
     await page.locator("body").waitFor({ timeout: 5000 });
     await page.goto("/?action=signup");
-
     const signupModal = page.getByTestId("signup-modal");
     await expect(signupModal).toBeVisible({ timeout: 10000 });
-
-    await page.locator("#fullName").fill("John Doe");
-    await page.locator('input[name="email"]').fill("john@example.com");
-    await page.locator("#password").fill("Password123!");
-    await page.locator("#confirmPassword").fill("Password123!");
-    await page.locator('input[name="referralCode"]').fill("REFERRAL_CODE");
-
-    await signupModal.getByText("Select date of birth").click();
-    await page.waitForTimeout(300);
-    const selects = signupModal.locator("select");
-    await selects.first().selectOption("0");
-    await selects.last().selectOption("1990");
-    await signupModal
-      .locator(".grid.grid-cols-7 button")
-      .filter({ hasText: "15" })
-      .first()
-      .click();
-
-    await signupModal.getByText("Select country").click();
-    await page.waitForTimeout(300);
-    await page
-      .locator('input[placeholder*="Search"]')
-      .first()
-      .fill("United Arab");
-    await page.waitForTimeout(200);
-    await page.getByText("United Arab Emirates").first().click();
-
-    await page.locator('[data-testid="signup-continue-button"]').click();
-
-    await expect(signupModal.getByText("Security & Verification")).toBeVisible({
-      timeout: 10000,
+    // Wait for potential geolocation fetch to complete
+    await page.waitForTimeout(2000); // Give time for async fetch
+    // Fetch expected country code from ipwho.is using page.evaluate
+    const expectedResponse = await page.evaluate(async () => {
+      const response = await fetch("https://ipwho.is/");
+      const data = await response.json();
+      return data.success ? data.country_code : null;
     });
-    console.log("[Test] Completed");
+    if (!expectedResponse) {
+      throw new Error("Failed to fetch geolocation data");
+    }
+    console.log(`[Test] Expected country code from IP: ${expectedResponse}`);
+    // Get the pre-filled country in the modal using a reliable locator (find div with label, then button inside)
+    const countryField = signupModal.locator(
+      'div.flex.flex-col.w-full:has(label:text("Country of Residence *"))',
+    );
+    const countryButton = countryField.locator("button");
+    await expect(countryButton).toBeVisible({ timeout: 5000 }); // Ensure button exists
+    const prefilledText = await countryButton
+      .locator("span.flex-1")
+      .innerText();
+    if (prefilledText === "Select country") {
+      throw new Error("Country not pre-filled - geolocation failed");
+    }
+    // Map name to code - get from img src for accuracy
+    const flagImg = countryButton.locator("img");
+    await expect(flagImg).toBeVisible({ timeout: 5000 });
+    const flagSrc = await flagImg.getAttribute("src");
+    const prefilledCode = flagSrc
+      ? flagSrc.match(/\/w40\/(.*)\.png/)?.[1].toUpperCase()
+      : null;
+    if (!prefilledCode) {
+      throw new Error("Could not extract pre-filled country code");
+    }
+    console.log(`[Test] Pre-filled country code: ${prefilledCode}`);
+    // Assert match
+    expect(prefilledCode).toBe(expectedResponse);
+    console.log("[Test] Completed - Geolocation prefill matches");
   });
 
   test("Signup with date of birth", async ({ page, supabaseAdapter }) => {
@@ -281,7 +284,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -334,36 +337,36 @@ test.describe("Signup Flow", () => {
     console.log("[Step 1] Filling personal info...");
 
     await signupModal.locator("#fullName").fill(TEST_USER.fullName);
-    console.log("  - Filled full name");
+    console.log(" - Filled full name");
 
     await signupModal.locator('input[name="email"]').fill(TEST_USER.email);
-    console.log("  - Filled email");
+    console.log(" - Filled email");
 
     await signupModal.locator("#password").fill(TEST_USER.password);
-    console.log("  - Filled password");
+    console.log(" - Filled password");
 
     await signupModal.locator("#confirmPassword").fill(TEST_USER.password);
-    console.log("  - Filled confirm password");
+    console.log(" - Filled confirm password");
 
     await signupModal.getByText("Select date of birth").click();
     await page.waitForTimeout(500);
-    console.log("  - Opened date picker");
+    console.log(" - Opened date picker");
 
     const selects = signupModal.locator("select");
     await selects.first().selectOption(TEST_USER.dob.month);
     await selects.last().selectOption(TEST_USER.dob.year);
-    console.log("  - Selected month and year");
+    console.log(" - Selected month and year");
 
     await signupModal
       .locator(".grid.grid-cols-7 button")
       .filter({ hasText: TEST_USER.dob.day })
       .first()
       .click();
-    console.log("  - Selected day");
+    console.log(" - Selected day");
 
-    await signupModal.getByText("Select country").click();
+    await signupModal.getByText("United Arab Emirates").click();
     await page.waitForTimeout(500);
-    console.log("  - Opened country dropdown");
+    console.log(" - Opened country dropdown");
 
     const searchInput = page.locator('input[placeholder*="Search"]');
     if (await searchInput.isVisible()) {
@@ -372,7 +375,7 @@ test.describe("Signup Flow", () => {
     }
 
     await page.getByText("United Arab Emirates").first().click();
-    console.log("  - Selected country");
+    console.log(" - Selected country");
 
     const continueButton = signupModal.getByTestId("signup-continue-button");
     await expect(continueButton).toBeVisible();
@@ -400,21 +403,21 @@ test.describe("Signup Flow", () => {
     await page.waitForTimeout(300);
 
     await signupModal.getByText("United Arab Emirates").first().click();
-    console.log("  - Selected UAE as phone country (+971)");
+    console.log(" - Selected UAE as phone country (+971)");
 
     // Fill phone number
     await signupModal.locator('input[name="phone"]').fill(TEST_USER.phone);
-    console.log("  - Filled phone number");
+    console.log(" - Filled phone number");
 
     // Check agreements
     await signupModal.locator("#useSameNumber").check();
-    console.log("  - Checked use same number");
+    console.log(" - Checked use same number");
 
     await signupModal.locator("#agreeToWhatsappOtp").check();
-    console.log("  - Checked WhatsApp OTP agreement");
+    console.log(" - Checked WhatsApp OTP agreement");
 
     await signupModal.locator("#agreeToTerms").check();
-    console.log("  - Checked terms agreement");
+    console.log(" - Checked terms agreement");
 
     // Click Create Account
     const createAccountButton = signupModal.getByTestId("signup-submit-button");
@@ -430,17 +433,17 @@ test.describe("Signup Flow", () => {
 
     const emailVerificationTitle = page.getByText("Email Verification");
     await emailVerificationTitle.waitFor({ timeout: 15000 });
-    console.log("  - Email Verification modal visible");
+    console.log(" - Email Verification modal visible");
 
     // Wait for OTP to be generated
     await page.waitForTimeout(2000);
 
     // Fetch email OTP from database
-    console.log("  - Fetching email OTP from database...");
+    console.log(" - Fetching email OTP from database...");
     const emailOtp = await supabaseAdapter.getEmailOtp(TEST_USER.email);
 
     if (emailOtp) {
-      console.log(`  - Got email OTP: ${emailOtp}`);
+      console.log(` - Got email OTP: ${emailOtp}`);
 
       const otpInputs = page.locator('input[maxlength="1"]');
       const inputCount = await otpInputs.count();
@@ -451,7 +454,7 @@ test.describe("Signup Flow", () => {
           await otpInputs.nth(i).fill(emailOtp[i]);
           await page.waitForTimeout(100);
         }
-        console.log("  - Filled email OTP");
+        console.log(" - Filled email OTP");
 
         await page.waitForTimeout(500);
 
@@ -462,7 +465,7 @@ test.describe("Signup Flow", () => {
 
         if (isButtonEnabled) {
           await verifyButton.click();
-          console.log("  - Clicked Verify for email");
+          console.log(" - Clicked Verify for email");
         }
 
         // Wait longer in CI - verification API can be slow
@@ -471,12 +474,14 @@ test.describe("Signup Flow", () => {
           page
             .getByText("Email verified successfully")
             .waitFor({ timeout: verifyTimeout }),
-          page.getByText("WhatsApp Verification").waitFor({ timeout: verifyTimeout }),
+          page
+            .getByText("WhatsApp Verification")
+            .waitFor({ timeout: verifyTimeout }),
         ]);
         console.log("[Step 3] Email verification completed");
       }
     } else {
-      console.log("  - Email OTP not available, skipping verification");
+      console.log(" - Email OTP not available, skipping verification");
     }
 
     // ============ STEP 4: WhatsApp Verification ============
@@ -490,27 +495,27 @@ test.describe("Signup Flow", () => {
       .catch(() => false);
 
     if (whatsappVisible) {
-      console.log("  - WhatsApp Verification modal visible");
+      console.log(" - WhatsApp Verification modal visible");
 
       // Poll for WhatsApp OTP
       let whatsappOtp: string | null = null;
       let attempts = 0;
       const maxAttempts = 10;
 
-      console.log("  - Waiting for WhatsApp OTP to be generated...");
+      console.log(" - Waiting for WhatsApp OTP to be generated...");
       while (!whatsappOtp && attempts < maxAttempts) {
         await page.waitForTimeout(2000);
         whatsappOtp = await supabaseAdapter.getWhatsAppOtp(TEST_USER.email);
         attempts++;
         if (!whatsappOtp) {
           console.log(
-            `  - Attempt ${attempts}/${maxAttempts}: OTP not ready yet...`,
+            ` - Attempt ${attempts}/${maxAttempts}: OTP not ready yet...`,
           );
         }
       }
 
       if (whatsappOtp) {
-        console.log(`  - Got WhatsApp OTP: ${whatsappOtp}`);
+        console.log(` - Got WhatsApp OTP: ${whatsappOtp}`);
 
         const otpInputs = page.locator('input[maxlength="1"]');
         const inputCount = await otpInputs.count();
@@ -519,7 +524,7 @@ test.describe("Signup Flow", () => {
           for (let i = 0; i < 6; i++) {
             await otpInputs.nth(i).fill(whatsappOtp[i]);
           }
-          console.log("  - Filled WhatsApp OTP");
+          console.log(" - Filled WhatsApp OTP");
         }
 
         await page.waitForTimeout(1000);
@@ -536,52 +541,51 @@ test.describe("Signup Flow", () => {
 
         if (isButtonVisible && isButtonEnabled) {
           await verifyButton.click();
-          console.log("  - Clicked Verify for WhatsApp");
+          console.log(" - Clicked Verify for WhatsApp");
         }
 
         await page.waitForTimeout(3000);
         console.log("[Step 4] WhatsApp verification completed");
       } else {
-        console.log("  - WhatsApp OTP not available, skipping verification");
+        console.log(" - WhatsApp OTP not available, skipping verification");
       }
     }
 
     // ============ VERIFY USER IN DATABASE ============
     console.log("[Verify] Checking user in database...");
-    
+
     // Wait a bit for database triggers to complete
     await page.waitForTimeout(2000);
-    
+
     let user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
 
     // Retry a few times if user not found (database trigger might be slow)
     if (!user) {
-      console.log("  - User not found, retrying...");
+      console.log(" - User not found, retrying...");
       for (let i = 0; i < 5; i++) {
         await page.waitForTimeout(2000);
         user = await supabaseAdapter.getUserByEmail(TEST_USER.email);
         if (user) break;
-        console.log(`  - Retry ${i + 1}/5: User still not found...`);
+        console.log(` - Retry ${i + 1}/5: User still not found...`);
       }
     }
 
     // This MUST pass - if user is not in database, test should fail
     expect(user, "User should exist in database after signup").toBeTruthy();
-    
-    console.log("  ✅ User found in database!");
-    console.log(`     - ID: ${user.id}`);
-    console.log(`     - Email: ${user.email}`);
+
+    console.log(" ✅ User found in database!");
+    console.log(` - ID: ${user.id}`);
+    console.log(` - Email: ${user.email}`);
 
     const verificationStatus = await supabaseAdapter.isUserVerified(
       TEST_USER.email,
     );
-    console.log(`     - Email Verified: ${verificationStatus.email}`);
-    console.log(`     - WhatsApp Verified: ${verificationStatus.whatsapp}`);
+    console.log(` - Email Verified: ${verificationStatus.email}`);
+    console.log(` - WhatsApp Verified: ${verificationStatus.whatsapp}`);
 
     expect(user.email.toLowerCase()).toBe(TEST_USER.email.toLowerCase());
 
     await page.screenshot({ path: "test-results/signup-final.png" });
-
 
     console.log("========================================");
     console.log("✅ SIGNUP TEST COMPLETE");

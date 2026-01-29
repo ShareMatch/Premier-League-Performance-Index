@@ -8,8 +8,8 @@ const TEST_USER = {
 };
 
 // Supabase config - use env vars or defaults
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://bibvtujpesatuxzfkdbl.supabase.co";
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 test.describe("Forgot Password Flow", () => {
   test.setTimeout(120000); // 2 minutes for the full flow
@@ -58,12 +58,37 @@ test.describe("Forgot Password Flow", () => {
         },
       });
 
-      expect(response.ok()).toBeTruthy();
-      const body = await response.json();
-      resetLink = body.resetLink;
+      console.log(`📡 Response status: ${response.status()}`);
+
+      const responseText = await response.text();
+      console.log(`📡 Response body: ${responseText}`);
+
+      // Parse JSON if possible, otherwise use text
+      let body;
+      try {
+        body = JSON.parse(responseText);
+      } catch (e) {
+        console.warn("⚠️ Could not parse response as JSON");
+      }
+
+      // Skip test if running against production (endpoint intentionally blocked)
+      if (response.status() === 403 && body?.error === "Not available in production") {
+        console.log("⚠️ Test endpoint blocked in production - skipping test");
+        console.log("💡 To enable: set ENVIRONMENT=staging in Supabase Edge Function secrets");
+        test.skip(true, "test-get-reset-link endpoint not available in production environment");
+        return;
+      }
+
+      if (!response.ok()) {
+        console.error(`❌ Edge Function Error (${response.status()}):`, responseText);
+      }
+
+      expect(response.ok(), `Edge function failed with status ${response.status()}: ${responseText}`).toBeTruthy();
+
+      resetLink = body?.resetLink;
       expect(resetLink).toBeTruthy();
       console.log("✅ Got reset link from test endpoint");
-      
+
       // Fix redirect URL if it points to localhost (in CI, we need the staging URL)
       const appBaseUrl = process.env.APP_BASE_URL || process.env.VITE_APP_URL || 'http://localhost:3000';
       if (resetLink && resetLink.includes('redirect_to=http://localhost:3000')) {
@@ -110,7 +135,7 @@ test.describe("Forgot Password Flow", () => {
       await Promise.all([
         page
           .waitForNavigation({ waitUntil: "networkidle", timeout: 20000 })
-          .catch(() => {}),
+          .catch(() => { }),
         page.locator('[data-testid="login-submit-button"]').click(),
       ]);
 
@@ -144,13 +169,13 @@ test.describe("Forgot Password Flow", () => {
         // Click outside the modal at the corner of the screen to close it
         await page.mouse.click(10, 10);
         await page.waitForTimeout(1000);
-        
+
         // If modal is still visible, try pressing Escape
         if (await kycModal.isVisible().catch(() => false)) {
           await page.keyboard.press('Escape');
           await page.waitForTimeout(1000);
         }
-        
+
         await expect(kycModal).toBeHidden({ timeout: 5000 });
         console.log("✅ KYC modal closed");
       }
