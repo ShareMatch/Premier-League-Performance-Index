@@ -577,6 +577,7 @@ const CountrySelectField = ({
       </label>
       <button
         type="button"
+        data-testid="country-selector"
         onClick={() => {
           setIsOpen(!isOpen);
           setSearch("");
