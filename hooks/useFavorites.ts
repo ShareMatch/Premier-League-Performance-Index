@@ -18,7 +18,6 @@ export const useFavorites = () => {
     });
 
     const toggleFavorite = (id: string) => {
-        console.log("Toggling favorite for ID:", id);
         const stored = localStorage.getItem('sm_favorites');
         let current: string[] = [];
         if (stored) {
@@ -34,7 +33,6 @@ export const useFavorites = () => {
             : [...current, id];
 
         localStorage.setItem('sm_favorites', JSON.stringify(next));
-        console.log("New favorites list:", next);
         setFavorites(next);
         window.dispatchEvent(new CustomEvent('favorites-updated', { detail: next }));
     };
@@ -44,7 +42,6 @@ export const useFavorites = () => {
     // Sync across components in the same tab
     useEffect(() => {
         const handleSync = (e: any) => {
-            console.log("Favorites sync triggered");
             if (e instanceof CustomEvent && e.detail) {
                 setFavorites(e.detail);
             } else {
