@@ -1,16 +1,4 @@
 {
-  "status": "failed",
-  "failedTests": [
-<<<<<<< Updated upstream
-    "a13b862118584d13dd5d-4e90048cc7330b431ad3"
-=======
-    "a13b862118584d13dd5d-eb37b7949a7006a52d35",
-    "a13b862118584d13dd5d-4e90048cc7330b431ad3",
-    "a13b862118584d13dd5d-836cbce67ffa1c99bd1a",
-    "a13b862118584d13dd5d-2375a05ff761fa0254ea",
-    "a13b862118584d13dd5d-508ed55d9326a6aa49a1",
-    "a13b862118584d13dd5d-a68e399c814e619a9356",
-    "a13b862118584d13dd5d-dbff794e6651085c0f1c"
->>>>>>> Stashed changes
-  ]
+  "status": "passed",
+  "failedTests": []
 }

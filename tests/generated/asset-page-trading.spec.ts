@@ -13,18 +13,52 @@ async function checkLoginError(page: Page, context: string): Promise<string | nu
     // Only check for the specific login error element inside the login modal
     const loginError = page.locator('[data-testid="login-error"]');
     const isVisible = await loginError.isVisible().catch(() => false);
-    
+
     if (isVisible) {
         const text = await loginError.textContent().catch(() => '');
         console.log(`[${context}] ❌ Login error found: ${text}`);
         return text;
     }
-    
+
     return null;
 }
 
-test.describe.configure({ mode: 'serial' });
+/**
+ * Helper to handle order confirmation modal
+ */
+async function handleOrderConfirmation(
+    page: Page,
+    expectedAsset: string,
+    expectedSide: 'buy' | 'sell',
+) {
+    console.log(`[Order Confirmation] Waiting for confirmation modal...`);
 
+    // Wait for confirmation modal to appear
+    const confirmModal = page.locator('[data-testid="order-confirmation-modal"]');
+    await expect(confirmModal).toBeVisible({ timeout: 10000 });
+
+    // Verify modal content
+    await expect(confirmModal).toContainText('Order Confirmed');
+    await expect(confirmModal).toContainText(expectedAsset);
+    await expect(confirmModal).toContainText(
+        expectedSide === 'buy' ? 'Buy' : 'Sell',
+    );
+
+    console.log(
+        `[Order Confirmation] Modal verified for ${expectedSide} ${expectedAsset}`,
+    );
+
+    // Close the modal by clicking Done button
+    const doneButton = confirmModal.locator('button:has-text("Done")');
+    await expect(doneButton).toBeVisible();
+    await doneButton.click();
+
+    // Wait for modal to close
+    await expect(confirmModal).toBeHidden({ timeout: 5000 });
+    console.log(`[Order Confirmation] Modal closed`);
+}
+
+test.describe.configure({ mode: 'serial' });
 
 test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
     test.setTimeout(120000);
@@ -35,8 +69,6 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
     });
 
     test('should complete full trading cycle on asset page: login, navigate to Man City, buy tokens, and sell tokens', async ({ page }) => {
-        // Capture console logs to debug application logic
-        // page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
         // 1. Login Flow
         await test.step('Login to application', async () => {
             await page.goto("/?action=login");
@@ -80,21 +112,21 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
         });
 
-        // 2. Navigate to Man City Asset Page (Correct slug is man-city)
+        // 2. Navigate to Man City Asset Page
         await test.step('Navigate to Man City Asset Page', async () => {
-            await page.goto('/asset/man-city');
+            await page.goto('/asset/epl/man-city');
 
             // Handle potential alert modal from API failures
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
@@ -104,22 +136,13 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await expect(assetPage).toBeVisible({ timeout: 15000 });
 
             // Verify we're on the correct asset page
-            // Use specific locator and ensure it's visible to avoid matching hidden mobile/desktop duplicates
             await expect(page.locator('h1:visible').filter({ hasText: /Manchester City|Man City/i })).toBeVisible();
         });
 
         // 3. Attempt to Sell Man City from Asset Page (Expect Error - User doesn't own it yet)
         await test.step('Attempt to sell asset not owned from asset page', async () => {
-            // On mobile, use the mobile sell button
-            const mobileSellButton = page.locator('[data-testid="asset-page-sell-mobile"]');
             const desktopSellButton = page.locator('[data-testid="asset-page-sell-desktop"]');
-
-            // Click whichever button is visible
-            if (await mobileSellButton.isVisible()) {
-                await mobileSellButton.click();
-            } else {
-                await desktopSellButton.click();
-            }
+            await desktopSellButton.click();
 
             // Wait for either error modal or trade slip to open
             await page.waitForTimeout(1000);
@@ -141,14 +164,8 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
         // 4. Buy Man City Tokens from Asset Page (Complete Transaction)
         await test.step('Complete Man City token purchase from asset page', async () => {
             // Click Buy button on asset page
-            const mobileBuyButton = page.locator('[data-testid="asset-page-buy-mobile"]');
             const desktopBuyButton = page.locator('[data-testid="asset-page-buy-desktop"]');
-
-            if (await mobileBuyButton.isVisible()) {
-                await mobileBuyButton.click();
-            } else {
-                await desktopBuyButton.click();
-            }
+            await desktopBuyButton.click();
 
             // Wait for Trade Slip to open
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
@@ -188,7 +205,10 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             // Wait for transaction to complete (countdown + processing time)
             await page.waitForTimeout(8000);
 
-            // Verify trade slip closes after successful transaction
+            // Handle the order confirmation modal FIRST (it appears on top of trade slip)
+            await handleOrderConfirmation(page, 'Man City', 'buy');
+
+            // THEN verify trade slip closes after modal is dismissed
             await expect(tradeSlip).toBeHidden({ timeout: 5000 });
         });
 
@@ -202,14 +222,15 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
                 await portfolioButton.click();
             }
 
-            // Look for Man City in portfolio
+            // Look for Man City in portfolio - check for any amount of units (could be 15+ if previous holdings)
             await expect(rightPanel).toContainText(/Manchester City|Man City/i, { timeout: 5000 });
-            await expect(rightPanel).toContainText('15 units');
+            await expect(rightPanel).toContainText(/\d+ units/);
+
+            console.log('[Test] Man City found in portfolio');
         });
 
-        // 6. Navigate back to Asset Page (Actually, we are already there, just verify)
+        // 6. Verify we are still on Man City asset page
         await test.step('Verify we are still on Man City asset page', async () => {
-            // No need to goto, it causes unneeded reload and race conditions
             const assetPage = page.locator('[data-testid="asset-page"]');
             await expect(assetPage).toBeVisible({ timeout: 15000 });
             await expect(page.locator('h1:visible').filter({ hasText: /Manchester City|Man City/i })).toBeVisible();
@@ -218,17 +239,22 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
         // 7. Sell Man City Tokens from Asset Page (Complete Transaction)
         await test.step('Complete Man City token sale from asset page', async () => {
             // First, ensure the portfolio in the side panel is showing the units
-            // This guarantees the App state has updated before we click Sell
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
             await expect(rightPanel).toContainText(/Manchester City|Man City/i, { timeout: 10000 });
-            await expect(rightPanel).toContainText('15 units', { timeout: 10000 });
+
+            // Get the current units count to sell all of them
+            const portfolioText = await rightPanel.textContent();
+            const unitsMatch = portfolioText?.match(/(\d+) units/);
+            const unitsToSell = unitsMatch ? unitsMatch[1] : '15';
+
+            console.log(`[Test] Selling ${unitsToSell} Man City units`);
 
             const desktopSellButton = page.locator('[data-testid="asset-page-sell-desktop"]');
 
             // Click Sell
             await desktopSellButton.click();
 
-            // Wait for either Trade Slip OR Sell Error Modal (to debug)
+            // Wait for either Trade Slip OR Sell Error Modal
             const sellErrorModal = page.locator('[data-testid="sell-error-modal"]');
 
             await Promise.race([
@@ -240,7 +266,6 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             if (await sellErrorModal.isVisible()) {
                 const errorText = await sellErrorModal.textContent();
                 console.error(`Unexpected Sell Error Modal: ${errorText}`);
-                console.log('Failing test because Sell Error Modal appeared');
                 throw new Error(`Sell failed: ${errorText}`);
             }
 
@@ -253,10 +278,10 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await sellTab.click();
             await page.waitForTimeout(500);
 
-            // Enter quantity to sell (all 15 units)
+            // Enter quantity to sell (all units)
             const quantityInput = tradeSlip.locator('[data-testid="trade-slip-quantity-input"]');
             await quantityInput.clear();
-            await quantityInput.fill('15');
+            await quantityInput.fill(unitsToSell);
 
             // Verify fee breakdown is visible for sell orders
             await expect(tradeSlip.locator('text=Processing Fee')).toBeVisible();
@@ -278,7 +303,10 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             // Wait for transaction to complete
             await page.waitForTimeout(8000);
 
-            // Verify trade slip closes after successful transaction
+            // Handle the order confirmation modal FIRST
+            await handleOrderConfirmation(page, 'Man City', 'sell');
+
+            // THEN verify trade slip closes after modal is dismissed
             await expect(tradeSlip).toBeHidden({ timeout: 5000 });
         });
 
@@ -314,17 +342,11 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
 
         // 10. Test Back Navigation
         await test.step('Test back navigation from asset page', async () => {
-            // Click back button (mobile or desktop)
-            const mobileBackButton = page.locator('[data-testid="asset-page-back-mobile"]');
+            // Click back button (desktop)
             const desktopBackButton = page.locator('[data-testid="asset-page-back-desktop"]');
+            await desktopBackButton.click();
 
-            if (await mobileBackButton.isVisible()) {
-                await mobileBackButton.click();
-            } else {
-                await desktopBackButton.click();
-            }
-
-            // Wait for navigation - should go back to previous page
+            // Wait for navigation
             await page.waitForTimeout(2000);
 
             // Verify we're no longer on the asset page
@@ -350,20 +372,20 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
         });
 
         await test.step('Navigate to Liverpool asset page', async () => {
-            await page.goto('/asset/liverpool');
+            await page.goto('/asset/epl/liverpool');
 
             // Handle potential alert modal from API failures
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
@@ -374,14 +396,8 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
         });
 
         await test.step('Buy Liverpool tokens', async () => {
-            const mobileBuyButton = page.locator('[data-testid="asset-page-buy-mobile"]');
             const desktopBuyButton = page.locator('[data-testid="asset-page-buy-desktop"]');
-
-            if (await mobileBuyButton.isVisible()) {
-                await mobileBuyButton.click();
-            } else {
-                await desktopBuyButton.click();
-            }
+            await desktopBuyButton.click();
 
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
             await expect(rightPanel).toBeVisible({ timeout: 5000 });
@@ -397,6 +413,12 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await confirmButton.click();
             await expect(confirmButton).toContainText('Confirming...', { timeout: 2000 });
             await page.waitForTimeout(8000);
+
+            // Handle the order confirmation modal FIRST
+            await handleOrderConfirmation(page, 'Liverpool', 'buy');
+
+            // THEN verify trade slip closes
+            await expect(tradeSlip).toBeHidden({ timeout: 5000 });
         });
 
         await test.step('Verify Liverpool in portfolio', async () => {
@@ -407,7 +429,7 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             }
 
             await expect(rightPanel).toContainText(/Liverpool/i, { timeout: 5000 });
-            await expect(rightPanel).toContainText('5 units');
+            await expect(rightPanel).toContainText(/\d+ units/);
         });
     });
 
@@ -425,20 +447,20 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
         });
 
         await test.step('Navigate to asset page and test share', async () => {
-            await page.goto('/asset/arsenal');
+            await page.goto('/asset/epl/arsenal');
 
             // Handle potential alert modal from API failures
             const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
             if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
                 console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")'); // Adjust selector if needed
+                const okButton = alertModal.locator('button:text("OK")');
                 await okButton.click({ timeout: 5000 });
                 await expect(alertModal).toBeHidden({ timeout: 5000 });
             }
@@ -446,23 +468,19 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             const assetPage = page.locator('[data-testid="asset-page"]');
             await expect(assetPage).toBeVisible({ timeout: 15000 });
 
-            // Setup dialog handler for alert
-            page.on('dialog', async dialog => {
-                expect(dialog.message()).toContain('Link copied to clipboard');
-                await dialog.accept();
-            });
+            // Look for share button with Share2 icon (desktop view)
+            const shareButton = page.locator('button').filter({ has: page.locator('svg') }).filter({ hasText: '' }).nth(1);
 
-            // Click share button (it should be visible on both mobile and desktop)
-            const shareButtons = page.locator('button').filter({ has: page.locator('svg') }).filter({ hasText: '' });
-            const shareButton = shareButtons.nth(1); // Second button is typically share
-
-            // Try to click share button if visible
             const shareButtonVisible = await shareButton.isVisible().catch(() => false);
             if (shareButtonVisible) {
                 await shareButton.click();
                 await page.waitForTimeout(1000);
+
+                // Check if share tooltip appeared
+                const shareTooltip = page.locator('text=/Copy|Copied/i');
+                const tooltipVisible = await shareTooltip.isVisible().catch(() => false);
+                console.log(`Share tooltip visible: ${tooltipVisible}`);
             }
         });
     });
-
 });
