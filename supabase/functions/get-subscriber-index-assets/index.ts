@@ -41,13 +41,13 @@ serve(async (req) => {
       throw new Error("Invalid market index season");
     }
 
-    /* ---------------- QUERY (CORRECT JOIN GRAPH) ---------------- */
+    /* ---------------- QUERY (EXPLICIT ALIASING) ---------------- */
     const { data, error } = await supabase
       .from("subscriber_index_assets")
       .select(`
+        subscriber_asset_code:external_ref_code,
         units,
         market_index_seasons_asset!inner (
-          external_ref_code,
           market_index_seasons_id,
           assets!inner (
             name
@@ -66,10 +66,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         data: data.map(row => ({
-          asset_ref_code:
-            row.market_index_seasons_asset.external_ref_code,
-          asset_name:
-            row.market_index_seasons_asset.assets.name,
+          asset_ref_code: row.subscriber_asset_code, // ✅ GUARANTEED
+          asset_name: row.market_index_seasons_asset.assets.name,
           units: row.units
         }))
       }),

@@ -7,25 +7,45 @@ info:
     Partner API for ShareMatch RWA platform.
 
     🔐 Authentication
-    - All endpoints require a Bearer API Key
-    - API keys are issued by ShareMatch after onboarding
-    - Keys are scoped (example: subscription:read, offers:write)
+    - APIs are protected using Bearer API Keys
+    - Subscriber and Liquidity Provider APIs use different keys
+    - API keys are issued manually by ShareMatch after onboarding
+    - Keys are scope-limited (example: subscription:read, offers:write)
 
 servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/sharematch/Sharematch_External/1.0.0
   - url: https://lbmixnhxerrmecfxdfkx.supabase.co/functions/v1
 
 tags:
   - name: Authentication
+    description: API key issuance (documentation only)
+
   - name: Market Index
+    description: Read-only APIs for market index metadata
+
   - name: Subscriber APIs
+    description: |
+      APIs available to Subscribers.
+      Requires a Subscriber API Key.
+
   - name: Liquidity Provider APIs
+    description: |
+      APIs available to Liquidity Providers (LPs).
+      Requires an LP API Key.
 
 components:
   securitySchemes:
-    BearerAuth:
+    SubscriberAuth:
       type: http
       scheme: bearer
-      bearerFormat: API_KEY
+      bearerFormat: SUBSCRIBER_API_KEY
+
+    LPAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: LP_API_KEY
 
   schemas:
     Error:
@@ -39,20 +59,26 @@ components:
       properties:
         external_ref_code:
           type: string
+          example: EPL_PERF_2024_26
         name:
           type: string
+          example: EPL Performance Index 2024–26
         status:
           type: string
+          example: active
 
     SubscriberIndexAsset:
       type: object
       properties:
         subscriber_asset_code:
           type: string
+          example: SUB_AST_001
         asset_name:
           type: string
+          example: Manchester United Performance
         units:
           type: number
+          example: 100
 
     SubscriberPriceSet:
       type: object
@@ -60,57 +86,60 @@ components:
       properties:
         subscriber_asset_code:
           type: string
+          example: SUB_AST_001
         subscription_price:
           type: number
+          example: 12.50
 
     LPIndexAsset:
       type: object
       properties:
         lp_asset_code:
           type: string
+          example: LP_AST_009
         asset_name:
           type: string
+          example: Arsenal Performance
         available_units:
           type: number
-        min_price:
-          type: number
-        max_price:
-          type: number
+          example: 1000
 
     LPOfferSet:
       type: object
-      required: [lp_asset_code, available_units, min_price, max_price]
+      required: [lp_asset_code, offered_units, buy_offer, sell_offer]
       properties:
         lp_asset_code:
           type: string
-        available_units:
+          example: LP_AST_009
+        offered_units:
           type: number
-        min_price:
+          example: 500
+        buy_offer:
           type: number
-        max_price:
+          example: 11.00
+        sell_offer:
           type: number
-
-security:
-  - BearerAuth: []
+          example: 13.50
 
 paths:
 
   # =========================
-  # AUTHENTICATION (INFO)
+  # AUTHENTICATION (DOC ONLY)
   # =========================
   /auth/api-keys:
     post:
       tags: [Authentication]
       summary: Request an API key (documentation only)
       description: |
-        API keys are issued by ShareMatch after verification.
-        This endpoint documents the expected request structure.
+        API keys are issued manually by ShareMatch after onboarding.
+        This endpoint documents the expected request format only.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [owner_type, requested_scopes]
               properties:
                 owner_type:
                   type: string
@@ -144,16 +173,20 @@ paths:
   # =========================
   # SUBSCRIBER APIs
   # =========================
-  /subscriber/index-assets:
+  /get-subscriber-index-assets:
     get:
       tags: [Subscriber APIs]
-      summary: Get Subscriber Index Assets (per market index season)
+      security:
+        - SubscriberAuth: []
+      summary: Get Subscriber Index Assets
+      description: Returns subscriber assets for a given market index season.
       parameters:
         - in: query
           name: market_index_season_code
           required: true
           schema:
             type: string
+            example: EPL_PERF_2024_26
       responses:
         "200":
           description: Subscriber assets
@@ -164,19 +197,30 @@ paths:
                 items:
                   $ref: "#/components/schemas/SubscriberIndexAsset"
 
-  /subscriber/index-assets/prices:
+  /set-subscription-prices:
     post:
       tags: [Subscriber APIs]
+      security:
+        - SubscriberAuth: []
       summary: Set Subscription Prices
-      description: Batch update subscription prices for subscriber assets.
+      description: |
+        Sets subscription prices for subscriber-owned assets.
+        Buy and sell prices are updated to match the subscription price.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/SubscriberPriceSet"
+              type: object
+              required: [market_index_season_code, prices]
+              properties:
+                market_index_season_code:
+                  type: string
+                  example: EPL_PERF_2024_26
+                prices:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/SubscriberPriceSet"
       responses:
         "200":
           description: Prices updated successfully
@@ -184,16 +228,20 @@ paths:
   # =========================
   # LIQUIDITY PROVIDER APIs
   # =========================
-  /lp/index-assets:
+  /get-lp-index-assets:
     get:
       tags: [Liquidity Provider APIs]
-      summary: Get LP Index Assets (per market index season)
+      security:
+        - LPAuth: []
+      summary: Get LP Index Assets
+      description: Returns LP inventory for a given market index season.
       parameters:
         - in: query
           name: market_index_season_code
           required: true
           schema:
             type: string
+            example: EPL_PERF_2024_26
       responses:
         "200":
           description: LP inventory
@@ -204,19 +252,30 @@ paths:
                 items:
                   $ref: "#/components/schemas/LPIndexAsset"
 
-  /lp/index-assets/offers:
+  /set-lp-offers:
     post:
       tags: [Liquidity Provider APIs]
+      security:
+        - LPAuth: []
       summary: Set LP Offers
-      description: Batch update LP offers for index assets.
+      description: |
+        Creates or updates LP buy/sell offers.
+        Activating an offer updates market buy/sell prices.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/LPOfferSet"
+              type: object
+              required: [market_index_season_code, offers]
+              properties:
+                market_index_season_code:
+                  type: string
+                  example: EPL_PERF_2024_26
+                offers:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/LPOfferSet"
       responses:
         "200":
-          description: Offers updated successfully
+          description: Offers created successfully
