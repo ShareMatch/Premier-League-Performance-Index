@@ -70,7 +70,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -109,7 +109,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -151,7 +151,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -195,7 +195,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -284,7 +284,7 @@ test.describe("Signup Flow", () => {
       .first()
       .click();
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(300);
     await page
       .locator('input[placeholder*="Search"]')
@@ -364,7 +364,7 @@ test.describe("Signup Flow", () => {
       .click();
     console.log(" - Selected day");
 
-    await signupModal.getByText("United Arab Emirates").click();
+    await signupModal.locator('[data-testid="country-selector"]').click();
     await page.waitForTimeout(500);
     console.log(" - Opened country dropdown");
 
