@@ -77,7 +77,7 @@ export const marketInfoData: Record<string, MarketInfo> = {
     title: "Eurovision Song Contest Performance Index",
     content: InfoPopup,
     seasonDates: "", // Loaded from Supabase
-    isOpen: true,
+    isOpen: false,
   },
 };
 

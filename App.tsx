@@ -1320,14 +1320,16 @@ const App: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Ticker */}
-                      <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
-                        <Ticker
-                          onNavigate={handleNavigate}
-                          onViewAsset={handleViewAsset}
-                          teams={allAssets}
-                        />
-                      </div>
+                      {/* Ticker - Hidden on AI Analytics page */}
+                      {activeLeague !== "AI_ANALYTICS" && (
+                        <div className="pt-0 flex-shrink-0 sticky bottom-0 bg-gray-900">
+                          <Ticker
+                            onNavigate={handleNavigate}
+                            onViewAsset={handleViewAsset}
+                            teams={allAssets}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Right Panel Desktop */}

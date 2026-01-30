@@ -15,6 +15,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import type { Team } from "../types";
 import { supabase } from "../lib/supabase";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
+import { marketInfoData } from "../lib/marketInfo";
 
 interface AIAnalyticsPageProps {
   teams: Team[];
@@ -112,6 +113,18 @@ const SUGGESTED_QUESTIONS = [
   },
 ];
 
+// Asset-specific question templates (placeholders for asset names)
+const ASSET_QUESTION_TEMPLATES = [
+  "Analyze {asset}",
+  "{asset} performance overview",
+  "{asset} recent form",
+  "{asset} stats breakdown",
+  "Compare {asset}",
+  "{asset} key metrics",
+  "{asset} trends analysis",
+  "{asset} valuation report",
+];
+
 const InputArea: React.FC<{
   inputRef: React.RefObject<HTMLInputElement | null>;
   inputValue: string;
@@ -128,6 +141,8 @@ const InputArea: React.FC<{
   setOpenDropdown: (value: string | null) => void;
   handleCategoryChange: (id: string) => void;
   handleMarketSelect: (market: string) => void;
+  showGenerateButton?: boolean;
+  onGenerateAnalysis?: () => void;
 }> = ({
   inputRef,
   inputValue,
@@ -144,6 +159,8 @@ const InputArea: React.FC<{
   setOpenDropdown,
   handleCategoryChange,
   handleMarketSelect,
+  showGenerateButton = false,
+  onGenerateAnalysis,
 }) => {
     const displayLabel =
       selectedMarket === "ALL_INDEX"
@@ -227,7 +244,17 @@ const InputArea: React.FC<{
 
                     <div className="h-px bg-gray-800 my-1 mx-1" />
 
-                    {CATEGORIES.map((cat) => (
+                    {CATEGORIES.map((cat) => {
+                      // Filter out closed markets from this category
+                      const openMarkets = cat.markets.filter((marketId) => {
+                        const marketInfo = marketInfoData[marketId];
+                        return marketInfo && marketInfo.isOpen;
+                      });
+                      
+                      // Don't show category if no open markets
+                      if (openMarkets.length === 0) return null;
+                      
+                      return (
                       <DropdownMenu.Sub key={cat.id}>
                         <DropdownMenu.SubTrigger
                           className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${selectedCategory === cat.id
@@ -244,8 +271,8 @@ const InputArea: React.FC<{
                             sideOffset={0}
                             alignOffset={-8}
                           >
-                            {/* "All" Option for the category - only shown if multiple markets exist */}
-                            {cat.markets.length > 1 && (
+                            {/* "All" Option for the category - only shown if multiple open markets exist */}
+                            {openMarkets.length > 1 && (
                               <>
                                 <DropdownMenu.Item
                                   onSelect={() => {
@@ -269,7 +296,7 @@ const InputArea: React.FC<{
                               </>
                             )}
 
-                            {cat.markets.map((marketId) => {
+                            {openMarkets.map((marketId) => {
                               const isSelected =
                                 selectedCategory === cat.id &&
                                 selectedMarket === marketId;
@@ -304,25 +331,22 @@ const InputArea: React.FC<{
                           </DropdownMenu.SubContent>
                         </DropdownMenu.Portal>
                       </DropdownMenu.Sub>
-                    ))}
+                    );
+                    })}
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
               </DropdownMenu.Root>
 
-              {/* Web search button
-          <button
-            onClick={() => setClicked((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0
-              ${
-                clicked
-                  ? "bg-[#005430] border-[#005430] text-white"
-                  : "bg-gray-800 border-gray-700 text-white hover:border-[#005430]/50"
-              }
-            `}
-          >
-            <Globe className="w-4 h-4" />
-            Web Search
-          </button> */}
+              {/* Generate Analysis Button - Only shown in bottom input view */}
+              {showGenerateButton && onGenerateAnalysis && (
+                <button
+                  onClick={onGenerateAnalysis}
+                  disabled={isLoading}
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold whitespace-nowrap transition-all border bg-primary-gradient border-[#005430] text-white hover:bg-[#00A651]/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
+                >
+                  <span>Generate Analysis</span>
+                </button>
+              )}
             </div>
 
             {/* Send button - right side */}
@@ -443,8 +467,55 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   const randomQuestions = useMemo(() => {
-    return [...SUGGESTED_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 4);
+    // Filter out questions for closed markets
+    const openMarketQuestions = SUGGESTED_QUESTIONS.filter((q) => {
+      const marketInfo = marketInfoData[q.market];
+      return marketInfo && marketInfo.isOpen;
+    });
+    return [...openMarketQuestions].sort(() => Math.random() - 0.5).slice(0, 4);
   }, []);
+
+  // Generate asset-specific questions based on selected market
+  const assetQuestions = useMemo(() => {
+    // Get assets for the selected market (exclude settled assets and closed markets)
+    let marketAssets: Team[] = [];
+    
+    if (selectedMarket === "ALL_INDEX") {
+      // Get a sample from all markets (filter out settled)
+      marketAssets = teams
+        .filter((t) => !t.is_settled)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 15);
+    } else if (selectedMarket === "ALL") {
+      // Get assets from the current category's markets
+      const currentCat = CATEGORIES.find((c) => c.id === selectedCategory);
+      if (currentCat) {
+        marketAssets = teams
+          .filter((t) => t.market && currentCat.markets.includes(t.market) && !t.is_settled)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 15);
+      }
+    } else {
+      // Get assets from the specific market
+      marketAssets = teams
+        .filter((t) => t.market === selectedMarket && !t.is_settled)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 15);
+    }
+
+    // Generate questions for each asset
+    const questions: { text: string; asset: Team }[] = [];
+    marketAssets.forEach((asset) => {
+      const template = ASSET_QUESTION_TEMPLATES[Math.floor(Math.random() * ASSET_QUESTION_TEMPLATES.length)];
+      questions.push({
+        text: template.replace("{asset}", asset.name),
+        asset,
+      });
+    });
+
+    return questions;
+  }, [teams, selectedMarket, selectedCategory]);
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -698,6 +769,35 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     }
   };
 
+  // Handle clicking on rotating asset questions
+  const handleAssetQuestion = (question: { text: string; asset: Team }) => {
+    // Set the market to match the asset's market
+    if (question.asset.market) {
+      const category = CATEGORIES.find((c) =>
+        c.markets.includes(question.asset.market!),
+      );
+      if (category) {
+        setSelectedCategory(category.id);
+        setSelectedMarket(question.asset.market);
+      }
+    }
+    // Send the question
+    handleSendMessage(question.text);
+  };
+
+  // Handle Generate Analysis button click
+  const handleGenerateAnalysis = () => {
+    const marketLabel =
+      selectedMarket === "ALL_INDEX"
+        ? "all index tokens"
+        : selectedMarket === "ALL"
+          ? `all ${currentCategory.label} assets`
+          : MARKET_LABELS[selectedMarket] || selectedMarket;
+
+    const analysisQuery = `Generate a comprehensive analysis for ${marketLabel}. Include top performers, undervalued assets, recent trends, and investment opportunities.`;
+    handleSendMessage(analysisQuery);
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-900 overflow-hidden">
       {/* Messages Container */}
@@ -804,8 +904,53 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
       {/* Input Container - Sticky Bottom, after first query */}
       {shouldShowBottomInput && (
-        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-0 safe-area-inset-bottom">
+        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-2 safe-area-inset-bottom">
           <div className="w-full max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pb-0">
+            {/* Rotating Asset Questions - Ticker Style Carousel */}
+            {assetQuestions.length > 0 && (
+              <div className="mb-2 overflow-hidden relative">
+                <div className="flex items-center gap-2">
+                  <span className="text-[clamp(0.5rem,1.5vw,0.625rem)] text-gray-500 flex-shrink-0 z-10 bg-gray-900/95 pr-2">Try asking:</span>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="animate-questions-ticker flex items-center gap-3 sm:gap-4">
+                      {/* Duplicate questions for seamless loop */}
+                      {[...assetQuestions, ...assetQuestions].map((question, idx) => (
+                        <button
+                          key={`${question.asset.id}-${idx}`}
+                          onClick={() => handleAssetQuestion(question)}
+                          disabled={isLoading}
+                          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-[clamp(0.625rem,1.5vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
+                        >
+                          {question.asset?.logo_url && (
+                            <img
+                              src={question.asset.logo_url}
+                              alt={question.asset.name}
+                              className="w-4 h-4 object-contain flex-shrink-0"
+                            />
+                          )}
+                          <span className="font-medium">
+                            {question.text}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <style>{`
+                  @keyframes questions-ticker {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                  }
+                  .animate-questions-ticker {
+                    animation: questions-ticker 30s linear infinite;
+                  }
+                  .animate-questions-ticker:hover {
+                    animation-play-state: paused;
+                  }
+                `}</style>
+              </div>
+            )}
+
             <InputArea
               inputRef={inputRef}
               inputValue={inputValue}
@@ -822,6 +967,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               setOpenDropdown={setOpenDropdown}
               handleCategoryChange={handleCategoryChange}
               handleMarketSelect={handleMarketSelect}
+              showGenerateButton={true}
+              onGenerateAnalysis={handleGenerateAnalysis}
             />
           </div>
           {/* Disclaimer */}
