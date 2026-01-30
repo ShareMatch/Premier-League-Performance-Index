@@ -535,7 +535,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
-        "https://lbmixnhxerrmecfxdfkx.functions.supabase.co/ai-analytics",
+        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.functions.supabase.co/ai-analytics`,
         {
           method: "POST",
           headers: {
