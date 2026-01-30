@@ -1,9 +1,4 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   Sparkles,
   AlertTriangle,
@@ -150,177 +145,171 @@ const InputArea: React.FC<{
   handleCategoryChange,
   handleMarketSelect,
 }) => {
-  const displayLabel =
-    selectedMarket === "ALL_INDEX"
-      ? "All Index"
-      : selectedMarket === "ALL"
-        ? `${currentCategory.label} • All`
-        : `${currentCategory.label} • ${
-            MARKET_LABELS[selectedMarket] || selectedMarket
+    const displayLabel =
+      selectedMarket === "ALL_INDEX"
+        ? "All Index"
+        : selectedMarket === "ALL"
+          ? `${currentCategory.label} • All`
+          : `${currentCategory.label} • ${MARKET_LABELS[selectedMarket] || selectedMarket
           }`;
 
-  return (
-    <div className="w-full">
-      {/* Combined Input Container */}
-      <div className="bg-gray-800/60 border border-gray-700 rounded-2xl">
-        {/* Input Field */}
-        <div className="relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Ask about ${
-              selectedMarket === "ALL_INDEX"
+    return (
+      <div className="w-full">
+        {/* Combined Input Container */}
+        <div className="bg-gray-800/60 border border-gray-700 rounded-xl sm:rounded-2xl">
+          {/* Input Field */}
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={`Ask about ${selectedMarket === "ALL_INDEX"
                 ? "All Index"
                 : selectedMarket === "ALL"
                   ? currentCategory.label
                   : MARKET_LABELS[selectedMarket] || selectedMarket
-            }`}
-            disabled={isLoading}
-            className="w-full px-4 py-4 bg-transparent text-sm text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
-          />
-        </div>
+                }`}
+              disabled={isLoading}
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
+            />
+          </div>
 
-        {/* Filters Row - Inside the same container */}
-        <div className="flex items-center justify-between px-3 pb-2 pt-1">
-          <div className="flex gap-2">
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button
-                  disabled={isLoading}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 flex-shrink-0 disabled:opacity-50 group/trigger shadow-lg"
-                >
-                  <div className="flex items-center gap-1.5">
-                    {selectedMarket !== "ALL" &&
-                      selectedMarket !== "ALL_INDEX" &&
-                      getIndexAvatarUrl(selectedMarket) && (
-                        <img
-                          src={getIndexAvatarUrl(selectedMarket)!}
-                          alt={selectedMarket}
-                          className="w-6 h-6 object-contain flex-shrink-0"
-                        />
-                      )}
-                    <span className="font-bold">{displayLabel}</span>
-                  </div>
-                  <ChevronDown className="w-3.5 h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity" />
-                </button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
-                  sideOffset={8}
-                  align="start"
-                >
-                  {/* Top-level All Index option */}
-                  <DropdownMenu.Item
-                    onSelect={() => {
-                      handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
-                      handleMarketSelect("ALL_INDEX");
-                    }}
-                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                      selectedMarket === "ALL_INDEX"
+          {/* Filters Row - Inside the same container */}
+          <div className="flex items-center justify-between px-2 sm:px-3 pb-2 pt-1 gap-2">
+            <div className="flex gap-2 min-w-0 flex-1">
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button
+                    disabled={isLoading}
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 disabled:opacity-50 group/trigger shadow-lg min-w-0"
+                  >
+                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                      {selectedMarket !== "ALL" &&
+                        selectedMarket !== "ALL_INDEX" &&
+                        getIndexAvatarUrl(selectedMarket) && (
+                          <img
+                            src={getIndexAvatarUrl(selectedMarket)!}
+                            alt={selectedMarket}
+                            className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
+                          />
+                        )}
+                      <span className="font-bold truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">{displayLabel}</span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity flex-shrink-0" />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
+                    sideOffset={8}
+                    align="start"
+                  >
+                    {/* Top-level All Index option */}
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
+                        handleMarketSelect("ALL_INDEX");
+                      }}
+                      className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedMarket === "ALL_INDEX"
                         ? "bg-brand-emerald500 text-white"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>All Index</span>
-                    </div>
-                    {selectedMarket === "ALL_INDEX" && (
-                      <FaCheck className="w-3 h-3" />
-                    )}
-                  </DropdownMenu.Item>
+                        }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>All Index</span>
+                      </div>
+                      {selectedMarket === "ALL_INDEX" && (
+                        <FaCheck className="w-3 h-3" />
+                      )}
+                    </DropdownMenu.Item>
 
-                  <div className="h-px bg-gray-800 my-1 mx-1" />
+                    <div className="h-px bg-gray-800 my-1 mx-1" />
 
-                  {CATEGORIES.map((cat) => (
-                    <DropdownMenu.Sub key={cat.id}>
-                      <DropdownMenu.SubTrigger
-                        className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
-                          selectedCategory === cat.id
+                    {CATEGORIES.map((cat) => (
+                      <DropdownMenu.Sub key={cat.id}>
+                        <DropdownMenu.SubTrigger
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${selectedCategory === cat.id
                             ? "text-brand-emerald500"
                             : "text-gray-400 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        <span>{cat.label}</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </DropdownMenu.SubTrigger>
-                      <DropdownMenu.Portal>
-                        <DropdownMenu.SubContent
-                          className="z-50 min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-left ml-1"
-                          sideOffset={0}
-                          alignOffset={-8}
+                            }`}
                         >
-                          {/* "All" Option for the category - only shown if multiple markets exist */}
-                          {cat.markets.length > 1 && (
-                            <>
-                              <DropdownMenu.Item
-                                onSelect={() => {
-                                  handleCategoryChange(cat.id);
-                                  handleMarketSelect("ALL");
-                                }}
-                                className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                                  selectedCategory === cat.id &&
-                                  selectedMarket === "ALL"
+                          <span>{cat.label}</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </DropdownMenu.SubTrigger>
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.SubContent
+                            className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-left ml-1"
+                            sideOffset={0}
+                            alignOffset={-8}
+                          >
+                            {/* "All" Option for the category - only shown if multiple markets exist */}
+                            {cat.markets.length > 1 && (
+                              <>
+                                <DropdownMenu.Item
+                                  onSelect={() => {
+                                    handleCategoryChange(cat.id);
+                                    handleMarketSelect("ALL");
+                                  }}
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedCategory === cat.id &&
+                                    selectedMarket === "ALL"
                                     ? "bg-brand-emerald500 text-white"
                                     : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
-                              >
-                                <span>All {cat.label}</span>
-                                {selectedCategory === cat.id &&
-                                  selectedMarket === "ALL" && (
-                                    <FaCheck className="w-3 h-3" />
-                                  )}
-                              </DropdownMenu.Item>
+                                    }`}
+                                >
+                                  <span>All {cat.label}</span>
+                                  {selectedCategory === cat.id &&
+                                    selectedMarket === "ALL" && (
+                                      <FaCheck className="w-3 h-3" />
+                                    )}
+                                </DropdownMenu.Item>
 
-                              <div className="h-px bg-gray-800 my-1 mx-1" />
-                            </>
-                          )}
+                                <div className="h-px bg-gray-800 my-1 mx-1" />
+                              </>
+                            )}
 
-                          {cat.markets.map((marketId) => {
-                            const isSelected =
-                              selectedCategory === cat.id &&
-                              selectedMarket === marketId;
-                            return (
-                              <DropdownMenu.Item
-                                key={marketId}
-                                onSelect={() => {
-                                  handleCategoryChange(cat.id);
-                                  handleMarketSelect(marketId);
-                                }}
-                                className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
-                                  isSelected
+                            {cat.markets.map((marketId) => {
+                              const isSelected =
+                                selectedCategory === cat.id &&
+                                selectedMarket === marketId;
+                              return (
+                                <DropdownMenu.Item
+                                  key={marketId}
+                                  onSelect={() => {
+                                    handleCategoryChange(cat.id);
+                                    handleMarketSelect(marketId);
+                                  }}
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
                                     ? "bg-brand-emerald500 text-white"
                                     : "text-gray-400 hover:text-white hover:bg-white/5"
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {getIndexAvatarUrl(marketId) && (
-                                    <img
-                                      src={getIndexAvatarUrl(marketId)!}
-                                      alt={marketId}
-                                      className="w-5 h-5 object-contain flex-shrink-0"
-                                    />
-                                  )}
-                                  <span>
-                                    {MARKET_LABELS[marketId] || marketId}
-                                  </span>
-                                </div>
-                                {isSelected && <FaCheck className="w-3 h-3" />}
-                              </DropdownMenu.Item>
-                            );
-                          })}
-                        </DropdownMenu.SubContent>
-                      </DropdownMenu.Portal>
-                    </DropdownMenu.Sub>
-                  ))}
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                                    }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {getIndexAvatarUrl(marketId) && (
+                                      <img
+                                        src={getIndexAvatarUrl(marketId)!}
+                                        alt={marketId}
+                                        className="w-5 h-5 object-contain flex-shrink-0"
+                                      />
+                                    )}
+                                    <span>
+                                      {MARKET_LABELS[marketId] || marketId}
+                                    </span>
+                                  </div>
+                                  {isSelected && <FaCheck className="w-3 h-3" />}
+                                </DropdownMenu.Item>
+                              );
+                            })}
+                          </DropdownMenu.SubContent>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Sub>
+                    ))}
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
 
-            {/* Web search button
+              {/* Web search button
           <button
             onClick={() => setClicked((prev) => !prev)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0
@@ -334,44 +323,43 @@ const InputArea: React.FC<{
             <Globe className="w-4 h-4" />
             Web Search
           </button> */}
-          </div>
+            </div>
 
-          {/* Send button - right side */}
-          <button
-            onClick={() => handleSendMessage()}
-            disabled={!inputValue.trim() || isLoading}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <ArrowUp className="w-5 h-5" />
-            )}
-          </button>
+            {/* Send button - right side */}
+            <button
+              onClick={() => handleSendMessage()}
+              disabled={!inputValue.trim() || isLoading}
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
   ({ message }) => {
     return (
       <div
-        className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+        className={`flex gap-2 sm:gap-3 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
       >
         {message.role === "assistant" && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-brand-emerald500" />
+          <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500" />
           </div>
         )}
 
         <div
-          className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
-            message.role === "user"
-              ? "bg-brand-emerald500 text-white rounded-tr-sm"
-              : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
-          }`}
+          className={`max-w-[88%] xs:max-w-[85%] sm:max-w-[80%] md:max-w-[75%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${message.role === "user"
+            ? "bg-brand-emerald500 text-white rounded-tr-sm"
+            : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
+            }`}
         >
           {message.role === "assistant" ? (
             <ReactMarkdown
@@ -379,49 +367,49 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
               components={{
                 h1: ({ node, ...props }) => (
                   <h1
-                    className="text-xl font-bold text-white mb-3 border-b border-gray-700 pb-2"
+                    className="text-[clamp(1rem,3vw,1.25rem)] font-bold text-white mb-2 sm:mb-3 border-b border-gray-700 pb-2"
                     {...props}
                   />
                 ),
                 h2: ({ node, ...props }) => (
                   <h2
-                    className="text-lg font-bold text-brand-emerald500 mt-4 mb-2"
+                    className="text-[clamp(0.9375rem,2.5vw,1.125rem)] font-bold text-brand-emerald500 mt-3 sm:mt-4 mb-1.5 sm:mb-2"
                     {...props}
                   />
                 ),
                 h3: ({ node, ...props }) => (
                   <h3
-                    className="text-base font-semibold text-white mt-3 mb-1.5"
+                    className="text-[clamp(0.875rem,2vw,1rem)] font-semibold text-white mt-2 sm:mt-3 mb-1 sm:mb-1.5"
                     {...props}
                   />
                 ),
                 p: ({ node, ...props }) => (
                   <p
-                    className="text-sm text-gray-300 leading-relaxed mb-2"
+                    className="text-[clamp(0.75rem,2vw,0.875rem)] text-gray-300 leading-relaxed mb-1.5 sm:mb-2"
                     {...props}
                   />
                 ),
                 ul: ({ node, ...props }) => (
                   <ul
-                    className="list-disc list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
+                    className="list-disc list-outside ml-4 sm:ml-5 space-y-0.5 sm:space-y-1 mb-2 sm:mb-3 text-[clamp(0.75rem,2vw,0.875rem)] text-gray-300"
                     {...props}
                   />
                 ),
                 ol: ({ node, ...props }) => (
                   <ol
-                    className="list-decimal list-outside ml-5 space-y-1 mb-3 text-sm text-gray-300"
+                    className="list-decimal list-outside ml-4 sm:ml-5 space-y-0.5 sm:space-y-1 mb-2 sm:mb-3 text-[clamp(0.75rem,2vw,0.875rem)] text-gray-300"
                     {...props}
                   />
                 ),
                 li: ({ node, ...props }) => (
-                  <li className="pl-1 text-sm" {...props} />
+                  <li className="pl-0.5 sm:pl-1 text-[clamp(0.75rem,2vw,0.875rem)]" {...props} />
                 ),
                 strong: ({ node, ...props }) => (
                   <strong className="text-white font-semibold" {...props} />
                 ),
                 blockquote: ({ node, ...props }) => (
                   <blockquote
-                    className="border-l-4 border-brand-emerald500 pl-3 italic text-sm text-gray-400 my-3 bg-gray-900/50 p-2 rounded-r-lg"
+                    className="border-l-2 sm:border-l-4 border-brand-emerald500 pl-2 sm:pl-3 italic text-[clamp(0.75rem,2vw,0.875rem)] text-gray-400 my-2 sm:my-3 bg-gray-900/50 p-1.5 sm:p-2 rounded-r-lg"
                     {...props}
                   />
                 ),
@@ -430,13 +418,13 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
               {message.content}
             </ReactMarkdown>
           ) : (
-            <p className="text-sm leading-relaxed">{message.content}</p>
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] leading-relaxed">{message.content}</p>
           )}
         </div>
 
         {message.role === "user" && (
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-            <User className="w-4 h-4 text-gray-300" />
+          <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-600 flex items-center justify-center">
+            <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-300" />
           </div>
         )}
       </div>
@@ -453,8 +441,6 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [clicked, setClicked] = useState(false);
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
-  // Session ID for Vertex AI Agent Engine - maintains conversation context
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const randomQuestions = useMemo(() => {
     return [...SUGGESTED_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 4);
@@ -462,6 +448,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   const hasStartedChat = messages.length > 0;
   const shouldShowBottomInput = hasSentFirstMessage || hasStartedChat;
@@ -478,6 +465,12 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      sessionIdRef.current = null;
+    };
+  }, []);
+
   // Update selected market when category changes
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -491,10 +484,6 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const handleMarketSelect = (marketId: string) => {
     setSelectedMarket(marketId);
     setOpenDropdown(null);
-    // Reset session when market changes - new context = new conversation
-    if (marketId !== selectedMarket) {
-      setSessionId(null);
-    }
   };
 
   const handleSendMessage = async (messageText?: string) => {
@@ -502,6 +491,9 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     if (!text || isLoading) return;
 
     setHasSentFirstMessage(true);
+
+    // In handleSendMessage, before the fetch:
+    // console.log("📤 Sending message with session ID:", sessionIdRef.current);
 
     const displayMarket =
       selectedMarket === "ALL_INDEX"
@@ -537,7 +529,9 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         selectedMarket === "ALL_INDEX"
           ? teams
           : selectedMarket === "ALL"
-            ? teams.filter((t) => t.market && categoryMarkets.includes(t.market))
+            ? teams.filter(
+              (t) => t.market && categoryMarkets.includes(t.market),
+            )
             : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
@@ -554,7 +548,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             selectedMarket,
             userQuery: text,
             chatHistory: messages.length ? messages.slice(-10) : [], // last 10 messages for context
-            sessionId, // Include session ID for conversation continuity
+            sessionId: sessionIdRef.current, // Include session ID for conversation continuity
           }),
         },
       );
@@ -569,9 +563,17 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       if (!res.body) throw new Error("No response body");
 
       // Check for session ID in response header
+      // Check for session ID in response header IMMEDIATELY
       const responseSessionId = res.headers.get("X-Session-Id");
-      if (responseSessionId) {
-        setSessionId(responseSessionId);
+      // console.log("🔍 Response headers:", {
+      //   hasSessionId: !!responseSessionId,
+      //   sessionId: responseSessionId,
+      //   allHeaders: Array.from(res.headers.entries()),
+      // });
+
+      if (responseSessionId && !sessionIdRef.current) {
+        sessionIdRef.current = responseSessionId;
+        // console.log("📌 Session ID set from header:", responseSessionId);
       }
 
       // Prepare assistant message in state
@@ -588,41 +590,79 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       const decoder = new TextDecoder();
       let isFirstChunk = true;
 
-      // ✅ Direct streaming - update state immediately on every chunk
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Character-by-character reveal logic
+      let fullContent = "";
+      let displayedLength = 0;
+      const CHARS_PER_FRAME = 3; // ~180 chars per second at 60fps
+      const FRAME_DELAY = 16; // ~60fps
 
-        let chunk = decoder.decode(value, { stream: true });
+      const typingInterval = setInterval(() => {
+        if (displayedLength < fullContent.length) {
+          displayedLength = Math.min(displayedLength + CHARS_PER_FRAME, fullContent.length);
+          const visibleContent = fullContent.slice(0, displayedLength);
 
-        // Check for session marker in first chunk (fallback if header not available)
-        if (isFirstChunk) {
-          isFirstChunk = false;
-          const sessionMatch = chunk.match(/<!--SESSION:([^>]+)-->/);
-          if (sessionMatch) {
-            setSessionId(sessionMatch[1]);
-            // Remove the session marker from the displayed content
-            chunk = chunk.replace(/<!--SESSION:[^>]+-->/, "");
-          }
-        }
-
-        // Update message content directly - no buffering
-        if (chunk) {
           setMessages((prev) => {
             const updated = [...prev];
             const idx = updated.findIndex((m) => m.id === assistantMessageId);
             if (idx !== -1) {
               updated[idx] = {
                 ...updated[idx],
-                content: updated[idx].content + chunk,
+                content: visibleContent,
               };
             }
             return updated;
           });
         }
+      }, FRAME_DELAY);
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          let chunk = decoder.decode(value, { stream: true });
+
+          // Check for session marker in first chunk
+          if (isFirstChunk) {
+            isFirstChunk = false;
+            const sessionMatch = chunk.match(/<!--SESSION:([^>]+)-->/);
+            if (sessionMatch && !sessionIdRef.current) {
+              sessionIdRef.current = sessionMatch[1];
+            }
+            chunk = chunk.replace(/<!--SESSION:[^>]+-->/, "");
+          }
+
+          if (chunk) {
+            fullContent += chunk;
+          }
+        }
+      } finally {
+        // Wait for remaining content to be typed out before clearing interval and loading state
+        await new Promise<void>((resolve) => {
+          const checkComplete = setInterval(() => {
+            if (displayedLength >= fullContent.length) {
+              clearInterval(checkComplete);
+              clearInterval(typingInterval);
+
+              // Ensure final state is perfectly clean
+              setMessages((prev) => {
+                const updated = [...prev];
+                const idx = updated.findIndex((m) => m.id === assistantMessageId);
+                if (idx !== -1) {
+                  updated[idx] = { ...updated[idx], content: fullContent };
+                }
+                return updated;
+              });
+              resolve();
+            }
+          }, 50);
+        });
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Unable to generate analysis at this time.";
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Unable to generate analysis at this time.";
       console.error(err);
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
@@ -666,37 +706,37 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         style={{ contain: "layout" }}
         ref={messagesEndRef}
       >
-        <div className="max-w-sm sm:max-w-md md:max-w-4xl mx-auto p-4">
+        <div className="w-full max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 py-3 sm:py-4">
           {!shouldShowBottomInput ? (
             /* Initial Welcome State - Input centered */
-            <div className="flex flex-col items-center justify-center h-full w-full">
-              <div className="inline-flex items-center justify-center p-3 bg-[#00A651]/10 rounded-full ring-1 ring-[#00A651]/20">
-                <Sparkles className="w-8 h-8 text-[#00A651]" />
+            <div className="flex flex-col items-center justify-center h-full w-full min-h-[40vh] sm:min-h-[50vh]">
+              <div className="inline-flex items-center justify-center p-2 sm:p-3 bg-[#00A651]/10 rounded-full ring-1 ring-[#00A651]/20">
+                <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-[#00A651]" />
               </div>
-              <h2 className="px-1 text-pretty whitespace-pre-wrap text-lg font-medium text-white mb-10 text-center mt-6">
+              <h2 className="px-2 sm:px-4 text-pretty whitespace-pre-wrap text-[clamp(0.9375rem,3vw,1.125rem)] font-medium text-white mb-6 sm:mb-10 text-center mt-4 sm:mt-6 max-w-[280px] xs:max-w-sm sm:max-w-md md:max-w-lg">
                 Ask me anything about sports markets, team performance, or
                 player stats.
               </h2>
 
               {/* Centered Input Area */}
-              <div className="w-full mt-8">
-                {/* Suggested Questions - Horizontal Scrollable Row */}
-                <div className="w-full flex justify-center px-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 pb-2 w-full max-w-5xl">
+              <div className="w-full mt-4 sm:mt-8">
+                {/* Suggested Questions - Responsive Grid */}
+                <div className="w-full flex justify-center px-1 xs:px-2 sm:px-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-6 sm:mb-10 pb-2 w-full max-w-5xl">
                     {randomQuestions.map((question, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSuggestedQuestion(question)}
-                        className="px-4 py-2 text-xs text-start text-gray-400 bg-gray-800/40 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 flex items-center justify-start gap-2 shadow-xl shadow-black/20 group/btn w-full"
+                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-[clamp(0.6875rem,1.8vw,0.75rem)] text-start text-gray-400 bg-gray-800/40 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-2xl sm:rounded-full transition-all duration-200 flex items-center justify-start gap-2 sm:gap-2.5 shadow-xl shadow-black/20 group/btn w-full"
                       >
                         {getIndexAvatarUrl(question.market) && (
                           <img
                             src={getIndexAvatarUrl(question.market)!}
                             alt={question.market}
-                            className="w-5 h-5 object-contain flex-shrink-0"
+                            className="w-5 h-5 sm:w-5 sm:h-5 object-contain flex-shrink-0"
                           />
                         )}
-                        <span className="font-medium whitespace-nowrap">
+                        <span className="font-medium text-left leading-snug">
                           {question.text}
                         </span>
                       </button>
@@ -725,7 +765,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             </div>
           ) : (
             /* Chat Messages */
-            <div className="space-y-4 pb-4 mb-32">
+            <div className="space-y-3 sm:space-y-4 pb-4 mb-28 sm:mb-32">
               {messages.map((message) => (
                 <ChatMessageBubble key={message.id} message={message} />
               ))}
@@ -733,22 +773,22 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               {/* Loading indicator */}
               {isLoading &&
                 messages[messages.length - 1]?.role !== "assistant" && (
-                  <div className="flex gap-3 justify-start animate-in fade-in duration-200">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-brand-emerald500" />
+                  <div className="flex gap-2 sm:gap-3 justify-start animate-in fade-in duration-200">
+                    <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-brand-emerald500/20 flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-brand-emerald500" />
                     </div>
-                    <div className="bg-gray-800/80 px-4 py-3 rounded-2xl rounded-tl-sm border border-gray-700/50">
-                      <div className="flex gap-1.5">
+                    <div className="bg-gray-800/80 px-3 sm:px-4 py-2 sm:py-3 rounded-xl sm:rounded-2xl rounded-tl-sm border border-gray-700/50">
+                      <div className="flex gap-1 sm:gap-1.5">
                         <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: "0ms" }}
                         />
                         <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: "150ms" }}
                         />
                         <span
-                          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                          className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gray-400 rounded-full animate-bounce"
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
@@ -764,8 +804,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
       {/* Input Container - Sticky Bottom, after first query */}
       {shouldShowBottomInput && (
-        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-0">
-          <div className="max-w-sm sm:max-w-md md:max-w-4xl mx-auto p-4 pb-0">
+        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-0 safe-area-inset-bottom">
+          <div className="w-full max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pb-0">
             <InputArea
               inputRef={inputRef}
               inputValue={inputValue}
@@ -785,8 +825,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             />
           </div>
           {/* Disclaimer */}
-          <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-600 mt-2">
-            <AlertTriangle className="w-3 h-3 text-amber-500/50" />
+          <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[clamp(0.5rem,1.5vw,0.625rem)] text-gray-600 mt-1.5 sm:mt-2 pb-1 sm:pb-2">
+            <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500/50" />
             <span>AI can make mistakes. Check important info.</span>
           </div>
         </div>
