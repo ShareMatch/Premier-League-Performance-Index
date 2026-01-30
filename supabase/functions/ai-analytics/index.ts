@@ -2,34 +2,26 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 
-// GCP token response interface
 interface GcpTokenResponse {
   access_token: string;
   expires_in: number;
   token_type: string;
 }
 
-// Get GCP access token from metadata server (works in Cloud Run/GCE)
-// Falls back to service account key if metadata server unavailable
 async function getAccessToken(): Promise<string> {
-  // Try metadata server first (Cloud Run, GCE, etc.)
   try {
     const res = await fetch(
       "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
-      {
-        headers: { "Metadata-Flavor": "Google" },
-      },
+      { headers: { "Metadata-Flavor": "Google" } },
     );
-
     if (res.ok) {
       const data = (await res.json()) as GcpTokenResponse;
       return data.access_token;
     }
   } catch {
-    // Metadata server not available, try service account
+    // Metadata server not available
   }
 
-  // Fallback: Use service account JSON from environment
   const serviceAccountJson = Deno.env.get("GCP_SERVICE_ACCOUNT_JSON");
   if (serviceAccountJson) {
     const serviceAccount = JSON.parse(serviceAccountJson);
@@ -39,7 +31,6 @@ async function getAccessToken(): Promise<string> {
   throw new Error("No GCP authentication method available");
 }
 
-// Generate JWT and exchange for access token using service account
 async function getAccessTokenFromServiceAccount(serviceAccount: {
   client_email: string;
   private_key: string;
@@ -56,17 +47,11 @@ async function getAccessTokenFromServiceAccount(serviceAccount: {
   };
 
   const encodedHeader = btoa(JSON.stringify(header))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
   const encodedPayload = btoa(JSON.stringify(payload))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
-
-  // Import private key and sign
   const pemKey = serviceAccount.private_key;
   const pemContents = pemKey
     .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -75,29 +60,21 @@ async function getAccessTokenFromServiceAccount(serviceAccount: {
   const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryKey,
+    "pkcs8", binaryKey,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
+    false, ["sign"],
   );
 
   const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
+    "RSASSA-PKCS1-v1_5", cryptoKey,
     new TextEncoder().encode(signatureInput),
   );
 
-  const encodedSignature = btoa(
-    String.fromCharCode(...new Uint8Array(signature)),
-  )
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 
   const jwt = `${signatureInput}.${encodedSignature}`;
 
-  // Exchange JWT for access token
   const tokenRes = await fetch(
     serviceAccount.token_uri || "https://oauth2.googleapis.com/token",
     {
@@ -134,15 +111,7 @@ serve(async (req: Request) => {
       });
     }
 
-    console.log("✅ Auth successful for user:", authResult.authUserId);
-
-    const {
-      teams,
-      selectedMarket,
-      userQuery,
-      chatHistory = [],
-      sessionId, // Session ID for multi-turn conversations
-    } = await req.json();
+    const { teams, selectedMarket, userQuery, sessionId } = await req.json();
 
     const missingFields = [];
     if (!teams || teams.length === 0) missingFields.push("teams");
@@ -151,111 +120,76 @@ serve(async (req: Request) => {
 
     if (missingFields.length > 0) {
       return new Response(
-        JSON.stringify({
-          error: `Missing field(s): ${missingFields.join(", ")}`,
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        JSON.stringify({ error: `Missing field(s): ${missingFields.join(", ")}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Get configuration from environment
     const agentStreamUrl = Deno.env.get("VERTEX_AI_AGENT_STREAM_URL");
     const projectId = Deno.env.get("GCP_PROJECT_ID");
     const location = Deno.env.get("GCP_LOCATION") || "us-central1";
     const reasoningEngineId = Deno.env.get("VERTEX_AI_REASONING_ENGINE_ID");
 
     if (!agentStreamUrl && !reasoningEngineId) {
-      console.error("❌ Missing configuration");
       return new Response(
         JSON.stringify({ error: "Agent configuration missing" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    console.log("🤖 Calling deployed Vertex AI agent");
-
-    // Get GCP access token
     const accessToken = await getAccessToken();
 
-    // Prepare team data for context
-    const marketTeams = teams
-      .filter(
-        (t: { market: string }) =>
-          selectedMarket === "ALL_INDEX" ||
-          selectedMarket === "ALL" ||
-          t.market === selectedMarket,
-      )
-      .sort((a: { offer: number }, b: { offer: number }) => b.offer - a.offer)
-      .slice(0, 8)
-      .map(
-        (t: { name: string; offer: number }) =>
-          `${t.name} (${t.offer.toFixed(1)}%)`,
-      )
-      .join(", ");
+    let activeSessionId = sessionId;
+    if (!activeSessionId && reasoningEngineId && projectId) {
+      console.log("📝 Creating new session...");
+      const sessionCreateUrl = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}/sessions`;
 
-    const today = new Date().toISOString().split("T")[0];
+      const sessionResponse = await fetch(sessionCreateUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ userId: authResult.authUserId }),
+      });
 
-    // Determine the endpoint URL - MUST include ?alt=sse for streaming
+      if (sessionResponse.ok) {
+        let operation = await sessionResponse.json();
+        const operationName = operation.name;
+        while (!operation.done) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const pollResponse = await fetch(
+            `https://${location}-aiplatform.googleapis.com/v1beta1/${operationName}`,
+            { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!pollResponse.ok) break;
+          operation = await pollResponse.json();
+        }
+
+        if (operation.response?.name) {
+          activeSessionId = operation.response.name.split("/").pop();
+          console.log("✅ New session created:", activeSessionId);
+        }
+      }
+    }
+
     let endpoint = agentStreamUrl;
     if (!endpoint && projectId && reasoningEngineId) {
       endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}:streamQuery?alt=sse`;
     }
 
-    if (!endpoint) {
-      throw new Error("No valid endpoint configured");
-    }
+    const messageWithContext = `[Selected Market Index: ${selectedMarket}]\n${userQuery}`;
 
-    // ✅ FIX: Build message with all context embedded
-    const contextInfo = [];
-
-    contextInfo.push(
-      `Market context: ${selectedMarket === "ALL_INDEX" ? "All Index Tokens" : selectedMarket}`,
-    );
-    contextInfo.push(`Date: ${today}`);
-    contextInfo.push(`Top teams in market: ${marketTeams}`);
-
-    if (chatHistory.length > 0) {
-      contextInfo.push(`\nRecent conversation:`);
-      chatHistory
-        .slice(-10)
-        .forEach((msg: { role: string; content: string }) => {
-          contextInfo.push(`${msg.role}: ${msg.content}`);
-        });
-    }
-
-    const messageWithContext = `${userQuery}
-
-Context:
-${contextInfo.join("\n")}`;
-
-    // ✅ FIX: Use ADK-specific payload structure
-    // According to Vertex AI Agent Engine docs, the payload must be:
-    // { "class_method": "async_stream_query", "input": { "user_id", "session_id", "message" } }
     const payload = {
       class_method: "async_stream_query",
       input: {
         user_id: authResult.authUserId,
-        ...(sessionId && { session_id: sessionId }),
+        ...(activeSessionId && { session_id: activeSessionId }),
         message: messageWithContext,
       },
     };
 
-    console.log(
-      "📤 Request payload:",
-      JSON.stringify({
-        class_method: payload.class_method,
-        user_id: payload.input.user_id,
-        session_id: payload.input.session_id || "new",
-        messageLength: payload.input.message.length,
-        hasHistory: chatHistory.length > 0,
-      }),
-    );
+    console.log("🤖 Calling Vertex AI Agent:", endpoint);
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -268,94 +202,53 @@ ${contextInfo.join("\n")}`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ Agent request failed:", response.status, errorText);
-      throw new Error(
-        `Agent request failed: ${response.status} - ${errorText}`,
-      );
+      throw new Error(`Agent request failed: ${response.status} - ${errorText}`);
     }
 
-    console.log("✅ Agent responded, streaming...");
+    const responseHeaders: Record<string, string> = {
+      ...corsHeaders,
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    };
 
-    // Check if response includes a new session ID in headers
-    const newSessionId = response.headers.get("x-session-id");
+    if (activeSessionId) {
+      responseHeaders["X-Session-Id"] = activeSessionId;
+    }
 
-    // Create a TransformStream to potentially inject session info
+    // Use TransformStream for cleaner processing
     const { readable, writable } = new TransformStream();
-
-    // Start piping the response
     const writer = writable.getWriter();
     const reader = response.body?.getReader();
 
-    if (!reader) {
-      throw new Error("No response body");
-    }
+    if (!reader) throw new Error("No response body from agent");
 
-    // Process the stream - parse SSE JSON format
     (async () => {
       try {
         const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
         let buffer = "";
-        let sessionIdExtracted = false;
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          // Decode the chunk
-          buffer += decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
 
-          // Split by newlines to handle multiple JSON objects
           const lines = buffer.split("\n");
-          buffer = lines.pop() || ""; // Keep the incomplete line in buffer
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-
-            try {
-              // Parse the JSON object from the stream
-              const data = JSON.parse(trimmed);
-
-              // Extract session ID from the first response if available
-              if (!sessionIdExtracted && data.session_id) {
-                const sessionMarker = `<!--SESSION:${data.session_id}-->`;
-                await writer.write(new TextEncoder().encode(sessionMarker));
-                sessionIdExtracted = true;
-              }
-
-              // Extract text content from the response
-              if (data.content?.parts) {
-                for (const part of data.content.parts) {
-                  if (part.text) {
-                    // Stream the actual text content to frontend
-                    await writer.write(new TextEncoder().encode(part.text));
-                  }
-                }
-              }
-            } catch (parseError) {
-              // If it's not JSON, it might be a partial chunk or error message
-              console.error("Failed to parse SSE chunk:", trimmed);
-            }
+            await processLine(line, writer, encoder);
           }
         }
 
-        // Process any remaining buffer
         if (buffer.trim()) {
-          try {
-            const data = JSON.parse(buffer.trim());
-            if (data.content?.parts) {
-              for (const part of data.content.parts) {
-                if (part.text) {
-                  await writer.write(new TextEncoder().encode(part.text));
-                }
-              }
-            }
-          } catch (e) {
-            console.error("Failed to parse final buffer:", buffer);
-          }
+          await processLine(buffer, writer, encoder);
         }
-      } catch (error) {
-        console.error("Stream processing error:", error);
+      } catch (err) {
+        console.error("❌ Stream error:", err);
       } finally {
         await writer.close();
       }
@@ -363,29 +256,56 @@ ${contextInfo.join("\n")}`;
 
     return new Response(readable, {
       status: 200,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-        // Pass session ID in response header if available
-        ...(newSessionId && { "X-Session-Id": newSessionId }),
-      },
+      headers: responseHeaders,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("❌ Error:", errorMessage);
     return new Response(
       JSON.stringify({
         error: `AI agent error: ${errorMessage}`,
-        analysis:
-          "**Unable to Generate Analysis**\n\nThe AI agent encountered an error. Please try again later.",
+        analysis: "**Unable to Generate Analysis**\n\nThe AI agent encountered an error.",
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
+
+async function processLine(line: string, writer: any, encoder: TextEncoder) {
+  const trimmedLine = line.trim();
+  if (!trimmedLine) return;
+
+  if (trimmedLine.startsWith("data:")) {
+    const jsonStr = trimmedLine.replace(/^data:\s*/, "");
+    if (jsonStr === "[DONE]") return;
+
+    try {
+      const data = JSON.parse(jsonStr);
+
+      let text = "";
+      if (data.content?.parts) {
+        for (const part of data.content.parts) {
+          if (part.text) text += part.text;
+        }
+      } else if (data.text) {
+        text = data.text;
+      } else if (typeof data === 'string') {
+        text = data;
+      }
+
+      if (text) {
+        await writer.write(encoder.encode(text));
+      }
+    } catch {
+      // Ignore parse errors for partial chunks
+    }
+  } else if (trimmedLine.startsWith("{")) {
+    try {
+      const data = JSON.parse(trimmedLine);
+      const text = data.content?.parts?.[0]?.text || data.text;
+      if (text) await writer.write(encoder.encode(text));
+    } catch {
+      // Ignore
+    }
+  }
+}
