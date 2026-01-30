@@ -903,29 +903,30 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       </div>
 
       {/* Input Container - Sticky Bottom, after first query */}
+      {/* On lg+ screens, offset left for Sidebar and right for RightPanel to avoid overlap */}
       {shouldShowBottomInput && (
-        <div className="fixed bottom-0 left-0 w-full z-10 bg-gray-900/95 backdrop-blur-xl pt-2 safe-area-inset-bottom">
-          <div className="w-full max-w-[95%] xs:max-w-[90%] sm:max-w-md md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pb-0">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-[clamp(180px,18vw,240px)] lg:right-[clamp(240px,22vw,320px)] z-[5] bg-gray-900/95 backdrop-blur-xl pt-1.5 xs:pt-2 sm:pt-2.5 md:pt-3 safe-area-inset-bottom">
+          <div className="w-full max-w-[96%] xs:max-w-[94%] sm:max-w-[90%] md:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 md:px-5 pb-0">
             {/* Rotating Asset Questions - Ticker Style Carousel */}
             {assetQuestions.length > 0 && (
-              <div className="mb-2 overflow-hidden relative">
-                <div className="flex items-center gap-2">
-                  <span className="text-[clamp(0.5rem,1.5vw,0.625rem)] text-gray-500 flex-shrink-0 z-10 bg-gray-900/95 pr-2">Try asking:</span>
+              <div className="mb-1.5 xs:mb-2 sm:mb-2.5 overflow-hidden relative">
+                <div className="flex items-center gap-1.5 xs:gap-2">
+                  <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 flex-shrink-0 bg-gray-900/95 pr-1 xs:pr-2 hidden xs:block">Try asking:</span>
                   <div className="flex-1 overflow-hidden">
-                    <div className="animate-questions-ticker flex items-center gap-3 sm:gap-4">
+                    <div className="animate-questions-ticker flex items-center gap-2 xs:gap-3 sm:gap-4">
                       {/* Duplicate questions for seamless loop */}
                       {[...assetQuestions, ...assetQuestions].map((question, idx) => (
                         <button
                           key={`${question.asset.id}-${idx}`}
                           onClick={() => handleAssetQuestion(question)}
                           disabled={isLoading}
-                          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-[clamp(0.625rem,1.5vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
+                          className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 md:px-4 py-0.5 xs:py-1 sm:py-1.5 text-[clamp(0.5625rem,1.3vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
                         >
                           {question.asset?.logo_url && (
                             <img
                               src={question.asset.logo_url}
                               alt={question.asset.name}
-                              className="w-4 h-4 object-contain flex-shrink-0"
+                              className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
                             />
                           )}
                           <span className="font-medium">
@@ -972,8 +973,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             />
           </div>
           {/* Disclaimer */}
-          <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[clamp(0.5rem,1.5vw,0.625rem)] text-gray-600 mt-1.5 sm:mt-2 pb-1 sm:pb-2">
-            <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500/50" />
+          <div className="flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-1.5 text-[clamp(0.4375rem,1.1vw,0.625rem)] text-gray-600 mt-1 xs:mt-1.5 sm:mt-2 pb-1 xs:pb-1.5 sm:pb-2 md:pb-3">
+            <AlertTriangle className="w-2 h-2 xs:w-2.5 xs:h-2.5 sm:w-3 sm:h-3 text-amber-500/50 flex-shrink-0" />
             <span>AI can make mistakes. Check important info.</span>
           </div>
         </div>
