@@ -36,6 +36,7 @@ import {
 } from "../lib/api";
 import type { VerificationRequiredData } from "./auth/LoginModal";
 import HowItWorksModal from "./HowItWorksModal";
+import { marketInfoData } from "../lib/marketInfo";
 
 interface TopBarProps {
   wallet: WalletType | null;
@@ -180,7 +181,19 @@ const TopBar: React.FC<TopBarProps> = ({
 
     const query = searchQuery.toLowerCase();
     const results = allAssets
-      .filter((asset) => asset.name.toLowerCase().includes(query))
+      .filter((asset) => {
+        // Filter by search query
+        if (!asset.name.toLowerCase().includes(query)) return false;
+        
+        // Filter out settled assets
+        if (asset.is_settled) return false;
+        
+        // Only show assets from markets that are explicitly open
+        const marketInfo = marketInfoData[asset.market || ""];
+        if (!marketInfo || !marketInfo.isOpen) return false;
+        
+        return true;
+      })
       .slice(0, 10); // Limit to 10 results
 
     setSearchResults(results);
