@@ -160,7 +160,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   // Payment details state
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("none");
   const [bankDetails, setBankDetails] = useState<BankDetails | undefined>(
-    undefined
+    undefined,
   );
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showBankDetailsModal, setShowBankDetailsModal] = useState(false);
@@ -219,15 +219,21 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           }
         };
 
-        const [details, kycStatusResponse, bankingDetails, userPrefs, user, logins] =
-          await Promise.all([
-            fetchUserDetails(userId),
-            getKycUserStatus(userId).catch(() => null),
-            fetchUserBankingDetails(userId).catch(() => null),
-            fetchPreferences(),
-            fetchAuthUserData().catch(() => null),
-            fetchLoginHistory(userId, 5).catch(() => []),
-          ]);
+        const [
+          details,
+          kycStatusResponse,
+          bankingDetails,
+          userPrefs,
+          user,
+          logins,
+        ] = await Promise.all([
+          fetchUserDetails(userId),
+          getKycUserStatus(userId).catch(() => null),
+          fetchUserBankingDetails(userId).catch(() => null),
+          fetchPreferences(),
+          fetchAuthUserData().catch(() => null),
+          fetchLoginHistory(userId, 5).catch(() => []),
+        ]);
 
         if (details) {
           setUserDetails(details);
@@ -331,7 +337,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     const newWhatsApp = updatedFields.whatsapp || "";
     const newDisplayName = updatedFields.name;
 
-
     const emailChanged = newEmail !== currentEmail && newEmail !== "";
     const whatsappChanged =
       newWhatsApp !== currentWhatsApp && newWhatsApp !== "";
@@ -364,7 +369,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       } catch (error: any) {
         console.error("❌ Email OTP error:", error);
         throw new Error(
-          error.message || "Failed to send email verification code"
+          error.message || "Failed to send email verification code",
         );
       }
     }
@@ -388,7 +393,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       } catch (error: any) {
         console.error("❌ WhatsApp OTP error:", error);
         throw new Error(
-          error.message || "Failed to send WhatsApp verification code"
+          error.message || "Failed to send WhatsApp verification code",
         );
       }
     }
@@ -503,7 +508,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     } catch (error: any) {
       console.error("Failed to update WhatsApp:", error);
       setAlertMessage(
-        "Failed to update WhatsApp number: " + (error?.message || "")
+        "Failed to update WhatsApp number: " + (error?.message || ""),
       );
       setAlertOpen(true);
     }
@@ -627,7 +632,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   // Save Marketing Preferences handler
   const handleSaveMarketingPreferences = async (
     newPreferences: typeof preferences,
-    newPersonalized: boolean
+    newPersonalized: boolean,
   ) => {
     if (!userId || !userDetails?.email) return;
 
@@ -658,7 +663,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   // Change Password handler
   const handleChangePassword = async (
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
   ) => {
     // Input validation
     if (!currentPassword?.trim()) {
@@ -671,7 +676,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       throw new Error("New password must be at least 8 characters long");
     }
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
-      throw new Error("New password must contain at least one uppercase letter, one lowercase letter, and one number");
+      throw new Error(
+        "New password must contain at least one uppercase letter, one lowercase letter, and one number",
+      );
     }
 
     // Get current user
@@ -715,7 +722,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     // TODO: Implement account deletion
     // This should call a backend function to properly delete the user
     setAlertMessage(
-      "Account deletion feature coming soon. Please contact support."
+      "Account deletion feature coming soon. Please contact support.",
     );
     setAlertOpen(true);
   };
@@ -734,7 +741,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             >
               <X className="w-4 h-4" />
             </button>
-            <h1 className="text-lg sm:text-xl font-bold font-sans">My Details</h1>
+            <h1 className="text-lg sm:text-xl font-bold font-sans">
+              My Details
+            </h1>
           </div>
         </div>
 
@@ -822,7 +831,10 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   }
 
   return (
-    <div data-testid="my-details-page" className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden">
+    <div
+      data-testid="my-details-page"
+      className="h-screen bg-gray-900 text-white flex flex-col font-sans overflow-hidden"
+    >
       {/* Header - Sticky on scroll */}
       <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 sm:px-6 py-3">
         <div className="flex items-center gap-4 max-w-7xl mx-auto">
@@ -921,7 +933,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
             <p className="text-gray-500 text-[10px] sm:text-xs font-sans">
               Read our{" "}
               <a
-                href="/privacy.html"
+                href="https://sharematch.me/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-primary hover:underline font-sans"
@@ -930,7 +942,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
               </a>
               ,{" "}
               <a
-                href="/terms.html"
+                href="https://sharematch.me/terms-and-conditions"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-primary hover:underline font-sans"
@@ -939,7 +951,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
               </a>{" "}
               and{" "}
               <a
-                href="/legal.html"
+                href="https://sharematch.me/legal-regulatory-framework"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-primary hover:underline font-sans"
@@ -995,8 +1007,6 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         }
         currentUserId={userId}
       />
-
-
 
       {/* Edit Address Modal */}
       <EditDetailsModal

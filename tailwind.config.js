@@ -11,6 +11,14 @@ export default {
         "./data/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
+        screens: {
+            'xs': '480px',
+            'sm': '640px',
+            'md': '768px',
+            'lg': '1024px',
+            'xl': '1280px',
+            '2xl': '1536px',
+        },
         extend: {
             colors: {
                 brand: {
@@ -65,6 +73,19 @@ export default {
                     '-webkit-background-clip': 'text',
                     'background-clip': 'text',
                     'color': 'transparent',
+                },
+                // Safe area utilities for mobile devices with notches
+                '.safe-area-inset-bottom': {
+                    'padding-bottom': 'env(safe-area-inset-bottom)',
+                },
+                '.safe-area-inset-top': {
+                    'padding-top': 'env(safe-area-inset-top)',
+                },
+                '.safe-area-inset-left': {
+                    'padding-left': 'env(safe-area-inset-left)',
+                },
+                '.safe-area-inset-right': {
+                    'padding-right': 'env(safe-area-inset-right)',
                 },
             });
         }),

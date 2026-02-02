@@ -10,6 +10,7 @@ export function getCorsHeaders(requestOrigin: string | null, restrictToApp: bool
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Expose-Headers': 'X-Session-Id',
     };
   }
 
@@ -27,7 +28,7 @@ export function getCorsHeaders(requestOrigin: string | null, restrictToApp: bool
 
   // Check if the request origin is allowed
   const isAllowed = allowedOrigins.includes(requestOrigin || '') ||
-                   (requestOrigin && requestOrigin.includes('localhost'));
+    (requestOrigin && requestOrigin.includes('localhost'));
 
   const allowedOrigin = isAllowed ? requestOrigin : supabaseUrl;
 
@@ -37,6 +38,7 @@ export function getCorsHeaders(requestOrigin: string | null, restrictToApp: bool
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Expose-Headers': 'X-Session-Id',
   };
 }
 
@@ -45,6 +47,7 @@ export const unrestrictedCors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Expose-Headers': 'X-Session-Id',
 };
 
 export const restrictedCors = (requestOrigin: string | null) => getCorsHeaders(requestOrigin, true);

@@ -1,12 +1,100 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { requireAuthUser } from "../_shared/require-auth.ts";
 
-serve(async (req: Request) => {
-  const corsHeaders = getCorsHeaders(req.headers.get('origin'), true);
+interface GcpTokenResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+}
 
-  // Handle CORS
+async function getAccessToken(): Promise<string> {
+  try {
+    const res = await fetch(
+      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+      { headers: { "Metadata-Flavor": "Google" } },
+    );
+    if (res.ok) {
+      const data = (await res.json()) as GcpTokenResponse;
+      return data.access_token;
+    }
+  } catch {
+    // Metadata server not available
+  }
+
+  const serviceAccountJson = Deno.env.get("GCP_SERVICE_ACCOUNT_JSON");
+  if (serviceAccountJson) {
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    return await getAccessTokenFromServiceAccount(serviceAccount);
+  }
+
+  throw new Error("No GCP authentication method available");
+}
+
+async function getAccessTokenFromServiceAccount(serviceAccount: {
+  client_email: string;
+  private_key: string;
+  token_uri: string;
+}): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/cloud-platform",
+    aud: serviceAccount.token_uri || "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encodedHeader = btoa(JSON.stringify(header))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  const encodedPayload = btoa(JSON.stringify(payload))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+  const pemKey = serviceAccount.private_key;
+  const pemContents = pemKey
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace("-----END PRIVATE KEY-----", "")
+    .replace(/\s/g, "");
+  const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8", binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false, ["sign"],
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5", cryptoKey,
+    new TextEncoder().encode(signatureInput),
+  );
+
+  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+  const jwt = `${signatureInput}.${encodedSignature}`;
+
+  const tokenRes = await fetch(
+    serviceAccount.token_uri || "https://oauth2.googleapis.com/token",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+    },
+  );
+
+  if (!tokenRes.ok) {
+    throw new Error(`Failed to get access token: ${await tokenRes.text()}`);
+  }
+
+  const tokenData = (await tokenRes.json()) as GcpTokenResponse;
+  return tokenData.access_token;
+}
+
+serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req.headers.get("origin"), true);
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -14,156 +102,210 @@ serve(async (req: Request) => {
   try {
     console.log("🚀 AI Analytics function called");
 
-    // Require authentication
     const authResult = await requireAuthUser(req);
     if (authResult.error) {
       console.error("❌ Auth failed:", authResult.error);
+      return new Response(JSON.stringify({ error: authResult.error.message }), {
+        status: authResult.error.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { teams, selectedMarket, userQuery, sessionId } = await req.json();
+
+    const missingFields = [];
+    if (!teams || teams.length === 0) missingFields.push("teams");
+    if (!selectedMarket) missingFields.push("selectedMarket");
+    if (!userQuery) missingFields.push("userQuery");
+
+    if (missingFields.length > 0) {
       return new Response(
-        JSON.stringify({ error: authResult.error.message }),
-        {
-          status: authResult.error.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+        JSON.stringify({ error: `Missing field(s): ${missingFields.join(", ")}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    console.log("✅ Auth successful for user:", authResult.authUserId);
+    const agentStreamUrl = Deno.env.get("VERTEX_AI_AGENT_STREAM_URL");
+    const projectId = Deno.env.get("GCP_PROJECT_ID");
+    const location = Deno.env.get("GCP_LOCATION") || "us-central1";
+    const reasoningEngineId = Deno.env.get("VERTEX_AI_REASONING_ENGINE_ID");
 
-    const { teams, selectedMarket } = await req.json();
-    console.log("📥 Request data - teams count:", teams?.length, "market:", selectedMarket);
-
-    if (!teams || !selectedMarket) {
+    if (!agentStreamUrl && !reasoningEngineId) {
       return new Response(
-        JSON.stringify({ error: "Missing teams or selectedMarket" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+        JSON.stringify({ error: "Agent configuration missing" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Get API key from environment
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) {
-      console.error("❌ GEMINI_API_KEY not found");
-      return new Response(
-        JSON.stringify({ error: "API configuration missing" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
-    }
+    const accessToken = await getAccessToken();
 
-    console.log("🔑 Gemini API key found, initializing AI client");
-    const ai = new GoogleGenerativeAI(apiKey);
+    let activeSessionId = sessionId;
+    if (!activeSessionId && reasoningEngineId && projectId) {
+      console.log("📝 Creating new session...");
+      const sessionCreateUrl = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}/sessions`;
 
-    // Prepare team data for selected market (top 8 teams)
-    const marketTeams = teams
-      .filter((t: any) => t.market === selectedMarket)
-      .sort((a: any, b: any) => b.offer - a.offer)
-      .slice(0, 8)
-      .map((t: any) => `${t.name} (${t.offer.toFixed(1)}%)`)
-      .join(', ');
-
-    const today = new Date().toISOString().split('T')[0];
-    
-    const prompt = `You are an Expert Sports Analyst for the ShareMatch trading platform.
-
-Market: ${selectedMarket} Index
-Date: ${today}
-Current Market Prices: ${marketTeams}
-
-TASK:
-1. SEARCH THE WEB for the latest breaking news, injuries, suspensions, and team morale impacting these specific teams/drivers from the last 24-48 hours.
-2. Provide a technical analysis of the market based on current form, fundamentals, performance, and momentum.
-3. Identify 1 Undervalued Asset and 1 Overvalued Asset based on the divergence between sentiment and current market price.
-
-FORMAT RULES:
-- Use clean Markdown with ## for section headers (NOT #)
-- Use bullet points for lists
-- DO NOT include any title or header at the very beginning - start directly with the "## Latest News, Injuries, and Team Morale:" section
-- Keep each team's update to 2-3 sentences max for conciseness
-
-SECTIONS TO INCLUDE (in this exact order):
-## Latest News, Injuries, and Team Morale:
-[For each major team: recent match results, injury updates, transfer news, manager comments - from your web search]
-
-## Technical Analysis:
-[Fundamentals, Performance, Momentum analysis based on current standings and form]
-
-## Undervalued and Overvalued Assets:
-[One undervalued asset with reasoning, one overvalued asset with reasoning]
-
-STRICT TERMINOLOGY GUIDELINES:
-- DO NOT use religious terms like "Halal", "Islamic", "Sharia", "Haram"
-- DO NOT use gambling terms like "bet", "odds", "wager", "gamble". Use "trade", "position", "sentiment", "forecast"
-- DO NOT use "Win" or "Winner" when referring to the market outcome. Use "Top the Index" or "finish first"
-- DO NOT provide meta-commentary or conversational openings. Start immediately with the first section.
-
-Style: Professional, insightful, concise, data-driven.`;
-
-    console.log("🤖 Calling Gemini API with model: gemini-2.5-flash + googleSearch");
-    console.log("📝 Prompt length:", prompt.length);
-
-    try {
-      // Use flash model WITH googleSearch for real-time news and injury data
-      const model = ai.getGenerativeModel({
-        model: 'gemini-2.5-flash',
-        tools: [{ googleSearch: {} }],
+      const sessionResponse = await fetch(sessionCreateUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ userId: authResult.authUserId }),
       });
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-
-      console.log("🔄 Gemini response received");
-      const analysis = response.text() || 'Analysis currently unavailable. Please try again.';
-      console.log("✅ AI analysis completed, length:", analysis.length);
-
-      return new Response(
-        JSON.stringify({ analysis }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+      if (sessionResponse.ok) {
+        let operation = await sessionResponse.json();
+        const operationName = operation.name;
+        while (!operation.done) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const pollResponse = await fetch(
+            `https://${location}-aiplatform.googleapis.com/v1beta1/${operationName}`,
+            { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!pollResponse.ok) break;
+          operation = await pollResponse.json();
         }
-      );
 
-    } catch (geminiError: any) {
-      console.error("❌ Gemini API error:", geminiError.message, geminiError);
-      
-      // Check if it's a quota error
-      const errorMessage = geminiError.message || "";
-      if (errorMessage.includes("quota") || errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED")) {
-        return new Response(
-          JSON.stringify({ 
-            analysis: "**AI Analysis Temporarily Unavailable**\n\nThe AI service is currently experiencing high demand. Please try again in a few minutes.\n\n_Tip: The free tier has limited requests per minute and per day. Consider upgrading your Gemini API plan for higher limits._"
-          }),
-          {
-            status: 200, // Return 200 with a message instead of error
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          }
-        );
+        if (operation.response?.name) {
+          activeSessionId = operation.response.name.split("/").pop();
+          console.log("✅ New session created:", activeSessionId);
+        }
       }
-      
-      return new Response(
-        JSON.stringify({ 
-          analysis: "**Unable to Generate Analysis**\n\nThe AI service encountered an error. Please try again later."
-        }),
-        {
-          status: 200, // Return 200 with fallback message
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
     }
 
-  } catch (error) {
-    console.error("Error in ai-analytics function:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to generate analysis" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+    let endpoint = agentStreamUrl;
+    if (!endpoint && projectId && reasoningEngineId) {
+      endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/reasoningEngines/${reasoningEngineId}:streamQuery?alt=sse`;
+    }
+
+    const messageWithContext = `[Selected Market Index: ${selectedMarket}]\n${userQuery}`;
+
+    const payload = {
+      class_method: "async_stream_query",
+      input: {
+        user_id: authResult.authUserId,
+        ...(activeSessionId && { session_id: activeSessionId }),
+        message: messageWithContext,
+      },
+    };
+
+    console.log("🤖 Calling Vertex AI Agent:", endpoint);
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Agent request failed: ${response.status} - ${errorText}`);
+    }
+
+    const responseHeaders: Record<string, string> = {
+      ...corsHeaders,
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    };
+
+    if (activeSessionId) {
+      responseHeaders["X-Session-Id"] = activeSessionId;
+    }
+
+    // Use TransformStream for cleaner processing
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const reader = response.body?.getReader();
+
+    if (!reader) throw new Error("No response body from agent");
+
+    (async () => {
+      try {
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            await processLine(line, writer, encoder);
+          }
+        }
+
+        if (buffer.trim()) {
+          await processLine(buffer, writer, encoder);
+        }
+      } catch (err) {
+        console.error("❌ Stream error:", err);
+      } finally {
+        await writer.close();
       }
+    })();
+
+    return new Response(readable, {
+      status: 200,
+      headers: responseHeaders,
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Error:", errorMessage);
+    return new Response(
+      JSON.stringify({
+        error: `AI agent error: ${errorMessage}`,
+        analysis: "**Unable to Generate Analysis**\n\nThe AI agent encountered an error.",
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
+
+async function processLine(line: string, writer: any, encoder: TextEncoder) {
+  const trimmedLine = line.trim();
+  if (!trimmedLine) return;
+
+  if (trimmedLine.startsWith("data:")) {
+    const jsonStr = trimmedLine.replace(/^data:\s*/, "");
+    if (jsonStr === "[DONE]") return;
+
+    try {
+      const data = JSON.parse(jsonStr);
+
+      let text = "";
+      if (data.content?.parts) {
+        for (const part of data.content.parts) {
+          if (part.text) text += part.text;
+        }
+      } else if (data.text) {
+        text = data.text;
+      } else if (typeof data === 'string') {
+        text = data;
+      }
+
+      if (text) {
+        await writer.write(encoder.encode(text));
+      }
+    } catch {
+      // Ignore parse errors for partial chunks
+    }
+  } else if (trimmedLine.startsWith("{")) {
+    try {
+      const data = JSON.parse(trimmedLine);
+      const text = data.content?.parts?.[0]?.text || data.text;
+      if (text) await writer.write(encoder.encode(text));
+    } catch {
+      // Ignore
+    }
+  }
+}

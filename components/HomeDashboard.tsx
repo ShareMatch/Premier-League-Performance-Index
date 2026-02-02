@@ -44,6 +44,7 @@ const HomeDashboard: React.FC<HomeDashboardProps> = ({
                     <HotQuestions
                         teams={teams}
                         onNavigate={onNavigate}
+                        onViewAsset={onViewAsset}
                         onSelectOrder={onSelectOrder}
                         seasonDatesMap={seasonDatesMap}
                     />
