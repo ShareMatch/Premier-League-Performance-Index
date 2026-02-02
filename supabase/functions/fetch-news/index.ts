@@ -56,9 +56,9 @@ serve(async (req) => {
       };
 
       const leagueName = leagueNames[leagueCode] || leagueCode || "sports";
-      
+
       // More specific search query for teams/players
-      effectiveSearchQuery = `"${teamName}" ${leagueName} latest news transfers injuries matches performance 2026`;
+      effectiveSearchQuery = `"${teamName}" in "${leagueName}"`;
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -96,11 +96,12 @@ serve(async (req) => {
       tools: [{ googleSearch: {} }],
     });
 
-    const prompt = `Search the web for recent sports news about: ${effectiveSearchQuery}
+    const prompt = `You MUST use the Google Search tool to fetch live articles for: "${effectiveSearchQuery}".
+      Do NOT use your internal knowledge. Only return information from the search results.
 
 Find 5-8 recent news articles covering:
 - Match results and performances
-- Injuries and recovery updates  
+- Injuries and recovery updates
 - Transfer news and rumors
 - Contract negotiations
 - Manager/coach statements

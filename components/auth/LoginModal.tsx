@@ -107,6 +107,7 @@ const InputField = ({
         onChange={onChange}
         className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
         required
+        autoComplete="username"
       />
       {showIcon && (
         <span className="text-gray-900 flex-shrink-0 ml-2">
@@ -150,6 +151,7 @@ const PasswordField = ({
           onChange={onChange}
           className="flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-sm"
           required
+          autoComplete="current-password"
         />
         <button
           type="button"
@@ -220,7 +222,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     try {
       const result: LoginResponse = await loginUser(
         email.trim().toLowerCase(),
-        password
+        password,
       );
 
       // Handle verification required response
@@ -377,8 +379,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
 
               {error && (
-                <p className="text-center text-red-400 font-sans text-sm"
-                   data-testid="login-error"
+                <p
+                  className="text-center text-red-400 font-sans text-sm"
+                  data-testid="login-error"
                 >
                   {error}
                 </p>
