@@ -379,31 +379,52 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
   useEffect(() => {
     const checkForceLogout = async () => {
       try {
-        const navEntry = performance.getEntriesByType(
-          "navigation",
-        )[0] as PerformanceNavigationTiming | undefined;
-        const navType = navEntry?.type;
-
         const forceLogoutAt = localStorage.getItem(LOCAL_FORCE_LOGOUT_AT_KEY);
         if (!forceLogoutAt) return;
 
-        // If this page load is a refresh, do not treat it as a tab/browser close.
-        // Clear the flag so we don't log out on refresh loops.
-        if (navType === "reload") {
-          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-          return;
+        // Detect navigation type using multiple methods for reliability
+        let isRefresh = false;
+        
+        // Method 1: Performance Navigation API (modern browsers)
+        try {
+          const navEntry = performance.getEntriesByType(
+            "navigation",
+          )[0] as PerformanceNavigationTiming | undefined;
+          if (navEntry?.type === "reload") {
+            isRefresh = true;
+          }
+        } catch {
+          // API not available
         }
-
+        
+        // Method 2: Legacy navigation.type (fallback)
+        if (!isRefresh && (performance as any).navigation) {
+          // TYPE_RELOAD = 1
+          isRefresh = (performance as any).navigation.type === 1;
+        }
+        
+        // Method 3: Check if timestamp is very recent (< 2 seconds)
+        // A real tab close followed by reopening would take longer than 2s
         const logoutTime = parseInt(forceLogoutAt, 10);
         if (!Number.isFinite(logoutTime)) {
           localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
           return;
         }
+        const timeSinceFlag = Date.now() - logoutTime;
+        if (timeSinceFlag < 2000) {
+          // Flag was set less than 2 seconds ago - almost certainly a refresh
+          isRefresh = true;
+        }
 
-        const timeSinceLogout = Date.now() - logoutTime;
+        // If this page load is a refresh, do not treat it as a tab/browser close.
+        // Clear the flag so we don't log out on refresh loops.
+        if (isRefresh) {
+          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
+          return;
+        }
 
-        // If a close happened recently, force logout immediately
-        if (timeSinceLogout < 5 * 60 * 1000) {
+        // If a close happened recently (but > 2s ago), force logout immediately
+        if (timeSinceFlag < 5 * 60 * 1000) {
           // console.warn("[Inactivity] 🔴 Previous tab/browser closed - forcing logout");
           localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
           await handleTimeout();
@@ -414,6 +435,10 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
         localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
       } catch (e) {
         // console.warn("[Storage] Failed to check force logout:", e);
+        // On error, clear the flag to prevent stuck logout loops
+        try {
+          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
+        } catch {}
       }
     };
 

@@ -592,33 +592,50 @@ const App: React.FC = () => {
   // Load public user ID when auth user changes
   useEffect(() => {
     if (user) {
-      // Pass both auth_user_id and email for better fallback support
-      getPublicUserId(user.id, user.email)
-        .then((userId) => {
+      let retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+
+      const attemptGetPublicUserId = async (): Promise<void> => {
+        try {
+          const userId = await getPublicUserId(user.id, user.email);
           if (userId) {
             setPublicUserId(userId);
+          } else if (retryCount < maxRetries) {
+            // Retry on null result - might be a transient issue
+            retryCount++;
+            console.warn(`Public user ID not found, retrying (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptGetPublicUserId, retryDelay);
           } else {
-            // No user record found or session invalid - this indicates incomplete registration or session issue
-            // Sign out the user for security
+            // After all retries failed, sign out
+            console.error("Public user ID not found after all retries - signing out");
             supabase.auth
               .signOut()
               .catch((err) => console.error("Error signing out:", err));
-            // Don't show alert during automatic sign-out to avoid spam
             setPublicUserId(null);
             setKycStatus(null);
             setKycChecked(false);
           }
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error("Error checking user registration:", error);
-          // If there's an error checking, sign out to be safe
-          supabase.auth
-            .signOut()
-            .catch((err) => console.error("Error signing out:", err));
-          setPublicUserId(null);
-          setKycStatus(null);
-          setKycChecked(false);
-        });
+          if (retryCount < maxRetries) {
+            // Retry on error - might be a network hiccup
+            retryCount++;
+            console.warn(`Error getting public user ID, retrying (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptGetPublicUserId, retryDelay);
+          } else {
+            // After all retries failed, sign out
+            supabase.auth
+              .signOut()
+              .catch((err) => console.error("Error signing out:", err));
+            setPublicUserId(null);
+            setKycStatus(null);
+            setKycChecked(false);
+          }
+        }
+      };
+
+      attemptGetPublicUserId();
     } else {
       setPublicUserId(null);
       setKycStatus(null);
@@ -1125,6 +1142,7 @@ const App: React.FC = () => {
                   onHelpCenterClick={() => setShowHelpCenter(true)}
                   activeHoverMenu={activeHoverMenu}
                   setActiveHoverMenu={setActiveHoverMenu}
+                  isUserDataLoading={userDataLoading || !userDataInitialized}
                 />
 
                 {/* AI Analytics Banner */}

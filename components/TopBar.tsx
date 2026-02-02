@@ -56,6 +56,8 @@ interface TopBarProps {
   onHelpCenterClick?: () => void;
   activeHoverMenu?: string | null;
   setActiveHoverMenu?: (menuId: string | null) => void;
+  /** True while user data (wallet, portfolio) is still loading */
+  isUserDataLoading?: boolean;
 }
 // ... (props definition continued internally in component, but I'll skip to where needed or use multi_replace for cleaner edit if they are far apart)
 
@@ -100,6 +102,7 @@ const TopBar: React.FC<TopBarProps> = ({
   onHelpCenterClick,
   activeHoverMenu: propsActiveHoverMenu,
   setActiveHoverMenu: propsSetActiveHoverMenu,
+  isUserDataLoading = false,
 }) => {
   const { user, signOut, isPasswordRecovery, clearPasswordRecovery } =
     useAuth();
@@ -401,6 +404,26 @@ const TopBar: React.FC<TopBarProps> = ({
     });
   };
 
+  // Determine if we should show skeleton (user logged in but data not loaded yet)
+  const showSkeleton = user && !isPasswordRecovery && (isUserDataLoading || wallet === null);
+
+  // Skeleton Components - Full box skeletons (matching actual component colors)
+  const SearchBarSkeleton = () => (
+    <div className="w-full h-[34px] bg-black/20 rounded-lg animate-pulse" />
+  );
+
+  const BalanceButtonSkeleton = () => (
+    <div className="h-[34px] w-24 bg-[#004225] border border-[#006035] rounded animate-pulse" />
+  );
+
+  const AvatarButtonSkeleton = () => (
+    <div className="h-9 w-9 bg-[#004225] rounded-full animate-pulse" />
+  );
+
+  const MobileQuickActionsSkeleton = () => (
+    <div className="h-[34px] w-28 bg-[#004225] border border-[#006035]/50 rounded-lg animate-pulse" />
+  );
+
   return (
     <>
       <div
@@ -578,58 +601,62 @@ const TopBar: React.FC<TopBarProps> = ({
         {/* Desktop Search - Center (Only for logged in) */}
         {user && !isPasswordRecovery && (
           <div className="hidden lg:flex flex-1 max-w-md mx-8 relative">
-            <div className="relative w-full group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 group-focus-within:text-white" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full bg-black/20 border-none rounded-lg py-1.5 pl-10 pr-10 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium"
-              />
-              {/* Desktop Clear/Mic Actions */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {searchQuery ? (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="text-white/40 hover:text-white transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={startListening}
-                    aria-label={isListening ? "Stop voice search" : "Start voice search"}
-                    className={`transition-colors ${isListening ? "text-red-500 animate-pulse" : "text-white/40 hover:text-white"}`}
-                  >
-                    <Mic className="h-4 w-4" />
-                  </button>
+            {showSkeleton ? (
+              <SearchBarSkeleton />
+            ) : (
+              <div className="relative w-full group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 group-focus-within:text-white" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search..."
+                  className="w-full bg-black/20 border-none rounded-lg py-1.5 pl-10 pr-10 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all font-medium"
+                />
+                {/* Desktop Clear/Mic Actions */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  {searchQuery ? (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                      className="text-white/40 hover:text-white transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={startListening}
+                      aria-label={isListening ? "Stop voice search" : "Start voice search"}
+                      className={`transition-colors ${isListening ? "text-red-500 animate-pulse" : "text-white/40 hover:text-white"}`}
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                {/* Search Results Dropdown - Desktop */}
+                {searchResults.length > 0 && searchQuery && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
+                    {searchResults.map((asset) => (
+                      <button
+                        key={asset.id}
+                        onClick={() => handleSearchResultClick(asset)}
+                        className="w-full text-left px-4 py-3 border-b border-gray-800 last:border-0 flex items-center justify-between hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-white font-bold text-sm">{asset.name}</span>
+                          <span className="text-xs text-gray-400 font-medium">
+                            {asset.market || "Market"} Index
+                          </span>
+                        </div>
+                        <span className="text-[9px] bg-[#005430] text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest">
+                          View
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-              {/* Search Results Dropdown - Desktop */}
-              {searchResults.length > 0 && searchQuery && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
-                  {searchResults.map((asset) => (
-                    <button
-                      key={asset.id}
-                      onClick={() => handleSearchResultClick(asset)}
-                      className="w-full text-left px-4 py-3 border-b border-gray-800 last:border-0 flex items-center justify-between hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-white font-bold text-sm">{asset.name}</span>
-                        <span className="text-xs text-gray-400 font-medium">
-                          {asset.market || "Market"} Index
-                        </span>
-                      </div>
-                      <span className="text-[9px] bg-[#005430] text-white px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                        View
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 
@@ -725,50 +752,56 @@ const TopBar: React.FC<TopBarProps> = ({
                   <HelpCircle className="w-[clamp(1.25rem,2.5vw,1.5rem)] h-[clamp(1.25rem,2.5vw,1.5rem)] transition-colors" />
                 </button>
               )}
-              <button
-                className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
-                  }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsBalanceOpen(!isBalanceOpen);
-                  // ensure the avatar dropdown is closed to avoid overlap
-                  setIsAvatarOpen(false);
-                }}
-              >
-                <span className="font-bold text-white text-sm">
-                  {formatCurrency(balance)}
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
-                />
-              </button>
-
-              {isBalanceOpen && (
-                <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-4 py-2 border-b border-gray-700">
-                    <p className="text-xs text-gray-400 uppercase font-semibold">
-                      Total Balance
-                    </p>
-                    <p className="text-xl font-bold text-white">
+              {showSkeleton ? (
+                <BalanceButtonSkeleton />
+              ) : (
+                <>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded bg-[#004225] hover:bg-[#003820] transition-colors border border-[#006035] ${isBalanceOpen ? "bg-[#003820]" : ""
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsBalanceOpen(!isBalanceOpen);
+                      // ensure the avatar dropdown is closed to avoid overlap
+                      setIsAvatarOpen(false);
+                    }}
+                  >
+                    <span className="font-bold text-white text-sm">
                       {formatCurrency(balance)}
-                    </p>
-                  </div>
-                  <div className="px-4 py-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-400">Available</span>
-                      <span className="font-medium text-gray-200">
-                        {formatCurrency(available)}
-                      </span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+
+                  {isBalanceOpen && (
+                    <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-2 border-b border-gray-700">
+                        <p className="text-xs text-gray-400 uppercase font-semibold">
+                          Total Balance
+                        </p>
+                        <p className="text-xl font-bold text-white">
+                          {formatCurrency(balance)}
+                        </p>
+                      </div>
+                      <div className="px-4 py-2">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-400">Available</span>
+                          <span className="font-medium text-gray-200">
+                            {formatCurrency(available)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-400">Active Assets</span>
+                          <span className="font-medium text-gray-200">
+                            {formatCurrency(portfolioValue)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Active Assets</span>
-                      <span className="font-medium text-gray-200">
-                        {formatCurrency(portfolioValue)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -776,203 +809,215 @@ const TopBar: React.FC<TopBarProps> = ({
           {/* Desktop Avatar Dropdown */}
           {user && !isPasswordRecovery && (
             <div ref={avatarRef} className="hidden lg:relative lg:block">
-              <button
-                aria-label="Open user menu"
-                data-testid="topbar-user-avatar-desktop"
-                className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
-                  }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsAvatarOpen(!isAvatarOpen);
-                  setIsBalanceOpen(false);
-                }}
-              >
-                <User className="h-5 w-5" />
-              </button>
+              {showSkeleton ? (
+                <AvatarButtonSkeleton />
+              ) : (
+                <>
+                  <button
+                    aria-label="Open user menu"
+                    data-testid="topbar-user-avatar-desktop"
+                    className={`p-2 rounded-full hover:bg-[#004225] text-white/80 hover:text-white transition-colors ${isAvatarOpen ? "bg-[#004225] text-white" : ""
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsAvatarOpen(!isAvatarOpen);
+                      setIsBalanceOpen(false);
+                    }}
+                  >
+                    <User className="h-5 w-5" />
+                  </button>
 
-              {isAvatarOpen && (
-                <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-4 py-3 border-b border-gray-700">
-                    <p className="text-sm font-bold text-white truncate">
-                      {user?.email}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Last logged in: Today
-                    </p>
-                  </div>
-                  <div className="py-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
-                        onOpenPortfolio?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <FileText className="h-4 w-4" /> Portfolio
-                    </button>
-                    {/* <a
-                      href="#"
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      <Shield className="h-4 w-4" /> Rules & Regulations
-                    </a> */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        signOut();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
-                      data-testid="user-menu-signout"
-                    >
-                      <LogOut className="h-4 w-4" /> Sign Out
-                    </button>
-                  </div>
-                </div>
+                  {isAvatarOpen && (
+                    <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                      <div className="px-4 py-3 border-b border-gray-700">
+                        <p className="text-sm font-bold text-white truncate">
+                          {user?.email}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Last logged in: Today
+                        </p>
+                      </div>
+                      <div className="py-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsAvatarOpen(false);
+                            onOpenPortfolio?.();
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                        >
+                          <FileText className="h-4 w-4" /> Portfolio
+                        </button>
+                        {/* <a
+                          href="#"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                        >
+                          <Shield className="h-4 w-4" /> Rules & Regulations
+                        </a> */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsAvatarOpen(false);
+                            onOpenSettings?.();
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                        >
+                          <Settings className="h-4 w-4" /> Settings
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            signOut();
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                          data-testid="user-menu-signout"
+                        >
+                          <LogOut className="h-4 w-4" /> Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
 
           {/* Mobile: Combined Quick Actions*/}
           {user && !isPasswordRecovery && (
-            <div
-              ref={mobileQuickRef}
-              className="lg:hidden relative flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 shadow-sm"
-            >
-              {/* Balance Part */}
-              <button
-                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsBalanceOpen(!isBalanceOpen);
-                  setIsAvatarOpen(false);
-                }}
+            showSkeleton ? (
+              <div className="lg:hidden">
+                <MobileQuickActionsSkeleton />
+              </div>
+            ) : (
+              <div
+                ref={mobileQuickRef}
+                className="lg:hidden relative flex items-center bg-[#004225] rounded-lg border border-[#006035]/50 shadow-sm"
               >
-                <span className="font-bold text-white text-sm">
-                  {formatCurrency(balance)}
-                </span>
-                <ChevronDown
-                  className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
-                    }`}
-                />
-              </button>
+                {/* Balance Part */}
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsBalanceOpen(!isBalanceOpen);
+                    setIsAvatarOpen(false);
+                  }}
+                >
+                  <span className="font-bold text-white text-sm">
+                    {formatCurrency(balance)}
+                  </span>
+                  <ChevronDown
+                    className={`h-3 w-3 text-white/70 transition-transform ${isBalanceOpen ? "rotate-180" : ""
+                      }`}
+                  />
+                </button>
 
-              {/* Divider */}
-              <div className="w-[1px] h-4 bg-[#006035]/50"></div>
+                {/* Divider */}
+                <div className="w-[1px] h-4 bg-[#006035]/50"></div>
 
-              {/* User Icon Part */}
-              <button
-                aria-label="Open user menu"
-                data-testid="topbar-user-avatar-mobile"
-                className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsAvatarOpen(!isAvatarOpen);
-                  setIsBalanceOpen(false);
-                }}
-              >
-                <User className="h-4 w-4 text-white" />
-              </button>
+                {/* User Icon Part */}
+                <button
+                  aria-label="Open user menu"
+                  data-testid="topbar-user-avatar-mobile"
+                  className="px-2.5 py-1.5 hover:bg-[#005430] transition-colors active:bg-[#003820]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsAvatarOpen(!isAvatarOpen);
+                    setIsBalanceOpen(false);
+                  }}
+                >
+                  <User className="h-4 w-4 text-white" />
+                </button>
 
-              {/* Mobile Balance Dropdown */}
-              {isBalanceOpen && (
-                <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-4 py-2 border-b border-gray-700">
-                    <p className="text-xs text-gray-400 uppercase font-semibold">
-                      Total Balance
-                    </p>
-                    <p className="text-xl font-bold text-white">
-                      {formatCurrency(balance)}
-                    </p>
-                  </div>
-                  <div className="px-4 py-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-400">Available</span>
-                      <span className="font-medium text-gray-200">
-                        {formatCurrency(available)}
-                      </span>
+                {/* Mobile Balance Dropdown */}
+                {isBalanceOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-64 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="px-4 py-2 border-b border-gray-700">
+                      <p className="text-xs text-gray-400 uppercase font-semibold">
+                        Total Balance
+                      </p>
+                      <p className="text-xl font-bold text-white">
+                        {formatCurrency(balance)}
+                      </p>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Active Assets</span>
-                      <span className="font-medium text-gray-200">
-                        {formatCurrency(portfolioValue)}
-                      </span>
+                    <div className="px-4 py-2">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-400">Available</span>
+                        <span className="font-medium text-gray-200">
+                          {formatCurrency(available)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Active Assets</span>
+                        <span className="font-medium text-gray-200">
+                          {formatCurrency(portfolioValue)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Mobile Avatar Dropdown */}
-              {isAvatarOpen && (
-                <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
-                  <div className="px-4 py-3 border-b border-gray-700">
-                    <p className="text-sm font-bold text-white truncate">
-                      {user?.email}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Last logged in: Today
-                    </p>
+                {/* Mobile Avatar Dropdown */}
+                {isAvatarOpen && (
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-gray-800 rounded-lg shadow-xl border border-gray-700 z-[60] py-1 animate-in fade-in slide-in-from-top-2">
+                    <div className="px-4 py-3 border-b border-gray-700">
+                      <p className="text-sm font-bold text-white truncate">
+                        {user?.email}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Last logged in: Today
+                      </p>
+                    </div>
+                    <div className="py-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsAvatarOpen(false);
+                          onOpenPortfolio?.();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                      >
+                        <FileText className="h-4 w-4" /> Portfolio
+                      </button>
+                      {/* <a
+                        href="#"
+                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
+                      >
+                        <Shield className="h-4 w-4" /> Rules & Regulations
+                      </a> */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsAvatarOpen(false);
+                          onOpenSettings?.();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                      >
+                        <Settings className="h-4 w-4" /> Settings
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsAvatarOpen(false);
+                          onHelpCenterClick?.();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
+                      >
+                        <HelpCircle className="h-4 w-4" /> Help
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          signOut();
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
+                      >
+                        <LogOut className="h-4 w-4" /> Sign Out
+                      </button>
+                    </div>
                   </div>
-                  <div className="py-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
-                        onOpenPortfolio?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <FileText className="h-4 w-4" /> Portfolio
-                    </button>
-                    {/* <a
-                      href="#"
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-                    >
-                      <Shield className="h-4 w-4" /> Rules & Regulations
-                    </a> */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
-                        onOpenSettings?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <Settings className="h-4 w-4" /> Settings
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAvatarOpen(false);
-                        onHelpCenterClick?.();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 text-left"
-                    >
-                      <HelpCircle className="h-4 w-4" /> Help
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        signOut();
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-gray-700 text-left"
-                    >
-                      <LogOut className="h-4 w-4" /> Sign Out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )
           )}
         </div>
       </div>
