@@ -162,105 +162,111 @@ const InputArea: React.FC<{
   showGenerateButton = false,
   onGenerateAnalysis,
 }) => {
-    const displayLabel =
-      selectedMarket === "ALL_INDEX"
-        ? "All Index"
-        : selectedMarket === "ALL"
-          ? `${currentCategory.label} • All`
-          : `${currentCategory.label} • ${MARKET_LABELS[selectedMarket] || selectedMarket
+  const displayLabel =
+    selectedMarket === "ALL_INDEX"
+      ? "All Index"
+      : selectedMarket === "ALL"
+        ? `${currentCategory.label} • All`
+        : `${currentCategory.label} • ${
+            MARKET_LABELS[selectedMarket] || selectedMarket
           }`;
 
-    return (
-      <div className="w-full">
-        {/* Combined Input Container */}
-        <div className="bg-gray-800/60 border border-gray-700 rounded-xl sm:rounded-2xl">
-          {/* Input Field */}
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={`Ask about ${selectedMarket === "ALL_INDEX"
+  return (
+    <div className="w-full">
+      {/* Combined Input Container */}
+      <div className="bg-gray-800/60 border border-gray-700 rounded-xl sm:rounded-2xl">
+        {/* Input Field */}
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`Ask about ${
+              selectedMarket === "ALL_INDEX"
                 ? "All Index"
                 : selectedMarket === "ALL"
                   ? currentCategory.label
                   : MARKET_LABELS[selectedMarket] || selectedMarket
-                }`}
-              disabled={isLoading}
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
-            />
-          </div>
+            }`}
+            disabled={isLoading}
+            className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
+          />
+        </div>
 
-          {/* Filters Row - Inside the same container */}
-          <div className="flex items-center justify-between px-2 sm:px-3 pb-2 pt-1 gap-2">
-            <div className="flex gap-2 min-w-0 flex-1">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    disabled={isLoading}
-                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 disabled:opacity-50 group/trigger shadow-lg min-w-0"
-                  >
-                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                      {selectedMarket !== "ALL" &&
-                        selectedMarket !== "ALL_INDEX" &&
-                        getIndexAvatarUrl(selectedMarket) && (
-                          <img
-                            src={getIndexAvatarUrl(selectedMarket)!}
-                            alt={selectedMarket}
-                            className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
-                          />
-                        )}
-                      <span className="font-bold truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">{displayLabel}</span>
-                    </div>
-                    <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity flex-shrink-0" />
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
-                    sideOffset={8}
-                    align="start"
-                  >
-                    {/* Top-level All Index option */}
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
-                        handleMarketSelect("ALL_INDEX");
-                      }}
-                      className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedMarket === "ALL_INDEX"
+        {/* Filters Row - Inside the same container */}
+        <div className="flex items-center justify-between px-2 sm:px-3 pb-2 pt-1 gap-2">
+          <div className="flex gap-2 min-w-0 flex-1">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  disabled={isLoading}
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 disabled:opacity-50 group/trigger shadow-lg min-w-0"
+                >
+                  <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                    {selectedMarket !== "ALL" &&
+                      selectedMarket !== "ALL_INDEX" &&
+                      getIndexAvatarUrl(selectedMarket) && (
+                        <img
+                          src={getIndexAvatarUrl(selectedMarket)!}
+                          alt={selectedMarket}
+                          className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
+                        />
+                      )}
+                    <span className="font-bold truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">
+                      {displayLabel}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity flex-shrink-0" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
+                  sideOffset={8}
+                  align="start"
+                >
+                  {/* Top-level All Index option */}
+                  <DropdownMenu.Item
+                    onSelect={() => {
+                      handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
+                      handleMarketSelect("ALL_INDEX");
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                      selectedMarket === "ALL_INDEX"
                         ? "bg-brand-emerald500 text-white"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
-                        }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>All Index</span>
-                      </div>
-                      {selectedMarket === "ALL_INDEX" && (
-                        <FaCheck className="w-3 h-3" />
-                      )}
-                    </DropdownMenu.Item>
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>All Index</span>
+                    </div>
+                    {selectedMarket === "ALL_INDEX" && (
+                      <FaCheck className="w-3 h-3" />
+                    )}
+                  </DropdownMenu.Item>
 
-                    <div className="h-px bg-gray-800 my-1 mx-1" />
+                  <div className="h-px bg-gray-800 my-1 mx-1" />
 
-                    {CATEGORIES.map((cat) => {
-                      // Filter out closed markets from this category
-                      const openMarkets = cat.markets.filter((marketId) => {
-                        const marketInfo = marketInfoData[marketId];
-                        return marketInfo && marketInfo.isOpen;
-                      });
-                      
-                      // Don't show category if no open markets
-                      if (openMarkets.length === 0) return null;
-                      
-                      return (
+                  {CATEGORIES.map((cat) => {
+                    // Filter out closed markets from this category
+                    const openMarkets = cat.markets.filter((marketId) => {
+                      const marketInfo = marketInfoData[marketId];
+                      return marketInfo && marketInfo.isOpen;
+                    });
+
+                    // Don't show category if no open markets
+                    if (openMarkets.length === 0) return null;
+
+                    return (
                       <DropdownMenu.Sub key={cat.id}>
                         <DropdownMenu.SubTrigger
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${selectedCategory === cat.id
-                            ? "text-brand-emerald500"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
+                            selectedCategory === cat.id
+                              ? "text-brand-emerald500"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
+                          }`}
                         >
                           <span>{cat.label}</span>
                           <ChevronRight className="w-3 h-3" />
@@ -279,11 +285,12 @@ const InputArea: React.FC<{
                                     handleCategoryChange(cat.id);
                                     handleMarketSelect("ALL");
                                   }}
-                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedCategory === cat.id &&
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                                    selectedCategory === cat.id &&
                                     selectedMarket === "ALL"
-                                    ? "bg-brand-emerald500 text-white"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                    }`}
+                                      ? "bg-brand-emerald500 text-white"
+                                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                                  }`}
                                 >
                                   <span>All {cat.label}</span>
                                   {selectedCategory === cat.id &&
@@ -307,10 +314,11 @@ const InputArea: React.FC<{
                                     handleCategoryChange(cat.id);
                                     handleMarketSelect(marketId);
                                   }}
-                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
-                                    ? "bg-brand-emerald500 text-white"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                    }`}
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                                    isSelected
+                                      ? "bg-brand-emerald500 text-white"
+                                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                                  }`}
                                 >
                                   <div className="flex items-center gap-2">
                                     {getIndexAvatarUrl(marketId) && (
@@ -324,7 +332,9 @@ const InputArea: React.FC<{
                                       {MARKET_LABELS[marketId] || marketId}
                                     </span>
                                   </div>
-                                  {isSelected && <FaCheck className="w-3 h-3" />}
+                                  {isSelected && (
+                                    <FaCheck className="w-3 h-3" />
+                                  )}
                                 </DropdownMenu.Item>
                               );
                             })}
@@ -332,40 +342,40 @@ const InputArea: React.FC<{
                         </DropdownMenu.Portal>
                       </DropdownMenu.Sub>
                     );
-                    })}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+                  })}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
-              {/* Generate Analysis Button - Only shown in bottom input view */}
-              {showGenerateButton && onGenerateAnalysis && (
-                <button
-                  onClick={onGenerateAnalysis}
-                  disabled={isLoading}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold whitespace-nowrap transition-all border bg-primary-gradient border-[#005430] text-white hover:bg-[#00A651]/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
-                >
-                  <span>Generate Analysis</span>
-                </button>
-              )}
-            </div>
-
-            {/* Send button - right side */}
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!inputValue.trim() || isLoading}
-              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
-            </button>
+            {/* Generate Analysis Button - Only shown in bottom input view */}
+            {showGenerateButton && onGenerateAnalysis && (
+              <button
+                onClick={onGenerateAnalysis}
+                disabled={isLoading}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold whitespace-nowrap transition-all border bg-primary-gradient border-[#005430] text-white hover:bg-[#00A651]/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
+              >
+                <span>Generate Analysis</span>
+              </button>
+            )}
           </div>
+
+          {/* Send button - right side */}
+          <button
+            onClick={() => handleSendMessage()}
+            disabled={!inputValue.trim() || isLoading}
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
+          >
+            {isLoading ? (
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
   ({ message }) => {
@@ -380,10 +390,11 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
         )}
 
         <div
-          className={`max-w-[88%] xs:max-w-[85%] sm:max-w-[80%] md:max-w-[75%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${message.role === "user"
-            ? "bg-brand-emerald500 text-white rounded-tr-sm"
-            : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
-            }`}
+          className={`max-w-[88%] xs:max-w-[85%] sm:max-w-[80%] md:max-w-[75%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${
+            message.role === "user"
+              ? "bg-brand-emerald500 text-white rounded-tr-sm"
+              : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
+          }`}
         >
           {message.role === "assistant" ? (
             <ReactMarkdown
@@ -426,7 +437,10 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
                   />
                 ),
                 li: ({ node, ...props }) => (
-                  <li className="pl-0.5 sm:pl-1 text-[clamp(0.75rem,2vw,0.875rem)]" {...props} />
+                  <li
+                    className="pl-0.5 sm:pl-1 text-[clamp(0.75rem,2vw,0.875rem)]"
+                    {...props}
+                  />
                 ),
                 strong: ({ node, ...props }) => (
                   <strong className="text-white font-semibold" {...props} />
@@ -442,7 +456,9 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
               {message.content}
             </ReactMarkdown>
           ) : (
-            <p className="text-[clamp(0.75rem,2vw,0.875rem)] leading-relaxed">{message.content}</p>
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] leading-relaxed">
+              {message.content}
+            </p>
           )}
         </div>
 
@@ -479,7 +495,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const assetQuestions = useMemo(() => {
     // Get assets for the selected market (exclude settled assets and closed markets)
     let marketAssets: Team[] = [];
-    
+
     if (selectedMarket === "ALL_INDEX") {
       // Get a sample from all markets (filter out settled)
       marketAssets = teams
@@ -491,7 +507,12 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       const currentCat = CATEGORIES.find((c) => c.id === selectedCategory);
       if (currentCat) {
         marketAssets = teams
-          .filter((t) => t.market && currentCat.markets.includes(t.market) && !t.is_settled)
+          .filter(
+            (t) =>
+              t.market &&
+              currentCat.markets.includes(t.market) &&
+              !t.is_settled,
+          )
           .sort(() => Math.random() - 0.5)
           .slice(0, 15);
       }
@@ -506,7 +527,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     // Generate questions for each asset
     const questions: { text: string; asset: Team }[] = [];
     marketAssets.forEach((asset) => {
-      const template = ASSET_QUESTION_TEMPLATES[Math.floor(Math.random() * ASSET_QUESTION_TEMPLATES.length)];
+      const template =
+        ASSET_QUESTION_TEMPLATES[
+          Math.floor(Math.random() * ASSET_QUESTION_TEMPLATES.length)
+        ];
       questions.push({
         text: template.replace("{asset}", asset.name),
         asset,
@@ -515,7 +539,6 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
     return questions;
   }, [teams, selectedMarket, selectedCategory]);
-
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -601,8 +624,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
           ? teams
           : selectedMarket === "ALL"
             ? teams.filter(
-              (t) => t.market && categoryMarkets.includes(t.market),
-            )
+                (t) => t.market && categoryMarkets.includes(t.market),
+              )
             : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
@@ -647,7 +670,6 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         // console.log("📌 Session ID set from header:", responseSessionId);
       }
 
-      // Prepare assistant message in state
       const assistantMessageId = `assistant_${Date.now()}`;
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -659,18 +681,14 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let isFirstChunk = true;
+      let buffer = "";
 
-      // Character-by-character reveal logic
-      let fullContent = "";
-      let displayedLength = 0;
-      const CHARS_PER_FRAME = 3; // ~180 chars per second at 60fps
-      const FRAME_DELAY = 16; // ~60fps
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      const typingInterval = setInterval(() => {
-        if (displayedLength < fullContent.length) {
-          displayedLength = Math.min(displayedLength + CHARS_PER_FRAME, fullContent.length);
-          const visibleContent = fullContent.slice(0, displayedLength);
+          const chunk = decoder.decode(value, { stream: true });
 
           setMessages((prev) => {
             const updated = [...prev];
@@ -678,56 +696,14 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             if (idx !== -1) {
               updated[idx] = {
                 ...updated[idx],
-                content: visibleContent,
+                content: updated[idx].content + chunk,
               };
             }
             return updated;
           });
         }
-      }, FRAME_DELAY);
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          let chunk = decoder.decode(value, { stream: true });
-
-          // Check for session marker in first chunk
-          if (isFirstChunk) {
-            isFirstChunk = false;
-            const sessionMatch = chunk.match(/<!--SESSION:([^>]+)-->/);
-            if (sessionMatch && !sessionIdRef.current) {
-              sessionIdRef.current = sessionMatch[1];
-            }
-            chunk = chunk.replace(/<!--SESSION:[^>]+-->/, "");
-          }
-
-          if (chunk) {
-            fullContent += chunk;
-          }
-        }
       } finally {
-        // Wait for remaining content to be typed out before clearing interval and loading state
-        await new Promise<void>((resolve) => {
-          const checkComplete = setInterval(() => {
-            if (displayedLength >= fullContent.length) {
-              clearInterval(checkComplete);
-              clearInterval(typingInterval);
-
-              // Ensure final state is perfectly clean
-              setMessages((prev) => {
-                const updated = [...prev];
-                const idx = updated.findIndex((m) => m.id === assistantMessageId);
-                if (idx !== -1) {
-                  updated[idx] = { ...updated[idx], content: fullContent };
-                }
-                return updated;
-              });
-              resolve();
-            }
-          }, 50);
-        });
+        reader.releaseLock();
       }
     } catch (err: unknown) {
       const errorMsg =
@@ -911,29 +887,31 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             {assetQuestions.length > 0 && (
               <div className="mb-1.5 xs:mb-2 sm:mb-2.5 overflow-hidden relative">
                 <div className="flex items-center gap-1.5 xs:gap-2">
-                  <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 flex-shrink-0 bg-gray-900/95 pr-1 xs:pr-2 hidden xs:block">Try asking:</span>
+                  <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 flex-shrink-0 bg-gray-900/95 pr-1 xs:pr-2 hidden xs:block">
+                    Try asking:
+                  </span>
                   <div className="flex-1 overflow-hidden">
                     <div className="animate-questions-ticker flex items-center gap-2 xs:gap-3 sm:gap-4">
                       {/* Duplicate questions for seamless loop */}
-                      {[...assetQuestions, ...assetQuestions].map((question, idx) => (
-                        <button
-                          key={`${question.asset.id}-${idx}`}
-                          onClick={() => handleAssetQuestion(question)}
-                          disabled={isLoading}
-                          className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 md:px-4 py-0.5 xs:py-1 sm:py-1.5 text-[clamp(0.5625rem,1.3vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
-                        >
-                          {question.asset?.logo_url && (
-                            <img
-                              src={question.asset.logo_url}
-                              alt={question.asset.name}
-                              className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
-                            />
-                          )}
-                          <span className="font-medium">
-                            {question.text}
-                          </span>
-                        </button>
-                      ))}
+                      {[...assetQuestions, ...assetQuestions].map(
+                        (question, idx) => (
+                          <button
+                            key={`${question.asset.id}-${idx}`}
+                            onClick={() => handleAssetQuestion(question)}
+                            disabled={isLoading}
+                            className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 md:px-4 py-0.5 xs:py-1 sm:py-1.5 text-[clamp(0.5625rem,1.3vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
+                          >
+                            {question.asset?.logo_url && (
+                              <img
+                                src={question.asset.logo_url}
+                                alt={question.asset.name}
+                                className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
+                              />
+                            )}
+                            <span className="font-medium">{question.text}</span>
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
