@@ -2,6 +2,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import { restrictedCors } from "../_shared/cors.ts";
+import {
+  TOPIC_SEARCH_MAP,
+  LEAGUE_DISPLAY_NAMES,
+  FETCH_NEWS_PROMPT,
+} from "../_shared/prompts/index.ts";
+import { interpolate } from "../_shared/prompts/utils.ts";
 
 serve(async (req) => {
   const corsHeaders = restrictedCors(req.headers.get("origin"));
@@ -13,49 +19,15 @@ serve(async (req) => {
   try {
     const { topic, apiKey: bodyApiKey, force = false } = await req.json();
 
-    // ── Topic → Search Query mapping ───────────────────────────────
-    const topicMap: Record<string, string> = {
-      EPL: "Premier League football news, transfers, matches, table",
-      UCL: "UEFA Champions League latest news and results",
-      SPL: "Saudi Pro League football news",
-      WC: "FIFA World Cup news",
-      F1: "Formula 1 racing news, qualifying, race results",
-      NBA: "NBA basketball news, trades, injuries",
-      NFL: "NFL American football news",
-      T20: "T20 Cricket World Cup news and scores",
-      Eurovision: "Eurovision Song Contest latest news",
-      Global: "Major global sports headlines today",
-    };
-
-    // Helper: date string for recency filter (24 hours ago)
-    // const oneDayAgo = () => {
-    //   const d = new Date();
-    //   d.setDate(d.getDate() - 1);
-    //   return d.toISOString().split("T")[0];
-    // };
-
     // ── Build effective search query ───────────────────────────────
-    let effectiveSearchQuery = topicMap[topic] || "Sports news";
+    let effectiveSearchQuery = TOPIC_SEARCH_MAP[topic] || "Sports news";
 
     if (topic.startsWith("team:")) {
       const parts = topic.split(":");
       const teamName = parts[1]?.trim() || "";
       const leagueCode = parts[2]?.trim() || "";
 
-      // Build context-aware search for the specific team/player
-      const leagueNames: Record<string, string> = {
-        EPL: "Premier League",
-        UCL: "Champions League",
-        SPL: "Saudi Pro League",
-        WC: "FIFA World Cup 2026",
-        F1: "Formula 1 2026 season",
-        NBA: "NBA",
-        NFL: "NFL",
-        T20: "T20 Cricket World Cup",
-        Eurovision: "Eurovision 2026",
-      };
-
-      const leagueName = leagueNames[leagueCode] || leagueCode || "sports";
+      const leagueName = LEAGUE_DISPLAY_NAMES[leagueCode] || leagueCode || "sports";
 
       // More specific search query for teams/players
       effectiveSearchQuery = `"${teamName}" in "${leagueName}"`;
@@ -96,34 +68,8 @@ serve(async (req) => {
       tools: [{ googleSearch: {} }],
     });
 
-    const prompt = `You MUST use the Google Search tool to fetch live articles for: "${effectiveSearchQuery}".
-      Do NOT use your internal knowledge. Only return information from the search results.
-
-Find 5-8 recent news articles covering:
-- Match results and performances
-- Injuries and recovery updates
-- Transfer news and rumors
-- Contract negotiations
-- Manager/coach statements
-- Upcoming fixtures and predictions
-
-RULES:
-- Articles must be from the LAST 24 HOURS
-- Use reputable sports sources (BBC Sport, Sky Sports, ESPN, The Athletic, Goal.com, etc.)
-- NO betting/gambling content
-- NO clickbait or low-quality sources
-
-Strictly output a JSON ARRAY of 5 objects. format:
-        [
-          {
-            "headline": "Article Title",
-            "source": "Publisher Name",
-            "published_at": "ISO date string (must be recent)",
-            "url": "https://link-to-article"
-          }
-        ]
-
-Return ONLY the JSON array. No text before or after.`;
+    // Use shared prompt with interpolation
+    const prompt = interpolate(FETCH_NEWS_PROMPT, { searchQuery: effectiveSearchQuery });
 
     const result = await model.generateContent(prompt);
     const generatedText = (await result.response).text();
@@ -143,8 +89,7 @@ Return ONLY the JSON array. No text before or after.`;
     let dbStatus = "skipped";
 
     if (articles.length > 0) {
-      // Recommended: don't delete everything — especially bad for team topics!
-      // Alternative A: delete only very old articles
+      // Delete only very old articles
       await supabase
         .from("news_articles")
         .delete()
@@ -153,9 +98,6 @@ Return ONLY the JSON array. No text before or after.`;
           "published_at",
           new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         );
-
-      // Alternative B: just insert new ones (most projects do this + client filtering)
-      // await supabase.from("news_articles").insert(...)
 
       const newsItems = articles.map((a: any) => ({
         topic,

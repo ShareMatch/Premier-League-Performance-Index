@@ -348,11 +348,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         <div
           ref={scrollContainerRef}
           className={`flex items-center gap-2 pb-1 scrollbar-hide select-none
-        ${
-          openDropdown
-            ? "overflow-x-hidden touch-none"
-            : "overflow-x-auto touch-pan-x"
-        }`}
+        ${openDropdown
+              ? "overflow-x-hidden touch-none"
+              : "overflow-x-auto touch-pan-x"
+            }`}
           onPointerDown={(e) => {
             pointerStartRef.current = { x: e.clientX, y: e.clientY };
             setIsDragging(false);
@@ -381,11 +380,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
             const pillButton = (
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
-                  isActive
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
                     ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
                     : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
-                }`}
+                  }`}
               >
                 <span>{cat.label}</span>
                 {hasMarkets &&
@@ -437,11 +435,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       return (
                         <DropdownMenu.CheckboxItem
                           key={m.id}
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${
-                            isSelected
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
                               ? "bg-brand-primary text-white"
                               : "text-gray-400 hover:text-white hover:bg-white/5"
-                          }`}
+                            }`}
                           checked={isSelected}
                           onSelect={(e) => {
                             e.preventDefault(); // Keep dropdown open for multi-select
@@ -469,22 +466,22 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-3">
           {isLoading ? (
-            // Skeleton Loading State
+            // Skeleton Loading State - Responsive
             Array.from({ length: ITEMS_PER_PAGE }).map((_, idx) => (
               <div
                 key={`skeleton-${idx}`}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-800/20 border border-gray-700/30 animate-pulse"
+                className="flex items-center justify-between p-[clamp(0.5rem,2vw,0.75rem)] rounded-xl bg-gray-800/20 border border-gray-700/30 animate-pulse"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gray-800/50" />
-                  <div className="flex flex-col gap-2">
-                    <div className="h-4 w-32 bg-gray-800/50 rounded-md" />
-                    <div className="h-3 w-16 bg-gray-800/50 rounded-md" />
+                <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
+                  <div className="w-[clamp(2.5rem,8vw,3rem)] h-[clamp(2.5rem,8vw,3rem)] rounded-xl bg-gray-700/50" />
+                  <div className="flex flex-col gap-[clamp(0.25rem,1vw,0.5rem)]">
+                    <div className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(5rem,20vw,8rem)] bg-gray-700/50 rounded-md" />
+                    <div className="h-[clamp(0.5rem,1.5vw,0.75rem)] w-[clamp(2.5rem,10vw,4rem)] bg-gray-700/50 rounded-md" />
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="h-4 w-16 bg-gray-800/50 rounded-md" />
-                  <div className="h-3 w-10 bg-gray-800/50 rounded-md" />
+                <div className="flex flex-col items-end gap-[clamp(0.25rem,1vw,0.5rem)]">
+                  <div className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(3rem,10vw,4rem)] bg-gray-700/50 rounded-md" />
+                  <div className="h-[clamp(0.5rem,1.5vw,0.75rem)] w-[clamp(2rem,6vw,2.5rem)] bg-gray-700/50 rounded-md" />
                 </div>
               </div>
             ))
@@ -587,11 +584,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === 1
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
                     ? "text-gray-600 cursor-not-allowed"
                     : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                  }`}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
@@ -607,11 +603,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                       <button
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${
-                          currentPage === page
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
                             ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
                             : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -624,11 +619,10 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  currentPage === totalPages
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
                     ? "text-gray-600 cursor-not-allowed"
                     : "text-brand-primary hover:bg-gray-700/50"
-                }`}
+                  }`}
               >
                 Next
                 <ChevronRight className="w-4 h-4" />

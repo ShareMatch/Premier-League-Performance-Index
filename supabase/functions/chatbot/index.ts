@@ -1,6 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { restrictedCors } from "../_shared/cors.ts";
+import {
+  VIDEO_FILE_NAMES,
+  VIDEO_METADATA,
+  INTENT_CLASSIFICATION_PROMPT,
+  CHATBOT_PUBLIC_PROMPT,
+  CHATBOT_AUTHENTICATED_PROMPT,
+} from "../_shared/prompts/index.ts";
+import { interpolate } from "../_shared/prompts/utils.ts";
 
 interface ChatRequest {
   message: string;
@@ -16,146 +24,6 @@ const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID") || "";
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID") || "";
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY") || "";
 const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME") || "sharematch-assets";
-
-// Map topic IDs to R2 video file names
-const VIDEO_FILE_NAMES: Record<string, string> = {
-  login: "Streamline Login Process With Sharematch.mp4",
-  signup: "Streamline Signup Process With Sharematch Product Demo.mp4",
-  kyc: "Streamline KYC Verification With Sharematch Demo.mp4",
-  buyAssets: "How to buy.mp4",
-  sellAssets: "How to sell.mp4",
-  forgotPassword: "forgot password.mp4",
-  updateUserDetails: "How to update user details.mp4",
-  editMarketingPreferences: "how to edit marketing preferences.mp4",
-  changePassword: "how to change password.mp4",
-  eplIndex: "English epl.mp4",
-  splIndex: "English SPL.mp4",
-  uefaIndex: "English UEFA.mp4",
-  nflIndex: "English NFL.mp4",
-  nbaIndex: "English NBA Market.mp4",
-  islIndex: "English Indonesia Super League.mp4",
-  t20Index: "English T20 World Cup.mp4",
-  fifaIndex: "English FIFA World Cup.mp4",
-  f1Index: "English Formula 1.mp4",
-};
-
-// Video metadata mapping (without URLs - URLs are generated dynamically)
-// accessLevel: "public" = available to all, "authenticated" = requires login
-const VIDEO_METADATA: {
-  [key: string]: {
-    title: string;
-    intro: string;
-    accessLevel: "public" | "authenticated";
-  };
-} = {
-  login: {
-    title: "How to Login to ShareMatch",
-    intro:
-      "Here's a quick video walkthrough showing you how to log in to ShareMatch!",
-    accessLevel: "public",
-  },
-  signup: {
-    title: "How to Sign Up for ShareMatch",
-    intro:
-      "I've got a helpful video that will guide you through the signup process step by step.",
-    accessLevel: "public",
-  },
-  kyc: {
-    title: "How to Complete KYC Verification on ShareMatch",
-    intro:
-      "Check out this video tutorial on completing your KYC verification - it covers everything you need to know!",
-    accessLevel: "public",
-  },
-  buyAssets: {
-    title: "How to Buy Assets on ShareMatch",
-    intro:
-      "Here's a step-by-step video showing you how to purchase assets on ShareMatch!",
-    accessLevel: "authenticated",
-  },
-  sellAssets: {
-    title: "How to Sell Assets on ShareMatch",
-    intro:
-      "Check out this guide on how to sell your assets on the ShareMatch platform!",
-    accessLevel: "authenticated",
-  },
-  forgotPassword: {
-    title: "How to Reset Your Password on ShareMatch",
-    intro:
-      "Here's a quick video showing you how to reset your password if you've forgotten it!",
-    accessLevel: "public",
-  },
-  updateUserDetails: {
-    title: "How to Update User Details on ShareMatch",
-    intro:
-      "This video will walk you through updating your profile information on ShareMatch!",
-    accessLevel: "authenticated",
-  },
-  editMarketingPreferences: {
-    title: "How to Edit Marketing Preferences on ShareMatch",
-    intro:
-      "Learn how to customize your communication preferences with this helpful video!",
-    accessLevel: "authenticated",
-  },
-  changePassword: {
-    title: "How to Change Your Password on ShareMatch",
-    intro: "Here's a guide on how to change your password",
-    accessLevel: "authenticated",
-  },
-  eplIndex: {
-    title: "Understanding the English Premier League Index on ShareMatch",
-    intro:
-      "This video explains how the English Premier League index token works on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  splIndex: {
-    title: "Understanding the Saudi Pro League Index on ShareMatch",
-    intro:
-      "Learn how the Saudi Pro League index token functions on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  uefaIndex: {
-    title: "Understanding the UEFA Champions League Index on ShareMatch",
-    intro:
-      "This video explains how the UEFA Champions League index token works on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  nflIndex: {
-    title: "Understanding the NFL Index on ShareMatch",
-    intro:
-      "This video explains how the NFL index token functions on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  nbaIndex: {
-    title: "Understanding the NBA Index on ShareMatch",
-    intro:
-      "Learn how the NBA index token works and how index values are represented on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  islIndex: {
-    title: "Understanding the Indonesia Super League Index on ShareMatch",
-    intro:
-      "This video explains how the Indonesia Super League index token functions on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  t20Index: {
-    title: "Understanding the T20 Cricket Index on ShareMatch",
-    intro:
-      "Learn how the T20 Cricket index token works and how index performance is represented.",
-    accessLevel: "authenticated",
-  },
-  fifaIndex: {
-    title: "Understanding the FIFA World Cup Index on ShareMatch",
-    intro:
-      "This video explains how the FIFA World Cup index token works on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-  f1Index: {
-    title: "Understanding the F1 Index on ShareMatch",
-    intro:
-      "Learn how the F1 index token operates and how index values move on ShareMatch.",
-    accessLevel: "authenticated",
-  },
-};
 
 // ============== R2 Signed URL Generation ==============
 
@@ -270,73 +138,14 @@ async function generateSignedUrl(
 
 /**
  * Classify user intent using LLM
- * Returns: { wantsVideo: boolean, videoTopic: "login" | "signup" | "kyc" | null }
+ * Returns: { wantsVideo: boolean, videoTopic: string | null }
  */
 async function classifyIntent(
   query: string,
   groqApiKey: string
 ): Promise<{ wantsVideo: boolean; videoTopic: string | null }> {
-  const classificationPrompt = `You are an intent classifier. Analyze the user's question and determine:
-1. Does the user want a step-by-step tutorial/guide (visual walkthrough)?
-2. If yes, which topic from this list:
-   - login: How to log into ShareMatch
-   - signup: How to create a new account
-   - kyc: How to verify identity/complete KYC
-   - forgotPassword: How to reset/recover password
-   - buyAssets: How to purchase/buy assets
-   - sellAssets: How to sell assets
-   - updateUserDetails: How to update profile/user information
-   - editMarketingPreferences: How to change communication/marketing settings
-   - changePassword: How to change password (when logged in)
-   - eplIndex: English Premier League index overview
-   - splIndex: Saudi Pro League index overview
-   - uefaIndex: UEFA Champions League index overview
-   - nflIndex: NFL index overview
-   - nbaIndex: NBA index overview
-   - islIndex: Indonesia Super League index overview
-   - t20Index: T20 Cricket index overview
-   - fifaIndex: FIFA World Cup index overview
-   - f1Index: Formula 1 index overview
-
-
-TUTORIAL indicators: "how do I", "how to", "show me", "guide me", "walk me through", "steps to", "process for", "tutorial"
-INFORMATION indicators: "what is", "explain", "tell me about", "describe", "why", "when"
-
-IMPORTANT: 
-- "forgot password" or "reset password" → forgotPassword
-- "change password" (when logged in) → changePassword
-- "how to buy" → buyAssets
-- "how to sell" → sellAssets
-
-IMPORTANT (Index Videos):
-- If the user asks to explain, show, or understand an index, return wantsVideo=true
-- Examples of index intent:
-  "what is epl index"
-  "explain nba index"
-  "how does the fifa index work"
-  "show me the f1 index"
-- These are EDUCATIONAL index videos, not trading tutorials
-
-
-Respond with ONLY valid JSON (no markdown, no explanation):
-{"wantsVideo": true/false, "videoTopic": "login"|"signup"|"kyc"|"forgotPassword"|"buyAssets"|"sellAssets"|"updateUserDetails"|"editMarketingPreferences"|"changePassword"|"eplIndex"|"splIndex"|"uefaIndex"|"nflIndex"|"nbaIndex"|"islIndex"|"t20Index"|"fifaIndex"|"f1Index"|null}
-
-
-Examples:
-- "how do I sign up?" → {"wantsVideo": true, "videoTopic": "signup"}
-- "what is the signup flow?" → {"wantsVideo": false, "videoTopic": null}
-- "show me how to login" → {"wantsVideo": true, "videoTopic": "login"}
-- "I forgot my password" → {"wantsVideo": true, "videoTopic": "forgotPassword"}
-- "how to reset my password" → {"wantsVideo": true, "videoTopic": "forgotPassword"}
-- "how do I change my password" → {"wantsVideo": true, "videoTopic": "changePassword"}
-- "how to buy assets" → {"wantsVideo": true, "videoTopic": "buyAssets"}
-- "show me how to sell" → {"wantsVideo": true, "videoTopic": "sellAssets"}
-- "how to update my profile" → {"wantsVideo": true, "videoTopic": "updateUserDetails"}
-- "what is ShareMatch?" → {"wantsVideo": false, "videoTopic": null}
-- "how to verify my identity" → {"wantsVideo": true, "videoTopic": "kyc"}
-- "explain the KYC process" → {"wantsVideo": false, "videoTopic": null}
-
-User question: "${query}"`;
+  // Use shared prompt with interpolation
+  const classificationPrompt = interpolate(INTENT_CLASSIFICATION_PROMPT, { query });
 
   try {
     const response = await fetch(
@@ -351,7 +160,7 @@ User question: "${query}"`;
           model: "llama-3.1-8b-instant",
           messages: [{ role: "user", content: classificationPrompt }],
           temperature: 0,
-          max_tokens: 100, // Increased from 50 to handle longer responses
+          max_tokens: 100,
         }),
       }
     );
@@ -397,7 +206,6 @@ serve(async (req) => {
     }
 
     // ============== Session Validation ==============
-    // Check if user is authenticated by validating the auth token
     let isAuthenticated = false;
     let userId: string | null = null;
 
@@ -456,7 +264,6 @@ serve(async (req) => {
     if (!chromaTenant) throw new Error("CHROMA_TENANT not configured");
 
     // Step 0: Intent Classification using LLM
-    // Determine if user wants a video tutorial or information
     console.log("Step 0: Classifying user intent...");
     const intent = await classifyIntent(message, groqApiKey);
     console.log(
@@ -513,7 +320,7 @@ serve(async (req) => {
               id: intent.videoTopic,
               url: videoUrl,
               title: videoInfo.title,
-              isR2Video: true, // Flag to tell frontend this is an R2 video (use <video> tag)
+              isR2Video: true,
             },
           }),
           {
@@ -636,120 +443,21 @@ serve(async (req) => {
 
     console.log("✓ Found", documents.length, "documents");
 
-    // Step 3: Generate response using RAG (intent classification already handled video requests)
+    // Step 3: Generate response using RAG
     console.log("Step 3: Generating RAG response...");
 
     const context =
       documents.join("\n\n") ||
       "No specific information found in the knowledge base.";
 
-    // ============== Dual System Prompts ==============
-    // Different prompts for authenticated vs public users
-
-    const publicSystemPrompt = `You are ShareMatch AI, helping visitors learn about ShareMatch.
-
-COMMUNICATION STYLE:
-- Be friendly, welcoming, and helpful
-- Speak naturally and directly
-- Encourage users to sign up or log in when appropriate
-
-GREETINGS:
-When the user says greetings like "hi", "hey", "hello", "good morning", "what's up", etc.:
-→ Respond warmly and naturally, welcoming them to ShareMatch
-→ Let them know you can help with: signing up, logging in, KYC verification, or learning about ShareMatch
-→ Keep it brief and friendly
-→ Do NOT ask them to rephrase - greetings are NOT unclear questions!
-
-Example greeting responses:
-- "Hey there! 👋 Welcome to ShareMatch! What can I help you with today?"
-- "Hello! I'm here to help you with ShareMatch. Feel free to ask about signing up, logging in, or how the platform works!"
-- "Hi! Welcome! I can assist you with account creation, login, or any questions about ShareMatch."
-
-TOPICS YOU CAN HELP WITH:
-- What is ShareMatch and how it works
-- How to create an account (signup process)
-- How to login to your account
-- KYC verification process
-- General platform overview
-
-TOPICS THAT REQUIRE LOGIN:
-- Trading and buying/selling tokens
-- Deposits and withdrawals
-- Account settings and profile management
-- Portfolio and transaction history
-- Specific account questions
-
-HANDLING LOGIN-REQUIRED TOPICS:
-If asked about trading, deposits, withdrawals, or account-specific features, respond:
-"To get help with that, please log in to your ShareMatch account first. I can help you with login or signup if you need!"
-
-HANDLING UNCLEAR QUESTIONS:
-- ONLY if the user sends truly vague follow-ups like "huh?", "what?", "again?", "??":
-  → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
-- NEVER treat greetings as unclear questions
-- NEVER dump raw text or repeat the same long response
-
-STRICT RULES:
-1. Answer ONLY using the CONTEXT below. Do NOT make up information.
-2. Keep responses concise and focused.
-3. If the answer is not in the context, say: "I don't have that specific information. Please contact hello@sharematch.me"
-4. NEVER use phrases like "according to the context" or similar.
-
-FORMATTING RULES:
-When presenting lists or multiple features:
-- Put EACH item on its OWN LINE
-- Use bullet points with dashes (-)
-- Keep each bullet point concise
-
-CONTEXT:
-${context}`;
-
-    const authenticatedSystemPrompt = `You are ShareMatch AI, the official assistant for the ShareMatch platform.
-
-COMMUNICATION STYLE:
-- Speak naturally and directly, as if you inherently know this information
-- Answer confidently as the authoritative source on ShareMatch
-- Be conversational but professional
-
-GREETINGS (CRITICAL):
-When the user says greetings like "hi", "hey", "hello", "good morning", "what's up", etc.:
-→ Respond warmly: "Hey! Great to see you! How can I help you today? I can assist with trading, deposits, account settings, or anything else about ShareMatch."
-→ Do NOT ask them to rephrase - greetings are NOT unclear questions!
-
-HANDLING UNCLEAR QUESTIONS:
-- ONLY if the user sends truly vague follow-ups like "huh?", "what?", "again?", "??":
-  → Ask them to clarify: "Could you please rephrase your question? I'm happy to help!"
-- If the user asks you to repeat something:
-  → Politely ask what specific part they'd like explained: "Which part would you like me to explain further?"
-- NEVER treat greetings as unclear questions
-- NEVER dump raw text or repeat the same long response
-- NEVER output raw context chunks or document text
-
-STRICT RULES:
-1. Answer ONLY using the CONTEXT below. Do NOT make up information.
-2. Keep responses concise and focused on what the user asked.
-3. If the answer is not in the context, say: "I don't have that specific information. Please contact hello@sharematch.me"
-4. Use exact terms and definitions from the context.
-5. NEVER use phrases like "according to the context", "based on the provided information", "from the documents", or "the context states"
-6. NEVER output raw document text, chunks, or unformatted context data.
-
-FORMATTING RULES:
-When presenting lists or multiple features:
-- Put EACH item on its OWN LINE
-- Use bullet points with dashes (-)
-- Keep each bullet point concise
-
-CONTEXT:
-${context}`;
-
-    // Select prompt based on authentication status
+    // Use shared prompts with interpolation
     const systemPrompt = isAuthenticated
-      ? authenticatedSystemPrompt
-      : publicSystemPrompt;
+      ? interpolate(CHATBOT_AUTHENTICATED_PROMPT, { context })
+      : interpolate(CHATBOT_PUBLIC_PROMPT, { context });
+    
     console.log(
       `📝 Using ${isAuthenticated ? "authenticated" : "public"} system prompt`
     );
-    // ============== End Dual System Prompts ==============
 
     const groqResponse = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
