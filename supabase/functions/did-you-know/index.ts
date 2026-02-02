@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import { publicCors } from "../_shared/cors.ts";
+import { DID_YOU_KNOW_PROMPT, DEFAULT_DID_YOU_KNOW } from "../_shared/prompts/index.ts";
+import { interpolate, getContextClause } from "../_shared/prompts/utils.ts";
 
 serve(async (req: Request) => {
   const corsHeaders = publicCors(req.headers.get('origin'));
@@ -27,7 +29,7 @@ serve(async (req: Request) => {
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ fact: "Did you know? ShareMatch provides real-time tokenised trading for sports assets." }),
+        JSON.stringify({ fact: DEFAULT_DID_YOU_KNOW }),
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -37,23 +39,16 @@ serve(async (req: Request) => {
 
     const ai = new GoogleGenerativeAI(apiKey);
 
-    // Tightened prompt for relevance and safety
-    const contextClause = market ? `specifically within the context of ${market} (Sport/League)` : 'in the context of sports and performance';
-    const prompt = `Write a single, short, fascinating "Did You Know?" fact about ${assetName} ${contextClause}.
-Rules:
-1. It must be ONE sentence.
-2. It must be interesting or obscure.
-3. Focus on records, history, stats, or unique traits in their sport.
-4. STRICTLY AVOID: politics, war, religion, or sensitive geopolitical topics.
-5. If the asset is a country/team in a specific competition (e.g. Eurovision), focus ONLY on that competition.
-Start directly with the fact.`;
+    // Use shared prompt with interpolation
+    const contextClause = getContextClause(market, 'did-you-know');
+    const prompt = interpolate(DID_YOU_KNOW_PROMPT, { assetName, contextClause });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: prompt,
     });
 
-    const fact = response.text || "Did you know? ShareMatch provides real-time tokenised trading for sports assets.";
+    const fact = response.text || DEFAULT_DID_YOU_KNOW;
 
     return new Response(
       JSON.stringify({ fact }),
@@ -67,7 +62,7 @@ Start directly with the fact.`;
     console.error("Error in did-you-know function:", error);
     const corsHeaders = publicCors(req.headers.get('origin'));
     return new Response(
-      JSON.stringify({ fact: "Did you know? ShareMatch provides real-time tokenised trading for sports assets." }),
+      JSON.stringify({ fact: DEFAULT_DID_YOU_KNOW }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

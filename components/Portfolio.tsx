@@ -1,16 +1,19 @@
 import React, { useMemo } from "react";
-import type { Position, Team } from "../types";
+import type { Position, Team, League } from "../types";
 import { useFavorites } from "../hooks/useFavorites";
-import { Star } from "lucide-react";
 import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import { formatCurrency, formatNumberWithCommas } from "../utils/currencyUtils";
+import { getMarketDisplayName } from "../utils/marketUtils";
+import { PortfolioSkeleton } from "./Skeleton";
 
 interface PortfolioProps {
   portfolio: Position[];
   allAssets: Team[];
-  onNavigate: (league: "EPL" | "UCL" | "WC" | "SPL" | "F1") => void;
+  onNavigate: (league: League) => void;
   onSelectAsset: (team: Team, type: "buy" | "sell") => void;
   onViewAsset?: (asset: Team) => void;
+  /** Show skeleton loading state */
+  loading?: boolean;
 }
 
 const Portfolio: React.FC<PortfolioProps> = ({
@@ -19,20 +22,9 @@ const Portfolio: React.FC<PortfolioProps> = ({
   onNavigate,
   onSelectAsset,
   onViewAsset,
+  loading = false,
 }) => {
   const { favorites, toggleFavorite } = useFavorites();
-  const getMarketName = (market: string): string => {
-    const marketNames: Record<string, string> = {
-      EPL: "Premier League",
-      UCL: "Champions League",
-      WC: "World Cup",
-      SPL: "Saudi Pro League",
-      F1: "Formula 1",
-      NBA: "NBA",
-      NFL: "NFL",
-    };
-    return marketNames[market] || market;
-  };
 
   const holdings = useMemo(() => {
     return portfolio
@@ -42,11 +34,20 @@ const Portfolio: React.FC<PortfolioProps> = ({
           (a) => a.market_trading_asset_id === position.market_trading_asset_id
         );
 
+        // Use market token but also get display name from DB data if available
+        const marketToken = asset?.market || asset?.index_token || "Unknown";
+        const marketDisplayName = getMarketDisplayName(
+          marketToken,
+          asset?.index_name,
+          asset?.market_name
+        );
+
         return {
           ...position,
           asset: asset,
           currentPrice: asset?.bid || 0,
-          market: asset?.market || "Unknown",
+          market: marketToken, // Keep short token for badge
+          marketDisplayName: marketDisplayName, // Full name for display if needed
         };
       })
       .filter((h) => h.quantity > 0);
@@ -59,6 +60,11 @@ const Portfolio: React.FC<PortfolioProps> = ({
       onSelectAsset(holding.asset, "buy");
     }
   };
+
+  // Show skeleton while loading
+  if (loading) {
+    return <PortfolioSkeleton count={3} />;
+  }
 
   if (holdings.length === 0) {
     return (

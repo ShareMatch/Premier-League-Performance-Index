@@ -4,6 +4,7 @@ import Portfolio from "./Portfolio";
 import Watchlist from "./Watchlist";
 import type { Order, Position, Team, Transaction, League } from "../types";
 import { History, Activity, X, Star } from "lucide-react";
+import { TransactionHistorySkeleton, WatchlistSkeleton } from "./Skeleton";
 
 interface RightPanelProps {
   portfolio: Position[];
@@ -19,6 +20,8 @@ interface RightPanelProps {
   walletBalance?: number;
   onClose?: () => void;
   isMobile?: boolean;
+  /** Show skeleton loading state for portfolio/transactions */
+  loading?: boolean;
 }
 
 const RightPanel: React.FC<RightPanelProps> = ({
@@ -35,6 +38,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
   walletBalance,
   onClose,
   isMobile = false,
+  loading = false,
 }) => {
   const [activeTab, setActiveTab] = useState<"portfolio" | "watchlist" | "history">(
     "portfolio"
@@ -144,6 +148,7 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 onNavigate={onNavigate}
                 onSelectAsset={onSelectOrder}
                 onViewAsset={onViewAsset}
+                loading={loading}
               />
             </>
           ) : activeTab === "history" ? (
@@ -152,7 +157,9 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                 Transaction History
               </h2>
-              {transactions.length === 0 ? (
+              {loading ? (
+                <TransactionHistorySkeleton count={3} />
+              ) : transactions.length === 0 ? (
                 <div className="text-gray-500 text-center text-[clamp(0.75rem,2vw,0.875rem)] py-8">
                   No transaction history available.
                 </div>
@@ -231,11 +238,15 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 <span className="w-2 h-6 bg-[#005430] rounded-sm"></span>
                 Watchlist
               </h2>
-              <Watchlist
-                allAssets={allAssets}
-                onViewAsset={onViewAsset}
-                onSelectAsset={(team, type) => onSelectOrder(team, type)}
-              />
+              {loading ? (
+                <WatchlistSkeleton count={3} />
+              ) : (
+                <Watchlist
+                  allAssets={allAssets}
+                  onViewAsset={onViewAsset}
+                  onSelectAsset={(team, type) => onSelectOrder(team, type)}
+                />
+              )}
             </div>
           )}
         </div>

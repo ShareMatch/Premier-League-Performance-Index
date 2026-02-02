@@ -1,30 +1,41 @@
 import React, { useMemo } from "react";
-import { Minus } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaCaretDown } from "react-icons/fa";
 import { FaCaretUp } from "react-icons/fa6";
 import { Team, League } from "../types";
-import { marketInfoData } from "../lib/marketInfo";
+import { getMarketInfo } from "../lib/marketInfo";
+import type { SeasonDates } from "../lib/api";
 
 interface TickerProps {
   onNavigate: (league: League) => void;
   onViewAsset?: (asset: Team) => void;
   teams: Team[];
+  seasonDatesMap?: Map<string, SeasonDates>;
 }
 
-const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
+const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams, seasonDatesMap }) => {
   const navigate = useNavigate();
   const tickerItems = useMemo(() => {
-    // Filter out teams from closed markets
+    // Filter out teams from closed markets using dynamic season data
     const activeTeams = teams.filter((t) => {
-      const marketInfo = marketInfoData[t.market || "Unknown"];
-      return marketInfo && marketInfo.isOpen;
+      const market = t.market || t.index_token;
+      if (!market) return false;
+
+      const seasonData = seasonDatesMap?.get(market);
+      const marketInfo = getMarketInfo(
+        market,
+        seasonData?.start_date,
+        seasonData?.end_date,
+        seasonData?.stage || undefined,
+        t.index_name
+      );
+      return marketInfo.isOpen;
     });
 
     // Group teams by market
     const marketGroups: { [key: string]: Team[] } = {};
     activeTeams.forEach((t) => {
-      const m = t.market || "Unknown";
+      const m = t.market || t.index_token || "Unknown";
       if (!marketGroups[m]) marketGroups[m] = [];
       marketGroups[m].push(t);
     });
@@ -54,7 +65,7 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
       team: t,
       action: Math.random() > 0.5 ? "buy" : ("sell" as "buy" | "sell"),
     }));
-  }, [teams]);
+  }, [teams, seasonDatesMap]);
 
   const handleItemClick = (team: Team) => {
     if (onViewAsset) {
@@ -62,24 +73,11 @@ const Ticker: React.FC<TickerProps> = ({ onNavigate, onViewAsset, teams }) => {
       return;
     }
 
-    if (team.market) {
-      navigate(`/market/${team.market}`);
-    } else {
-      // Fallback to ID-based detection
-      const id = Number(team.id);
-      let league = "";
-      if (id >= 1 && id <= 100) league = "EPL";
-      else if (id >= 101 && id <= 200) league = "UCL";
-      else if (id >= 201 && id <= 300) league = "WC";
-      else if (id >= 301 && id <= 400) league = "SPL";
-      else if (id >= 401 && id <= 500) league = "F1";
-      else if (id >= 501 && id <= 600) league = "ISL";
-
-      if (league) navigate(`/market/${league}`);
-    }
-
-    if (onNavigate && team.market) {
-      onNavigate(team.market as any);
+    // Use market token from database - no ID-based fallback needed
+    const market = team.market || team.index_token;
+    if (market) {
+      navigate(`/market/${market}`);
+      onNavigate?.(market as League);
     }
   };
 

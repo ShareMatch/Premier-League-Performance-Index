@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { restrictedCors } from "../_shared/cors.ts";
+import { GENERATE_SUMMARY_PROMPT } from "../_shared/prompts/index.ts";
+import { interpolate } from "../_shared/prompts/utils.ts";
 
 serve(async (req) => {
   const corsHeaders = restrictedCors(req.headers.get("origin"));
@@ -11,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { headline, source, url } = await req.json(); // e.g., "Global" or "team:Arsenal:EPL"
+    const { headline, source, url } = await req.json();
 
     if (!headline || !source || !url) {
       return new Response(
@@ -41,17 +43,8 @@ serve(async (req) => {
       tool: [{ googleSearch: {} }],
     });
 
-    const prompt = `Write a short, engaging 3-sentence summary for this news article:
-
-    Headline: "${headline}"
-    Source: ${source}
-    URL: ${url}
-
-    Rules:
-    - Keep it concise and informative
-    - Focus on what this means for fans and the sport
-    - Don't speculate too wildly
-    - Write in an engaging, professional sports journalism style`;
+    // Use shared prompt with interpolation
+    const prompt = interpolate(GENERATE_SUMMARY_PROMPT, { headline, source, url });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

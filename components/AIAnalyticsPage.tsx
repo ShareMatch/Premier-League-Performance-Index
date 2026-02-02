@@ -16,6 +16,7 @@ import type { Team } from "../types";
 import { supabase } from "../lib/supabase";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { marketInfoData } from "../lib/marketInfo";
+import { useR2Config } from "../hooks/useR2Config";
 
 interface AIAnalyticsPageProps {
   teams: Team[];
@@ -29,101 +30,11 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Market labels for display
-const MARKET_LABELS: Record<string, string> = {
-  EPL: "Premier League",
-  SPL: "Saudi Pro League",
-  UCL: "Champions League",
-  F1: "Formula 1",
-  NBA: "NBA",
-  NFL: "NFL",
-  T20: "T20 World Cup",
-  ISL: "Indonesia Super League",
-};
-
-// Category configuration with their markets
-const CATEGORIES = [
-  // {
-  //   id: "all",
-  //   label: "Index Tokens",
-  //   markets: ["EPL", "SPL", "UCL", "ISL", "F1", "NBA", "NFL", "T20"],
-  // },
-  {
-    id: "football",
-    label: "Football",
-    markets: ["EPL", "SPL", "UCL", "ISL"],
-  },
-  {
-    id: "motorsport",
-    label: "Motorsport",
-    markets: ["F1"],
-  },
-  {
-    id: "basketball",
-    label: "Basketball",
-    markets: ["NBA"],
-  },
-  {
-    id: "american_football",
-    label: "American Football",
-    markets: ["NFL"],
-  },
-  {
-    id: "cricket",
-    label: "Cricket",
-    markets: ["T20"],
-  },
-];
-
-// Suggested questions for initial state
-const SUGGESTED_QUESTIONS = [
-  {
-    text: "Which EPL team is most undervalued based on performance?",
-    market: "EPL",
-  },
-  { text: "Analyze the top F1 performers this season", market: "F1" },
-  {
-    text: "Compare the Saudi Pro League top 5 teams' recent form",
-    market: "SPL",
-  },
-  {
-    text: "Identify high-performing UCL assets in the current cycle",
-    market: "UCL",
-  },
-  {
-    text: "Which NBA team has the most consistent player ratings?",
-    market: "NBA",
-  },
-  {
-    text: "Evaluate the growth potential of NFL star performers",
-    market: "NFL",
-  },
-  { text: "Find top-rated T20 players with low index values", market: "T20" },
-  {
-    text: "Which ISL teams are showing the most technical improvement?",
-    market: "ISL",
-  },
-  {
-    text: "Compare defensive efficiency between top 3 EPL clubs",
-    market: "EPL",
-  },
-  {
-    text: "What are the key performance metrics driving F1 valuations?",
-    market: "F1",
-  },
-];
-
-// Asset-specific question templates (placeholders for asset names)
-const ASSET_QUESTION_TEMPLATES = [
-  "Analyze {asset}",
-  "{asset} performance overview",
-  "{asset} recent form",
-  "{asset} stats breakdown",
-  "Compare {asset}",
-  "{asset} key metrics",
-  "{asset} trends analysis",
-  "{asset} valuation report",
-];
+interface Category {
+  id: string;
+  label: string;
+  markets: string[];
+}
 
 const InputArea: React.FC<{
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -135,7 +46,7 @@ const InputArea: React.FC<{
   handleSendMessage: () => void;
   selectedMarket: string;
   selectedCategory: string;
-  currentCategory: (typeof CATEGORIES)[0];
+  currentCategory: Category;
   isLoading: boolean;
   openDropdown: string | null;
   setOpenDropdown: (value: string | null) => void;
@@ -143,6 +54,8 @@ const InputArea: React.FC<{
   handleMarketSelect: (market: string) => void;
   showGenerateButton?: boolean;
   onGenerateAnalysis?: () => void;
+  categories: Category[];
+  marketLabels: Record<string, string>;
 }> = ({
   inputRef,
   inputValue,
@@ -161,6 +74,8 @@ const InputArea: React.FC<{
   handleMarketSelect,
   showGenerateButton = false,
   onGenerateAnalysis,
+  categories,
+  marketLabels,
 }) => {
   const displayLabel =
     selectedMarket === "ALL_INDEX"
@@ -168,7 +83,7 @@ const InputArea: React.FC<{
       : selectedMarket === "ALL"
         ? `${currentCategory.label} • All`
         : `${currentCategory.label} • ${
-            MARKET_LABELS[selectedMarket] || selectedMarket
+            marketLabels[selectedMarket] || selectedMarket
           }`;
 
   return (
@@ -188,7 +103,7 @@ const InputArea: React.FC<{
                 ? "All Index"
                 : selectedMarket === "ALL"
                   ? currentCategory.label
-                  : MARKET_LABELS[selectedMarket] || selectedMarket
+                  : marketLabels[selectedMarket] || selectedMarket
             }`}
             disabled={isLoading}
             className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
@@ -249,7 +164,7 @@ const InputArea: React.FC<{
 
                   <div className="h-px bg-gray-800 my-1 mx-1" />
 
-                  {CATEGORIES.map((cat) => {
+                  {categories.map((cat) => {
                     // Filter out closed markets from this category
                     const openMarkets = cat.markets.filter((marketId) => {
                       const marketInfo = marketInfoData[marketId];
@@ -329,7 +244,7 @@ const InputArea: React.FC<{
                                       />
                                     )}
                                     <span>
-                                      {MARKET_LABELS[marketId] || marketId}
+                                      {marketLabels[marketId] || marketId}
                                     </span>
                                   </div>
                                   {isSelected && (
@@ -473,6 +388,15 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
 );
 
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
+  // Get config from R2 (cached)
+  const { 
+    suggestedQuestions, 
+    assetTemplates, 
+    categories, 
+    marketLabels,
+    isLoading: configLoading 
+  } = useR2Config();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("football");
@@ -484,12 +408,12 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
   const randomQuestions = useMemo(() => {
     // Filter out questions for closed markets
-    const openMarketQuestions = SUGGESTED_QUESTIONS.filter((q) => {
+    const openMarketQuestions = suggestedQuestions.filter((q) => {
       const marketInfo = marketInfoData[q.market];
       return marketInfo && marketInfo.isOpen;
     });
     return [...openMarketQuestions].sort(() => Math.random() - 0.5).slice(0, 4);
-  }, []);
+  }, [suggestedQuestions]);
 
   // Generate asset-specific questions based on selected market
   const assetQuestions = useMemo(() => {
@@ -504,7 +428,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         .slice(0, 15);
     } else if (selectedMarket === "ALL") {
       // Get assets from the current category's markets
-      const currentCat = CATEGORIES.find((c) => c.id === selectedCategory);
+      const currentCat = categories.find((c) => c.id === selectedCategory);
       if (currentCat) {
         marketAssets = teams
           .filter(
@@ -528,8 +452,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const questions: { text: string; asset: Team }[] = [];
     marketAssets.forEach((asset) => {
       const template =
-        ASSET_QUESTION_TEMPLATES[
-          Math.floor(Math.random() * ASSET_QUESTION_TEMPLATES.length)
+        assetTemplates[
+          Math.floor(Math.random() * assetTemplates.length)
         ];
       questions.push({
         text: template.replace("{asset}", asset.name),
@@ -538,7 +462,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     });
 
     return questions;
-  }, [teams, selectedMarket, selectedCategory]);
+  }, [teams, selectedMarket, selectedCategory, categories, assetTemplates]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -549,8 +473,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
   // Get current category config
   const currentCategory = useMemo(() => {
-    return CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
-  }, [selectedCategory]);
+    return categories.find((c) => c.id === selectedCategory) || categories[0];
+  }, [selectedCategory, categories]);
 
   // Always scroll to bottom when new messages arrive (especially during streaming)
   useEffect(() => {
@@ -568,7 +492,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   // Update selected market when category changes
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    const category = CATEGORIES.find((c) => c.id === categoryId);
+    const category = categories.find((c) => c.id === categoryId);
     if (category && category.markets.length > 0) {
       setSelectedMarket(category.markets[0]);
     }
@@ -594,7 +518,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         ? "All Index Tokens"
         : selectedMarket === "ALL"
           ? `All ${currentCategory.label}`
-          : MARKET_LABELS[selectedMarket] || selectedMarket;
+          : marketLabels[selectedMarket] || selectedMarket;
 
     // Add user message
     const userMessage: ChatMessage = {
@@ -724,10 +648,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   };
 
   const handleSuggestedQuestion = (
-    question: (typeof SUGGESTED_QUESTIONS)[0],
+    question: { text: string; market: string },
   ) => {
     // Update market if different
-    const category = CATEGORIES.find((c) =>
+    const category = categories.find((c) =>
       c.markets.includes(question.market),
     );
     if (category) {
@@ -749,7 +673,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const handleAssetQuestion = (question: { text: string; asset: Team }) => {
     // Set the market to match the asset's market
     if (question.asset.market) {
-      const category = CATEGORIES.find((c) =>
+      const category = categories.find((c) =>
         c.markets.includes(question.asset.market!),
       );
       if (category) {
@@ -768,7 +692,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         ? "all index tokens"
         : selectedMarket === "ALL"
           ? `all ${currentCategory.label} assets`
-          : MARKET_LABELS[selectedMarket] || selectedMarket;
+          : marketLabels[selectedMarket] || selectedMarket;
 
     const analysisQuery = `Generate a comprehensive analysis for ${marketLabel}. Include top performers, undervalued assets, recent trends, and investment opportunities.`;
     handleSendMessage(analysisQuery);
@@ -836,6 +760,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                   setOpenDropdown={setOpenDropdown}
                   handleCategoryChange={handleCategoryChange}
                   handleMarketSelect={handleMarketSelect}
+                  categories={categories}
+                  marketLabels={marketLabels}
                 />
               </div>
             </div>
@@ -948,6 +874,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               handleMarketSelect={handleMarketSelect}
               showGenerateButton={true}
               onGenerateAnalysis={handleGenerateAnalysis}
+              categories={categories}
+              marketLabels={marketLabels}
             />
           </div>
           {/* Disclaimer */}

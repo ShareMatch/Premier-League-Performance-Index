@@ -3,6 +3,7 @@ import InfoPopup from "./InfoPopup";
 import { getMarketInfo } from "../lib/marketInfo";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { ArrowLeft } from "lucide-react";
+import { HeaderSkeleton } from "./Skeleton";
 
 interface HeaderProps {
   title: string;
@@ -11,6 +12,8 @@ interface HeaderProps {
   seasonEndDate?: string; // From Supabase market_index_seasons.end_date
   seasonStage?: string; // 'open' | 'closed' | 'settled'
   onBack?: () => void;
+  /** Show skeleton loading state */
+  loading?: boolean;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -20,7 +23,13 @@ const Header: React.FC<HeaderProps> = ({
   seasonEndDate,
   seasonStage,
   onBack,
+  loading = false,
 }) => {
+  // Show skeleton while loading
+  if (loading) {
+    return <HeaderSkeleton />;
+  }
+
   const marketInfo = getMarketInfo(
     market,
     seasonStartDate,
