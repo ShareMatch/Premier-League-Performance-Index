@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { fetchMarketHierarchy } from "../lib/api";
+// Market labels come from DB via activeMarkets (from fetchMarketHierarchy)
 
 interface SidebarProps {
   isOpen: boolean;
@@ -111,25 +112,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   const cricketOrder = ["T20"];
   const globalEventsOrder = ["EUROVISION"];
 
-  const labelMap: Record<string, string> = {
-    EPL: "England Premier League",
-    SPL: "Saudi Pro League",
-    UCL: "UEFA Champions League",
-    WC: "FIFA World Cup",
-    ISL: "Indonesia Super League",
-    F1: "Formula 1",
-    NBA: "NBA",
-    NFL: "NFL",
-    T20: "T20 World Cup",
-    EUROVISION: "Eurovision",
-  };
-
-  const footballItems = useMemo(() => createSubItems(footballOrder, labelMap), [activeLeague, activeMarkets]);
-  const motorsportItems = useMemo(() => createSubItems(motorsportOrder, labelMap), [activeLeague, activeMarkets]);
-  const basketballItems = useMemo(() => createSubItems(basketballOrder, labelMap), [activeLeague, activeMarkets]);
-  const americanFootballItems = useMemo(() => createSubItems(americanFootballOrder, labelMap), [activeLeague, activeMarkets]);
-  const cricketItems = useMemo(() => createSubItems(cricketOrder, labelMap), [activeLeague, activeMarkets]);
-  const globalEventsItems = useMemo(() => createSubItems(globalEventsOrder, labelMap), [activeLeague, activeMarkets]);
+  // Labels come from DB via activeMarkets - token is used as fallback
+  const footballItems = useMemo(() => createSubItems(footballOrder, {}), [activeLeague, activeMarkets]);
+  const motorsportItems = useMemo(() => createSubItems(motorsportOrder, {}), [activeLeague, activeMarkets]);
+  const basketballItems = useMemo(() => createSubItems(basketballOrder, {}), [activeLeague, activeMarkets]);
+  const americanFootballItems = useMemo(() => createSubItems(americanFootballOrder, {}), [activeLeague, activeMarkets]);
+  const cricketItems = useMemo(() => createSubItems(cricketOrder, {}), [activeLeague, activeMarkets]);
+  const globalEventsItems = useMemo(() => createSubItems(globalEventsOrder, {}), [activeLeague, activeMarkets]);
 
   const menuItems: any[] = [
     {

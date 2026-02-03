@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import { FaCheck } from "react-icons/fa6";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { isMarketOpen } from "../utils/marketUtils";
+import { 
+  isMarketOpen, 
+  CATEGORY_ORDER,
+  getCategoryLabel,
+  getMarketLabel,
+} from "../utils/marketUtils";
 
 interface AllMarketsPageProps {
   teams: Team[];
@@ -24,35 +29,6 @@ interface AllMarketsPageProps {
   onViewAsset: (asset: Team) => void;
   onSelectOrder: (team: Team, type: "buy" | "sell") => void;
 }
-
-const MARKET_LABELS: Record<string, string> = {
-  EPL: "Premier League",
-  SPL: "Saudi Pro League",
-  UCL: "Champions League",
-  WC: "World Cup",
-  FIFA: "FIFA World Cup",
-  F1: "Formula 1",
-  NBA: "NBA",
-  NFL: "NFL",
-  T20: "T20 World Cup",
-  ISL: "Indonesia Super League",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  football: "Football",
-  f1: "Motorsport",
-  basketball: "Basketball",
-  american_football: "American Football",
-  cricket: "Cricket",
-};
-
-const CATEGORY_ORDER = [
-  "football",
-  "f1",
-  "basketball",
-  "american_football",
-  "cricket",
-];
 
 const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   teams,
@@ -151,7 +127,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   }, [teams, activeCategory, activeFilters, searchQuery]);
 
   // Compute which categories and markets actually have active teams to display in the filter bar
-  const visibleCategories = useMemo(() => {
+  // All labels are derived from DB data (team.market_sub_group, team.market_name, team.index_name)
+  const { visibleCategories, derivedMarketLabels } = useMemo(() => {
     // 1. Get all active teams (open)
     const activeTeams = teams.filter((t) => {
       const status = isMarketOpen(t);
@@ -165,30 +142,47 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       return true;
     });
 
-    // 2. Group by category
+    // 2. Group by category and collect labels from DB
     const categoriesMap: Record<
       string,
       { id: string; label: string; markets: Set<string> }
     > = {};
+    const marketLabelsFromDb: Record<string, string> = {};
+    const categoryLabelsFromDb: Record<string, string> = {};
 
     activeTeams.forEach((t) => {
       const catId = t.category || "other";
+      
+      // Get category label from market_sub_group (DB)
+      if (t.market_sub_group && !categoryLabelsFromDb[catId]) {
+        categoryLabelsFromDb[catId] = t.market_sub_group;
+      }
+      
       if (!categoriesMap[catId]) {
         categoriesMap[catId] = {
           id: catId,
-          label:
-            CATEGORY_LABELS[catId] ||
-            catId.charAt(0).toUpperCase() + catId.slice(1).replace("_", " "),
+          label: categoryLabelsFromDb[catId] || getCategoryLabel(catId),
           markets: new Set<string>(),
         };
       }
+      
       if (t.market) {
         categoriesMap[catId].markets.add(t.market);
+        // Get market label from DB (prefer market_name, fallback to index_name)
+        if (!marketLabelsFromDb[t.market]) {
+          if (t.market_name) {
+            marketLabelsFromDb[t.market] = t.market_name;
+          } else if (t.index_name) {
+            marketLabelsFromDb[t.market] = t.index_name;
+          } else {
+            marketLabelsFromDb[t.market] = t.market;
+          }
+        }
       }
     });
 
     // 3. Convert to array and sort by CATEGORY_ORDER
-    return CATEGORY_ORDER.filter((id) => categoriesMap[id])
+    const categories = CATEGORY_ORDER.filter((id) => categoriesMap[id])
       .concat(
         Object.keys(categoriesMap).filter((id) => !CATEGORY_ORDER.includes(id)),
       )
@@ -196,13 +190,15 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         const cat = categoriesMap[id];
         return {
           id: cat.id,
-          label: cat.label,
+          label: categoryLabelsFromDb[cat.id] || cat.label,
           markets: Array.from(cat.markets).map((mId) => ({
             id: mId,
-            label: MARKET_LABELS[mId] || mId,
+            label: getMarketLabel(mId, marketLabelsFromDb[mId]),
           })),
         };
       });
+    
+    return { visibleCategories: categories, derivedMarketLabels: marketLabelsFromDb };
   }, [teams]);
 
   // Initial loading simulation

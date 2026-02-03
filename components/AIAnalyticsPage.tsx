@@ -16,7 +16,33 @@ import type { Team } from "../types";
 import { supabase } from "../lib/supabase";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { marketInfoData } from "../lib/marketInfo";
-import { useR2Config } from "../hooks/useR2Config";
+
+// Import questions from text files
+import suggestedQuestionsRaw from "../resources/suggested-questions.txt?raw";
+import assetTemplatesRaw from "../resources/asset-question-templates.txt?raw";
+import { deriveMarketConfig } from "../utils/marketUtils";
+
+// Parse text files into usable data
+const parseSuggestedQuestions = (raw: string): { text: string; market: string }[] => {
+  return raw
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => {
+      const [market, ...textParts] = line.split("|");
+      return { market: market.trim(), text: textParts.join("|").trim() };
+    });
+};
+
+const parseAssetTemplates = (raw: string): string[] => {
+  return raw
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => line.trim());
+};
+
+// Parsed questions and templates
+const SUGGESTED_QUESTIONS = parseSuggestedQuestions(suggestedQuestionsRaw);
+const ASSET_TEMPLATES = parseAssetTemplates(assetTemplatesRaw);
 
 interface AIAnalyticsPageProps {
   teams: Team[];
@@ -388,14 +414,20 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
 );
 
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
-  // Get config from R2 (cached)
-  const { 
-    suggestedQuestions, 
-    assetTemplates, 
-    categories, 
-    marketLabels,
-    isLoading: configLoading 
-  } = useR2Config();
+  // Derive categories and market labels from teams (DB data)
+  const { categories, marketLabels } = useMemo(() => {
+    const config = deriveMarketConfig(teams);
+    return {
+      categories: config.categories.length > 0 ? config.categories : [
+        { id: "football", label: "Football", markets: ["EPL", "SPL", "UCL", "ISL"] },
+      ],
+      marketLabels: config.marketLabels,
+    };
+  }, [teams]);
+
+  // Use parsed questions from text files
+  const suggestedQuestions = SUGGESTED_QUESTIONS;
+  const assetTemplates = ASSET_TEMPLATES;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");

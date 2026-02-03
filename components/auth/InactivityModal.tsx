@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Clock, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+
+// Storage key for persisting deadline across sleep/wake
+const MODAL_DEADLINE_KEY = "sharematch_modal_deadline";
 
 interface InactivityModalProps {
   isOpen: boolean;
@@ -17,31 +20,129 @@ const InactivityModal: React.FC<InactivityModalProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(countdownSeconds);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const hasTimedOutRef = useRef<boolean>(false);
+  
+  // Store onTimeout in ref to avoid stale closure
+  const onTimeoutRef = useRef(onTimeout);
+  onTimeoutRef.current = onTimeout;
 
-  // Reset timer when modal opens
+  // Get deadline from storage (persists across sleep)
+  const getDeadline = (): number => {
+    try {
+      const stored = sessionStorage.getItem(MODAL_DEADLINE_KEY);
+      return stored ? parseInt(stored, 10) : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  // Set deadline in storage
+  const setDeadline = (deadline: number) => {
+    try {
+      if (deadline > 0) {
+        sessionStorage.setItem(MODAL_DEADLINE_KEY, deadline.toString());
+      } else {
+        sessionStorage.removeItem(MODAL_DEADLINE_KEY);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  // Calculate remaining seconds based on wall-clock time
+  const calculateRemaining = (): number => {
+    const deadline = getDeadline();
+    if (deadline === 0) return countdownSeconds;
+    const now = Date.now();
+    return Math.max(0, Math.ceil((deadline - now) / 1000));
+  };
+
+  // Check if expired and trigger logout
+  const checkAndTriggerTimeout = () => {
+    const remaining = calculateRemaining();
+    setTimeLeft(remaining);
+    
+    if (remaining <= 0 && !hasTimedOutRef.current) {
+      hasTimedOutRef.current = true;
+      setDeadline(0); // Clear storage
+      onTimeoutRef.current();
+      return true;
+    }
+    return false;
+  };
+
+  // Reset timer when modal opens - set deadline based on wall-clock
   useEffect(() => {
     if (isOpen) {
+      const deadline = Date.now() + (countdownSeconds * 1000);
+      setDeadline(deadline);
+      hasTimedOutRef.current = false;
       setTimeLeft(countdownSeconds);
+    } else {
+      setDeadline(0);
+      hasTimedOutRef.current = false;
     }
   }, [isOpen, countdownSeconds]);
 
-  // Countdown timer
+  // Countdown timer - uses wall-clock time from storage
   useEffect(() => {
     if (!isOpen) return;
 
+    // Check immediately on mount
+    if (checkAndTriggerTimeout()) return;
+
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onTimeout();
-          return 0;
-        }
-        return prev - 1;
-      });
+      checkAndTriggerTimeout();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isOpen, onTimeout]);
+  }, [isOpen]);
+
+  // Handle wake from sleep - separate effect with its own handlers
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleWake = () => {
+      // Use setTimeout to ensure we're fully awake
+      setTimeout(() => {
+        const remaining = calculateRemaining();
+        setTimeLeft(remaining);
+        
+        if (remaining <= 0 && !hasTimedOutRef.current) {
+          hasTimedOutRef.current = true;
+          setDeadline(0);
+          onTimeoutRef.current();
+        }
+      }, 100);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        handleWake();
+      }
+    };
+
+    const handleFocus = () => {
+      handleWake();
+    };
+
+    // @ts-ignore - resume event for wake from sleep
+    const handleResume = () => {
+      handleWake();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    // @ts-ignore
+    document.addEventListener("resume", handleResume);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      // @ts-ignore
+      document.removeEventListener("resume", handleResume);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
