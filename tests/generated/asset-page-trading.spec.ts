@@ -24,6 +24,104 @@ async function checkLoginError(page: Page, context: string): Promise<string | nu
 }
 
 /**
+ * Helper to dismiss KYC modal if it appears
+ * The KYC modal has class "fixed inset-0 z-50" and contains "Identity Verification" or "ShieldCheck"
+ */
+async function dismissKycModal(page: Page): Promise<void> {
+    // Look for the modal container with fixed positioning and z-50
+    const modalOverlay = page.locator('div.fixed.inset-0.z-50').first();
+    
+    if (await modalOverlay.isVisible({ timeout: 3000 }).catch(() => false)) {
+        console.log("📋 Modal overlay detected, attempting to close...");
+        
+        // Method 1: Try clicking the X button (close button in header)
+        const closeButton = modalOverlay.locator('button').filter({ has: page.locator('svg.lucide-x, svg[class*="w-6"][class*="h-6"]') }).first();
+        if (await closeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+            console.log("  → Clicking X close button");
+            await closeButton.click();
+            await page.waitForTimeout(500);
+        }
+        
+        // Method 2: If still visible, try clicking the backdrop (bg-black/70)
+        if (await modalOverlay.isVisible().catch(() => false)) {
+            const backdrop = modalOverlay.locator('div.absolute.inset-0.bg-black\\/70').first();
+            if (await backdrop.isVisible({ timeout: 1000 }).catch(() => false)) {
+                console.log("  → Clicking backdrop");
+                await backdrop.click({ position: { x: 5, y: 5 }, force: true });
+                await page.waitForTimeout(500);
+            }
+        }
+        
+        // Method 3: If still visible, try pressing Escape
+        if (await modalOverlay.isVisible().catch(() => false)) {
+            console.log("  → Pressing Escape");
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(500);
+        }
+        
+        // Method 4: Try clicking any "Close" or "Cancel" button text
+        if (await modalOverlay.isVisible().catch(() => false)) {
+            const textCloseButton = modalOverlay.locator('button:has-text("Close"), button:has-text("Cancel"), button:has-text("Skip")').first();
+            if (await textCloseButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+                console.log("  → Clicking text close button");
+                await textCloseButton.click();
+                await page.waitForTimeout(500);
+            }
+        }
+        
+        // Verify modal is closed
+        const stillVisible = await modalOverlay.isVisible().catch(() => false);
+        if (stillVisible) {
+            console.log("⚠️ Modal still visible after all attempts, continuing anyway");
+        } else {
+            console.log("✅ Modal closed successfully");
+        }
+    }
+}
+
+/**
+ * Helper to dismiss any blocking alert modal
+ */
+async function dismissAlertModal(page: Page): Promise<void> {
+    const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
+    if (await alertModal.isVisible({ timeout: 2000 }).catch(() => false)) {
+        console.log("⚠️ Alert modal appeared, dismissing...");
+        const okButton = alertModal.locator('button:text("OK")');
+        if (await okButton.isVisible().catch(() => false)) {
+            await okButton.click();
+            await expect(alertModal).toBeHidden({ timeout: 3000 });
+        }
+        console.log("✅ Alert modal dismissed");
+    }
+}
+
+/**
+ * Helper to wait for asset page to fully load (skeleton complete)
+ */
+async function waitForAssetPageToLoad(page: Page): Promise<void> {
+    // Wait for page to stabilize first
+    await page.waitForTimeout(2000);
+    
+    // Dismiss any modals that might be blocking BEFORE checking asset page
+    await dismissKycModal(page);
+    await dismissAlertModal(page);
+    
+    // Wait a bit more for any delayed modals
+    await page.waitForTimeout(1000);
+    await dismissKycModal(page);
+    
+    // Now wait for asset page to be visible
+    const assetPage = page.locator('[data-testid="asset-page"]');
+    await expect(assetPage).toBeVisible({ timeout: 15000 });
+    
+    // Dismiss any modals that might have appeared after page load
+    await dismissKycModal(page);
+    await dismissAlertModal(page);
+    
+    console.log("✅ Asset page loaded");
+}
+
+/**
  * Helper to handle order confirmation modal
  */
 async function handleOrderConfirmation(
@@ -108,32 +206,19 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
                 expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
             }
 
+            // Dismiss KYC modal if it appears after login
+            await dismissKycModal(page);
+            
             // Handle potential error alert after login
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
+            await dismissAlertModal(page);
         });
 
         // 2. Navigate to Man City Asset Page
         await test.step('Navigate to Man City Asset Page', async () => {
             await page.goto('/asset/epl/man-city');
 
-            // Handle potential alert modal from API failures
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
-
-            // Wait for asset page to load
-            const assetPage = page.locator('[data-testid="asset-page"]');
-            await expect(assetPage).toBeVisible({ timeout: 15000 });
+            // Wait for asset page to fully load and dismiss any modals
+            await waitForAssetPageToLoad(page);
 
             // Verify we're on the correct asset page
             await expect(page.locator('h1:visible').filter({ hasText: /Manchester City|Man City/i })).toBeVisible();
@@ -141,8 +226,12 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
 
         // 3. Attempt to Sell Man City from Asset Page (Expect Error - User doesn't own it yet)
         await test.step('Attempt to sell asset not owned from asset page', async () => {
+            // Ensure no modals are blocking
+            await dismissKycModal(page);
+            await dismissAlertModal(page);
+            
             const desktopSellButton = page.locator('[data-testid="asset-page-sell-desktop"]');
-            await desktopSellButton.click();
+            await desktopSellButton.click({ timeout: 15000 });
 
             // Wait for either error modal or trade slip to open
             await page.waitForTimeout(1000);
@@ -163,9 +252,13 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
 
         // 4. Buy Man City Tokens from Asset Page (Complete Transaction)
         await test.step('Complete Man City token purchase from asset page', async () => {
+            // Ensure no modals are blocking before clicking buy
+            await dismissKycModal(page);
+            await dismissAlertModal(page);
+            
             // Click Buy button on asset page
             const desktopBuyButton = page.locator('[data-testid="asset-page-buy-desktop"]');
-            await desktopBuyButton.click();
+            await desktopBuyButton.click({ timeout: 15000 });
 
             // Wait for Trade Slip to open
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
@@ -199,11 +292,11 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await expect(confirmButton).toBeEnabled();
             await confirmButton.click();
 
-            // Wait for countdown (5 seconds) and automatic confirmation
-            await expect(confirmButton).toContainText('Confirming...', { timeout: 2000 });
+            // Wait for processing to start
+            await expect(confirmButton).toContainText(/Processing\.\.\.|Confirming\.\.\./, { timeout: 5000 });
 
-            // Wait for transaction to complete (countdown + processing time)
-            await page.waitForTimeout(8000);
+            // Wait for transaction to complete
+            await page.waitForTimeout(5000);
 
             // Handle the order confirmation modal FIRST (it appears on top of trade slip)
             await handleOrderConfirmation(page, 'Man City', 'buy');
@@ -297,11 +390,11 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await expect(confirmButton).toBeEnabled();
             await confirmButton.click();
 
-            // Wait for countdown and automatic confirmation
-            await expect(confirmButton).toContainText('Confirming...', { timeout: 2000 });
+            // Wait for processing to start
+            await expect(confirmButton).toContainText(/Processing\.\.\.|Confirming\.\.\./, { timeout: 5000 });
 
             // Wait for transaction to complete
-            await page.waitForTimeout(8000);
+            await page.waitForTimeout(5000);
 
             // Handle the order confirmation modal FIRST
             await handleOrderConfirmation(page, 'Man City', 'sell');
@@ -368,36 +461,34 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await page.locator('[data-testid="login-submit-button"]').click();
             await page.waitForTimeout(5000);
 
+            // Dismiss KYC modal if it appears - be aggressive
+            await dismissKycModal(page);
+            await page.waitForTimeout(1000);
+            await dismissKycModal(page);
+            
             // Handle potential error alert after login
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
+            await dismissAlertModal(page);
         });
 
         await test.step('Navigate to Liverpool asset page', async () => {
+            // Dismiss any lingering modals before navigation
+            await dismissKycModal(page);
+            
             await page.goto('/asset/epl/liverpool');
 
-            // Handle potential alert modal from API failures
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
+            // Wait for asset page to fully load and dismiss any modals
+            await waitForAssetPageToLoad(page);
 
-            const assetPage = page.locator('[data-testid="asset-page"]');
-            await expect(assetPage).toBeVisible({ timeout: 15000 });
             await expect(page.locator('h1:visible').filter({ hasText: /Liverpool/i })).toBeVisible();
         });
 
         await test.step('Buy Liverpool tokens', async () => {
+            // Ensure no modals are blocking before clicking buy
+            await dismissKycModal(page);
+            await dismissAlertModal(page);
+            
             const desktopBuyButton = page.locator('[data-testid="asset-page-buy-desktop"]');
-            await desktopBuyButton.click();
+            await desktopBuyButton.click({ timeout: 15000 });
 
             const rightPanel = page.locator('[data-testid="right-panel"]:visible');
             await expect(rightPanel).toBeVisible({ timeout: 5000 });
@@ -411,8 +502,8 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
 
             const confirmButton = tradeSlip.locator('[data-testid="trade-slip-confirm-button"]');
             await confirmButton.click();
-            await expect(confirmButton).toContainText('Confirming...', { timeout: 2000 });
-            await page.waitForTimeout(8000);
+            await expect(confirmButton).toContainText(/Processing\.\.\.|Confirming\.\.\./, { timeout: 5000 });
+            await page.waitForTimeout(5000);
 
             // Handle the order confirmation modal FIRST
             await handleOrderConfirmation(page, 'Liverpool', 'buy');
@@ -443,30 +534,23 @@ test.describe('Asset Page Trading Flow - Complete Buy/Sell', () => {
             await page.locator('[data-testid="login-submit-button"]').click();
             await page.waitForTimeout(5000);
 
+            // Dismiss KYC modal if it appears - be aggressive
+            await dismissKycModal(page);
+            await page.waitForTimeout(1000);
+            await dismissKycModal(page);
+            
             // Handle potential error alert after login
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing login error alert');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
+            await dismissAlertModal(page);
         });
 
         await test.step('Navigate to asset page and test share', async () => {
+            // Dismiss any lingering modals before navigation
+            await dismissKycModal(page);
+            
             await page.goto('/asset/epl/arsenal');
 
-            // Handle potential alert modal from API failures
-            const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
-            if (await alertModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-                console.log('Dismissing unexpected alert modal');
-                const okButton = alertModal.locator('button:text("OK")');
-                await okButton.click({ timeout: 5000 });
-                await expect(alertModal).toBeHidden({ timeout: 5000 });
-            }
-
-            const assetPage = page.locator('[data-testid="asset-page"]');
-            await expect(assetPage).toBeVisible({ timeout: 15000 });
+            // Wait for asset page to fully load and dismiss any modals
+            await waitForAssetPageToLoad(page);
 
             // Look for share button with Share2 icon (desktop view)
             const shareButton = page.locator('button').filter({ has: page.locator('svg') }).filter({ hasText: '' }).nth(1);
