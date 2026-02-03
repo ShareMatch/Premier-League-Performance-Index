@@ -439,13 +439,25 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   const randomQuestions = useMemo(() => {
-    // Filter out questions for closed markets
-    const openMarketQuestions = suggestedQuestions.filter((q) => {
-      const marketInfo = marketInfoData[q.market];
-      return marketInfo && marketInfo.isOpen;
-    });
-    return [...openMarketQuestions].sort(() => Math.random() - 0.5).slice(0, 4);
-  }, [suggestedQuestions]);
+    // Get list of open markets from teams data
+    const openMarkets = new Set(
+      teams
+        .filter((t) => !t.is_settled && t.market)
+        .map((t) => t.market)
+    );
+
+    // Filter questions to only show those for markets with active assets
+    const openMarketQuestions = suggestedQuestions.filter((q) => 
+      openMarkets.has(q.market)
+    );
+
+    // If no open market questions, show all questions as fallback
+    const questionsToUse = openMarketQuestions.length > 0 
+      ? openMarketQuestions 
+      : suggestedQuestions;
+
+    return [...questionsToUse].sort(() => Math.random() - 0.5).slice(0, 4);
+  }, [suggestedQuestions, teams]);
 
   // Generate asset-specific questions based on selected market
   const assetQuestions = useMemo(() => {
@@ -639,12 +651,39 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       const decoder = new TextDecoder();
       let buffer = "";
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      // Parse SSE format: "data: {"text":"..."}\n\n"
+      const parseSSEChunk = (data: string): string => {
+        let extractedText = "";
+        const lines = data.split("\n");
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data:")) {
+            const jsonStr = trimmed.replace(/^data:\s*/, "");
+            if (jsonStr === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.text) {
+                extractedText += parsed.text;
+              }
+            } catch {
+              // Not valid JSON, skip
+            }
+          }
+        }
+        return extractedText;
+      };
 
-          const chunk = decoder.decode(value, { stream: true });
+      // Character-by-character typing effect
+      let fullContent = "";
+      let displayedLength = 0;
+      const CHARS_PER_FRAME = 3; // ~180 chars per second at 60fps
+      const FRAME_DELAY = 16; // ~60fps
+
+      const typingInterval = setInterval(() => {
+        if (displayedLength < fullContent.length) {
+          displayedLength = Math.min(displayedLength + CHARS_PER_FRAME, fullContent.length);
+          const visibleContent = fullContent.slice(0, displayedLength);
 
           setMessages((prev) => {
             const updated = [...prev];
@@ -652,14 +691,64 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             if (idx !== -1) {
               updated[idx] = {
                 ...updated[idx],
-                content: updated[idx].content + chunk,
+                content: visibleContent,
               };
             }
             return updated;
           });
         }
+      }, FRAME_DELAY);
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+
+          // Process complete SSE events (end with \n\n)
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || ""; // Keep incomplete event in buffer
+
+          for (const event of events) {
+            const text = parseSSEChunk(event);
+            if (text) {
+              fullContent += text;
+            }
+          }
+        }
+
+        // Process any remaining buffer
+        if (buffer.trim()) {
+          const text = parseSSEChunk(buffer);
+          if (text) {
+            fullContent += text;
+          }
+        }
       } finally {
         reader.releaseLock();
+
+        // Wait for typing animation to complete before clearing interval
+        await new Promise<void>((resolve) => {
+          const checkComplete = setInterval(() => {
+            if (displayedLength >= fullContent.length) {
+              clearInterval(checkComplete);
+              clearInterval(typingInterval);
+
+              // Ensure final state is complete
+              setMessages((prev) => {
+                const updated = [...prev];
+                const idx = updated.findIndex((m) => m.id === assistantMessageId);
+                if (idx !== -1) {
+                  updated[idx] = { ...updated[idx], content: fullContent };
+                }
+                return updated;
+              });
+              resolve();
+            }
+          }, 50);
+        });
       }
     } catch (err: unknown) {
       const errorMsg =
