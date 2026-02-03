@@ -39,7 +39,7 @@ const LOCAL_FORCE_LOGOUT_AT_KEY = "sharematch_force_logout_at";
 const WAS_LOGGED_IN_KEY = "sharematch_was_logged_in";
 const TAB_ACTIVE_KEY = "sharematch_tab_active";
 const TAB_HEARTBEAT_KEY = "sharematch_tab_heartbeat";
-const HEARTBEAT_STALE_THRESHOLD = 1000; // 5 seconds
+const HEARTBEAT_STALE_THRESHOLD = 5000; // 5 seconds
 
 // ─────────────────────────────────────────────────────────────────────
 // MODULE-LEVEL TAB CLOSE CHECK - Runs BEFORE React renders
