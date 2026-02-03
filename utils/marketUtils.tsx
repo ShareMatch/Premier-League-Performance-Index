@@ -188,3 +188,120 @@ export const getUniqueMarkets = (teams: Team[]): Array<{
 
 // Note: getIndexAvatarUrl is exported from ../lib/logoHelper
 // Use that import for index avatar URLs
+
+// ============================================
+// MARKET & CATEGORY UTILITIES (DB-DRIVEN)
+// ============================================
+
+/**
+ * Preferred category display order.
+ * Categories not in this list will appear at the end.
+ */
+export const CATEGORY_ORDER = [
+    "football",
+    "f1",
+    "motorsport",
+    "basketball",
+    "american_football",
+    "cricket",
+    "global_events",
+];
+
+/**
+ * Gets a market label - prefers DB data, falls back to token.
+ */
+export const getMarketLabel = (
+    marketToken: string,
+    dbMarketName?: string,
+    dbIndexName?: string
+): string => {
+    // Priority: dbMarketName > dbIndexName > token
+    if (dbMarketName) return dbMarketName;
+    if (dbIndexName) return dbIndexName;
+    return marketToken;
+};
+
+/**
+ * Gets a category label - prefers DB data (market_sub_group), falls back to formatted ID.
+ */
+export const getCategoryLabel = (
+    categoryId: string,
+    dbSubGroupName?: string
+): string => {
+    if (dbSubGroupName) return dbSubGroupName;
+    // Format category ID as label (e.g., "american_football" -> "American Football")
+    return categoryId
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+/**
+ * Derives categories and market labels from teams array (DB data).
+ * All labels come from the database - no hardcoded values.
+ */
+export const deriveMarketConfig = (teams: Team[]): {
+    categories: Array<{ id: string; label: string; markets: string[] }>;
+    marketLabels: Record<string, string>;
+    categoryLabels: Record<string, string>;
+} => {
+    const categoryMarketsMap: Record<string, Set<string>> = {};
+    const categoryLabelsMap: Record<string, string> = {};
+    const marketLabelsMap: Record<string, string> = {};
+
+    teams.forEach((team) => {
+        const categoryId = team.category || "other";
+        const marketToken = team.market;
+
+        if (marketToken) {
+            // Build category -> markets mapping
+            if (!categoryMarketsMap[categoryId]) {
+                categoryMarketsMap[categoryId] = new Set();
+            }
+            categoryMarketsMap[categoryId].add(marketToken);
+
+            // Get category label from market_sub_group (DB)
+            if (team.market_sub_group && !categoryLabelsMap[categoryId]) {
+                categoryLabelsMap[categoryId] = team.market_sub_group;
+            }
+
+            // Get market label from DB (prefer market_name, fallback to index_name)
+            if (!marketLabelsMap[marketToken]) {
+                if (team.market_name) {
+                    marketLabelsMap[marketToken] = team.market_name;
+                } else if (team.index_name) {
+                    marketLabelsMap[marketToken] = team.index_name;
+                } else {
+                    marketLabelsMap[marketToken] = marketToken;
+                }
+            }
+        }
+    });
+
+    // Convert to sorted array based on CATEGORY_ORDER
+    const categories = CATEGORY_ORDER
+        .filter((catId) => categoryMarketsMap[catId]?.size > 0)
+        .map((catId) => ({
+            id: catId,
+            label: categoryLabelsMap[catId] || getCategoryLabel(catId),
+            markets: Array.from(categoryMarketsMap[catId] || []),
+        }));
+
+    // Add any categories not in CATEGORY_ORDER
+    Object.entries(categoryMarketsMap).forEach(([catId, markets]) => {
+        if (!CATEGORY_ORDER.includes(catId) && markets.size > 0) {
+            categories.push({
+                id: catId,
+                label: categoryLabelsMap[catId] || getCategoryLabel(catId),
+                markets: Array.from(markets),
+            });
+        }
+    });
+
+    return { 
+        categories, 
+        marketLabels: marketLabelsMap,
+        categoryLabels: categoryLabelsMap,
+    };
+};
+

@@ -4,11 +4,8 @@ import { useAuth } from "./AuthProvider";
 import { supabase } from "../../lib/supabase";
 
 interface InactivityHandlerProps {
-  /** Time in milliseconds before showing warning (default: 5 minutes) */
   inactivityTimeout?: number;
-  /** Time in seconds for the countdown in the warning modal */
   warningCountdown?: number;
-  /** Whether to enable inactivity tracking */
   enabled?: boolean;
   children: React.ReactNode;
 }
@@ -36,6 +33,53 @@ const LOCAL_LAST_ACTIVITY_KEY = "sharematch_last_activity";
 const LOCAL_ACTIVITY_CHECK_KEY = "sharematch_last_activity_check";
 const LOCAL_FORCE_LOGOUT_AT_KEY = "sharematch_force_logout_at";
 
+// ─────────────────────────────────────────────────────────────────────
+// Tab close detection keys
+// ─────────────────────────────────────────────────────────────────────
+const WAS_LOGGED_IN_KEY = "sharematch_was_logged_in";
+const TAB_ACTIVE_KEY = "sharematch_tab_active";
+const TAB_HEARTBEAT_KEY = "sharematch_tab_heartbeat";
+const HEARTBEAT_STALE_THRESHOLD = 1000; // 5 seconds
+
+// ─────────────────────────────────────────────────────────────────────
+// MODULE-LEVEL TAB CLOSE CHECK - Runs BEFORE React renders
+// ─────────────────────────────────────────────────────────────────────
+(() => {
+  try {
+    const tabActive = sessionStorage.getItem(TAB_ACTIVE_KEY);
+    const wasLoggedIn = localStorage.getItem(WAS_LOGGED_IN_KEY);
+    const heartbeat = localStorage.getItem(TAB_HEARTBEAT_KEY);
+    const heartbeatTime = heartbeat ? parseInt(heartbeat, 10) : 0;
+    const timeSinceHeartbeat = Date.now() - heartbeatTime;
+
+    // Always set tab marker for this session
+    sessionStorage.setItem(TAB_ACTIVE_KEY, "1");
+
+    // If sessionStorage has tab marker, this is a refresh - do nothing
+    if (tabActive === "1") {
+      return;
+    }
+
+    // New tab (sessionStorage empty)
+    if (wasLoggedIn === "1") {
+      if (heartbeatTime > 0 && timeSinceHeartbeat < HEARTBEAT_STALE_THRESHOLD) {
+        console.log("[TabClose] Another tab is active, staying logged in");
+        return;
+      }
+
+      console.log("[TabClose] All tabs were closed, signing out...");
+      localStorage.removeItem(WAS_LOGGED_IN_KEY);
+      localStorage.removeItem(TAB_HEARTBEAT_KEY);
+      const supabaseKeys = Object.keys(localStorage).filter(
+        (key) => key.startsWith("sb-") || key.includes("supabase")
+      );
+      supabaseKeys.forEach((key) => localStorage.removeItem(key));
+    }
+  } catch (e) {
+    console.error("[TabClose] Error during tab close check:", e);
+  }
+})();
+
 const InactivityHandler: React.FC<InactivityHandlerProps> = ({
   inactivityTimeout = 5 * 60 * 1000, // 5 minutes
   warningCountdown = 10, // 10 seconds
@@ -61,7 +105,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     const sessionId = `${Date.now()}-${Math.random()}`;
     sessionIdRef.current = sessionId;
 
-    // // console.log("[Inactivity] 🚀 Initialized with timeout:", inactivityTimeout / 1000, "seconds");
+     // console.log("[Inactivity] 🚀 Initialized with timeout:", inactivityTimeout / 1000, "seconds");
 
     const now = Date.now();
     lastActivityRef.current = now;
@@ -283,7 +327,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
           }
         }
       },
-      10 * 60 * 1000,
+      30 * 60 * 1000,
     );
   }, [
     user,
@@ -339,11 +383,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
   // HANDLE ACTIVITY - Simple, no heavy checks
   // ─────────────────────────────────────────────────────────────────────
   const handleActivity = useCallback(() => {
-    // If warning already showing, activity doesn't count
     if (showWarning) return;
-
-    // Simple: just update activity and reset timer
-    // All heavy checks happen in visibility handler
     updateLastActivity();
     resetInactivityTimer();
   }, [showWarning, updateLastActivity, resetInactivityTimer]);
@@ -375,99 +415,42 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     }
   }, [validateSessionWithSupabase, updateLastActivity, resetInactivityTimer, handleTimeout]);
 
-  // Check if a previous tab/browser close requested a forced logout
+  // ─────────────────────────────────────────────────────────────────────
+  // TAB CLOSE DETECTION - Heartbeat approach
+  // ─────────────────────────────────────────────────────────────────────
+
+  const HEARTBEAT_INTERVAL = 2000; // 2 seconds
+
+  // Heartbeat: periodically update timestamp while user is logged in
   useEffect(() => {
-    const checkForceLogout = async () => {
+    if (!user) return;
+
+    const sendHeartbeat = () => {
       try {
-        const forceLogoutAt = localStorage.getItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-        if (!forceLogoutAt) return;
-
-        // Detect navigation type using multiple methods for reliability
-        let isRefresh = false;
-        
-        // Method 1: Performance Navigation API (modern browsers)
-        try {
-          const navEntry = performance.getEntriesByType(
-            "navigation",
-          )[0] as PerformanceNavigationTiming | undefined;
-          if (navEntry?.type === "reload") {
-            isRefresh = true;
-          }
-        } catch {
-          // API not available
-        }
-        
-        // Method 2: Legacy navigation.type (fallback)
-        if (!isRefresh && (performance as any).navigation) {
-          // TYPE_RELOAD = 1
-          isRefresh = (performance as any).navigation.type === 1;
-        }
-        
-        // Method 3: Check if timestamp is very recent (< 2 seconds)
-        // A real tab close followed by reopening would take longer than 2s
-        const logoutTime = parseInt(forceLogoutAt, 10);
-        if (!Number.isFinite(logoutTime)) {
-          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-          return;
-        }
-        const timeSinceFlag = Date.now() - logoutTime;
-        if (timeSinceFlag < 2000) {
-          // Flag was set less than 2 seconds ago - almost certainly a refresh
-          isRefresh = true;
-        }
-
-        // If this page load is a refresh, do not treat it as a tab/browser close.
-        // Clear the flag so we don't log out on refresh loops.
-        if (isRefresh) {
-          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-          return;
-        }
-
-        // If a close happened recently (but > 2s ago), force logout immediately
-        if (timeSinceFlag < 5 * 60 * 1000) {
-          // console.warn("[Inactivity] 🔴 Previous tab/browser closed - forcing logout");
-          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-          await handleTimeout();
-          return;
-        }
-
-        // Old flag, clean it up
-        localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-      } catch (e) {
-        // console.warn("[Storage] Failed to check force logout:", e);
-        // On error, clear the flag to prevent stuck logout loops
-        try {
-          localStorage.removeItem(LOCAL_FORCE_LOGOUT_AT_KEY);
-        } catch {}
+        localStorage.setItem(TAB_HEARTBEAT_KEY, Date.now().toString());
+      } catch {
+        // Ignore
       }
     };
 
+    // Send heartbeat immediately and every 2 seconds
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Track login state
+  useEffect(() => {
     if (user) {
-      checkForceLogout();
-    }
-  }, [user, handleTimeout]);
-
-  // ─────────────────────────────────────────────────────────────────────
-  // DETECT TAB CLOSE / WINDOW UNLOAD
-  // ─────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Set a flag that this session should be terminated
       try {
-        localStorage.setItem(
-          LOCAL_FORCE_LOGOUT_AT_KEY,
-          Date.now().toString(),
-        );
-        sessionStorage.removeItem(SESSION_ID_KEY);
-        sessionStorage.removeItem(SESSION_LAST_ACTIVITY_KEY);
-      } catch (e) {
-        // console.warn("[Storage] Failed to set logout flag:", e);
+        localStorage.setItem(WAS_LOGGED_IN_KEY, "1");
+        sessionStorage.setItem(TAB_ACTIVE_KEY, "1");
+      } catch {
+        // Ignore
       }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
+    }
+  }, [user]);
 
   // ─────────────────────────────────────────────────────────────────────
   // SET UP LISTENERS
@@ -478,16 +461,13 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       return;
     }
 
-    // Initialize
     updateLastActivity();
     resetInactivityTimer();
 
-    // Add activity listeners
     ACTIVITY_EVENTS.forEach((event) => {
       document.addEventListener(event, handleActivity, { passive: true });
     });
 
-    // Cross-tab sync
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LOCAL_LAST_ACTIVITY_KEY && e.newValue && !showWarning) {
         try {
@@ -527,7 +507,6 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
           return;
         }
 
-        // Update timestamp AFTER checking
         lastActivityCheckRef.current = now;
 
         if (!showWarning) {
@@ -545,7 +524,6 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
 
       // console.log(`[Inactivity] 🔍 Window focused. Time since last check: ${(timeSinceLastCheck / 1000).toFixed(1)}s`,);
 
-      // Check inactivity on focus too
       const isInactive = checkRealInactivity();
 
       if (!showWarning && isInactive) {
@@ -568,7 +546,29 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     };
     window.addEventListener("focus", handleWindowFocus);
 
-    // Cleanup
+    const handleResume = () => {
+      const isInactive = checkRealInactivity();
+
+      if (!showWarning && isInactive) {
+        warningShownRef.current = true;
+        setShowWarning(true);
+        setCountdownActive(true);
+
+        warningTimerRef.current = setTimeout(() => {
+          handleTimeout();
+        }, warningCountdown * 1000);
+        return;
+      }
+
+      lastActivityCheckRef.current = Date.now();
+
+      if (!showWarning) {
+        resetInactivityTimer();
+      }
+    };
+    // @ts-ignore - resume event exists in some browsers
+    document.addEventListener("resume", handleResume);
+
     return () => {
       clearAllTimers();
       ACTIVITY_EVENTS.forEach((event) => {
@@ -577,6 +577,8 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       window.removeEventListener("storage", handleStorageChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleWindowFocus);
+      // @ts-ignore
+      document.removeEventListener("resume", handleResume);
     };
   }, [
     user,
@@ -591,7 +593,6 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     warningCountdown,
   ]);
 
-  // Clean up on logout
   useEffect(() => {
     if (!user) {
       clearAllTimers();

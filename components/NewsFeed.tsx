@@ -162,7 +162,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
         allData = assetData || [];
 
-        console.log("[NewsFeed] Total combined news:", allData.length);
+        // console.log("[NewsFeed] Total combined news:", allData.length);
       } else {
         // For index-level topics, just fetch directly
         const { data, error } = await supabase
@@ -284,7 +284,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
           // 1. Must NOT contain Haram content
           if (isHaram(lowerText)) {
-            console.log(`[Filter] ❌ Haram: "${item.headline}"`);
+            // console.log(`[Filter] ❌ Haram: "${item.headline}"`);
             return false;
           }
 
@@ -293,14 +293,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             const isRelevant = isRelevantToAsset(fullText, assetName);
 
             if (!isRelevant) {
-              console.log(
-                `[Filter] ❌ Not relevant to ${assetName}: "${item.headline}"`,
-              );
+              // console.log(
+              //   `[Filter] ❌ Not relevant to ${assetName}: "${item.headline}"`,
+              // );
               return false;
             } else {
-              console.log(
-                `[Filter] ✅ Relevant to ${assetName}: "${item.headline}"`,
-              );
+              // console.log(
+              //   `[Filter] ✅ Relevant to ${assetName}: "${item.headline}"`,
+              // );
             }
           }
 
@@ -314,20 +314,20 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             new Date(a.published_at).getTime(),
         );
 
-        console.log("[NewsFeed] Filtering results:", {
-          assetName,
-          topic,
-          parentIndexTopic,
-          totalFetched: allData.length,
-          afterHaramFilter: allData.filter(
-            (item) =>
-              !isHaram(
-                (item.headline + " " + (item.source || "")).toLowerCase(),
-              ),
-          ).length,
-          afterRelevanceFilter: filteredData.length,
-          topHeadlines: filteredData.slice(0, 5).map((item) => item.headline),
-        });
+        // console.log("[NewsFeed] Filtering results:", {
+        //   assetName,
+        //   topic,
+        //   parentIndexTopic,
+        //   totalFetched: allData.length,
+        //   afterHaramFilter: allData.filter(
+        //     (item) =>
+        //       !isHaram(
+        //         (item.headline + " " + (item.source || "")).toLowerCase(),
+        //       ),
+        //   ).length,
+        //   afterRelevanceFilter: filteredData.length,
+        //   topHeadlines: filteredData.slice(0, 5).map((item) => item.headline),
+        // });
 
         setNewsItems(filteredData.slice(0, 10));
       }
@@ -350,10 +350,10 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       if (isAssetLevel) {
         // Only fetch if we haven't fetched for this asset before (or it's stale)
         if (!lastUpdated || lastUpdated < sixHoursAgo) {
-          console.log(
-            "[NewsFeed] Triggering on-demand fetch for asset:",
-            assetName,
-          );
+          // console.log(
+          //   "[NewsFeed] Triggering on-demand fetch for asset:",
+          //   assetName,
+          // );
           // Fire and forget - don't await (shows fallback news immediately while fetching)
           triggerUpdate();
         }
@@ -364,7 +364,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         }
       }
     } catch (err) {
-      console.error("Error fetching news:", err);
+      // console.error("Error fetching news:", err);
       setError("Failed to load news.");
     } finally {
       setLoading(false);
@@ -374,7 +374,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const triggerUpdate = async () => {
     setIsUpdating(true);
     try {
-      console.log("[NewsFeed] Triggering fetch-news for:", topic);
+      // console.log("[NewsFeed] Triggering fetch-news for:", topic);
 
       const { data, error } = await supabase.functions.invoke("fetch-news", {
         body: {
@@ -384,18 +384,18 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       if (error) throw error;
 
-      console.log("[NewsFeed] fetch-news result:", data);
+      // console.log("[NewsFeed] fetch-news result:", data);
 
       if (!data?.error) {
         // Refetch news (will get from both parent index and asset-specific)
         // Re-run the full fetch logic to properly merge and filter
         await fetchNews();
       } else if (data?.error || data?.dbStatus === "empty") {
-        console.log("[NewsFeed] No news found for:", topic);
+        // console.log("[NewsFeed] No news found for:", topic);
         setDebugMessage(JSON.stringify(data, null, 2));
       }
     } catch (err: any) {
-      console.error("Error updating news:", err);
+      // console.error("Error updating news:", err);
       setDebugMessage(`Client Error: ${err.message || JSON.stringify(err)}`);
     } finally {
       setIsUpdating(false);
@@ -436,12 +436,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       );
 
       if (error) {
-        console.error("Edge function error:", error);
+        // console.error("Edge function error:", error);
         throw new Error(error.message || "Failed to generate summary");
       }
 
       if (data?.error) {
-        console.error("Summary generation error:", data.error);
+        // console.error("Summary generation error:", data.error);
         setSummary(data.error);
       } else if (data?.summary) {
         setSummary(data.summary);
@@ -449,7 +449,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         setSummary("Summary could not be generated at this time.");
       }
     } catch (err: any) {
-      console.error("Summary generation error:", err?.message || err);
+      // console.error("Summary generation error:", err?.message || err);
 
       // Provide helpful error message
       const errorMessage = err?.message?.toLowerCase() || "";

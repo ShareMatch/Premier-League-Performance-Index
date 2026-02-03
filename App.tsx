@@ -70,10 +70,6 @@ import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
 import HelpCenterModal from "./components/HelpCenterModal";
 import HowItWorksModal from "./components/HowItWorksModal";
-import { preloadR2Config } from "./hooks/useR2Config";
-
-// Preload R2 config on app initialization (non-blocking)
-preloadR2Config();
 
 const AssetRouteWrapper: React.FC<{
   allAssets: Team[];

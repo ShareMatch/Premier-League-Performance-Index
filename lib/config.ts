@@ -35,7 +35,7 @@ export const SESSION_CONFIG = {
    * Default: 60 minutes (60 * 60 * 1000)
    * For testing, you can set to 30 seconds (30 * 1000)
    */
-  INACTIVITY_TIMEOUT_MS: 60 * 60 * 1000, // 60 minutes
+  INACTIVITY_TIMEOUT_MS: 30 * 60 * 1000, // 60 minutes
 
   /**
    * Countdown time in seconds shown in the warning modal
