@@ -25,10 +25,9 @@ serve(async (req) => {
     }
 
     /* ----------------------------------
-       PARSE + VALIDATE PAYLOAD
+       PAYLOAD
     ---------------------------------- */
     const body = await req.json();
-
     const { market_index_season_code, offers } = body;
 
     if (
@@ -47,14 +46,14 @@ serve(async (req) => {
 
     for (const o of offers) {
       if (
-        !o.lp_asset_code ||
+        typeof o.asset_reference_code !== "string" ||
         typeof o.buy_offer_price !== "number" ||
         typeof o.sell_offer_price !== "number"
       ) {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Invalid offer object detected"
+            error: "Invalid offer object"
           }),
           { status: 400 }
         );
@@ -62,7 +61,7 @@ serve(async (req) => {
     }
 
     /* ----------------------------------
-       RPC CALL (ATOMIC)
+       RPC
     ---------------------------------- */
     const { data, error } = await supabase.rpc(
       "set_lp_bulk_offer_prices",
@@ -78,14 +77,8 @@ serve(async (req) => {
       throw new Error(error.message);
     }
 
-    /* ----------------------------------
-       SUCCESS RESPONSE
-    ---------------------------------- */
     return new Response(
-      JSON.stringify({
-        success: true,
-        ...data
-      }),
+      JSON.stringify(data),
       {
         status: 200,
         headers: { "Content-Type": "application/json" }
@@ -93,17 +86,14 @@ serve(async (req) => {
     );
 
   } catch (err: any) {
-    console.error("LP BULK OFFER EDGE ERROR:", err);
+    console.error("LP OFFER EDGE ERROR:", err);
 
     return new Response(
       JSON.stringify({
         success: false,
         error: err.message ?? "Unknown error"
       }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      }
+      { status: 400 }
     );
   }
 });

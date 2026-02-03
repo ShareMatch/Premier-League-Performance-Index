@@ -9,26 +9,28 @@ const supabase = createClient(
 
 serve(async (req) => {
   try {
-    const auth = await verifyApiKey(req, "subscription:write");
+    /* ---------- Issuer / System Auth ---------- */
+    const auth = await verifyApiKey(req, "issuer:assets:write");
 
-    if (auth.ownerType !== "subscriber") {
+    if (auth.ownerType !== "issuer") {
       return new Response(
-        JSON.stringify({ error: "Invalid entity type" }),
+        JSON.stringify({ error: "Issuer access only" }),
         { status: 403 }
       );
     }
 
+    /* ---------- Payload ---------- */
     const body = await req.json();
-    const { market_index_season_code, prices } = body;
+    const { market_index_season_code, assets } = body;
 
-    if (!market_index_season_code || !Array.isArray(prices)) {
+    if (!market_index_season_code || !Array.isArray(assets)) {
       return new Response(
         JSON.stringify({ error: "Invalid payload" }),
         { status: 400 }
       );
     }
 
-    /* Resolve season */
+    /* ---------- Resolve Market Index Season ---------- */
     const { data: season, error: seasonError } = await supabase
       .from("market_index_seasons")
       .select("id")
@@ -39,37 +41,25 @@ serve(async (req) => {
       throw new Error("Invalid market index season");
     }
 
-    for (const item of prices) {
+    /* ---------- Update Subscription Prices ---------- */
+    for (const item of assets) {
       if (
-        !item.subscriber_asset_code ||
+        !item.misa_external_ref_code ||
         typeof item.subscription_price !== "number"
       ) {
         continue;
       }
 
-      /* Resolve subscriber assets → MISA */
-      const { data: assets, error: assetError } = await supabase
-        .from("subscriber_index_assets")
-        .select("market_index_seasons_asset_id")
-        .eq("external_ref_code", item.subscriber_asset_code)
-        .eq("subscriber_id", auth.ownerId);
-
-      if (assetError) throw assetError;
-      if (!assets || assets.length === 0) continue;
-
-      const misaIds = assets.map(a => a.market_index_seasons_asset_id);
-
-      /* Update MISA live prices */
       const { error: updateError } = await supabase
         .from("market_index_seasons_asset")
         .update({
           subscription_price: item.subscription_price,
-          buy_price: item.subscription_price,
-          sell_price: item.subscription_price,
-          subscribed_at: new Date().toISOString(),
+          min_value: item.min_value ?? null,
+          max_value: item.max_value ?? null,
           last_change: new Date().toISOString()
         })
-        .in("id", misaIds);
+        .eq("external_ref_code", item.misa_external_ref_code)
+        .eq("market_index_seasons_id", season.id);
 
       if (updateError) throw updateError;
     }
@@ -80,7 +70,7 @@ serve(async (req) => {
     );
 
   } catch (err: any) {
-    console.error("SUBSCRIPTION PRICE ERROR:", err);
+    console.error("ISSUER SUBSCRIPTION PRICE ERROR:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 400 }

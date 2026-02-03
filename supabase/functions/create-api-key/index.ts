@@ -27,7 +27,7 @@ serve(async (req) => {
     /* ---------------- Payload ---------------- */
     const { entity_type, entity_id } = await req.json();
 
-    if (!["subscriber", "lp"].includes(entity_type)) {
+    if (!["subscriber", "lp", "issuer"].includes(entity_type)) {
       return new Response("Invalid entity_type", { status: 400 });
     }
 
@@ -40,11 +40,33 @@ serve(async (req) => {
     const salt = Deno.env.get("API_KEY_SALT")!;
     const keyHash = await sha256(rawKey + salt);
 
-    /* ---------------- Correct Scopes ---------------- */
-    const scopes =
-      entity_type === "subscriber"
-        ? ["subscription:write", "subscription:read"]
-        : ["lp:offers:write", "lp:offers:read"];
+    /* ---------------- Scopes (FINAL) ---------------- */
+    let scopes: string[] = [];
+
+    switch (entity_type) {
+      case "subscriber":
+        scopes = [
+          "subscription:read",
+          "subscription:execute"
+        ];
+        break;
+
+      case "lp":
+        scopes = [
+          "lp:offers:write",
+          "lp:offers:read",
+          "lp:trade"
+        ];
+        break;
+
+      case "issuer":
+        scopes = [
+          "issuer:assets:read",
+          "issuer:assets:write",
+          "issuer:issuance:write"
+        ];
+        break;
+    }
 
     /* ---------------- Store Hash ---------------- */
     const { error } = await supabase.rpc("create_api_key", {
@@ -55,7 +77,7 @@ serve(async (req) => {
     });
 
     if (error) {
-      console.error(error);
+      console.error("API KEY CREATION ERROR:", error);
       return new Response("Failed to create key", { status: 500 });
     }
 
@@ -69,7 +91,7 @@ serve(async (req) => {
     );
 
   } catch (err) {
-    console.error(err);
+    console.error("SERVER ERROR:", err);
     return new Response("Server error", { status: 500 });
   }
 });

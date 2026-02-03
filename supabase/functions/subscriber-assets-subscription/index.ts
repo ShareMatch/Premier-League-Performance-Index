@@ -9,30 +9,30 @@ const supabase = createClient(
 
 serve(async (req) => {
   try {
-    const auth = await verifyApiKey(req, "lp:trade");
+    const auth = await verifyApiKey(req, "subscription:execute");
 
-    if (auth.ownerType !== "lp") {
+    if (auth.ownerType !== "subscriber") {
       return new Response(
-        JSON.stringify({ error: "LP access only" }),
+        JSON.stringify({ error: "Subscriber access only" }),
         { status: 403 }
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json();
     const { market_index_season_code, assets } = body;
 
-    if (!Array.isArray(assets) || assets.length === 0) {
+    if (!market_index_season_code || !Array.isArray(assets)) {
       return new Response(
-        JSON.stringify({ error: "assets array is required" }),
+        JSON.stringify({ error: "Invalid payload" }),
         { status: 400 }
       );
     }
 
     const { data, error } = await supabase.rpc(
-      "lp_primary_trade",
+      "subscriber_assets_subscription",
       {
-        p_lp_id: auth.ownerId,
-        p_market_index_season_code: market_index_season_code ?? null,
+        p_subscriber_id: auth.ownerId,
+        p_market_index_season_code: market_index_season_code,
         p_assets: assets
       }
     );
@@ -42,14 +42,14 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        processed_assets: data.length,
+        subscribed_assets: data.length,
         details: data
       }),
       { headers: { "Content-Type": "application/json" } }
     );
 
   } catch (err: any) {
-    console.error("LP TRADE ERROR:", err);
+    console.error("SUBSCRIPTION ERROR:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 400 }
