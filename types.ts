@@ -5,9 +5,6 @@ export interface Team {
   asset_id?: string; // Reference to static assets table
   name: string;
 
-
-
-  
   team?: string;
   bid: number;
   offer: number;
@@ -19,17 +16,22 @@ export interface Team {
   market_trading_asset_id?: string; // New field for trading asset reference
   is_settled?: boolean;
   settled_date?: string;
-  // Additional fields for richer data
+  // Additional fields for richer data from database
   market_group?: string;
   market_sub_group?: string;
-  index_name?: string;
-  index_token?: string;
+  index_name?: string; // Full market name from DB (e.g., "Premier League 24/25")
+  index_token?: string; // Market token (e.g., "EPL")
+  market_name?: string; // Friendly market name (e.g., "Premier League")
   season_status?: string;
   season_start_date?: string;
   season_end_date?: string;
   season_stage?: string; // 'open' | 'closed' | 'settled'
   units?: number;
   short_code?: string; // Shortened share code for asset
+  // Styling fields from database
+  primary_color?: string; // Primary brand color (hex)
+  secondary_color?: string; // Secondary brand color (hex)
+  avatar_class?: string; // CSS class for avatar styling
 }
 
 export interface Order {

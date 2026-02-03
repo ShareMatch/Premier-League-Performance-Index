@@ -60,18 +60,32 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
       : null;
   }, [asset.name, asset.market, asset.id]);
 
-  // Generate a distinct color for fallback avatar based on name hash
+  // Use primary_color from database, or generate fallback based on name hash
   const avatarColor = useMemo(() => {
-    const colors = [
+    // If primary_color is available from DB, use it with inline style
+    if (asset.primary_color) {
+      return `bg-[${asset.primary_color}]`;
+    }
+
+    // Fallback: Generate a distinct color based on name hash
+    const fallbackColors = [
       "bg-blue-600",
       "bg-emerald-600",
       "bg-violet-600",
       "bg-amber-600",
       "bg-rose-600",
     ];
-    const index = asset.name.length % colors.length;
-    return colors[index];
-  }, [asset.name]);
+    const index = asset.name.length % fallbackColors.length;
+    return fallbackColors[index];
+  }, [asset.name, asset.primary_color]);
+
+  // Get hex color for inline styles (for dynamic DB colors)
+  const avatarBgStyle = useMemo(() => {
+    if (asset.primary_color) {
+      return { backgroundColor: asset.primary_color };
+    }
+    return undefined;
+  }, [asset.primary_color]);
 
   const handleShare = async (type: 'mobile' | 'desktop') => {
     // If tooltip is already open for this type, close it
@@ -170,7 +184,8 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
               </div>
             ) : (
               <div
-                className={`w-8 h-8 rounded-lg ${avatarColor} flex items-center justify-center border border-white/10 flex-shrink-0`}
+                className={`w-8 h-8 rounded-lg ${!asset.primary_color ? avatarColor : ''} flex items-center justify-center border border-white/10 flex-shrink-0`}
+                style={avatarBgStyle}
               >
                 <span className="text-xs font-bold text-white">
                   {asset.name.substring(0, 2).toUpperCase()}
@@ -355,7 +370,8 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
               </div>
             ) : (
               <div
-                className={`w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl ${avatarColor} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10 flex-shrink-0`}
+                className={`w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl ${!asset.primary_color ? avatarColor : ''} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10 flex-shrink-0`}
+                style={avatarBgStyle}
               >
                 <span className="text-[clamp(0.75rem,2vw,1.25rem)] font-black text-white tracking-tighter">
                   {asset.name?.substring(0, 2).toUpperCase() || "??"}

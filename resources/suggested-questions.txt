@@ -1,0 +1,18 @@
+EPL|Which EPL team is most undervalued based on performance?
+F1|Analyze the top F1 performers this season
+SPL|Compare the Saudi Pro League top 5 teams' recent form
+UCL|Identify high-performing UCL assets in the current cycle
+NBA|Which NBA team has the most consistent player ratings?
+NFL|Evaluate the growth potential of NFL star performers
+T20|Find top-rated T20 players with low index values
+ISL|Which ISL teams are showing the most technical improvement?
+EPL|Compare defensive efficiency between top 3 EPL clubs
+F1|What are the key performance metrics driving F1 valuations?
+EPL|Which Premier League team has the best goal difference this season?
+UCL|Analyze the knockout stage favorites in Champions League
+NBA|Compare the offensive efficiency of top NBA teams
+NFL|Which NFL quarterbacks are outperforming their index value?
+SPL|What Saudi Pro League teams are on an upward trend?
+T20|Analyze batting strike rates across T20 World Cup teams
+ISL|Which Indonesian Super League defenders have the best stats?
+F1|Compare pit stop strategies of top F1 constructors

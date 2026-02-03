@@ -17,6 +17,33 @@ import { supabase } from "../lib/supabase";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { marketInfoData } from "../lib/marketInfo";
 
+// Import questions from text files
+import suggestedQuestionsRaw from "../resources/suggested-questions.txt?raw";
+import assetTemplatesRaw from "../resources/asset-question-templates.txt?raw";
+import { deriveMarketConfig } from "../utils/marketUtils";
+
+// Parse text files into usable data
+const parseSuggestedQuestions = (raw: string): { text: string; market: string }[] => {
+  return raw
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => {
+      const [market, ...textParts] = line.split("|");
+      return { market: market.trim(), text: textParts.join("|").trim() };
+    });
+};
+
+const parseAssetTemplates = (raw: string): string[] => {
+  return raw
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => line.trim());
+};
+
+// Parsed questions and templates
+const SUGGESTED_QUESTIONS = parseSuggestedQuestions(suggestedQuestionsRaw);
+const ASSET_TEMPLATES = parseAssetTemplates(assetTemplatesRaw);
+
 interface AIAnalyticsPageProps {
   teams: Team[];
 }
@@ -29,101 +56,11 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-// Market labels for display
-const MARKET_LABELS: Record<string, string> = {
-  EPL: "Premier League",
-  SPL: "Saudi Pro League",
-  UCL: "Champions League",
-  F1: "Formula 1",
-  NBA: "NBA",
-  NFL: "NFL",
-  T20: "T20 World Cup",
-  ISL: "Indonesia Super League",
-};
-
-// Category configuration with their markets
-const CATEGORIES = [
-  // {
-  //   id: "all",
-  //   label: "Index Tokens",
-  //   markets: ["EPL", "SPL", "UCL", "ISL", "F1", "NBA", "NFL", "T20"],
-  // },
-  {
-    id: "football",
-    label: "Football",
-    markets: ["EPL", "SPL", "UCL", "ISL"],
-  },
-  {
-    id: "motorsport",
-    label: "Motorsport",
-    markets: ["F1"],
-  },
-  {
-    id: "basketball",
-    label: "Basketball",
-    markets: ["NBA"],
-  },
-  {
-    id: "american_football",
-    label: "American Football",
-    markets: ["NFL"],
-  },
-  {
-    id: "cricket",
-    label: "Cricket",
-    markets: ["T20"],
-  },
-];
-
-// Suggested questions for initial state
-const SUGGESTED_QUESTIONS = [
-  {
-    text: "Which EPL team is most undervalued based on performance?",
-    market: "EPL",
-  },
-  { text: "Analyze the top F1 performers this season", market: "F1" },
-  {
-    text: "Compare the Saudi Pro League top 5 teams' recent form",
-    market: "SPL",
-  },
-  {
-    text: "Identify high-performing UCL assets in the current cycle",
-    market: "UCL",
-  },
-  {
-    text: "Which NBA team has the most consistent player ratings?",
-    market: "NBA",
-  },
-  {
-    text: "Evaluate the growth potential of NFL star performers",
-    market: "NFL",
-  },
-  { text: "Find top-rated T20 players with low index values", market: "T20" },
-  {
-    text: "Which ISL teams are showing the most technical improvement?",
-    market: "ISL",
-  },
-  {
-    text: "Compare defensive efficiency between top 3 EPL clubs",
-    market: "EPL",
-  },
-  {
-    text: "What are the key performance metrics driving F1 valuations?",
-    market: "F1",
-  },
-];
-
-// Asset-specific question templates (placeholders for asset names)
-const ASSET_QUESTION_TEMPLATES = [
-  "Analyze {asset}",
-  "{asset} performance overview",
-  "{asset} recent form",
-  "{asset} stats breakdown",
-  "Compare {asset}",
-  "{asset} key metrics",
-  "{asset} trends analysis",
-  "{asset} valuation report",
-];
+interface Category {
+  id: string;
+  label: string;
+  markets: string[];
+}
 
 const InputArea: React.FC<{
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -135,7 +72,7 @@ const InputArea: React.FC<{
   handleSendMessage: () => void;
   selectedMarket: string;
   selectedCategory: string;
-  currentCategory: (typeof CATEGORIES)[0];
+  currentCategory: Category;
   isLoading: boolean;
   openDropdown: string | null;
   setOpenDropdown: (value: string | null) => void;
@@ -143,6 +80,8 @@ const InputArea: React.FC<{
   handleMarketSelect: (market: string) => void;
   showGenerateButton?: boolean;
   onGenerateAnalysis?: () => void;
+  categories: Category[];
+  marketLabels: Record<string, string>;
 }> = ({
   inputRef,
   inputValue,
@@ -161,106 +100,114 @@ const InputArea: React.FC<{
   handleMarketSelect,
   showGenerateButton = false,
   onGenerateAnalysis,
+  categories,
+  marketLabels,
 }) => {
-    const displayLabel =
-      selectedMarket === "ALL_INDEX"
-        ? "All Index"
-        : selectedMarket === "ALL"
-          ? `${currentCategory.label} • All`
-          : `${currentCategory.label} • ${MARKET_LABELS[selectedMarket] || selectedMarket
+  const displayLabel =
+    selectedMarket === "ALL_INDEX"
+      ? "All Index"
+      : selectedMarket === "ALL"
+        ? `${currentCategory.label} • All`
+        : `${currentCategory.label} • ${
+            marketLabels[selectedMarket] || selectedMarket
           }`;
 
-    return (
-      <div className="w-full">
-        {/* Combined Input Container */}
-        <div className="bg-gray-800/60 border border-gray-700 rounded-xl sm:rounded-2xl">
-          {/* Input Field */}
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={`Ask about ${selectedMarket === "ALL_INDEX"
+  return (
+    <div className="w-full">
+      {/* Combined Input Container */}
+      <div className="bg-gray-800/60 border border-gray-700 rounded-xl sm:rounded-2xl">
+        {/* Input Field */}
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={`Ask about ${
+              selectedMarket === "ALL_INDEX"
                 ? "All Index"
                 : selectedMarket === "ALL"
                   ? currentCategory.label
-                  : MARKET_LABELS[selectedMarket] || selectedMarket
-                }`}
-              disabled={isLoading}
-              className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
-            />
-          </div>
+                  : marketLabels[selectedMarket] || selectedMarket
+            }`}
+            disabled={isLoading}
+            className="w-full px-3 sm:px-4 py-3 sm:py-4 bg-transparent text-[clamp(0.8125rem,2vw,0.875rem)] text-white placeholder-gray-500 appearance-none outline-none ring-0 border-0 shadow-none focus:outline-none focus:ring-0 focus:border-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 active:outline-none disabled:opacity-50 transition-all pr-12"
+          />
+        </div>
 
-          {/* Filters Row - Inside the same container */}
-          <div className="flex items-center justify-between px-2 sm:px-3 pb-2 pt-1 gap-2">
-            <div className="flex gap-2 min-w-0 flex-1">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button
-                    disabled={isLoading}
-                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 disabled:opacity-50 group/trigger shadow-lg min-w-0"
-                  >
-                    <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
-                      {selectedMarket !== "ALL" &&
-                        selectedMarket !== "ALL_INDEX" &&
-                        getIndexAvatarUrl(selectedMarket) && (
-                          <img
-                            src={getIndexAvatarUrl(selectedMarket)!}
-                            alt={selectedMarket}
-                            className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
-                          />
-                        )}
-                      <span className="font-bold truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">{displayLabel}</span>
-                    </div>
-                    <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity flex-shrink-0" />
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
-                    sideOffset={8}
-                    align="start"
-                  >
-                    {/* Top-level All Index option */}
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
-                        handleMarketSelect("ALL_INDEX");
-                      }}
-                      className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedMarket === "ALL_INDEX"
+        {/* Filters Row - Inside the same container */}
+        <div className="flex items-center justify-between px-2 sm:px-3 pb-2 pt-1 gap-2">
+          <div className="flex gap-2 min-w-0 flex-1">
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  disabled={isLoading}
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold transition-all border bg-gray-800 text-white border-gray-700 hover:border-brand-emerald500/50 disabled:opacity-50 group/trigger shadow-lg min-w-0"
+                >
+                  <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                    {selectedMarket !== "ALL" &&
+                      selectedMarket !== "ALL_INDEX" &&
+                      getIndexAvatarUrl(selectedMarket) && (
+                        <img
+                          src={getIndexAvatarUrl(selectedMarket)!}
+                          alt={selectedMarket}
+                          className="w-5 h-5 sm:w-6 sm:h-6 object-contain flex-shrink-0"
+                        />
+                      )}
+                    <span className="font-bold truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">
+                      {displayLabel}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-50 group-hover/trigger:opacity-100 transition-opacity flex-shrink-0" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  className="z-50 min-w-[160px] sm:min-w-[180px] bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-xl p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top"
+                  sideOffset={8}
+                  align="start"
+                >
+                  {/* Top-level All Index option */}
+                  <DropdownMenu.Item
+                    onSelect={() => {
+                      handleCategoryChange("football"); // Default to football for "All Index" logic or handle specially
+                      handleMarketSelect("ALL_INDEX");
+                    }}
+                    className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                      selectedMarket === "ALL_INDEX"
                         ? "bg-brand-emerald500 text-white"
                         : "text-gray-400 hover:text-white hover:bg-white/5"
-                        }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>All Index</span>
-                      </div>
-                      {selectedMarket === "ALL_INDEX" && (
-                        <FaCheck className="w-3 h-3" />
-                      )}
-                    </DropdownMenu.Item>
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>All Index</span>
+                    </div>
+                    {selectedMarket === "ALL_INDEX" && (
+                      <FaCheck className="w-3 h-3" />
+                    )}
+                  </DropdownMenu.Item>
 
-                    <div className="h-px bg-gray-800 my-1 mx-1" />
+                  <div className="h-px bg-gray-800 my-1 mx-1" />
 
-                    {CATEGORIES.map((cat) => {
-                      // Filter out closed markets from this category
-                      const openMarkets = cat.markets.filter((marketId) => {
-                        const marketInfo = marketInfoData[marketId];
-                        return marketInfo && marketInfo.isOpen;
-                      });
-                      
-                      // Don't show category if no open markets
-                      if (openMarkets.length === 0) return null;
-                      
-                      return (
+                  {categories.map((cat) => {
+                    // Filter out closed markets from this category
+                    const openMarkets = cat.markets.filter((marketId) => {
+                      const marketInfo = marketInfoData[marketId];
+                      return marketInfo && marketInfo.isOpen;
+                    });
+
+                    // Don't show category if no open markets
+                    if (openMarkets.length === 0) return null;
+
+                    return (
                       <DropdownMenu.Sub key={cat.id}>
                         <DropdownMenu.SubTrigger
-                          className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${selectedCategory === cat.id
-                            ? "text-brand-emerald500"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                            }`}
+                          className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 data-[state=open]:bg-brand-emerald500/20 data-[state=open]:text-white focus:bg-brand-emerald500/20 ${
+                            selectedCategory === cat.id
+                              ? "text-brand-emerald500"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
+                          }`}
                         >
                           <span>{cat.label}</span>
                           <ChevronRight className="w-3 h-3" />
@@ -279,11 +226,12 @@ const InputArea: React.FC<{
                                     handleCategoryChange(cat.id);
                                     handleMarketSelect("ALL");
                                   }}
-                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${selectedCategory === cat.id &&
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                                    selectedCategory === cat.id &&
                                     selectedMarket === "ALL"
-                                    ? "bg-brand-emerald500 text-white"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                    }`}
+                                      ? "bg-brand-emerald500 text-white"
+                                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                                  }`}
                                 >
                                   <span>All {cat.label}</span>
                                   {selectedCategory === cat.id &&
@@ -307,10 +255,11 @@ const InputArea: React.FC<{
                                     handleCategoryChange(cat.id);
                                     handleMarketSelect(marketId);
                                   }}
-                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
-                                    ? "bg-brand-emerald500 text-white"
-                                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                                    }`}
+                                  className={`flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-lg cursor-pointer transition-colors outline-none mb-0.5 ${
+                                    isSelected
+                                      ? "bg-brand-emerald500 text-white"
+                                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                                  }`}
                                 >
                                   <div className="flex items-center gap-2">
                                     {getIndexAvatarUrl(marketId) && (
@@ -321,10 +270,12 @@ const InputArea: React.FC<{
                                       />
                                     )}
                                     <span>
-                                      {MARKET_LABELS[marketId] || marketId}
+                                      {marketLabels[marketId] || marketId}
                                     </span>
                                   </div>
-                                  {isSelected && <FaCheck className="w-3 h-3" />}
+                                  {isSelected && (
+                                    <FaCheck className="w-3 h-3" />
+                                  )}
                                 </DropdownMenu.Item>
                               );
                             })}
@@ -332,40 +283,40 @@ const InputArea: React.FC<{
                         </DropdownMenu.Portal>
                       </DropdownMenu.Sub>
                     );
-                    })}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+                  })}
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
-              {/* Generate Analysis Button - Only shown in bottom input view */}
-              {showGenerateButton && onGenerateAnalysis && (
-                <button
-                  onClick={onGenerateAnalysis}
-                  disabled={isLoading}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold whitespace-nowrap transition-all border bg-primary-gradient border-[#005430] text-white hover:bg-[#00A651]/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
-                >
-                  <span>Generate Analysis</span>
-                </button>
-              )}
-            </div>
-
-            {/* Send button - right side */}
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!inputValue.trim() || isLoading}
-              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
-              )}
-            </button>
+            {/* Generate Analysis Button - Only shown in bottom input view */}
+            {showGenerateButton && onGenerateAnalysis && (
+              <button
+                onClick={onGenerateAnalysis}
+                disabled={isLoading}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full text-[clamp(0.625rem,1.5vw,0.75rem)] font-semibold whitespace-nowrap transition-all border bg-primary-gradient border-[#005430] text-white hover:bg-[#00A651]/90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
+              >
+                <span>Generate Analysis</span>
+              </button>
+            )}
           </div>
+
+          {/* Send button - right side */}
+          <button
+            onClick={() => handleSendMessage()}
+            disabled={!inputValue.trim() || isLoading}
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-[#00A651] hover:bg-[#00A651]/90 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
+          >
+            {isLoading ? (
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
+          </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+};
 
 const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
   ({ message }) => {
@@ -380,10 +331,11 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
         )}
 
         <div
-          className={`max-w-[88%] xs:max-w-[85%] sm:max-w-[80%] md:max-w-[75%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${message.role === "user"
-            ? "bg-brand-emerald500 text-white rounded-tr-sm"
-            : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
-            }`}
+          className={`max-w-[88%] xs:max-w-[85%] sm:max-w-[80%] md:max-w-[75%] rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${
+            message.role === "user"
+              ? "bg-brand-emerald500 text-white rounded-tr-sm"
+              : "bg-gray-800/80 text-gray-200 rounded-tl-sm border border-gray-700/50"
+          }`}
         >
           {message.role === "assistant" ? (
             <ReactMarkdown
@@ -426,7 +378,10 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
                   />
                 ),
                 li: ({ node, ...props }) => (
-                  <li className="pl-0.5 sm:pl-1 text-[clamp(0.75rem,2vw,0.875rem)]" {...props} />
+                  <li
+                    className="pl-0.5 sm:pl-1 text-[clamp(0.75rem,2vw,0.875rem)]"
+                    {...props}
+                  />
                 ),
                 strong: ({ node, ...props }) => (
                   <strong className="text-white font-semibold" {...props} />
@@ -442,7 +397,9 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
               {message.content}
             </ReactMarkdown>
           ) : (
-            <p className="text-[clamp(0.75rem,2vw,0.875rem)] leading-relaxed">{message.content}</p>
+            <p className="text-[clamp(0.75rem,2vw,0.875rem)] leading-relaxed">
+              {message.content}
+            </p>
           )}
         </div>
 
@@ -457,6 +414,21 @@ const ChatMessageBubble = React.memo<{ message: ChatMessage }>(
 );
 
 const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
+  // Derive categories and market labels from teams (DB data)
+  const { categories, marketLabels } = useMemo(() => {
+    const config = deriveMarketConfig(teams);
+    return {
+      categories: config.categories.length > 0 ? config.categories : [
+        { id: "football", label: "Football", markets: ["EPL", "SPL", "UCL", "ISL"] },
+      ],
+      marketLabels: config.marketLabels,
+    };
+  }, [teams]);
+
+  // Use parsed questions from text files
+  const suggestedQuestions = SUGGESTED_QUESTIONS;
+  const assetTemplates = ASSET_TEMPLATES;
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("football");
@@ -467,19 +439,31 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
 
   const randomQuestions = useMemo(() => {
-    // Filter out questions for closed markets
-    const openMarketQuestions = SUGGESTED_QUESTIONS.filter((q) => {
-      const marketInfo = marketInfoData[q.market];
-      return marketInfo && marketInfo.isOpen;
-    });
-    return [...openMarketQuestions].sort(() => Math.random() - 0.5).slice(0, 4);
-  }, []);
+    // Get list of open markets from teams data
+    const openMarkets = new Set(
+      teams
+        .filter((t) => !t.is_settled && t.market)
+        .map((t) => t.market)
+    );
+
+    // Filter questions to only show those for markets with active assets
+    const openMarketQuestions = suggestedQuestions.filter((q) => 
+      openMarkets.has(q.market)
+    );
+
+    // If no open market questions, show all questions as fallback
+    const questionsToUse = openMarketQuestions.length > 0 
+      ? openMarketQuestions 
+      : suggestedQuestions;
+
+    return [...questionsToUse].sort(() => Math.random() - 0.5).slice(0, 4);
+  }, [suggestedQuestions, teams]);
 
   // Generate asset-specific questions based on selected market
   const assetQuestions = useMemo(() => {
     // Get assets for the selected market (exclude settled assets and closed markets)
     let marketAssets: Team[] = [];
-    
+
     if (selectedMarket === "ALL_INDEX") {
       // Get a sample from all markets (filter out settled)
       marketAssets = teams
@@ -488,10 +472,15 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         .slice(0, 15);
     } else if (selectedMarket === "ALL") {
       // Get assets from the current category's markets
-      const currentCat = CATEGORIES.find((c) => c.id === selectedCategory);
+      const currentCat = categories.find((c) => c.id === selectedCategory);
       if (currentCat) {
         marketAssets = teams
-          .filter((t) => t.market && currentCat.markets.includes(t.market) && !t.is_settled)
+          .filter(
+            (t) =>
+              t.market &&
+              currentCat.markets.includes(t.market) &&
+              !t.is_settled,
+          )
           .sort(() => Math.random() - 0.5)
           .slice(0, 15);
       }
@@ -506,7 +495,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     // Generate questions for each asset
     const questions: { text: string; asset: Team }[] = [];
     marketAssets.forEach((asset) => {
-      const template = ASSET_QUESTION_TEMPLATES[Math.floor(Math.random() * ASSET_QUESTION_TEMPLATES.length)];
+      const template =
+        assetTemplates[
+          Math.floor(Math.random() * assetTemplates.length)
+        ];
       questions.push({
         text: template.replace("{asset}", asset.name),
         asset,
@@ -514,8 +506,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     });
 
     return questions;
-  }, [teams, selectedMarket, selectedCategory]);
-
+  }, [teams, selectedMarket, selectedCategory, categories, assetTemplates]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -526,8 +517,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
   // Get current category config
   const currentCategory = useMemo(() => {
-    return CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
-  }, [selectedCategory]);
+    return categories.find((c) => c.id === selectedCategory) || categories[0];
+  }, [selectedCategory, categories]);
 
   // Always scroll to bottom when new messages arrive (especially during streaming)
   useEffect(() => {
@@ -545,7 +536,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   // Update selected market when category changes
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    const category = CATEGORIES.find((c) => c.id === categoryId);
+    const category = categories.find((c) => c.id === categoryId);
     if (category && category.markets.length > 0) {
       setSelectedMarket(category.markets[0]);
     }
@@ -571,7 +562,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         ? "All Index Tokens"
         : selectedMarket === "ALL"
           ? `All ${currentCategory.label}`
-          : MARKET_LABELS[selectedMarket] || selectedMarket;
+          : marketLabels[selectedMarket] || selectedMarket;
 
     // Add user message
     const userMessage: ChatMessage = {
@@ -601,8 +592,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
           ? teams
           : selectedMarket === "ALL"
             ? teams.filter(
-              (t) => t.market && categoryMarkets.includes(t.market),
-            )
+                (t) => t.market && categoryMarkets.includes(t.market),
+              )
             : teams.filter((t) => t.market === selectedMarket);
 
       const res = await fetch(
@@ -647,7 +638,6 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         // console.log("📌 Session ID set from header:", responseSessionId);
       }
 
-      // Prepare assistant message in state
       const assistantMessageId = `assistant_${Date.now()}`;
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -659,9 +649,32 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let isFirstChunk = true;
+      let buffer = "";
 
-      // Character-by-character reveal logic
+      // Parse SSE format: "data: {"text":"..."}\n\n"
+      const parseSSEChunk = (data: string): string => {
+        let extractedText = "";
+        const lines = data.split("\n");
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data:")) {
+            const jsonStr = trimmed.replace(/^data:\s*/, "");
+            if (jsonStr === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.text) {
+                extractedText += parsed.text;
+              }
+            } catch {
+              // Not valid JSON, skip
+            }
+          }
+        }
+        return extractedText;
+      };
+
+      // Character-by-character typing effect
       let fullContent = "";
       let displayedLength = 0;
       const CHARS_PER_FRAME = 3; // ~180 chars per second at 60fps
@@ -691,31 +704,39 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
           const { done, value } = await reader.read();
           if (done) break;
 
-          let chunk = decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
 
-          // Check for session marker in first chunk
-          if (isFirstChunk) {
-            isFirstChunk = false;
-            const sessionMatch = chunk.match(/<!--SESSION:([^>]+)-->/);
-            if (sessionMatch && !sessionIdRef.current) {
-              sessionIdRef.current = sessionMatch[1];
+          // Process complete SSE events (end with \n\n)
+          const events = buffer.split("\n\n");
+          buffer = events.pop() || ""; // Keep incomplete event in buffer
+
+          for (const event of events) {
+            const text = parseSSEChunk(event);
+            if (text) {
+              fullContent += text;
             }
-            chunk = chunk.replace(/<!--SESSION:[^>]+-->/, "");
           }
+        }
 
-          if (chunk) {
-            fullContent += chunk;
+        // Process any remaining buffer
+        if (buffer.trim()) {
+          const text = parseSSEChunk(buffer);
+          if (text) {
+            fullContent += text;
           }
         }
       } finally {
-        // Wait for remaining content to be typed out before clearing interval and loading state
+        reader.releaseLock();
+
+        // Wait for typing animation to complete before clearing interval
         await new Promise<void>((resolve) => {
           const checkComplete = setInterval(() => {
             if (displayedLength >= fullContent.length) {
               clearInterval(checkComplete);
               clearInterval(typingInterval);
 
-              // Ensure final state is perfectly clean
+              // Ensure final state is complete
               setMessages((prev) => {
                 const updated = [...prev];
                 const idx = updated.findIndex((m) => m.id === assistantMessageId);
@@ -748,10 +769,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   };
 
   const handleSuggestedQuestion = (
-    question: (typeof SUGGESTED_QUESTIONS)[0],
+    question: { text: string; market: string },
   ) => {
     // Update market if different
-    const category = CATEGORIES.find((c) =>
+    const category = categories.find((c) =>
       c.markets.includes(question.market),
     );
     if (category) {
@@ -773,7 +794,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const handleAssetQuestion = (question: { text: string; asset: Team }) => {
     // Set the market to match the asset's market
     if (question.asset.market) {
-      const category = CATEGORIES.find((c) =>
+      const category = categories.find((c) =>
         c.markets.includes(question.asset.market!),
       );
       if (category) {
@@ -792,7 +813,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         ? "all index tokens"
         : selectedMarket === "ALL"
           ? `all ${currentCategory.label} assets`
-          : MARKET_LABELS[selectedMarket] || selectedMarket;
+          : marketLabels[selectedMarket] || selectedMarket;
 
     const analysisQuery = `Generate a comprehensive analysis for ${marketLabel}. Include top performers, undervalued assets, recent trends, and investment opportunities.`;
     handleSendMessage(analysisQuery);
@@ -860,6 +881,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
                   setOpenDropdown={setOpenDropdown}
                   handleCategoryChange={handleCategoryChange}
                   handleMarketSelect={handleMarketSelect}
+                  categories={categories}
+                  marketLabels={marketLabels}
                 />
               </div>
             </div>
@@ -911,29 +934,31 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
             {assetQuestions.length > 0 && (
               <div className="mb-1.5 xs:mb-2 sm:mb-2.5 overflow-hidden relative">
                 <div className="flex items-center gap-1.5 xs:gap-2">
-                  <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 flex-shrink-0 bg-gray-900/95 pr-1 xs:pr-2 hidden xs:block">Try asking:</span>
+                  <span className="text-[clamp(0.5rem,1.2vw,0.625rem)] text-gray-500 flex-shrink-0 bg-gray-900/95 pr-1 xs:pr-2 hidden xs:block">
+                    Try asking:
+                  </span>
                   <div className="flex-1 overflow-hidden">
                     <div className="animate-questions-ticker flex items-center gap-2 xs:gap-3 sm:gap-4">
                       {/* Duplicate questions for seamless loop */}
-                      {[...assetQuestions, ...assetQuestions].map((question, idx) => (
-                        <button
-                          key={`${question.asset.id}-${idx}`}
-                          onClick={() => handleAssetQuestion(question)}
-                          disabled={isLoading}
-                          className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 md:px-4 py-0.5 xs:py-1 sm:py-1.5 text-[clamp(0.5625rem,1.3vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
-                        >
-                          {question.asset?.logo_url && (
-                            <img
-                              src={question.asset.logo_url}
-                              alt={question.asset.name}
-                              className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
-                            />
-                          )}
-                          <span className="font-medium">
-                            {question.text}
-                          </span>
-                        </button>
-                      ))}
+                      {[...assetQuestions, ...assetQuestions].map(
+                        (question, idx) => (
+                          <button
+                            key={`${question.asset.id}-${idx}`}
+                            onClick={() => handleAssetQuestion(question)}
+                            disabled={isLoading}
+                            className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-1.5 xs:px-2 sm:px-3 md:px-4 py-0.5 xs:py-1 sm:py-1.5 text-[clamp(0.5625rem,1.3vw,0.75rem)] text-gray-400 bg-gray-800/60 hover:bg-gray-800 hover:text-white border border-gray-700/50 hover:border-brand-emerald500/40 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap"
+                          >
+                            {question.asset?.logo_url && (
+                              <img
+                                src={question.asset.logo_url}
+                                alt={question.asset.name}
+                                className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 object-contain flex-shrink-0"
+                              />
+                            )}
+                            <span className="font-medium">{question.text}</span>
+                          </button>
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
@@ -970,6 +995,8 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               handleMarketSelect={handleMarketSelect}
               showGenerateButton={true}
               onGenerateAnalysis={handleGenerateAnalysis}
+              categories={categories}
+              marketLabels={marketLabels}
             />
           </div>
           {/* Disclaimer */}

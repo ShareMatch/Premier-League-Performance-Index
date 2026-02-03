@@ -23,6 +23,7 @@ import { Menu, X, Loader2, HelpCircle, ArrowLeft } from "lucide-react";
 import NewsFeed from "./components/NewsFeed";
 import HomeDashboard from "./components/HomeDashboard";
 import OrderBookRow from "./components/OrderBookRow";
+import { OrderBookRowSkeleton, HeaderSkeleton } from "./components/Skeleton";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import AIAnalysis from "./components/AIAnalysis";
@@ -307,6 +308,11 @@ const App: React.FC = () => {
   const [sellErrorAssetName, setSellErrorAssetName] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+
+  // Loading States for skeleton loaders
+  const [assetsLoading, setAssetsLoading] = useState(true);
+  const [userDataLoading, setUserDataLoading] = useState(true); // Start true so skeleton shows initially
+  const [userDataInitialized, setUserDataInitialized] = useState(false); // Track if user data was ever loaded
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   // Scroll to top on navigation changes
@@ -395,6 +401,7 @@ const App: React.FC = () => {
   // Fetch User Data
   const loadUserData = useCallback(async () => {
     if (!publicUserId) return;
+    setUserDataLoading(true);
     try {
       const walletData = await fetchWallet(publicUserId);
       setWallet(walletData);
@@ -404,11 +411,17 @@ const App: React.FC = () => {
       setTransactions(transactionsData);
     } catch (error) {
       console.error("Error loading user data:", error);
+    } finally {
+      setUserDataLoading(false);
+      setUserDataInitialized(true);
     }
   }, [publicUserId]);
 
   // Fetch Assets
-  const loadAssets = useCallback(async () => {
+  const loadAssets = useCallback(async (showLoading = true) => {
+    if (showLoading) {
+      setAssetsLoading(true);
+    }
     try {
       // Fetch static asset data, active trading data, settled assets, and season dates in parallel
       const [staticAssets, tradingAssets, settledAssets, seasonDates] =
@@ -567,39 +580,58 @@ const App: React.FC = () => {
       setAllAssets(mappedAssets);
     } catch (error) {
       console.error("Error loading assets:", error);
+    } finally {
+      setAssetsLoading(false);
     }
   }, []);
 
   // Load public user ID when auth user changes
   useEffect(() => {
     if (user) {
-      // Pass both auth_user_id and email for better fallback support
-      getPublicUserId(user.id, user.email)
-        .then((userId) => {
+      let retryCount = 0;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+
+      const attemptGetPublicUserId = async (): Promise<void> => {
+        try {
+          const userId = await getPublicUserId(user.id, user.email);
           if (userId) {
             setPublicUserId(userId);
+          } else if (retryCount < maxRetries) {
+            // Retry on null result - might be a transient issue
+            retryCount++;
+            console.warn(`Public user ID not found, retrying (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptGetPublicUserId, retryDelay);
           } else {
-            // No user record found or session invalid - this indicates incomplete registration or session issue
-            // Sign out the user for security
+            // After all retries failed, sign out
+            console.error("Public user ID not found after all retries - signing out");
             supabase.auth
               .signOut()
               .catch((err) => console.error("Error signing out:", err));
-            // Don't show alert during automatic sign-out to avoid spam
             setPublicUserId(null);
             setKycStatus(null);
             setKycChecked(false);
           }
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error("Error checking user registration:", error);
-          // If there's an error checking, sign out to be safe
-          supabase.auth
-            .signOut()
-            .catch((err) => console.error("Error signing out:", err));
-          setPublicUserId(null);
-          setKycStatus(null);
-          setKycChecked(false);
-        });
+          if (retryCount < maxRetries) {
+            // Retry on error - might be a network hiccup
+            retryCount++;
+            console.warn(`Error getting public user ID, retrying (${retryCount}/${maxRetries})...`);
+            setTimeout(attemptGetPublicUserId, retryDelay);
+          } else {
+            // After all retries failed, sign out
+            supabase.auth
+              .signOut()
+              .catch((err) => console.error("Error signing out:", err));
+            setPublicUserId(null);
+            setKycStatus(null);
+            setKycChecked(false);
+          }
+        }
+      };
+
+      attemptGetPublicUserId();
     } else {
       setPublicUserId(null);
       setKycStatus(null);
@@ -609,6 +641,9 @@ const App: React.FC = () => {
       setTransactions([]);
       setWallet(null);
       setSelectedOrder(null);
+      // Reset user data loading states
+      setUserDataLoading(true);
+      setUserDataInitialized(false);
     }
   }, [user]);
 
@@ -749,13 +784,15 @@ const App: React.FC = () => {
     });
 
     const assetsSubscription = subscribeToAssets(() => {
-      loadAssets().catch((error) => {
+      // Don't show loading for background updates
+      loadAssets(false).catch((error) => {
         console.error("Error updating assets via subscription:", error);
       });
     });
 
     const tradingAssetsSubscription = subscribeToTradingAssets(() => {
-      loadAssets().catch((error) => {
+      // Don't show loading for background updates
+      loadAssets(false).catch((error) => {
         console.error("Error updating trading assets via subscription:", error);
       });
     });
@@ -875,7 +912,15 @@ const App: React.FC = () => {
       return;
     }
 
-    // Check if KYC is required
+    // Check if KYC status has been checked yet
+    // This prevents new users from trading before KYC verification is complete
+    if (!kycChecked) {
+      // KYC status still loading - show KYC modal to handle verification
+      setShowKycModal(true);
+      return;
+    }
+
+    // Check if KYC verification is needed
     if (kycStatus && needsKycVerification(kycStatus)) {
       setShowKycModal(true);
       return;
@@ -1093,6 +1138,7 @@ const App: React.FC = () => {
                   onHelpCenterClick={() => setShowHelpCenter(true)}
                   activeHoverMenu={activeHoverMenu}
                   setActiveHoverMenu={setActiveHoverMenu}
+                  isUserDataLoading={userDataLoading || !userDataInitialized}
                 />
 
                 {/* AI Analytics Banner */}
@@ -1292,7 +1338,7 @@ const App: React.FC = () => {
                                     sortedTeams={sortedTeams}
                                     handleSelectOrder={handleSelectOrder}
                                     handleViewAsset={handleViewAsset}
-                                    loading={loading}
+                                    loading={assetsLoading}
                                   />
                                 }
                               />
@@ -1351,6 +1397,7 @@ const App: React.FC = () => {
                               : getLeagueTitle(activeLeague)
                           }
                           walletBalance={wallet?.balance || 0}
+                          loading={userDataLoading || !userDataInitialized}
                         />
                       </div>
                     )}
@@ -1383,6 +1430,7 @@ const App: React.FC = () => {
                         setSelectedOrder(null);
                       }}
                       isMobile={true}
+                      loading={userDataLoading || !userDataInitialized}
                     />
                   </div>
                 )}
@@ -1585,28 +1633,27 @@ const LeagueRouteWrapper: React.FC<{
       return <Navigate to="/" replace />;
     }
 
-    if (loading && teams.length === 0) {
-      return (
-        <div className="h-full flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-          <p className="text-gray-400">Loading market statistics...</p>
-        </div>
-      );
-    }
+    // Show skeleton when loading assets or when no teams available yet
+    const showSkeleton = loading || sortedTeams.length === 0;
+
     return (
       <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
         {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
         <div className="w-full xl:flex-[2] flex flex-col">
           {/* Header aligned with order book */}
           <div className="flex-shrink-0">
-            <Header
-              title={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
-              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
-              seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-              onBack={shouldShowBackButton ? handleBack : undefined}
-            />
+            {showSkeleton ? (
+              <HeaderSkeleton />
+            ) : (
+              <Header
+                title={getLeagueTitleUtil(displayLeague)}
+                market={displayLeague}
+                seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+                seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+                seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
+                onBack={shouldShowBackButton ? handleBack : undefined}
+              />
+            )}
           </div>
 
           {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
@@ -1620,14 +1667,18 @@ const LeagueRouteWrapper: React.FC<{
 
             {/* Scrollable List */}
             <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-              {sortedTeams.map((team) => (
-                <OrderBookRow
-                  key={team.id}
-                  team={team}
-                  onSelectOrder={handleSelectOrder}
-                  onViewAsset={handleViewAsset}
-                />
-              ))}
+              {showSkeleton ? (
+                <OrderBookRowSkeleton count={10} />
+              ) : (
+                sortedTeams.map((team) => (
+                  <OrderBookRow
+                    key={team.id}
+                    team={team}
+                    onSelectOrder={handleSelectOrder}
+                    onViewAsset={handleViewAsset}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>

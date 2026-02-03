@@ -3,12 +3,8 @@ import type { SeasonDates } from "../lib/api";
 import type { Team, League } from "../types";
 import {
   TrendingUp,
-  Zap,
   ChevronLeft,
   ChevronRight,
-  Trophy,
-  Flag,
-  Activity,
 } from "lucide-react";
 import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import {
@@ -23,6 +19,8 @@ import {
 } from "recharts";
 import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
+import { getMarketDisplayData, getUniqueMarkets } from "../utils/marketUtils";
+import { getIndexAvatarUrl } from "../lib/logoHelper";
 import tooltipText from "../resources/ToolTip.txt?raw";
 
 interface IndexToken {
@@ -44,22 +42,20 @@ interface HistoryPoint {
   timestamp: number;
 }
 
-// Helper to get index avatar URL
-const getIndexAvatarUrl = (market: string): string | null => {
-  const INDEX_AVATARS: Record<string, string> = {
-    EPL: "/index-avatars/epl.svg",
-    UCL: "/index-avatars/ucl.svg",
-    SPL: "/index-avatars/spl.svg",
-    F1: "/index-avatars/f1.svg",
-    WC: "/index-avatars/wc.svg",
-    NBA: "/index-avatars/nba.svg",
-    NFL: "/index-avatars/nfl.svg",
-    T20: "/index-avatars/t20.svg",
-    ISL: "/index-avatars/isl.svg",
-  };
-  if (!market) return null;
-  return INDEX_AVATARS[market.toUpperCase()] || null;
-};
+interface MarketData {
+  id: string;
+  market: string;
+  fullName: string;
+  question: string;
+  icon: React.ReactNode;
+  color: string;
+  borderColor: string;
+}
+
+interface QuestionData extends MarketData {
+  topTokens: IndexToken[];
+  volume: string;
+}
 
 // Generate asset history using the same logic as AssetPage
 const generateAssetHistory = (
@@ -252,58 +248,45 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         }));
     };
 
-    const markets = [
-      {
-        id: "nba-index",
-        market: "NBA",
-        fullName: "NBA",
-        question: "Top NBA Finals?",
-        icon: <Activity className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-orange-400" />,
-        color: "from-orange-500/20 to-amber-500/20",
-        borderColor: "group-hover:border-orange-500/50",
-      },
-      {
-        id: "epl-index",
-        market: "EPL",
-        fullName: "England Premier League",
-        question: "Premier League Title Race",
-        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-purple-400" />,
-        color: "from-purple-500/20 to-blue-500/20",
-        borderColor: "group-hover:border-purple-500/50",
-      },
-      {
-        id: "ucl-index",
-        market: "UCL",
-        fullName: "Champions League",
-        question: "UEFA Champions League Favorites",
-        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-blue-400" />,
-        color: "from-blue-600/20 to-indigo-600/20",
-        borderColor: "group-hover:border-blue-500/50",
-      },
-      {
-        id: "nfl-index",
-        market: "NFL",
-        fullName: "NFL",
-        question: "Super Bowl Contenders",
-        icon: <Trophy className="w-[clamp(1rem,3vw,1.5rem)] h-[clamp(1rem,3vw,1.5rem)] text-blue-800" />,
-        color: "from-blue-800/20 to-blue-900/20",
-        borderColor: "group-hover:border-blue-800/50",
-      },
-    ];
+    // Dynamically derive markets from teams data
+    const uniqueMarkets = getUniqueMarkets(teams);
+
+    // Build markets array dynamically from unique markets found in teams
+    const markets: MarketData[] = uniqueMarkets.map((market: { token: string; name: string; category?: string; teamCount: number }) => {
+      // Get first team from this market for metadata
+      const sampleTeam = teams.find((t: Team) => t.market === market.token);
+      const displayData = getMarketDisplayData(market.token, {
+        index_name: sampleTeam?.index_name,
+        market_name: sampleTeam?.market_name,
+        category: sampleTeam?.category,
+      });
+
+      return {
+        id: `${market.token.toLowerCase()}-index`,
+        market: market.token,
+        fullName: displayData.fullName,
+        question: `Top ${displayData.label}?`,
+        icon: displayData.icon,
+        color: displayData.color,
+        borderColor: displayData.borderColor,
+      };
+    });
 
     // Map markets to Question format, filtering out closed markets and those with no teams
-    const results = markets
-      .filter((m) => {
+    const results: QuestionData[] = markets
+      .filter((m: MarketData) => {
         const seasonData = seasonDatesMap?.get(m.market);
+        const sampleTeam = teams.find((t: Team) => t.market === m.market);
         const info = getMarketInfo(
           m.market as League,
           seasonData?.start_date,
           seasonData?.end_date,
           seasonData?.stage || undefined,
+          sampleTeam?.index_name,
         );
         return info.isOpen;
       })
-      .map((m) => {
+      .map((m: MarketData): QuestionData => {
         const topTokens = getTopTeams(m.market);
         const topTeam = topTokens[0];
 
@@ -326,7 +309,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           volume: volStr,
         };
       })
-      .filter((q) => q.topTokens.length > 0);
+      .filter((q: QuestionData) => q.topTokens.length > 0);
 
     // Randomize the order of the pool
     for (let i = results.length - 1; i > 0; i--) {
@@ -339,7 +322,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
 
   const chartDataMap = useMemo(() => {
     const map = new Map<string, any[]>();
-    questionPool.forEach((question) => {
+    questionPool.forEach((question: QuestionData) => {
       const key = `${question.id}-${timeRange}`;
       const seasonData = seasonDatesMap?.get(question.market);
       const startDate = seasonData
@@ -352,8 +335,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
     });
     return map;
   }, [questionPool, timeRange, seasonDatesMap]);
-
-
 
   const handleNext = () => {
     if (!isAnimating && questionPool.length > 0) {
@@ -500,7 +481,7 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
             <img
               src="/logos/white_icon_on_black-removebg-preview.png"
               alt="Zap"
-              className="w-[clamp(0.875rem,3vw,1.5rem)] h-[clamp(0.875rem,3vw,1.5rem)] object-contain animate-pulse ml-[clamp(0.125rem,0.5vw,0.25rem)] flex-shrink-0"
+              className="w-[clamp(1rem,5vw,2rem)] h-[clamp(1rem,5vw,2rem)] object-contain animate-pulse ml-[clamp(0.125rem,0.5vw,0.25rem)] flex-shrink-0"
             />
           </h2>
         </div>
@@ -510,7 +491,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
             onClick={() => onNavigate("NEW_MARKETS")}
             className="text-[clamp(0.625rem,1.5vw,0.75rem)] font-medium text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-[clamp(0.125rem,0.5vw,0.25rem)] self-center mt-[clamp(0.5rem,1.5vw,0.75rem)]"
           >
-            View All <ChevronRight className="w-[clamp(0.625rem,1.5vw,0.75rem)] h-[clamp(0.625rem,1.5vw,0.75rem)]" />
+            View All{" "}
+            <ChevronRight className="w-[clamp(0.625rem,1.5vw,0.75rem)] h-[clamp(0.625rem,1.5vw,0.75rem)]" />
           </button>
         )}
       </div>
@@ -581,7 +563,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                               })()}
 
                               <button
-                                onClick={() => onNavigate?.(question.market as League)}
+                                onClick={() =>
+                                  onNavigate?.(question.market as League)
+                                }
                                 className="flex-1 min-w-0 flex flex-col justify-center mt-[clamp(0.5rem,1.5vw,1rem)] text-left hover:opacity-80 transition-opacity"
                               >
                                 <h3 className="text-[clamp(0.65rem,2vw,1.125rem)] font-bold text-gray-100 group-hover:text-white transition-colors leading-tight hover:text-brand-primary hover:underline">
@@ -632,8 +616,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                                 <div className="flex items-center gap-[clamp(0.25rem,0.75vw,0.5rem)] flex-wrap justify-end">
                                   <span
                                     className={`text-[clamp(0.4rem,0.9vw,0.625rem)] font-bold flex items-center gap-[clamp(0.0625rem,0.25vw,0.125rem)] whitespace-nowrap ${token.change >= 0
-                                      ? "text-green-400"
-                                      : "text-red-400"
+                                        ? "text-green-400"
+                                        : "text-red-400"
                                       }`}
                                   >
                                     {token.change >= 0 ? (
@@ -681,8 +665,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                             key={r}
                             onClick={() => setTimeRange(r)}
                             className={`rounded-full font-medium transition-colors whitespace-nowrap text-[clamp(0.4rem,0.85vw,0.625rem)] px-[clamp(0.375rem,1vw,0.75rem)] py-[clamp(0.125rem,0.4vw,0.25rem)] ${timeRange === r
-                              ? "bg-[#005430] text-white"
-                              : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                                ? "bg-[#005430] text-white"
+                                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                               }`}
                           >
                             {r}
@@ -839,7 +823,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                             cursor={<CustomCursor />}
                           />
 
-
                           {/* Lines for each token */}
                           {(() => {
                             const lastPoint = chartData[chartData.length - 1];
@@ -929,7 +912,6 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                           })()}
                         </ComposedChart>
                       </ResponsiveContainer>
-
                     </div>
                   </div>
                 </div>
@@ -961,8 +943,8 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
                   }
                 }}
                 className={`h-[clamp(0.25rem,0.5vw,0.375rem)] rounded-full transition-all duration-300 ${idx === currentIndex
-                  ? "w-[clamp(1.25rem,3vw,2rem)] bg-green-500"
-                  : "w-[clamp(0.25rem,0.5vw,0.375rem)] bg-gray-600 hover:bg-gray-500"
+                    ? "w-[clamp(1.25rem,3vw,2rem)] bg-green-500"
+                    : "w-[clamp(0.25rem,0.5vw,0.375rem)] bg-gray-600 hover:bg-gray-500"
                   }`}
               />
             ))}
