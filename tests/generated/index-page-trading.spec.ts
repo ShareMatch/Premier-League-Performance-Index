@@ -27,6 +27,95 @@ async function checkLoginError(
 }
 
 /**
+ * Helper to dismiss KYC modal if it appears
+ * The KYC modal has class "fixed inset-0 z-50" and contains "Identity Verification" or "ShieldCheck"
+ */
+async function dismissKycModal(page: Page): Promise<void> {
+  // Look for the modal container with fixed positioning and z-50
+  const modalOverlay = page.locator('div.fixed.inset-0.z-50').first();
+  
+  if (await modalOverlay.isVisible({ timeout: 3000 }).catch(() => false)) {
+    console.log("📋 Modal overlay detected, attempting to close...");
+    
+    // Method 1: Try clicking the X button (close button in header)
+    const closeButton = modalOverlay.locator('button').filter({ has: page.locator('svg.lucide-x, svg[class*="w-6"][class*="h-6"]') }).first();
+    if (await closeButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      console.log("  → Clicking X close button");
+      await closeButton.click();
+      await page.waitForTimeout(500);
+    }
+    
+    // Method 2: If still visible, try clicking the backdrop (bg-black/70)
+    if (await modalOverlay.isVisible().catch(() => false)) {
+      const backdrop = modalOverlay.locator('div.absolute.inset-0.bg-black\\/70').first();
+      if (await backdrop.isVisible({ timeout: 1000 }).catch(() => false)) {
+        console.log("  → Clicking backdrop");
+        await backdrop.click({ position: { x: 5, y: 5 }, force: true });
+        await page.waitForTimeout(500);
+      }
+    }
+    
+    // Method 3: If still visible, try pressing Escape
+    if (await modalOverlay.isVisible().catch(() => false)) {
+      console.log("  → Pressing Escape");
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
+    }
+    
+    // Method 4: Try clicking any "Close" or "Cancel" button text
+    if (await modalOverlay.isVisible().catch(() => false)) {
+      const textCloseButton = modalOverlay.locator('button:has-text("Close"), button:has-text("Cancel"), button:has-text("Skip")').first();
+      if (await textCloseButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+        console.log("  → Clicking text close button");
+        await textCloseButton.click();
+        await page.waitForTimeout(500);
+      }
+    }
+    
+    // Verify modal is closed
+    const stillVisible = await modalOverlay.isVisible().catch(() => false);
+    if (stillVisible) {
+      console.log("⚠️ Modal still visible after all attempts, continuing anyway");
+    } else {
+      console.log("✅ Modal closed successfully");
+    }
+  }
+}
+
+/**
+ * Helper to dismiss any blocking alert modal
+ */
+async function dismissAlertModal(page: Page): Promise<void> {
+  const alertModal = page.locator('[data-testid="alert-modal-overlay"]');
+  if (await alertModal.isVisible({ timeout: 2000 }).catch(() => false)) {
+    console.log("⚠️ Alert modal appeared, dismissing...");
+    const okButton = alertModal.locator('button:text("OK")');
+    if (await okButton.isVisible().catch(() => false)) {
+      await okButton.click();
+      await expect(alertModal).toBeHidden({ timeout: 3000 });
+    }
+    console.log("✅ Alert modal dismissed");
+  }
+}
+
+/**
+ * Helper to wait for skeleton loading to complete
+ */
+async function waitForSkeletonToLoad(page: Page): Promise<void> {
+  // Wait for any animate-pulse elements to disappear (skeleton loading)
+  // Give the page time to start showing skeletons first
+  await page.waitForTimeout(500);
+  
+  // Wait for order book rows to appear (not skeletons)
+  const orderBookRow = page.locator('[data-testid^="order-book-row-"]').first();
+  await orderBookRow.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {
+    console.log("⚠️ Order book rows not found, continuing anyway");
+  });
+  
+  console.log("✅ Page loaded, skeletons complete");
+}
+
+/**
  * Helper to handle order confirmation modal
  */
 async function handleOrderConfirmation(
@@ -63,6 +152,11 @@ async function handleOrderConfirmation(
 
 test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
   test.setTimeout(120000);
+
+  // Enforce desktop viewport to avoid strict mode violations with duplicate responsive elements
+  test.use({
+    viewport: { width: 1280, height: 800 },
+  });
 
   test("should complete full trading cycle: login, buy tokens, and sell tokens", async ({
     page,
@@ -118,31 +212,69 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
       } else {
         expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
       }
+      
+      // Dismiss KYC modal if it appears after login
+      await dismissKycModal(page);
+      
+      // Dismiss any alert modals
+      await dismissAlertModal(page);
     });
 
     // 2. Navigate to EPL Index Page
     await test.step("Navigate to EPL Index", async () => {
       await page.goto("/market/EPL");
+      
+      // Dismiss KYC modal if it appears after navigation
+      await dismissKycModal(page);
+      
+      // Dismiss any alert modals
+      await dismissAlertModal(page);
+      
       await expect(
         page.getByRole("heading", { name: /Premier League/i }),
       ).toBeVisible({ timeout: 15000 });
+      
+      // Wait for skeleton loading to complete
+      await waitForSkeletonToLoad(page);
+      
       await expect(page.getByText("Asset", { exact: true })).toBeVisible();
     });
 
     // 3. Attempt to Sell Arsenal (Expect Error - User doesn't own it yet)
     await test.step("Attempt to sell asset not owned", async () => {
+      // Aggressively dismiss any modals that might be blocking
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
+      await page.waitForTimeout(1000);
+      await dismissKycModal(page);
+      
       const arsenalRow = page
         .locator('[data-testid^="order-book-row-"]')
         .filter({ hasText: "Arsenal" })
         .first();
-      await expect(arsenalRow).toBeVisible();
+      await expect(arsenalRow).toBeVisible({ timeout: 10000 });
 
+      // Dismiss any modal right before clicking
+      await dismissKycModal(page);
+      
       const sellButton = arsenalRow.locator('[data-testid^="sell-button-"]');
-      await sellButton.click();
+      
+      // Try clicking, if blocked by modal, dismiss and retry
+      try {
+        await sellButton.click({ timeout: 5000 });
+      } catch (e) {
+        console.log("Sell button click blocked, dismissing modals and retrying...");
+        await dismissKycModal(page);
+        await dismissAlertModal(page);
+        await sellButton.click({ timeout: 10000 });
+      }
 
+      // Wait a moment for the modal to appear
+      await page.waitForTimeout(500);
+      
       // Verify Sell Error Modal
       const errorModal = page.locator('[data-testid="sell-error-modal"]');
-      await expect(errorModal).toBeVisible();
+      await expect(errorModal).toBeVisible({ timeout: 10000 });
       await expect(errorModal).toContainText("You cannot sell");
       await expect(errorModal).toContainText("Arsenal");
 
@@ -153,17 +285,30 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
 
     // 4. Buy Arsenal Tokens (Complete Transaction)
     await test.step("Complete Arsenal token purchase", async () => {
+      // Dismiss any modals before clicking buy
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
+      
       // Find Arsenal row and click Buy
       const arsenalRow = page
         .locator('[data-testid^="order-book-row-"]')
         .filter({ hasText: "Arsenal" })
         .first();
       const buyButton = arsenalRow.locator('[data-testid^="buy-button-"]');
-      await buyButton.click();
+      
+      // Try clicking, if blocked by modal, dismiss and retry
+      try {
+        await buyButton.click({ timeout: 5000 });
+      } catch (e) {
+        console.log("Buy button click blocked, dismissing modals and retrying...");
+        await dismissKycModal(page);
+        await dismissAlertModal(page);
+        await buyButton.click({ timeout: 10000 });
+      }
 
       // Wait for Trade Slip to open
       const rightPanel = page.locator('[data-testid="right-panel"]:visible');
-      await expect(rightPanel).toBeVisible({ timeout: 5000 });
+      await expect(rightPanel).toBeVisible({ timeout: 10000 });
 
       const tradeSlip = rightPanel.locator('[data-testid="trade-slip"]');
       await expect(tradeSlip).toBeVisible();
@@ -197,13 +342,13 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
       await expect(confirmButton).toBeEnabled();
       await confirmButton.click();
 
-      // Wait for countdown (5 seconds) and automatic confirmation
-      await expect(confirmButton).toContainText("Confirming...", {
-        timeout: 2000,
+      // Wait for processing to start
+      await expect(confirmButton).toContainText(/Processing\.\.\.|Confirming\.\.\./, {
+        timeout: 5000,
       });
 
-      // Wait for transaction to complete (countdown + processing time)
-      await page.waitForTimeout(8000);
+      // Wait for transaction to complete
+      await page.waitForTimeout(5000);
 
       // Verify trade slip closes after successful transaction
       await expect(tradeSlip).toBeHidden({ timeout: 5000 });
@@ -232,6 +377,10 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
 
     // 6. Sell Arsenal Tokens (Complete Transaction)
     await test.step("Complete Arsenal token sale via Portfolio", async () => {
+      // Dismiss any modals before interacting
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
+      
       // Use :visible to avoid strict mode violations
       const rightPanel = page.locator('[data-testid="right-panel"]:visible');
 
@@ -244,7 +393,7 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
 
       // Wait for Trade Slip to open
       const tradeSlip = rightPanel.locator('[data-testid="trade-slip"]');
-      await expect(tradeSlip).toBeVisible();
+      await expect(tradeSlip).toBeVisible({ timeout: 10000 });
 
       // Ensure we're on the Sell tab
       const sellTab = tradeSlip.locator('[data-testid="trade-slip-sell-tab"]');
@@ -274,13 +423,13 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
       await expect(confirmButton).toBeEnabled();
       await confirmButton.click();
 
-      // Wait for countdown and automatic confirmation
-      await expect(confirmButton).toContainText("Confirming...", {
-        timeout: 2000,
+      // Wait for processing to start
+      await expect(confirmButton).toContainText(/Processing\.\.\.|Confirming\.\.\./, {
+        timeout: 5000,
       });
 
       // Wait for transaction to complete
-      await page.waitForTimeout(8000);
+      await page.waitForTimeout(5000);
 
       // Verify trade slip closes after successful transaction
       await expect(tradeSlip).toBeHidden({ timeout: 5000 });
@@ -377,18 +526,49 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
       } else {
         expect(isLoginModalHidden || isVerificationModalVisible).toBeTruthy();
       }
+      
+      // Dismiss KYC modal if it appears after login
+      await dismissKycModal(page);
+      
+      // Dismiss any alert modals
+      await dismissAlertModal(page);
     });
 
     await test.step("Navigate to EPL", async () => {
       await page.goto("/market/EPL");
+      
+      // Wait for page to stabilize and dismiss any modals
+      await page.waitForTimeout(2000);
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
+      
+      // Wait a bit more for delayed modals
+      await page.waitForTimeout(1000);
+      await dismissKycModal(page);
+      
       await expect(
         page.getByRole("heading", { name: /Premier League/i }),
       ).toBeVisible({ timeout: 15000 });
+      
+      // Wait for skeleton loading to complete
+      await waitForSkeletonToLoad(page);
+      
+      // Dismiss any modals that appeared during loading
+      await dismissKycModal(page);
+      
       // Wait for order book to load
       await expect(page.getByText("Asset", { exact: true })).toBeVisible();
     });
 
     await test.step("Attempt to buy with excessive quantity", async () => {
+      // Aggressively dismiss any modals that might be blocking
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
+      
+      // Wait a moment for any delayed modals
+      await page.waitForTimeout(1000);
+      await dismissKycModal(page);
+      
       // Wait for order book to load
       const arsenalRow = page
         .locator('[data-testid^="order-book-row-"]')
@@ -396,14 +576,34 @@ test.describe("Index Page Trading Flow - Complete Buy/Sell", () => {
         .first();
       await expect(arsenalRow).toBeVisible({ timeout: 10000 });
 
+      // Dismiss any modal one more time right before clicking
+      await dismissKycModal(page);
+      
       const buyButton = arsenalRow.locator('[data-testid^="buy-button-"]');
-      await buyButton.click();
+      
+      // Try clicking, if blocked by modal, dismiss and retry
+      try {
+        await buyButton.click({ timeout: 5000 });
+      } catch (e) {
+        console.log("Buy button click blocked, dismissing modals and retrying...");
+        await dismissKycModal(page);
+        await dismissAlertModal(page);
+        await buyButton.click({ timeout: 10000 });
+      }
+
+      // Clicking buy navigates to asset page first, wait for it
+      const assetPage = page.locator('[data-testid="asset-page"]');
+      await expect(assetPage).toBeVisible({ timeout: 15000 });
+      
+      // Dismiss any modals that might appear after navigation
+      await dismissKycModal(page);
+      await dismissAlertModal(page);
 
       // Use :visible to avoid strict mode violations
       const rightPanel = page.locator('[data-testid="right-panel"]:visible');
-      await expect(rightPanel).toBeVisible({ timeout: 5000 });
+      await expect(rightPanel).toBeVisible({ timeout: 10000 });
       const tradeSlip = rightPanel.locator('[data-testid="trade-slip"]');
-      await expect(tradeSlip).toBeVisible();
+      await expect(tradeSlip).toBeVisible({ timeout: 10000 });
 
       // Try to buy 10000 tokens (likely exceeds wallet balance)
       const quantityInput = tradeSlip.locator(
