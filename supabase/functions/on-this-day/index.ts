@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import { publicCors } from "../_shared/cors.ts";
+import { ON_THIS_DAY_PROMPT, DEFAULT_ON_THIS_DAY } from "../_shared/prompts/index.ts";
+import { interpolate, getContextClause, getTodayDateString } from "../_shared/prompts/utils.ts";
 
 serve(async (req: Request) => {
   const corsHeaders = publicCors(req.headers.get('origin'));
@@ -27,7 +29,7 @@ serve(async (req: Request) => {
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ fact: `On this day, ${assetName} fans are engaging with the Performance Index.` }),
+        JSON.stringify({ fact: DEFAULT_ON_THIS_DAY }),
         {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -36,25 +38,18 @@ serve(async (req: Request) => {
     }
 
     const ai = new GoogleGenerativeAI(apiKey);
-    const today = new Date();
-    const dateString = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
-    const contextClause = market ? `specifically for ${market}` : 'in sports history';
-    const prompt = `Write a short "On This Day" (${dateString}) historical fact about ${assetName} ${contextClause}.
-Rules:
-1. It MUST be historically accurate for TODAY'S DATE (${dateString}).
-2. If no specific event happened on this exact date for ${assetName}, find a significant event from this WEEK in history.
-3. Keep it to one interesting sentence.
-4. STRICTLY AVOID: politics, war, religion.
-5. Focus on wins, records, signings, or legendary moments.
-Start directly with the fact.`;
+    // Use shared prompt with interpolation
+    const dateString = getTodayDateString();
+    const contextClause = getContextClause(market, 'on-this-day');
+    const prompt = interpolate(ON_THIS_DAY_PROMPT, { assetName, dateString, contextClause });
 
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: prompt,
     });
 
-    const fact = response.text || `On this day, ${assetName} fans are engaging with the Performance Index.`;
+    const fact = response.text || DEFAULT_ON_THIS_DAY;
 
     return new Response(
       JSON.stringify({ fact }),
@@ -68,7 +63,7 @@ Start directly with the fact.`;
     console.error("Error in on-this-day function:", error);
     const corsHeaders = publicCors(req.headers.get('origin'));
     return new Response(
-      JSON.stringify({ fact: "On this day, ShareMatch users are exploring sports performance data." }),
+      JSON.stringify({ fact: DEFAULT_ON_THIS_DAY }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

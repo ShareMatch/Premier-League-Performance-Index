@@ -47,9 +47,13 @@ async function getAccessTokenFromServiceAccount(serviceAccount: {
   };
 
   const encodedHeader = btoa(JSON.stringify(header))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
   const encodedPayload = btoa(JSON.stringify(payload))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
 
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
   const pemKey = serviceAccount.private_key;
@@ -60,18 +64,25 @@ async function getAccessTokenFromServiceAccount(serviceAccount: {
   const binaryKey = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8", binaryKey,
+    "pkcs8",
+    binaryKey,
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false, ["sign"],
+    false,
+    ["sign"],
   );
 
   const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5", cryptoKey,
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
     new TextEncoder().encode(signatureInput),
   );
 
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  const encodedSignature = btoa(
+    String.fromCharCode(...new Uint8Array(signature)),
+  )
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
 
   const jwt = `${signatureInput}.${encodedSignature}`;
 
@@ -120,8 +131,13 @@ serve(async (req: Request) => {
 
     if (missingFields.length > 0) {
       return new Response(
-        JSON.stringify({ error: `Missing field(s): ${missingFields.join(", ")}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: `Missing field(s): ${missingFields.join(", ")}`,
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -133,7 +149,10 @@ serve(async (req: Request) => {
     if (!agentStreamUrl && !reasoningEngineId) {
       return new Response(
         JSON.stringify({ error: "Agent configuration missing" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -157,10 +176,13 @@ serve(async (req: Request) => {
         let operation = await sessionResponse.json();
         const operationName = operation.name;
         while (!operation.done) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           const pollResponse = await fetch(
             `https://${location}-aiplatform.googleapis.com/v1beta1/${operationName}`,
-            { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } }
+            {
+              method: "GET",
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
           );
           if (!pollResponse.ok) break;
           operation = await pollResponse.json();
@@ -202,14 +224,24 @@ serve(async (req: Request) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Agent request failed: ${response.status} - ${errorText}`);
+      throw new Error(
+        `Agent request failed: ${response.status} - ${errorText}`,
+      );
     }
+
+    console.log("📡 Response received:", {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get("content-type"),
+      hasBody: !!response.body,
+    });
 
     const responseHeaders: Record<string, string> = {
       ...corsHeaders,
-      "Content-Type": "text/plain; charset=utf-8",
+      // ✅ CHANGE #1: "text/plain" → "text/event-stream"
+      "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     };
 
     if (activeSessionId) {
@@ -231,7 +263,10 @@ serve(async (req: Request) => {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log("📨 Stream ended");
+            break;
+          }
 
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
@@ -250,6 +285,7 @@ serve(async (req: Request) => {
       } catch (err) {
         console.error("❌ Stream error:", err);
       } finally {
+        console.log("🏁 Closing writer");
         await writer.close();
       }
     })();
@@ -259,53 +295,69 @@ serve(async (req: Request) => {
       headers: responseHeaders,
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     console.error("❌ Error:", errorMessage);
     return new Response(
       JSON.stringify({
         error: `AI agent error: ${errorMessage}`,
-        analysis: "**Unable to Generate Analysis**\n\nThe AI agent encountered an error.",
+        analysis:
+          "**Unable to Generate Analysis**\n\nThe AI agent encountered an error.",
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
 
+// ✅ CHANGE #2: Updated processLine function
 async function processLine(line: string, writer: any, encoder: TextEncoder) {
   const trimmedLine = line.trim();
   if (!trimmedLine) return;
 
-  if (trimmedLine.startsWith("data:")) {
-    const jsonStr = trimmedLine.replace(/^data:\s*/, "");
-    if (jsonStr === "[DONE]") return;
+  try {
+    let data: any;
 
-    try {
-      const data = JSON.parse(jsonStr);
+    // ✅ Handle both SSE format (data: {...}) and raw JSON ({...})
+    if (trimmedLine.startsWith("data:")) {
+      const jsonStr = trimmedLine.replace(/^data:\s*/, "");
+      if (jsonStr === "[DONE]") return;
+      data = JSON.parse(jsonStr);
+    } else if (trimmedLine.startsWith("{")) {
+      data = JSON.parse(trimmedLine);
+    } else {
+      return; // Not a JSON line
+    }
 
-      let text = "";
-      if (data.content?.parts) {
-        for (const part of data.content.parts) {
-          if (part.text) text += part.text;
+    // ✅ Extract text from Vertex AI event format
+    let text = "";
+
+    if (data.content?.parts) {
+      // Vertex AI format: content.parts[].text
+      for (const part of data.content.parts) {
+        if (part.text) {
+          text += part.text;
         }
-      } else if (data.text) {
-        text = data.text;
-      } else if (typeof data === 'string') {
-        text = data;
       }
+    } else if (data.text) {
+      // Alternative format: direct text field
+      text = data.text;
+    }
 
-      if (text) {
-        await writer.write(encoder.encode(text));
-      }
-    } catch {
-      // Ignore parse errors for partial chunks
+    // ✅ Send to frontend as SSE
+    if (text) {
+      const sseData = `data: ${JSON.stringify({ text })}\n\n`;
+      await writer.write(encoder.encode(sseData));
+      console.log("📤 Streamed chunk:", text.substring(0, 50) + "...");
     }
-  } else if (trimmedLine.startsWith("{")) {
-    try {
-      const data = JSON.parse(trimmedLine);
-      const text = data.content?.parts?.[0]?.text || data.text;
-      if (text) await writer.write(encoder.encode(text));
-    } catch {
-      // Ignore
-    }
+  } catch (err) {
+    // Log parsing errors for debugging
+    console.error(
+      "❌ Failed to parse line:",
+      trimmedLine.substring(0, 100),
+      err,
+    );
   }
 }

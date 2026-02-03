@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import { FaCheck } from "react-icons/fa6";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { isMarketOpen } from "../utils/marketUtils";
+import { 
+  isMarketOpen, 
+  CATEGORY_ORDER,
+  getCategoryLabel,
+  getMarketLabel,
+} from "../utils/marketUtils";
 
 interface AllMarketsPageProps {
   teams: Team[];
@@ -24,35 +29,6 @@ interface AllMarketsPageProps {
   onViewAsset: (asset: Team) => void;
   onSelectOrder: (team: Team, type: "buy" | "sell") => void;
 }
-
-const MARKET_LABELS: Record<string, string> = {
-  EPL: "Premier League",
-  SPL: "Saudi Pro League",
-  UCL: "Champions League",
-  WC: "World Cup",
-  FIFA: "FIFA World Cup",
-  F1: "Formula 1",
-  NBA: "NBA",
-  NFL: "NFL",
-  T20: "T20 World Cup",
-  ISL: "Indonesia Super League",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  football: "Football",
-  f1: "Motorsport",
-  basketball: "Basketball",
-  american_football: "American Football",
-  cricket: "Cricket",
-};
-
-const CATEGORY_ORDER = [
-  "football",
-  "f1",
-  "basketball",
-  "american_football",
-  "cricket",
-];
 
 const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   teams,
@@ -76,7 +52,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   const handleSelectMarket = (
     categoryId: string,
     filterId: string,
-    isFromDropdown = false
+    isFromDropdown = false,
   ) => {
     setActiveCategory(categoryId);
 
@@ -110,7 +86,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       if (!status.isOpen) return false;
 
       // Explicitly block Global Events / Eurovision
-      if (t.category === "global_events" || t.market === "Eurovision") return false;
+      if (t.category === "global_events" || t.market === "Eurovision")
+        return false;
 
       // Price-based visibility (settled system usually sets prices to $100 or $0.1)
       // We still show them if they aren't explicitly settled, but here we can be more strict if needed.
@@ -142,7 +119,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
         (t) =>
           t.name.toLowerCase().includes(query) ||
           t.team?.toLowerCase().includes(query) ||
-          t.market?.toLowerCase().includes(query)
+          t.market?.toLowerCase().includes(query),
       );
     }
 
@@ -150,7 +127,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
   }, [teams, activeCategory, activeFilters, searchQuery]);
 
   // Compute which categories and markets actually have active teams to display in the filter bar
-  const visibleCategories = useMemo(() => {
+  // All labels are derived from DB data (team.market_sub_group, team.market_name, team.index_name)
+  const { visibleCategories, derivedMarketLabels } = useMemo(() => {
     // 1. Get all active teams (open)
     const activeTeams = teams.filter((t) => {
       const status = isMarketOpen(t);
@@ -158,42 +136,69 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       if (t.offer === 100 || t.offer === 0.1) return false;
 
       // Explicitly block Global Events / Eurovision
-      if (t.category === "global_events" || t.market === "Eurovision") return false;
+      if (t.category === "global_events" || t.market === "Eurovision")
+        return false;
 
       return true;
     });
 
-    // 2. Group by category
-    const categoriesMap: Record<string, { id: string; label: string; markets: Set<string> }> = {};
+    // 2. Group by category and collect labels from DB
+    const categoriesMap: Record<
+      string,
+      { id: string; label: string; markets: Set<string> }
+    > = {};
+    const marketLabelsFromDb: Record<string, string> = {};
+    const categoryLabelsFromDb: Record<string, string> = {};
 
     activeTeams.forEach((t) => {
       const catId = t.category || "other";
+      
+      // Get category label from market_sub_group (DB)
+      if (t.market_sub_group && !categoryLabelsFromDb[catId]) {
+        categoryLabelsFromDb[catId] = t.market_sub_group;
+      }
+      
       if (!categoriesMap[catId]) {
         categoriesMap[catId] = {
           id: catId,
-          label: CATEGORY_LABELS[catId] || catId.charAt(0).toUpperCase() + catId.slice(1).replace("_", " "),
+          label: categoryLabelsFromDb[catId] || getCategoryLabel(catId),
           markets: new Set<string>(),
         };
       }
+      
       if (t.market) {
         categoriesMap[catId].markets.add(t.market);
+        // Get market label from DB (prefer market_name, fallback to index_name)
+        if (!marketLabelsFromDb[t.market]) {
+          if (t.market_name) {
+            marketLabelsFromDb[t.market] = t.market_name;
+          } else if (t.index_name) {
+            marketLabelsFromDb[t.market] = t.index_name;
+          } else {
+            marketLabelsFromDb[t.market] = t.market;
+          }
+        }
       }
     });
 
     // 3. Convert to array and sort by CATEGORY_ORDER
-    return CATEGORY_ORDER.filter((id) => categoriesMap[id])
-      .concat(Object.keys(categoriesMap).filter((id) => !CATEGORY_ORDER.includes(id)))
+    const categories = CATEGORY_ORDER.filter((id) => categoriesMap[id])
+      .concat(
+        Object.keys(categoriesMap).filter((id) => !CATEGORY_ORDER.includes(id)),
+      )
       .map((id) => {
         const cat = categoriesMap[id];
         return {
           id: cat.id,
-          label: cat.label,
+          label: categoryLabelsFromDb[cat.id] || cat.label,
           markets: Array.from(cat.markets).map((mId) => ({
             id: mId,
-            label: MARKET_LABELS[mId] || mId,
+            label: getMarketLabel(mId, marketLabelsFromDb[mId]),
           })),
         };
       });
+    
+    return { visibleCategories: categories, derivedMarketLabels: marketLabelsFromDb };
   }, [teams]);
 
   // Initial loading simulation
@@ -372,8 +377,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
               <button
                 onClick={() => !hasMarkets && handleSelectMarket("ALL", "ALL")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${isActive
-                  ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
-                  : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
+                    ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20"
+                    : "bg-gray-800 text-gray-400 border-gray-700 hover:border-gray-600 hover:text-gray-300"
                   }`}
               >
                 <span>{cat.label}</span>
@@ -427,8 +432,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                         <DropdownMenu.CheckboxItem
                           key={m.id}
                           className={`flex items-center justify-between px-3 py-2 text-xs font-bold rounded-xl cursor-pointer transition-colors outline-none mb-0.5 ${isSelected
-                            ? "bg-brand-primary text-white"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                              ? "bg-brand-primary text-white"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
                             }`}
                           checked={isSelected}
                           onSelect={(e) => {
@@ -457,22 +462,22 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
       <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-3">
           {isLoading ? (
-            // Skeleton Loading State
+            // Skeleton Loading State - Responsive
             Array.from({ length: ITEMS_PER_PAGE }).map((_, idx) => (
               <div
                 key={`skeleton-${idx}`}
-                className="flex items-center justify-between p-3 rounded-xl bg-gray-800/20 border border-gray-700/30 animate-pulse"
+                className="flex items-center justify-between p-[clamp(0.5rem,2vw,0.75rem)] rounded-xl bg-gray-800/20 border border-gray-700/30 animate-pulse"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gray-800/50" />
-                  <div className="flex flex-col gap-2">
-                    <div className="h-4 w-32 bg-gray-800/50 rounded-md" />
-                    <div className="h-3 w-16 bg-gray-800/50 rounded-md" />
+                <div className="flex items-center gap-[clamp(0.5rem,2vw,0.75rem)]">
+                  <div className="w-[clamp(2.5rem,8vw,3rem)] h-[clamp(2.5rem,8vw,3rem)] rounded-xl bg-gray-700/50" />
+                  <div className="flex flex-col gap-[clamp(0.25rem,1vw,0.5rem)]">
+                    <div className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(5rem,20vw,8rem)] bg-gray-700/50 rounded-md" />
+                    <div className="h-[clamp(0.5rem,1.5vw,0.75rem)] w-[clamp(2.5rem,10vw,4rem)] bg-gray-700/50 rounded-md" />
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="h-4 w-16 bg-gray-800/50 rounded-md" />
-                  <div className="h-3 w-10 bg-gray-800/50 rounded-md" />
+                <div className="flex flex-col items-end gap-[clamp(0.25rem,1vw,0.5rem)]">
+                  <div className="h-[clamp(0.75rem,2vw,1rem)] w-[clamp(3rem,10vw,4rem)] bg-gray-700/50 rounded-md" />
+                  <div className="h-[clamp(0.5rem,1.5vw,0.75rem)] w-[clamp(2rem,6vw,2.5rem)] bg-gray-700/50 rounded-md" />
                 </div>
               </div>
             ))
@@ -490,7 +495,7 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     {/* Logo */}
-                    <div className="w-12 h-12 rounded-xl bg-gray-900/50 p-2 flex items-center justify-center border border-gray-700/50 group-hover:border-brand-primary/30 transition-colors">
+                    <div className="w-12 h-12 flex items-center justify-center group-hover:border-brand-primary/30 transition-colors">
                       {team.logo_url ? (
                         <img
                           src={team.logo_url}
@@ -576,8 +581,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1 || isLoading}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === 1
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
                   }`}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -595,8 +600,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                         onClick={() => handlePageChange(page as number)}
                         disabled={isLoading}
                         className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === page
-                          ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
-                          : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
+                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/25 scale-105"
+                            : "text-gray-400 hover:bg-white/10 hover:text-gray-200"
                           }`}
                       >
                         {page}
@@ -611,8 +616,8 @@ const AllMarketsPage: React.FC<AllMarketsPageProps> = ({
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages || isLoading}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${currentPage === totalPages
-                  ? "text-gray-600 cursor-not-allowed"
-                  : "text-brand-primary hover:bg-gray-700/50"
+                    ? "text-gray-600 cursor-not-allowed"
+                    : "text-brand-primary hover:bg-gray-700/50"
                   }`}
               >
                 Next

@@ -3,6 +3,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { Team } from '../types';
 import OrderBookRow from './OrderBookRow';
+import { OrderBookRowSkeleton } from './Skeleton';
 
 interface OrderBookProps {
   teams: Team[];
@@ -10,9 +11,21 @@ interface OrderBookProps {
   onViewAsset?: (team: Team) => void;
   onBack?: () => void;
   title?: string;
+  /** Show skeleton loading state */
+  loading?: boolean;
+  /** Number of skeleton rows to show when loading */
+  skeletonCount?: number;
 }
 
-const OrderBook: React.FC<OrderBookProps> = ({ teams, onSelectOrder, onViewAsset, onBack, title }) => {
+const OrderBook: React.FC<OrderBookProps> = ({
+  teams,
+  onSelectOrder,
+  onViewAsset,
+  onBack,
+  title,
+  loading = false,
+  skeletonCount = 10,
+}) => {
   return (
     <div data-testid="order-book" className="bg-gray-800/50 rounded-[clamp(0.375rem,1vw,0.5rem)] shadow-2xl shadow-gray-950/50 overflow-hidden border border-gray-700 flex flex-col">
       {/* Back Button & Title */}
@@ -42,9 +55,13 @@ const OrderBook: React.FC<OrderBookProps> = ({ teams, onSelectOrder, onViewAsset
       </div>
       {/* List - scrolls with page, not internally */}
       <div className="divide-y divide-gray-700/50">
-        {teams.map(team => (
-          <OrderBookRow key={team.id} team={team} onSelectOrder={onSelectOrder} onViewAsset={onViewAsset} />
-        ))}
+        {loading ? (
+          <OrderBookRowSkeleton count={skeletonCount} />
+        ) : (
+          teams.map(team => (
+            <OrderBookRow key={team.id} team={team} onSelectOrder={onSelectOrder} onViewAsset={onViewAsset} />
+          ))
+        )}
       </div>
     </div>
   );

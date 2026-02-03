@@ -35,14 +35,14 @@ export const SESSION_CONFIG = {
    * Default: 60 minutes (60 * 60 * 1000)
    * For testing, you can set to 30 seconds (30 * 1000)
    */
-  INACTIVITY_TIMEOUT_MS: 60 * 60 * 1000, // 60 minutes
+  INACTIVITY_TIMEOUT_MS: 30 * 60 * 1000, // 60 minutes
 
   /**
    * Countdown time in seconds shown in the warning modal
    * User has this many seconds to click "I'm still here" before auto-logout
    * Default: 60 seconds
    */
-  WARNING_COUNTDOWN_SECONDS: 60, // 1 minute
+  WARNING_COUNTDOWN_SECONDS: 120, // 2 minute
 };
 
 // ============================================

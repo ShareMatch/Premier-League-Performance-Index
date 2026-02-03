@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Team, League } from "../types";
-import { TrendingUp, Trophy, Flag, Activity, Zap } from "lucide-react";
 import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
 import tooltipText from "../resources/ToolTip.txt?raw";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
+import { getMarketDisplayData } from "../utils/marketUtils";
 import type { SeasonDates } from "../lib/api";
 
 interface HotQuestionsProps {
@@ -70,65 +70,58 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
       if (t.is_settled) return false;
       if (t.offer <= 5.0) return false;
 
-      const seasonData = seasonDatesMap?.get(t.market || "");
+      const market = t.market || t.index_token;
+      if (!market) return false;
+
+      const seasonData = seasonDatesMap?.get(market);
       const marketInfo = getMarketInfo(
-        t.market as League,
+        market as League,
         seasonData?.start_date,
         seasonData?.end_date,
-        seasonData?.stage || undefined
+        seasonData?.stage || undefined,
+        t.index_name
       );
       return marketInfo.isOpen;
     });
 
-    const markets = {
-      EPL: activeTeams.filter((t) => t.market === "EPL"),
-      UCL: activeTeams.filter((t) => t.market === "UCL"),
-      SPL: activeTeams.filter((t) => t.market === "SPL"),
-      F1: activeTeams.filter((t) => t.market === "F1"),
-      WC: activeTeams.filter((t) => t.market === "WC"),
-      NBA: activeTeams.filter((t) => t.market === "NBA"),
-      NFL: activeTeams.filter((t) => t.market === "NFL"),
-    };
+    // Dynamically group teams by market
+    const marketGroups = new Map<string, Team[]>();
+    activeTeams.forEach((t) => {
+      const market = t.market || t.index_token;
+      if (!market) return;
+      const existing = marketGroups.get(market) || [];
+      existing.push(t);
+      marketGroups.set(market, existing);
+    });
 
     const generated: Question[] = [];
 
-    // Helper to get full market name
-    const getFullMarketName = (market: League): string => {
-      const names: Record<string, string> = {
-        EPL: "England Premier League",
-        UCL: "Champions League",
-        SPL: "Saudi Pro League",
-        F1: "Formula 1",
-        WC: "World Cup",
-        NBA: "NBA",
-        NFL: "NFL",
-      };
-      return names[market] || market;
-    };
+    // Helper to generate questions for a market
+    const addQuestionsForMarket = (marketToken: string, marketTeams: Team[]) => {
+      // Get display data dynamically from the first team's DB data
+      const sampleTeam = marketTeams[0];
+      const displayData = getMarketDisplayData(marketToken, {
+        index_name: sampleTeam?.index_name,
+        market_name: sampleTeam?.market_name,
+        category: sampleTeam?.category,
+      });
 
-    // Helper to generate questions
-    const addQuestions = (
-      leagueTeams: Team[],
-      market: League,
-      icon: React.ReactNode,
-      color: string,
-      border: string
-    ) => {
-      // Check if market is open before adding questions
-      const seasonData = seasonDatesMap?.get(market);
+      // Check if market is open
+      const seasonData = seasonDatesMap?.get(marketToken);
       const marketInfo = getMarketInfo(
-        market,
+        marketToken as League,
         seasonData?.start_date,
         seasonData?.end_date,
-        seasonData?.stage || undefined
+        seasonData?.stage || undefined,
+        sampleTeam?.index_name
       );
       if (!marketInfo.isOpen) return;
 
-      const sorted = [...leagueTeams]
+      const sorted = [...marketTeams]
         .sort((a, b) => b.offer - a.offer)
         .slice(0, 5);
 
-      sorted.forEach((team, idx) => {
+      sorted.forEach((team) => {
         const validId = parseInt(team.id) || team.name.length;
         const volNum = (team.offer * (10000 + validId * 100)) / 1000;
         const volStr =
@@ -136,72 +129,27 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
             ? `$${(volNum / 1000).toFixed(1)}M`
             : `$${volNum.toFixed(0)}K`;
 
-        // NEW: Use TrendingCarousel's question format
-        const fullMarketName = getFullMarketName(market);
         generated.push({
-          id: `${market.toLowerCase()}-${team.id}`,
-          market: market,
-          question: `Will ${team.name} top the ${fullMarketName} Index?`,
+          id: `${marketToken.toLowerCase()}-${team.id}`,
+          market: marketToken as League,
+          question: `Will ${team.name} top the ${displayData.fullName} Index?`,
           yesPrice: team.offer,
           noPrice: team.bid,
           volume: volStr,
-          icon: icon,
-          color: color,
-          borderColor: border,
+          icon: displayData.icon,
+          color: displayData.color,
+          borderColor: displayData.borderColor,
           team: team,
         });
       });
     };
 
-    // Generate for all markets
-    if (markets.EPL.length > 0)
-      addQuestions(
-        markets.EPL,
-        "EPL",
-        null,
-        "from-purple-500/20 to-blue-500/20",
-        "group-hover:border-purple-500/50"
-      );
-    if (markets.F1.length > 0)
-      addQuestions(
-        markets.F1,
-        "F1",
-        null,
-        "from-red-500/20 to-orange-500/20",
-        "group-hover:border-red-500/50"
-      );
-    if (markets.SPL.length > 0)
-      addQuestions(
-        markets.SPL,
-        "SPL",
-        null,
-        "from-green-500/20 to-emerald-500/20",
-        "group-hover:border-green-500/50"
-      );
-    if (markets.UCL.length > 0)
-      addQuestions(
-        markets.UCL,
-        "UCL",
-        null,
-        "from-blue-600/20 to-indigo-600/20",
-        "group-hover:border-blue-500/50"
-      );
-    if (markets.NBA.length > 0)
-      addQuestions(
-        markets.NBA,
-        "NBA",
-        null,
-        "from-orange-500/20 to-amber-500/20",
-        "group-hover:border-orange-500/50"
-      );
-    if (markets.NFL.length > 0)
-      addQuestions(
-        markets.NFL,
-        "NFL",
-        null,
-        "from-blue-800/20 to-blue-900/20",
-        "group-hover:border-blue-800/50"
-      );
+    // Generate questions for all markets dynamically
+    marketGroups.forEach((marketTeams, marketToken) => {
+      if (marketTeams.length > 0) {
+        addQuestionsForMarket(marketToken, marketTeams);
+      }
+    });
 
     // Shuffle full pool ONCE and store it
     const shuffled = generated.sort(() => 0.5 - Math.random());

@@ -1,4 +1,3 @@
-
 name: Daily Health & Compliance Audit
 
 on:
@@ -9,24 +8,49 @@ on:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 30
+
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      APP_BASE_URL: ${{ secrets.APP_MAIN_URL }}
+
+      SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_PROD_SERVICE_ROLE_KEY }}
+      VITE_SUPABASE_URL: ${{ secrets.SUPABASE_PROD_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_PROD_ANON_KEY }}
+
+      SUMSUB_APP_TOKEN: ${{ secrets.SUMSUB_APP_TOKEN }}
+      SUMSUB_SECRET_KEY: ${{ secrets.SUMSUB_SECRET_KEY }}
+      CI: true
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Install Playwright
+      - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
       - name: Run Audit
         run: npm run audit
+        continue-on-error: true
+
+      - name: Upload Audit Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-audit-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            audit-reports/
+          retention-days: 15
+          if-no-files-found: warn

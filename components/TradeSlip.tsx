@@ -30,27 +30,6 @@ const SoccerBallIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const TimerIcon: React.FC<{
-  className?: string;
-  style?: React.CSSProperties;
-}> = ({ className, style }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className={className}
-    style={style}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-    />
-  </svg>
-);
-
 const TradeSlip: React.FC<TradeSlipProps> = ({
   order,
   onClose,
@@ -59,7 +38,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
   walletBalance = 0,
 }) => {
   const [shares, setShares] = useState<number | "">("");
-  const [countdown, setCountdown] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [modalType, setModalType] = useState<"terms" | "risk" | null>(null);
@@ -78,7 +56,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     // Reset form state when order changes
     setShares("");
     setError(null);
-    setCountdown(null);
     setTermsAccepted(false);
   }, [order.type, order.team.id]);
 
@@ -110,19 +87,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     shares !== "" ? formatNumberWithCommas(shares * 100) : "0.00";
   const minReturn =
     shares !== "" ? formatNumberWithCommas(shares * 0.1) : "0.00";
-
-  useEffect(() => {
-    if (countdown === null) return;
-    if (countdown === 0) {
-      setCountdown(null);
-      handleSubmit();
-      return;
-    }
-    const timer = setTimeout(() => {
-      setCountdown(countdown - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
 
   const handleSubmit = async () => {
     if (shares === "" || shares <= 0) return;
@@ -178,7 +142,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     // Reset shares and errors when switching side to avoid invalid input states
     setShares("");
     setError(null);
-    setCountdown(null);
   };
 
   const handleConfirm = () => {
@@ -197,9 +160,9 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
         return;
       }
 
-      // All checks passed
+      // All checks passed - submit immediately
       setError(null);
-      setCountdown(5);
+      handleSubmit();
     }
   };
 
@@ -463,7 +426,6 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           onClick={handleConfirm}
           disabled={
             sharesNum <= 0 ||
-            countdown !== null ||
             isSubmitting ||
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
@@ -473,25 +435,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
             ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-            : countdown !== null
-              ? "bg-[#1C7D83] text-gray-300 cursor-wait"
-              : "bg-[#005430] hover:bg-[#005430]/90 text-white"
+            : "bg-[#005430] hover:bg-[#005430]/90 text-white"
             }`}
           data-testid="trade-slip-confirm-button"
         >
-          {countdown !== null ? (
-            <>
-              <TimerIcon
-                className="w-6 h-6 animate-spin"
-                style={{ animationDuration: "5s" }}
-              />
-              <span>Confirming... ({countdown}s)</span>
-            </>
-          ) : isSubmitting ? (
-            "Processing..."
-          ) : (
-            "Confirm Transaction"
-          )}
+          {isSubmitting ? "Processing..." : "Confirm Transaction"}
         </button>
       </div>
 
