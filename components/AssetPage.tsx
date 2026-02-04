@@ -29,11 +29,20 @@ interface AssetPageProps {
   onNavigateToIndex?: (market: string) => void;
 }
 
-const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onNavigateToIndex }) => {
+const AssetPage: React.FC<AssetPageProps> = ({
+  asset,
+  onBack,
+  onSelectOrder,
+  onNavigateToIndex,
+}) => {
   const [period, setPeriod] = useState<"1h" | "24h" | "7d" | "All">("24h");
 
   const isMarketClosed = useMemo(() => !isMarketOpen(asset).isOpen, [asset]);
-  const [shareConfig, setShareConfig] = useState<{ url: string; type: 'mobile' | 'desktop'; copied: boolean } | null>(null);
+  const [shareConfig, setShareConfig] = useState<{
+    url: string;
+    type: "mobile" | "desktop";
+    copied: boolean;
+  } | null>(null);
   const { favorites, toggleFavorite } = useFavorites();
   const desktopShareRef = useRef<HTMLDivElement>(null);
   const mobileShareRef = useRef<HTMLDivElement>(null);
@@ -87,27 +96,27 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
     return undefined;
   }, [asset.primary_color]);
 
-  const handleShare = async (type: 'mobile' | 'desktop') => {
+  const handleShare = async (type: "mobile" | "desktop") => {
     // If tooltip is already open for this type, close it
     if (shareConfig?.type === type) {
       setShareConfig(null);
       return;
     }
 
-    let shareUrl = '';
+    let shareUrl = "";
     if (asset.short_code) {
       shareUrl = `${window.location.origin}/a/${asset.short_code}`;
     } else {
       try {
         shareUrl = await generateShareLink(asset.id);
       } catch (err) {
-        console.error("Share error:", err);
+        // console.error("Share error:", err);
         return;
       }
     }
 
     // Attempt native share on mobile if supported
-    if (type === 'mobile' && navigator.share) {
+    if (type === "mobile" && navigator.share) {
       try {
         await navigator.share({
           title: `ShareMatch | ${asset.name}`,
@@ -117,8 +126,8 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
         return; // Successfully shared via native UI
       } catch (err) {
         // Only fallback to tooltip if it wasn't a user cancellation
-        if ((err as Error).name === 'AbortError') return;
-        console.error("Native share error:", err);
+        if ((err as Error).name === "AbortError") return;
+        // console.error("Native share error:", err);
       }
     }
 
@@ -129,10 +138,10 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
   const copyToClipboard = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
-      setShareConfig(prev => prev ? { ...prev, copied: true } : null);
+      setShareConfig((prev) => (prev ? { ...prev, copied: true } : null));
       setTimeout(() => setShareConfig(null), 2500);
     } catch (err) {
-      console.error("Clipboard error:", err);
+      // console.error("Clipboard error:", err);
     }
   };
 
@@ -143,12 +152,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
       const desktopRef = desktopShareRef.current;
       const mobileRef = mobileShareRef.current;
 
-      const isOutsideDesktop = desktopRef && !desktopRef.contains(event.target as Node);
-      const isOutsideMobile = mobileRef && !mobileRef.contains(event.target as Node);
+      const isOutsideDesktop =
+        desktopRef && !desktopRef.contains(event.target as Node);
+      const isOutsideMobile =
+        mobileRef && !mobileRef.contains(event.target as Node);
 
-      if (shareConfig.type === 'desktop' && isOutsideDesktop) {
+      if (shareConfig.type === "desktop" && isOutsideDesktop) {
         setShareConfig(null);
-      } else if (shareConfig.type === 'mobile' && isOutsideMobile) {
+      } else if (shareConfig.type === "mobile" && isOutsideMobile) {
         setShareConfig(null);
       }
     };
@@ -184,7 +195,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
               </div>
             ) : (
               <div
-                className={`w-8 h-8 rounded-lg ${!asset.primary_color ? avatarColor : ''} flex items-center justify-center border border-white/10 flex-shrink-0`}
+                className={`w-8 h-8 rounded-lg ${!asset.primary_color ? avatarColor : ""} flex items-center justify-center border border-white/10 flex-shrink-0`}
                 style={avatarBgStyle}
               >
                 <span className="text-xs font-bold text-white">
@@ -210,7 +221,9 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
                   </span>
                 </div>
               ) : (
-                <span className="text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">Asset</span>
+                <span className="text-[clamp(0.55rem,1.25vw,0.625rem)] text-gray-400">
+                  Asset
+                </span>
               )}
             </div>
           </div>
@@ -242,13 +255,13 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
             </button>
             <div className="relative" ref={mobileShareRef}>
               <button
-                onClick={() => handleShare('mobile')}
+                onClick={() => handleShare("mobile")}
                 className="p-1.5 text-gray-400 hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <Share2 className="w-4 h-4" />
               </button>
 
-              {shareConfig?.type === 'mobile' && (
+              {shareConfig?.type === "mobile" && (
                 <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-2.5 py-2 shadow-2xl relative min-w-[200px] max-w-[calc(100vw-2rem)]">
                     {shareConfig.copied ? (
@@ -298,8 +311,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
                         <FaCaretUp className="w-3 h-3" />
                       ) : (
                         <FaCaretDown className="w-3 h-3" />
-                      )
-                      }
+                      )}
                       ${Math.abs(changeAmount).toFixed(2)}
                       <span className="ml-1 text-[9px]">({period})</span>
                     </span>
@@ -342,7 +354,9 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
             <span className="inline-block px-4 py-2 text-sm font-bold rounded-lg border bg-amber-500/10 text-amber-500 border-amber-500/30">
               Market Closed
             </span>
-            <p className="text-[10px] text-gray-500 mt-2">Trading is currently unavailable for this asset.</p>
+            <p className="text-[10px] text-gray-500 mt-2">
+              Trading is currently unavailable for this asset.
+            </p>
           </div>
         )}
       </div>
@@ -370,7 +384,7 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
               </div>
             ) : (
               <div
-                className={`w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl ${!asset.primary_color ? avatarColor : ''} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10 flex-shrink-0`}
+                className={`w-[clamp(3rem,8vw,5rem)] h-[clamp(3rem,8vw,5rem)] rounded-xl ${!asset.primary_color ? avatarColor : ""} flex items-center justify-center shadow-lg shadow-black/50 border border-white/10 flex-shrink-0`}
                 style={avatarBgStyle}
               >
                 <span className="text-[clamp(0.75rem,2vw,1.25rem)] font-black text-white tracking-tighter">
@@ -478,14 +492,14 @@ const AssetPage: React.FC<AssetPageProps> = ({ asset, onBack, onSelectOrder, onN
             </button>
             <div className="relative" ref={desktopShareRef}>
               <button
-                onClick={() => handleShare('desktop')}
+                onClick={() => handleShare("desktop")}
                 className="p-[clamp(0.375rem,1vw,0.5rem)] text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
                 title="Share Asset"
               >
                 <Share2 className="w-[clamp(1rem,2vw,1.25rem)] h-[clamp(1rem,2vw,1.25rem)]" />
               </button>
 
-              {shareConfig?.type === 'desktop' && (
+              {shareConfig?.type === "desktop" && (
                 <div className="absolute top-full right-0 mt-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="bg-[#0B1221] backdrop-blur-xl border border-emerald-500/30 rounded-lg px-3 py-2.5 shadow-2xl relative min-w-[240px]">
                     {shareConfig.copied ? (

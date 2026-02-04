@@ -174,7 +174,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           window.history.replaceState(
             null,
             "",
-            window.location.pathname + window.location.search
+            window.location.pathname + window.location.search,
           );
         }
       }
@@ -187,7 +187,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         window.history.replaceState(
           null,
           "",
-          window.location.pathname + window.location.search
+          window.location.pathname + window.location.search,
         );
       }
     }
@@ -238,7 +238,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       // Go directly to login modal with success message
       onSuccess();
     } catch (err: any) {
-      console.error("Password reset error:", err);
+      // console.error("Password reset error:", err);
       setError(GENERIC_RESET_ERROR);
       setIsButtonHovered(false);
     } finally {

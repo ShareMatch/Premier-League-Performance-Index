@@ -152,7 +152,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setResendCooldown(30); // 30s resend cooldown
       setCanResend(false);
     } catch (err: any) {
-      console.error("Password reset error:", err);
+      // console.error("Password reset error:", err);
       setError(err.message || "Failed to request password reset");
       setEmailSent(false); // Ensure we stay in form state
     } finally {

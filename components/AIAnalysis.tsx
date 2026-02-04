@@ -50,7 +50,7 @@ const AIAnalysis: React.FC<AIAnalysisProps> = ({ teams, leagueName }) => {
 
       setAnalysis(data?.analysis || "No analysis generated.");
     } catch (err: any) {
-      console.error(err);
+      // console.error(err);
       setError(err.message || "Failed to retrieve analysis. Please try again.");
     } finally {
       setLoading(false);

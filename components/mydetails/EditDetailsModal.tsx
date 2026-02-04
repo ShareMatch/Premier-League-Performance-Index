@@ -19,14 +19,14 @@ const isValidEmail = (email: string): boolean => {
 const isValidPhoneNumber = (
   phoneNumber: string,
   countryCode: string,
-  countryIso: string
+  countryIso: string,
 ): boolean => {
   try {
     if (!phoneNumber.trim()) return false;
     const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, "")}`;
     const parsed = parsePhoneNumberFromString(
       fullNumber,
-      countryIso.toUpperCase() as CountryCode
+      countryIso.toUpperCase() as CountryCode,
     );
     return parsed ? parsed.isValid() : false;
   } catch {
@@ -38,13 +38,13 @@ const isValidPhoneNumber = (
 const normalizePhoneToE164 = (
   phoneNumber: string,
   countryCode: string,
-  countryIso: string
+  countryIso: string,
 ): string => {
   try {
     const fullNumber = `${countryCode}${phoneNumber.replace(/\D/g, "")}`;
     const parsed = parsePhoneNumberFromString(
       fullNumber,
-      countryIso.toUpperCase() as CountryCode
+      countryIso.toUpperCase() as CountryCode,
     );
     if (parsed && parsed.isValid()) {
       return parsed.format("E.164");
@@ -59,7 +59,7 @@ const normalizePhoneToE164 = (
 
 // Parse E.164 phone number into components
 const parsePhoneNumber = (
-  phone: string
+  phone: string,
 ): { countryCode: string; phoneNumber: string; countryIso: string } => {
   if (!phone) {
     return { countryCode: "+971", phoneNumber: "", countryIso: "AE" };
@@ -143,7 +143,7 @@ const PhoneInputField = ({
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.dial_code.includes(search) ||
-      c.code.toLowerCase().includes(search.toLowerCase())
+      c.code.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Strip leading zeros from input
@@ -161,10 +161,11 @@ const PhoneInputField = ({
         {label}
       </label>
       <div
-        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${error
-          ? "ring-2 ring-red-500"
-          : "focus-within:ring-2 focus-within:ring-brand-emerald500"
-          } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+        className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner transition-all relative h-9 sm:h-10 px-3 sm:px-4 ${
+          error
+            ? "ring-2 ring-red-500"
+            : "focus-within:ring-2 focus-within:ring-brand-emerald500"
+        } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
         ref={dropdownRef}
       >
         {/* Country Selector */}
@@ -176,8 +177,9 @@ const PhoneInputField = ({
             setSearch("");
           }}
           disabled={disabled}
-          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${disabled ? "cursor-not-allowed" : ""
-            }`}
+          className={`flex items-center gap-1 pr-2 border-r border-gray-400 mr-2 h-full ${
+            disabled ? "cursor-not-allowed" : ""
+          }`}
         >
           <img
             src={`https://flagcdn.com/w40/${selectedCountry.code.toLowerCase()}.png`}
@@ -185,8 +187,9 @@ const PhoneInputField = ({
             className="w-5 h-4 object-cover rounded"
           />
           <ChevronDown
-            className={`w-3 h-3 text-gray-600 transition-transform ${isOpen ? "rotate-180" : ""
-              }`}
+            className={`w-3 h-3 text-gray-600 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
           />
         </button>
         <span className="text-gray-900 text-xs font-medium mr-2 font-sans">
@@ -200,8 +203,9 @@ const PhoneInputField = ({
           onChange={handleInputChange}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${disabled ? "cursor-not-allowed" : ""
-            }`}
+          className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-xs sm:text-sm font-sans ${
+            disabled ? "cursor-not-allowed" : ""
+          }`}
         />
 
         {/* Dropdown */}
@@ -229,8 +233,9 @@ const PhoneInputField = ({
                     onCountryChange(c);
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${c.code === countryIso ? "bg-brand-emerald500/10" : ""
-                    }`}
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${
+                    c.code === countryIso ? "bg-brand-emerald500/10" : ""
+                  }`}
                 >
                   <img
                     src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
@@ -423,7 +428,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         }));
       }
     } catch (e) {
-      console.error("Error checking email status on blur:", e);
+      // console.error("Error checking email status on blur:", e);
       // Don't show error if check fails
     }
   };
@@ -441,10 +446,10 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
       // Build E.164 phone numbers for comparison
       const newWhatsAppE164 = formData.whatsapp
         ? normalizePhoneToE164(
-          formData.whatsapp,
-          whatsappCountry.dialCode,
-          whatsappCountry.code
-        )
+            formData.whatsapp,
+            whatsappCountry.dialCode,
+            whatsappCountry.code,
+          )
         : "";
 
       // Check for email duplicates if email field exists and has a value
@@ -469,7 +474,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
             return;
           }
         } catch (e) {
-          console.error("Error checking email status:", e);
+          // console.error("Error checking email status:", e);
           // Continue anyway if check fails
         }
       }
@@ -486,7 +491,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         try {
           const whatsappStatus = await checkWhatsAppVerificationStatus(
             newWhatsAppE164,
-            currentUserId
+            currentUserId,
           );
           // Block if WhatsApp already exists (regardless of verification status)
           if (whatsappStatus.exists) {
@@ -498,7 +503,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
             return;
           }
         } catch (e) {
-          console.error("Error checking WhatsApp status:", e);
+          // console.error("Error checking WhatsApp status:", e);
           // Continue anyway if check fails
         }
       }
@@ -511,7 +516,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
         finalData.phone = normalizePhoneToE164(
           formData.phone,
           phoneCountry.dialCode,
-          phoneCountry.code
+          phoneCountry.code,
         );
       }
       if (formData.whatsapp) {
@@ -520,7 +525,7 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
 
       await onSave(finalData);
     } catch (err: any) {
-      console.error("Failed to save:", err);
+      // console.error("Failed to save:", err);
       setSaveError(err.message || "Failed to save changes");
     } finally {
       setSaving(false);
@@ -572,10 +577,11 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
           {field.label}
         </label>
         <div
-          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${fieldErrors[field.key]
-            ? "ring-2 ring-red-500 focus-within:ring-red-500"
-            : "focus-within:ring-brand-emerald500"
-            } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
+          className={`flex items-center w-full bg-gray-200 rounded-full shadow-inner h-9 sm:h-10 px-3 sm:px-4 focus-within:ring-2 ${
+            fieldErrors[field.key]
+              ? "ring-2 ring-red-500 focus-within:ring-red-500"
+              : "focus-within:ring-brand-emerald500"
+          } ${field.editable === false ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           <input
             id={`edit-${field.key}`}
@@ -588,8 +594,9 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
                 : undefined
             }
             disabled={field.editable === false}
-            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${field.editable === false ? "cursor-not-allowed" : ""
-              }`}
+            className={`flex-1 min-w-0 bg-transparent text-gray-900 placeholder-gray-500 outline-none font-sans text-xs sm:text-sm ${
+              field.editable === false ? "cursor-not-allowed" : ""
+            }`}
             placeholder={`Enter ${field.label}`}
           />
         </div>
@@ -670,8 +677,9 @@ const EditDetailsModal: React.FC<EditDetailsModalProps> = ({
               Cancel
             </button>
             <div
-              className={`flex-1 rounded-full transition-all duration-300 ${isButtonHovered ? "shadow-glow" : ""
-                }`}
+              className={`flex-1 rounded-full transition-all duration-300 ${
+                isButtonHovered ? "shadow-glow" : ""
+              }`}
               onMouseEnter={() => setIsButtonHovered(true)}
               onMouseLeave={() => setIsButtonHovered(false)}
             >

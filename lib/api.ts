@@ -1,124 +1,132 @@
-import { supabase } from './supabase';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config';
-import type { Position } from '../types';
+import { supabase } from "./supabase";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
+import type { Position } from "../types";
 
-export const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
+export const TEST_USER_ID = "00000000-0000-0000-0000-000000000001";
 
 export interface Wallet {
-    id: string;
-    balance: number; // Stored as cents in DB
-    reserved_cents: number;
-    available_cents: number;
-    currency: string;
+  id: string;
+  balance: number; // Stored as cents in DB
+  reserved_cents: number;
+  available_cents: number;
+  currency: string;
 }
 
-
 export const fetchWallet = async (userId: string) => {
-    // Get the current session to include auth token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Get the current session to include auth token
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const { data, error } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+  const { data, error } = await supabase
+    .from("wallets")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return {
-        ...data,
-        balance: data.balance / 100,
-        reserved: data.reserved_cents / 100,
-        available: (data.balance - data.reserved_cents) / 100
-    };
+  return {
+    ...data,
+    balance: data.balance / 100,
+    reserved: data.reserved_cents / 100,
+    available: (data.balance - data.reserved_cents) / 100,
+  };
 };
 
 export const fetchPortfolio = async (userId: string) => {
-    // Get the current session to include auth token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Get the current session to include auth token
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const { data, error } = await supabase
-        .from('positions')
-        .select('*')
-        .eq('user_id', userId);
+  const { data, error } = await supabase
+    .from("positions")
+    .select("*")
+    .eq("user_id", userId);
 
-    if (error) throw error;
-    return data as Position[];
+  if (error) throw error;
+  return data as Position[];
 };
 
 export const fetchTransactions = async (userId: string) => {
-    // Get the current session to include auth token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Get the current session to include auth token
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
-    if (error) throw error;
-    return data;
+  if (error) throw error;
+  return data;
 };
 
-import { TRADING_CONFIG } from './config';
+import { TRADING_CONFIG } from "./config";
 
 export const placeTrade = async (
-    userId: string,
-    marketTradingAssetId: string,
-    direction: 'buy' | 'sell',
-    price: number,
-    quantity: number
+  userId: string,
+  marketTradingAssetId: string,
+  direction: "buy" | "sell",
+  price: number,
+  quantity: number,
 ) => {
-    const subtotal = price * quantity;
-    // Fee ONLY on sell - deducted from what user receives
-    const fee = direction === 'sell' ? subtotal * TRADING_CONFIG.FEE_RATE : 0;
-    // For buys: user pays exact subtotal (no fee)
-    // For sells: user receives subtotal - fee
-    const totalCost = direction === 'buy' ? subtotal : subtotal - fee;
+  const subtotal = price * quantity;
+  // Fee ONLY on sell - deducted from what user receives
+  const fee = direction === "sell" ? subtotal * TRADING_CONFIG.FEE_RATE : 0;
+  // For buys: user pays exact subtotal (no fee)
+  // For sells: user receives subtotal - fee
+  const totalCost = direction === "buy" ? subtotal : subtotal - fee;
 
-    const {
-        data: { session },
-        error: sessionError,
-    } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/place-trade`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-            marketTradingAssetId,
-            direction,
-            price,
-            quantity,
-            totalCost,
-        }),
-    });
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/place-trade`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      marketTradingAssetId,
+      direction,
+      price,
+      quantity,
+      totalCost,
+    }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to place trade');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || result.message || "Failed to place trade");
+  }
 
-    return result;
+  return result;
 };
 
 /**
@@ -126,130 +134,144 @@ export const placeTrade = async (
  * Uses maybeSingle() to handle cases where user might not exist yet
  * Also tries querying by email as a fallback if auth_user_id query fails
  */
-export const getPublicUserId = async (authUserId: string, userEmail?: string): Promise<string | null> => {
-    try {
-        // Ensure we have a session before querying
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            console.warn('No session available when fetching public user ID');
-            return null;
-        }
-
-        // Try querying by auth_user_id first
-        let { data, error } = await supabase
-            .from('users')
-            .select('id')
-            .eq('auth_user_id', authUserId)
-            .maybeSingle(); // Use maybeSingle() instead of single() to handle missing rows gracefully
-
-        // If that fails and we have email, try querying by email as fallback
-        if ((error || !data) && userEmail) {
-            const emailResult = await supabase
-                .from('users')
-                .select('id')
-                .eq('email', userEmail.toLowerCase())
-                .maybeSingle();
-
-            if (!emailResult.error && emailResult.data) {
-                return emailResult.data.id;
-            }
-        }
-
-        // If we can't find the user record, this indicates incomplete registration
-        // Don't try to create records from frontend - this should be handled by registration/login
-
-        if (error) {
-            console.error('Error fetching public user ID:', error);
-            // Log more details for debugging
-            if (error.code) {
-                console.error('Error code:', error.code);
-            }
-            if (error.message) {
-                console.error('Error message:', error.message);
-            }
-            return null;
-        }
-
-        return data?.id || null;
-    } catch (error) {
-        console.error('Exception in getPublicUserId:', error);
-        return null;
+export const getPublicUserId = async (
+  authUserId: string,
+  userEmail?: string,
+): Promise<string | null> => {
+  try {
+    // Ensure we have a session before querying
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      // console.warn('No session available when fetching public user ID');
+      return null;
     }
+
+    // Try querying by auth_user_id first
+    let { data, error } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle missing rows gracefully
+
+    // If that fails and we have email, try querying by email as fallback
+    if ((error || !data) && userEmail) {
+      const emailResult = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", userEmail.toLowerCase())
+        .maybeSingle();
+
+      if (!emailResult.error && emailResult.data) {
+        return emailResult.data.id;
+      }
+    }
+
+    // If we can't find the user record, this indicates incomplete registration
+    // Don't try to create records from frontend - this should be handled by registration/login
+
+    if (error) {
+      // console.error('Error fetching public user ID:', error);
+      // Log more details for debugging
+      if (error.code) {
+        // console.error('Error code:', error.code);
+      }
+      if (error.message) {
+        // console.error('Error message:', error.message);
+      }
+      return null;
+    }
+
+    return data?.id || null;
+  } catch (error) {
+    // console.error('Exception in getPublicUserId:', error);
+    return null;
+  }
 };
 
-export const subscribeToWallet = (publicUserId: string, callback: (wallet: any) => void) => {
-    return supabase
-        .channel('wallet-changes')
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'wallets',
-                filter: `user_id=eq.${publicUserId}`
-            },
-            (payload) => {
-                const data = payload.new as any;
-                callback({
-                    ...data,
-                    balance: data.balance / 100,
-                    reserved: data.reserved_cents / 100,
-                    available: (data.balance - data.reserved_cents) / 100
-                });
-            }
-        )
-        .subscribe();
+export const subscribeToWallet = (
+  publicUserId: string,
+  callback: (wallet: any) => void,
+) => {
+  return supabase
+    .channel("wallet-changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "wallets",
+        filter: `user_id=eq.${publicUserId}`,
+      },
+      (payload) => {
+        const data = payload.new as any;
+        callback({
+          ...data,
+          balance: data.balance / 100,
+          reserved: data.reserved_cents / 100,
+          available: (data.balance - data.reserved_cents) / 100,
+        });
+      },
+    )
+    .subscribe();
 };
 
-export const subscribeToPortfolio = (publicUserId: string, callback: () => void) => {
-    return supabase
-        .channel('portfolio-changes')
-        .on(
-            'postgres_changes',
-            {
-                event: '*', // Listen for INSERT, UPDATE, DELETE
-                schema: 'public',
-                table: 'positions',
-                filter: `user_id=eq.${publicUserId}`
-            },
-            () => {
-                callback();
-            }
-        )
-        .subscribe();
+export const subscribeToPortfolio = (
+  publicUserId: string,
+  callback: () => void,
+) => {
+  return supabase
+    .channel("portfolio-changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "*", // Listen for INSERT, UPDATE, DELETE
+        schema: "public",
+        table: "positions",
+        filter: `user_id=eq.${publicUserId}`,
+      },
+      () => {
+        callback();
+      },
+    )
+    .subscribe();
 };
 
 export const fetchAssets = async () => {
-    const { data, error } = await supabase
-        .from('assets')
-        .select('*')
-        .order('id', { ascending: true });
+  const { data, error } = await supabase
+    .from("assets")
+    .select("*")
+    .order("id", { ascending: true });
 
-    if (error) throw error;
-    return data;
+  if (error) throw error;
+  return data;
 };
 
-export const saveAssetFact = async (assetName: string, market: string, fact: string) => {
-    try {
-        const { error } = await supabase
-            .from('asset_facts')
-            .insert({
-                asset_name: assetName,
-                market: market,
-                fact: fact
-            });
+export const saveAssetFact = async (
+  assetName: string,
+  market: string,
+  fact: string,
+) => {
+  try {
+    const { error } = await supabase.from("asset_facts").insert({
+      asset_name: assetName,
+      market: market,
+      fact: fact,
+    });
 
-        if (error) throw error;
-    } catch (err) {
-        console.error('Error saving asset fact:', err);
-    }
+    if (error) throw error;
+  } catch (err) {
+    // console.error('Error saving asset fact:', err);
+  }
 };
 
 // NEW: Fetch active trading assets with full market hierarchy
 export const fetchTradingAssets = async () => {
-    const { data, error } = await supabase
-        .from('market_index_trading_assets')
-        .select(`
+  const { data, error } = await supabase
+    .from("market_index_trading_assets")
+    .select(
+      `
             id,
             asset_id,
             buy,
@@ -302,29 +324,30 @@ export const fetchTradingAssets = async () => {
                     )
                 )
             )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: true });
+        `,
+    )
+    .eq("status", "active")
+    .order("created_at", { ascending: true });
 
-    if (error) throw error;
-    return data;
+  if (error) throw error;
+  return data;
 };
-
 
 // Fetch season dates from market_index_seasons table
 // Returns a map of market_token -> { start_date, end_date, stage }
 export interface SeasonDates {
-    start_date: string;
-    end_date: string;
-    stage: string | null;
-    market_token: string;
-    index_name: string;
+  start_date: string;
+  end_date: string;
+  stage: string | null;
+  market_token: string;
+  index_name: string;
 }
 
 export const fetchSeasonDates = async (): Promise<Map<string, SeasonDates>> => {
-    const { data, error } = await supabase
-        .from('market_index_seasons')
-        .select(`
+  const { data, error } = await supabase
+    .from("market_index_seasons")
+    .select(
+      `
             id,
             start_date,
             end_date,
@@ -337,42 +360,44 @@ export const fetchSeasonDates = async (): Promise<Map<string, SeasonDates>> => {
                     market_token
                 )
             )
-        `)
-        .eq('status', 'active')
-        .order('start_date', { ascending: false });
+        `,
+    )
+    .eq("status", "active")
+    .order("start_date", { ascending: false });
 
-    if (error) {
-        console.error('Error fetching season dates:', error);
-        throw error;
+  if (error) {
+    // console.error('Error fetching season dates:', error);
+    throw error;
+  }
+
+  // Create a map of market_token -> season dates
+  const seasonDatesMap = new Map<string, SeasonDates>();
+
+  for (const season of data || []) {
+    // market_indexes is a single object (many-to-one relation)
+    const marketIndex = season.market_indexes as any;
+    const marketToken = marketIndex?.markets?.market_token;
+    if (marketToken && !seasonDatesMap.has(marketToken)) {
+      // Only store the first (most recent) season for each market
+      seasonDatesMap.set(marketToken, {
+        start_date: season.start_date,
+        end_date: season.end_date,
+        stage: season.stage,
+        market_token: marketToken,
+        index_name: marketIndex?.name || "",
+      });
     }
+  }
 
-    // Create a map of market_token -> season dates
-    const seasonDatesMap = new Map<string, SeasonDates>();
-
-    for (const season of data || []) {
-        // market_indexes is a single object (many-to-one relation)
-        const marketIndex = season.market_indexes as any;
-        const marketToken = marketIndex?.markets?.market_token;
-        if (marketToken && !seasonDatesMap.has(marketToken)) {
-            // Only store the first (most recent) season for each market
-            seasonDatesMap.set(marketToken, {
-                start_date: season.start_date,
-                end_date: season.end_date,
-                stage: season.stage,
-                market_token: marketToken,
-                index_name: marketIndex?.name || ''
-            });
-        }
-    }
-
-    return seasonDatesMap;
+  return seasonDatesMap;
 };
 
 // NEW: Build complete market hierarchy for navigation
 export const fetchMarketHierarchy = async () => {
-    const { data, error } = await supabase
-        .from('market_groups')
-        .select(`
+  const { data, error } = await supabase
+    .from("market_groups")
+    .select(
+      `
             name,
             status,
             market_sub_groups!inner (
@@ -384,20 +409,22 @@ export const fetchMarketHierarchy = async () => {
                     status
                 )
             )
-        `)
-        .eq('status', 'active')
-        .order('name', { ascending: true });
+        `,
+    )
+    .eq("status", "active")
+    .order("name", { ascending: true });
 
-    if (error) throw error;
-    return data;
+  if (error) throw error;
+  return data;
 };
 
 // Function to fetch settled assets for historical display
 export const fetchSettledAssets = async () => {
-    // First get settled seasons
-    const { data: settledSeasons, error: seasonsError } = await supabase
-        .from('market_index_seasons')
-        .select(`
+  // First get settled seasons
+  const { data: settledSeasons, error: seasonsError } = await supabase
+    .from("market_index_seasons")
+    .select(
+      `
             id,
             status,
             is_settled,
@@ -426,25 +453,28 @@ export const fetchSettledAssets = async () => {
                     )
                 )
             )
-        `)
-        .eq('is_settled', true)
-        .order('settled_at', { ascending: false });
+        `,
+    )
+    .eq("is_settled", true)
+    .order("settled_at", { ascending: false });
 
-    if (seasonsError) {
-        console.error('fetchSettledAssets seasons error:', seasonsError);
-        throw seasonsError;
-    }
+  if (seasonsError) {
+    // console.error('fetchSettledAssets seasons error:', seasonsError);
+    throw seasonsError;
+  }
 
-    // For each settled season, get the actual trading assets with settlement prices
-    const settledAssets = [];
+  // For each settled season, get the actual trading assets with settlement prices
+  const settledAssets = [];
 
-    for (const season of settledSeasons || []) {
-        const marketName = season.market_indexes[0]?.markets?.[0]?.name || 'Unknown Market';
+  for (const season of settledSeasons || []) {
+    const marketName =
+      season.market_indexes[0]?.markets?.[0]?.name || "Unknown Market";
 
-        // Get actual trading assets for this settled season
-        const { data: tradingAssets, error: tradingError } = await supabase
-            .from('market_index_trading_assets')
-            .select(`
+    // Get actual trading assets for this settled season
+    const { data: tradingAssets, error: tradingError } = await supabase
+      .from("market_index_trading_assets")
+      .select(
+        `
                 id,
                 asset_id,
                 settlement_price,
@@ -457,72 +487,75 @@ export const fetchSettledAssets = async () => {
                     type,
                     status
                 )
-            `)
-            .eq('market_index_season_id', season.id)
-            .eq('is_settled', true);
+            `,
+      )
+      .eq("market_index_season_id", season.id)
+      .eq("is_settled", true);
 
-        if (tradingError) {
-            console.error('fetchSettledAssets trading error:', tradingError);
-            continue;
-        }
-
-        // Create settled asset objects using real trading asset data
-        for (const tradingAsset of tradingAssets || []) {
-            const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
-
-            settledAssets.push({
-                id: `settled-${season.id}-${tradingAsset.id}`,
-                asset_id: tradingAsset.asset_id,
-                buy: settlementPrice,
-                sell: settlementPrice,
-                status: 'settled',
-                units: 0,
-                settled_at: season.settled_at,
-                created_at: season.created_at,
-                updated_at: season.settled_at || season.updated_at,
-                market_index_season_id: season.id,
-                assets: tradingAsset.assets,
-                market_index_seasons: season
-            });
-        }
+    if (tradingError) {
+      // console.error('fetchSettledAssets trading error:', tradingError);
+      continue;
     }
 
-    return settledAssets;
+    // Create settled asset objects using real trading asset data
+    for (const tradingAsset of tradingAssets || []) {
+      const settlementPrice = tradingAsset.settlement_price
+        ? parseFloat(tradingAsset.settlement_price)
+        : parseFloat(season.settlement_price || "0");
+
+      settledAssets.push({
+        id: `settled-${season.id}-${tradingAsset.id}`,
+        asset_id: tradingAsset.asset_id,
+        buy: settlementPrice,
+        sell: settlementPrice,
+        status: "settled",
+        units: 0,
+        settled_at: season.settled_at,
+        created_at: season.created_at,
+        updated_at: season.settled_at || season.updated_at,
+        market_index_season_id: season.id,
+        assets: tradingAsset.assets,
+        market_index_seasons: season,
+      });
+    }
+  }
+
+  return settledAssets;
 };
 
 // NEW: Real-time subscriptions for trading assets
 export const subscribeToTradingAssets = (callback: () => void) => {
-    return supabase
-        .channel('trading-assets-changes')
-        .on(
-            'postgres_changes',
-            {
-                event: '*',
-                schema: 'public',
-                table: 'market_index_trading_assets'
-            },
-            () => {
-                callback();
-            }
-        )
-        .subscribe();
+  return supabase
+    .channel("trading-assets-changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "market_index_trading_assets",
+      },
+      () => {
+        callback();
+      },
+    )
+    .subscribe();
 };
 
 export const subscribeToAssets = (callback: () => void) => {
-    return supabase
-        .channel('assets-changes')
-        .on(
-            'postgres_changes',
-            {
-                event: '*',
-                schema: 'public',
-                table: 'assets'
-            },
-            () => {
-                callback();
-            }
-        )
-        .subscribe();
+  return supabase
+    .channel("assets-changes")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "assets",
+      },
+      () => {
+        callback();
+      },
+    )
+    .subscribe();
 };
 
 // ============================================
@@ -530,76 +563,82 @@ export const subscribeToAssets = (callback: () => void) => {
 // ============================================
 
 export interface RegistrationData {
-    full_name: string;
-    email: string;
-    phone: string;
-    whatsapp_phone?: string;
-    dob: string;
-    country_of_residence: string;
-    password: string;
-    referral_code?: string | null;
-    receive_otp_sms: boolean;
-    agree_to_terms: boolean;
-    email_marketing?: boolean;
-    whatsapp_marketing?: boolean;
+  full_name: string;
+  email: string;
+  phone: string;
+  whatsapp_phone?: string;
+  dob: string;
+  country_of_residence: string;
+  password: string;
+  referral_code?: string | null;
+  receive_otp_sms: boolean;
+  agree_to_terms: boolean;
+  email_marketing?: boolean;
+  whatsapp_marketing?: boolean;
 }
 
 export interface RegistrationResponse {
-    ok: boolean;
-    user_id: string;
-    auth_user_id: string;
-    email: string;
-    requires_verification: boolean;
-    message: string;
+  ok: boolean;
+  user_id: string;
+  auth_user_id: string;
+  email: string;
+  requires_verification: boolean;
+  message: string;
 }
 
 export interface ApiError {
-    error: string;
-    duplicates?: string[];
-    message?: string;
-    details?: string;
+  error: string;
+  duplicates?: string[];
+  message?: string;
+  details?: string;
 }
 
 /**
  * Register a new user via the Supabase Edge Function
  */
-export const registerUser = async (data: RegistrationData): Promise<RegistrationResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/register`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify(data),
-    });
+export const registerUser = async (
+  data: RegistrationData,
+): Promise<RegistrationResponse> => {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        const error = result as ApiError;
-        throw new RegistrationError(
-            error.message || error.error || 'Registration failed',
-            error.duplicates,
-            response.status
-        );
-    }
+  if (!response.ok) {
+    const error = result as ApiError;
+    throw new RegistrationError(
+      error.message || error.error || "Registration failed",
+      error.duplicates,
+      response.status,
+    );
+  }
 
-    return result as RegistrationResponse;
+  return result as RegistrationResponse;
 };
 
 /**
  * Custom error class for registration errors
  */
 export class RegistrationError extends Error {
-    duplicates?: string[];
-    statusCode: number;
+  duplicates?: string[];
+  statusCode: number;
 
-    constructor(message: string, duplicates?: string[], statusCode: number = 500) {
-        super(message);
-        this.name = 'RegistrationError';
-        this.duplicates = duplicates;
-        this.statusCode = statusCode;
-    }
+  constructor(
+    message: string,
+    duplicates?: string[],
+    statusCode: number = 500,
+  ) {
+    super(message);
+    this.name = "RegistrationError";
+    this.duplicates = duplicates;
+    this.statusCode = statusCode;
+  }
 }
 
 // ============================================
@@ -607,18 +646,18 @@ export class RegistrationError extends Error {
 // ============================================
 
 export interface SendOtpResponse {
-    ok: boolean;
-    message: string;
+  ok: boolean;
+  message: string;
 }
 
 export interface VerifyOtpResponse {
-    ok: boolean;
-    message: string;
-    nextStep?: 'whatsapp' | 'dashboard';
-    whatsappData?: {
-        masked: string;
-        raw: string;
-    };
+  ok: boolean;
+  message: string;
+  nextStep?: "whatsapp" | "dashboard";
+  whatsappData?: {
+    masked: string;
+    raw: string;
+  };
 }
 
 /**
@@ -629,51 +668,59 @@ export interface VerifyOtpResponse {
  * @param options.forProfileChange - If true, allows sending OTP to already-verified emails
  */
 export const sendEmailOtp = async (
-    email: string,
-    options?: { targetEmail?: string; forProfileChange?: boolean }
+  email: string,
+  options?: { targetEmail?: string; forProfileChange?: boolean },
 ): Promise<SendOtpResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-            email,
-            targetEmail: options?.targetEmail,
-            forProfileChange: options?.forProfileChange ?? false,
-        }),
-    });
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({
+      email,
+      targetEmail: options?.targetEmail,
+      forProfileChange: options?.forProfileChange ?? false,
+    }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send verification code');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to send verification code",
+    );
+  }
 
-    return result as SendOtpResponse;
+  return result as SendOtpResponse;
 };
 
 /**
  * Verify OTP code for email
  */
-export const verifyEmailOtp = async (email: string, token: string): Promise<VerifyOtpResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-email-otp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, token }),
-    });
+export const verifyEmailOtp = async (
+  email: string,
+  token: string,
+): Promise<VerifyOtpResponse> => {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/verify-email-otp`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ email, token }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Verification failed');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || result.message || "Verification failed");
+  }
 
-    return result as VerifyOtpResponse;
+  return result as VerifyOtpResponse;
 };
 
 // ============================================
@@ -681,15 +728,15 @@ export const verifyEmailOtp = async (email: string, token: string): Promise<Veri
 // ============================================
 
 export interface SendWhatsAppOtpResponse {
-    ok: boolean;
-    message: string;
-    maskedPhone?: string;
+  ok: boolean;
+  message: string;
+  maskedPhone?: string;
 }
 
 export interface VerifyWhatsAppOtpResponse {
-    ok: boolean;
-    message: string;
-    nextStep?: 'login' | 'dashboard';
+  ok: boolean;
+  message: string;
+  nextStep?: "login" | "dashboard";
 }
 
 /**
@@ -701,27 +748,34 @@ export interface VerifyWhatsAppOtpResponse {
  * @param params.forProfileChange - If true, allows sending OTP to already-verified numbers
  */
 export const sendWhatsAppOtp = async (params: {
-    phone?: string;
-    email?: string;
-    targetPhone?: string;
-    forProfileChange?: boolean;
+  phone?: string;
+  email?: string;
+  targetPhone?: string;
+  forProfileChange?: boolean;
 }): Promise<SendWhatsAppOtpResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp-otp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify(params),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/send-whatsapp-otp`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(params),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send WhatsApp verification code');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+        result.message ||
+        "Failed to send WhatsApp verification code",
+    );
+  }
 
-    return result as SendWhatsAppOtpResponse;
+  return result as SendWhatsAppOtpResponse;
 };
 
 /**
@@ -729,23 +783,33 @@ export const sendWhatsAppOtp = async (params: {
  * Can identify user by either phone number or email
  * forProfileChange: Skip "already verified" check when changing to a new WhatsApp number
  */
-export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string; token: string; forProfileChange?: boolean }): Promise<VerifyWhatsAppOtpResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-whatsapp-otp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify(params),
-    });
+export const verifyWhatsAppOtp = async (params: {
+  phone?: string;
+  email?: string;
+  token: string;
+  forProfileChange?: boolean;
+}): Promise<VerifyWhatsAppOtpResponse> => {
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/verify-whatsapp-otp`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(params),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'WhatsApp verification failed');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "WhatsApp verification failed",
+    );
+  }
 
-    return result as VerifyWhatsAppOtpResponse;
+  return result as VerifyWhatsAppOtpResponse;
 };
 
 // ============================================
@@ -753,37 +817,46 @@ export const verifyWhatsAppOtp = async (params: { phone?: string; email?: string
 // ============================================
 
 export interface UpdateEmailResponse {
-    ok: boolean;
-    message: string;
-    newEmail?: string;
+  ok: boolean;
+  message: string;
+  newEmail?: string;
 }
 
 /**
  * Update user's email during verification flow
  * Updates in both auth.users and public.users, then sends new OTP
  */
-export const updateUserEmail = async (currentEmail: string, newEmail: string): Promise<UpdateEmailResponse> => {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (!session || sessionError) {
-        throw new Error('No active session');
-    }
+export const updateUserEmail = async (
+  currentEmail: string,
+  newEmail: string,
+): Promise<UpdateEmailResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (!session || sessionError) {
+    throw new Error("No active session");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-email`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ currentEmail, newEmail }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/update-user-email`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ currentEmail, newEmail }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to update email');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || result.message || "Failed to update email");
+  }
 
-    return result as UpdateEmailResponse;
+  return result as UpdateEmailResponse;
 };
 
 // ============================================
@@ -791,37 +864,48 @@ export const updateUserEmail = async (currentEmail: string, newEmail: string): P
 // ============================================
 
 export interface UpdateWhatsAppResponse {
-    ok: boolean;
-    message: string;
-    newWhatsappPhone?: string;
+  ok: boolean;
+  message: string;
+  newWhatsappPhone?: string;
 }
 
 /**
  * Update user's WhatsApp phone during verification flow
  * Updates in public.users, then sends new OTP
  */
-export const updateUserWhatsApp = async (email: string, newWhatsappPhone: string): Promise<UpdateWhatsAppResponse> => {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (!session || sessionError) {
-        throw new Error('No active session');
-    }
+export const updateUserWhatsApp = async (
+  email: string,
+  newWhatsappPhone: string,
+): Promise<UpdateWhatsAppResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (!session || sessionError) {
+    throw new Error("No active session");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-whatsapp`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ email, newWhatsappPhone }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/update-user-whatsapp`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ email, newWhatsappPhone }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to update WhatsApp number');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to update WhatsApp number",
+    );
+  }
 
-    return result as UpdateWhatsAppResponse;
+  return result as UpdateWhatsAppResponse;
 };
 
 // ============================================
@@ -829,29 +913,29 @@ export const updateUserWhatsApp = async (email: string, newWhatsappPhone: string
 // ============================================
 
 export interface UpdateProfilePayload {
-    currentEmail: string;
-    newEmail?: string;
-    fullName?: string;
-    dob?: string;
-    countryOfResidence?: string;
-    phone?: string;
-    whatsappPhone?: string;
-    sendEmailOtp?: boolean;
-    sendWhatsAppOtp?: boolean;
-    // Skip verification reset - use when the new email/whatsapp was already verified via OTP
-    emailAlreadyVerified?: boolean;
-    whatsappAlreadyVerified?: boolean;
+  currentEmail: string;
+  newEmail?: string;
+  fullName?: string;
+  dob?: string;
+  countryOfResidence?: string;
+  phone?: string;
+  whatsappPhone?: string;
+  sendEmailOtp?: boolean;
+  sendWhatsAppOtp?: boolean;
+  // Skip verification reset - use when the new email/whatsapp was already verified via OTP
+  emailAlreadyVerified?: boolean;
+  whatsappAlreadyVerified?: boolean;
 }
 
 export interface UpdateProfileResponse {
-    ok: boolean;
-    message: string;
-    emailChanged?: boolean;
-    whatsappChanged?: boolean;
-    emailOtpSent?: boolean;
-    whatsappOtpSent?: boolean;
-    newEmail?: string;
-    newWhatsappPhone?: string;
+  ok: boolean;
+  message: string;
+  emailChanged?: boolean;
+  whatsappChanged?: boolean;
+  emailOtpSent?: boolean;
+  whatsappOtpSent?: boolean;
+  newEmail?: string;
+  newWhatsappPhone?: string;
 }
 
 /**
@@ -859,28 +943,38 @@ export interface UpdateProfileResponse {
  * Can be used during verification or from profile settings
  * Handles email/phone changes with verification reset
  */
-export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<UpdateProfileResponse> => {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (!session || sessionError) {
-        throw new Error('No active session');
-    }
+export const updateUserProfile = async (
+  payload: UpdateProfilePayload,
+): Promise<UpdateProfileResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (!session || sessionError) {
+    throw new Error("No active session");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-user-profile`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/update-user-profile`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to update profile');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to update profile",
+    );
+  }
 
-    return result as UpdateProfileResponse;
+  return result as UpdateProfileResponse;
 };
 
 // ============================================
@@ -888,60 +982,70 @@ export const updateUserProfile = async (payload: UpdateProfilePayload): Promise<
 // ============================================
 
 export interface EditProfilePayload {
-    currentEmail: string;
-    newEmail?: string;
-    fullName?: string;
-    displayName?: string;
-    dob?: string;
-    countryOfResidence?: string;
-    phone?: string;
-    whatsappPhone?: string;
-    // Address fields
-    addressLine?: string;
-    city?: string;
-    region?: string;
-    postalCode?: string;
-    addressCountry?: string;
-    // Verification flags
-    emailAlreadyVerified?: boolean;
-    whatsappAlreadyVerified?: boolean;
+  currentEmail: string;
+  newEmail?: string;
+  fullName?: string;
+  displayName?: string;
+  dob?: string;
+  countryOfResidence?: string;
+  phone?: string;
+  whatsappPhone?: string;
+  // Address fields
+  addressLine?: string;
+  city?: string;
+  region?: string;
+  postalCode?: string;
+  addressCountry?: string;
+  // Verification flags
+  emailAlreadyVerified?: boolean;
+  whatsappAlreadyVerified?: boolean;
 }
 
 export interface EditProfileResponse {
-    ok: boolean;
-    message: string;
-    emailChanged?: boolean;
-    whatsappChanged?: boolean;
-    newEmail?: string;
-    newWhatsappPhone?: string;
+  ok: boolean;
+  message: string;
+  emailChanged?: boolean;
+  whatsappChanged?: boolean;
+  newEmail?: string;
+  newWhatsappPhone?: string;
 }
 
 /**
  * Edit user profile - simple update without sending OTPs
  * Use this after verification is complete to just update the database
  */
-export const editUserProfile = async (payload: EditProfilePayload): Promise<EditProfileResponse> => {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (!session || sessionError) {
-        throw new Error('No active session');
-    }
+export const editUserProfile = async (
+  payload: EditProfilePayload,
+): Promise<EditProfileResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (!session || sessionError) {
+    throw new Error("No active session");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/edit-user-profile`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/edit-user-profile`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to update profile');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to update profile",
+    );
+  }
 
-    return result as EditProfileResponse;
+  return result as EditProfileResponse;
 };
 
 // ============================================
@@ -949,55 +1053,67 @@ export const editUserProfile = async (payload: EditProfilePayload): Promise<Edit
 // ============================================
 
 export interface MarketingPreferencesPayload {
-    email: string; // User's email to identify them
-    preferences: {
-        email: boolean;
-        whatsapp: boolean;
-        sms: boolean;
-        personalized_marketing: boolean;
-    };
+  email: string; // User's email to identify them
+  preferences: {
+    email: boolean;
+    whatsapp: boolean;
+    sms: boolean;
+    personalized_marketing: boolean;
+  };
 }
 
 export interface MarketingPreferencesResponse {
-    ok: boolean;
-    message: string;
-    preferences?: {
-        email?: boolean;
-        whatsapp?: boolean;
-        sms?: boolean;
-        personalized_marketing?: boolean;
-        email_otp?: boolean;
-        whatsapp_otp?: boolean;
-    };
+  ok: boolean;
+  message: string;
+  preferences?: {
+    email?: boolean;
+    whatsapp?: boolean;
+    sms?: boolean;
+    personalized_marketing?: boolean;
+    email_otp?: boolean;
+    whatsapp_otp?: boolean;
+  };
 }
 
 /**
  * Update user marketing preferences via edge function (bypasses RLS)
  */
-export const updateMarketingPreferences = async (payload: MarketingPreferencesPayload): Promise<MarketingPreferencesResponse> => {
-    // Get the current session to include auth token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+export const updateMarketingPreferences = async (
+  payload: MarketingPreferencesPayload,
+): Promise<MarketingPreferencesResponse> => {
+  // Get the current session to include auth token
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/update-marketing-preferences`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(payload),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/update-marketing-preferences`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to update marketing preferences');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error ||
+        result.message ||
+        "Failed to update marketing preferences",
+    );
+  }
 
-    return result as MarketingPreferencesResponse;
+  return result as MarketingPreferencesResponse;
 };
 
 // ============================================
@@ -1005,39 +1121,41 @@ export const updateMarketingPreferences = async (payload: MarketingPreferencesPa
 // ============================================
 
 export interface ForgotPasswordResponse {
-    ok: boolean;
-    message: string;
+  ok: boolean;
+  message: string;
 }
 
 /**
  * Request a password reset email
  * Always returns success to prevent email enumeration
  */
-export const requestPasswordReset = async (email: string): Promise<ForgotPasswordResponse> => {
-    // Pass the current origin so the reset link redirects back to the correct app URL
-    const redirectUrl = window.location.origin;
+export const requestPasswordReset = async (
+  email: string,
+): Promise<ForgotPasswordResponse> => {
+  // Pass the current origin so the reset link redirects back to the correct app URL
+  const redirectUrl = window.location.origin;
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/forgot-password`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, redirectUrl }),
-    });
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/forgot-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ email, redirectUrl }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    // If the API returned an explicit error field, throw it so the UI can display the message
-    if (result.error) {
-        throw new Error(result.error);
-    }
+  // If the API returned an explicit error field, throw it so the UI can display the message
+  if (result.error) {
+    throw new Error(result.error);
+  }
 
-    if (!response.ok) {
-        throw new Error(result.message || 'Failed to request password reset');
-    }
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to request password reset");
+  }
 
-    return result as ForgotPasswordResponse;
+  return result as ForgotPasswordResponse;
 };
 
 // ============================================
@@ -1045,55 +1163,58 @@ export const requestPasswordReset = async (email: string): Promise<ForgotPasswor
 // ============================================
 
 export interface LoginResponse {
-    success: boolean;
-    message: string;
-    user?: {
-        id: string;
-        email: string;
-    };
-    session?: {
-        access_token: string;
-        refresh_token: string;
-        expires_in: number;
-        token_type: string;
-    };
-    // Verification required fields
-    requiresVerification?: boolean;
-    verificationType?: 'email' | 'whatsapp';
-    email?: string;
-    whatsappData?: {
-        masked: string;
-        raw: string;
-    };
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    email: string;
+  };
+  session?: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    token_type: string;
+  };
+  // Verification required fields
+  requiresVerification?: boolean;
+  verificationType?: "email" | "whatsapp";
+  email?: string;
+  whatsappData?: {
+    masked: string;
+    raw: string;
+  };
 }
 
 /**
  * Login user via edge function
  * Validates email/WhatsApp verification before allowing login
  */
-export const loginUser = async (email: string, password: string): Promise<LoginResponse> => {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email, password }),
-    });
+export const loginUser = async (
+  email: string,
+  password: string,
+): Promise<LoginResponse> => {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    // For verification required responses (403), we don't throw - we return the response
-    // so the UI can handle showing the appropriate verification modal
-    if (response.status === 403 && result.requiresVerification) {
-        return result as LoginResponse;
-    }
-
-    if (!response.ok) {
-        throw new Error(result.message || result.error || 'Login failed');
-    }
-
+  // For verification required responses (403), we don't throw - we return the response
+  // so the UI can handle showing the appropriate verification modal
+  if (response.status === 403 && result.requiresVerification) {
     return result as LoginResponse;
+  }
+
+  if (!response.ok) {
+    throw new Error(result.message || result.error || "Login failed");
+  }
+
+  return result as LoginResponse;
 };
 
 // ============================================
@@ -1101,104 +1222,118 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
 // ============================================
 
 export type KycStatus =
-    | 'not_started'
-    | 'started'
-    | 'pending'
-    | 'approved'
-    | 'rejected'
-    | 'resubmission_requested'
-    | 'on_hold';
+  | "not_started"
+  | "started"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "resubmission_requested"
+  | "on_hold";
 
 export interface KycUserStatusResponse {
-    kyc_status: KycStatus;
-    cooling_off_until: string | null;
-    is_in_cooling_off: boolean;
-    has_applicant: boolean;
-    sumsub_level: string | null;
-    kyc_started_at: string | null;
-    kyc_reviewed_at: string | null;
-    can_resubmit: boolean;
-    // Rejection details (only present if rejected/resubmission)
-    reject_type?: string | null;
-    reject_labels?: string[];
-    moderation_comment?: string | null;
-    button_ids?: string[];
+  kyc_status: KycStatus;
+  cooling_off_until: string | null;
+  is_in_cooling_off: boolean;
+  has_applicant: boolean;
+  sumsub_level: string | null;
+  kyc_started_at: string | null;
+  kyc_reviewed_at: string | null;
+  can_resubmit: boolean;
+  // Rejection details (only present if rejected/resubmission)
+  reject_type?: string | null;
+  reject_labels?: string[];
+  moderation_comment?: string | null;
+  button_ids?: string[];
 }
 
 export interface KycCheckStatusResponse {
-    kyc_status: KycStatus;
-    sumsub_status?: string;
-    review_result?: any;
-    reject_type?: string | null;
-    reject_labels?: string[];
-    moderation_comment?: string | null;
-    button_ids?: string[];
-    can_resubmit: boolean;
-    error?: string;
+  kyc_status: KycStatus;
+  sumsub_status?: string;
+  review_result?: any;
+  reject_type?: string | null;
+  reject_labels?: string[];
+  moderation_comment?: string | null;
+  button_ids?: string[];
+  can_resubmit: boolean;
+  error?: string;
 }
 
 /**
  * Get user's current KYC status
  * This is the primary method to check if user needs to do KYC
  */
-export const getKycUserStatus = async (userId: string): Promise<KycUserStatusResponse> => {
-    const {
-        data: { session },
-        error: sessionError,
-    } = await supabase.auth.getSession();
+export const getKycUserStatus = async (
+  userId: string,
+): Promise<KycUserStatusResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-user-status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/sumsub-user-status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ user_id: userId }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to get KYC status');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to get KYC status",
+    );
+  }
 
-    return result as KycUserStatusResponse;
+  return result as KycUserStatusResponse;
 };
 
 /**
  * Check KYC status directly from Sumsub API
  * Use this for real-time status checks or when webhook might be delayed
  */
-export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResponse> => {
-    const {
-        data: { session },
-        error: sessionError,
-    } = await supabase.auth.getSession();
+export const checkKycStatus = async (
+  userId: string,
+): Promise<KycCheckStatusResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-check-status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/sumsub-check-status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ user_id: userId }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to check KYC status');
-    }
+  if (!response.ok) {
+    throw new Error(
+      result.error || result.message || "Failed to check KYC status",
+    );
+  }
 
-    return result as KycCheckStatusResponse;
+  return result as KycCheckStatusResponse;
 };
 
 /**
@@ -1206,51 +1341,56 @@ export const checkKycStatus = async (userId: string): Promise<KycCheckStatusResp
  * This resets the Sumsub applicant and sets user's status to 'not_started'
  */
 export interface ResetKycResponse {
-    ok: boolean;
-    message: string;
-    applicantId?: string;
+  ok: boolean;
+  message: string;
+  applicantId?: string;
 }
 
-export const resetKycApplicant = async (userId: string): Promise<ResetKycResponse> => {
-    const {
-        data: { session },
-        error: sessionError,
-    } = await supabase.auth.getSession();
+export const resetKycApplicant = async (
+  userId: string,
+): Promise<ResetKycResponse> => {
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        throw new Error('No active session. Please log in.');
-    }
+  if (sessionError || !session) {
+    throw new Error("No active session. Please log in.");
+  }
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/sumsub-reset-applicant`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ user_id: userId }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/sumsub-reset-applicant`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ user_id: userId }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to reset KYC');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || result.message || "Failed to reset KYC");
+  }
 
-    return result as ResetKycResponse;
+  return result as ResetKycResponse;
 };
 
 /**
  * Determine if user needs to complete KYC before accessing the platform
  */
 export const needsKycVerification = (status: KycStatus): boolean => {
-    return status !== 'approved';
+  return status !== "approved";
 };
 
 /**
  * Determine if user can retry KYC (resubmission allowed)
  */
 export const canRetryKyc = (status: KycStatus): boolean => {
-    return status === 'not_started' || status === 'resubmission_requested';
+  return status === "not_started" || status === "resubmission_requested";
 };
 
 // ============================================
@@ -1258,51 +1398,58 @@ export const canRetryKyc = (status: KycStatus): boolean => {
 // ============================================
 
 export interface CheckEmailStatusResponse {
-    exists: boolean;
-    emailVerified: boolean;
-    whatsappVerified: boolean;
-    fullyVerified: boolean;
-    kyc_status?: string;
-    accountLocked?: boolean;
-    canOverwrite?: boolean;
+  exists: boolean;
+  emailVerified: boolean;
+  whatsappVerified: boolean;
+  fullyVerified: boolean;
+  kyc_status?: string;
+  accountLocked?: boolean;
+  canOverwrite?: boolean;
 }
 
 /**
  * Check if an email exists and its verification status
  * Used to prevent duplicate registrations for fully verified accounts
  */
-export const checkEmailVerificationStatus = async (email: string): Promise<CheckEmailStatusResponse> => {
-    // Try to get session for authenticated requests, fall back to anon key for registration
-    const { data: { session } } = await supabase.auth.getSession();
-    const authHeader = session
-        ? `Bearer ${session.access_token}`
-        : `Bearer ${SUPABASE_ANON_KEY}`;
+export const checkEmailVerificationStatus = async (
+  email: string,
+): Promise<CheckEmailStatusResponse> => {
+  // Try to get session for authenticated requests, fall back to anon key for registration
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const authHeader = session
+    ? `Bearer ${session.access_token}`
+    : `Bearer ${SUPABASE_ANON_KEY}`;
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/check-email-status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-        },
-        body: JSON.stringify({ email }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/check-email-status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({ email }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        // If endpoint doesn't exist or returns error, assume email doesn't exist
-        return {
-            exists: false,
-            emailVerified: false,
-            whatsappVerified: false,
-            fullyVerified: false,
-            kyc_status: "unverified",
-            accountLocked: false,
-            canOverwrite: true,
-        };
-    }
+  if (!response.ok) {
+    // If endpoint doesn't exist or returns error, assume email doesn't exist
+    return {
+      exists: false,
+      emailVerified: false,
+      whatsappVerified: false,
+      fullyVerified: false,
+      kyc_status: "unverified",
+      accountLocked: false,
+      canOverwrite: true,
+    };
+  }
 
-    return result as CheckEmailStatusResponse;
+  return result as CheckEmailStatusResponse;
 };
 
 // ============================================
@@ -1310,9 +1457,9 @@ export const checkEmailVerificationStatus = async (email: string): Promise<Check
 // ============================================
 
 export interface CheckWhatsAppStatusResponse {
-    exists: boolean;
-    whatsappVerified: boolean;
-    fullyVerified: boolean;
+  exists: boolean;
+  whatsappVerified: boolean;
+  fullyVerified: boolean;
 }
 
 /**
@@ -1322,36 +1469,41 @@ export interface CheckWhatsAppStatusResponse {
  * @param excludeUserId - Optional user ID to exclude (for edit scenarios)
  */
 export const checkWhatsAppVerificationStatus = async (
-    whatsappPhone: string,
-    excludeUserId?: string
+  whatsappPhone: string,
+  excludeUserId?: string,
 ): Promise<CheckWhatsAppStatusResponse> => {
-    // Try to get session for authenticated requests, fall back to anon key for registration
-    const { data: { session } } = await supabase.auth.getSession();
-    const authHeader = session
-        ? `Bearer ${session.access_token}`
-        : `Bearer ${SUPABASE_ANON_KEY}`;
+  // Try to get session for authenticated requests, fall back to anon key for registration
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const authHeader = session
+    ? `Bearer ${session.access_token}`
+    : `Bearer ${SUPABASE_ANON_KEY}`;
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/check-whatsapp-status`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authHeader,
-        },
-        body: JSON.stringify({ whatsappPhone, excludeUserId }),
-    });
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/check-whatsapp-status`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({ whatsappPhone, excludeUserId }),
+    },
+  );
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        // If endpoint doesn't exist or returns error, assume doesn't exist
-        return {
-            exists: false,
-            whatsappVerified: false,
-            fullyVerified: false,
-        };
-    }
+  if (!response.ok) {
+    // If endpoint doesn't exist or returns error, assume doesn't exist
+    return {
+      exists: false,
+      whatsappVerified: false,
+      fullyVerified: false,
+    };
+  }
 
-    return result as CheckWhatsAppStatusResponse;
+  return result as CheckWhatsAppStatusResponse;
 };
 
 // ============================================
@@ -1359,48 +1511,55 @@ export const checkWhatsAppVerificationStatus = async (
 // ============================================
 
 export interface UserDetails {
-    id: string;
-    full_name: string | null;
-    display_name: string | null;
-    email: string | null;
-    phone_e164: string | null;
-    whatsapp_phone_e164: string | null;
-    dob: string | null;
-    country: string | null;
-    country_code: string | null;
-    address_line: string | null;
-    city: string | null;
-    region: string | null;
-    postal_code: string | null;
-    source_ip: string | null;
-    created_at: string | null;
-    updated_at: string | null;
+  id: string;
+  full_name: string | null;
+  display_name: string | null;
+  email: string | null;
+  phone_e164: string | null;
+  whatsapp_phone_e164: string | null;
+  dob: string | null;
+  country: string | null;
+  country_code: string | null;
+  address_line: string | null;
+  city: string | null;
+  region: string | null;
+  postal_code: string | null;
+  source_ip: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 /**
  * Fetch user details from the public.users table
  */
-export const fetchUserDetails = async (userId: string): Promise<UserDetails | null> => {
-    // Get the current session to include auth token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+export const fetchUserDetails = async (
+  userId: string,
+): Promise<UserDetails | null> => {
+  // Get the current session to include auth token
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-        console.error('No active session when fetching user details');
-        return null;
-    }
+  if (sessionError || !session) {
+    // console.error('No active session when fetching user details');
+    return null;
+  }
 
-    const { data, error } = await supabase
-        .from('users')
-        .select('id, full_name, display_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at')
-        .eq('id', userId)
-        .single();
+  const { data, error } = await supabase
+    .from("users")
+    .select(
+      "id, full_name, display_name, email, phone_e164, whatsapp_phone_e164, dob, country, country_code, address_line, city, region, postal_code, source_ip, created_at, updated_at",
+    )
+    .eq("id", userId)
+    .single();
 
-    if (error) {
-        console.error('Error fetching user details:', error);
-        return null;
-    }
+  if (error) {
+    // console.error('Error fetching user details:', error);
+    return null;
+  }
 
-    return data as UserDetails;
+  return data as UserDetails;
 };
 
 // ============================================
@@ -1408,35 +1567,37 @@ export const fetchUserDetails = async (userId: string): Promise<UserDetails | nu
 // ============================================
 
 export interface UserBankingDetails {
-    id: string;
-    user_id: string;
-    account_name: string | null;
-    bank_name: string | null;
-    account_number: string | null;
-    iban: string | null;
-    swift_bic: string | null;
-    currency: string | null;
-    is_verified: boolean;
-    created_at: string;
-    updated_at: string;
+  id: string;
+  user_id: string;
+  account_name: string | null;
+  bank_name: string | null;
+  account_number: string | null;
+  iban: string | null;
+  swift_bic: string | null;
+  currency: string | null;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
  * Fetch user banking details from the user_payment_details table
  */
-export const fetchUserBankingDetails = async (userId: string): Promise<UserBankingDetails | null> => {
-    const { data, error } = await supabase
-        .from('user_payment_details')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+export const fetchUserBankingDetails = async (
+  userId: string,
+): Promise<UserBankingDetails | null> => {
+  const { data, error } = await supabase
+    .from("user_payment_details")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    if (error) {
-        console.error('Error fetching user banking details:', error);
-        return null;
-    }
+  if (error) {
+    // console.error('Error fetching user banking details:', error);
+    return null;
+  }
 
-    return data as UserBankingDetails | null;
+  return data as UserBankingDetails | null;
 };
 
 // ============================================
@@ -1447,84 +1608,92 @@ export const fetchUserBankingDetails = async (userId: string): Promise<UserBanki
  * Fetch auth user data to get last_sign_in_at from Supabase Auth
  */
 export const fetchAuthUserData = async () => {
-    try {
-        const { data, error } = await supabase.auth.getUser();
+  try {
+    const { data, error } = await supabase.auth.getUser();
 
-        if (error) {
-            console.error('Error fetching auth user:', error);
-            return null;
-        }
-
-        return data.user;
-    } catch (err) {
-        console.error('Exception fetching auth user:', err);
-        return null;
+    if (error) {
+      // console.error('Error fetching auth user:', error);
+      return null;
     }
+
+    return data.user;
+  } catch (err) {
+    // console.error('Exception fetching auth user:', err);
+    return null;
+  }
 };
 
 /**
  * Fetch last N login events from Supabase Logs API via Edge Function
  */
 export const fetchLoginHistory = async (userId: string, limit: number = 5) => {
-    try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (!session || sessionError) {
-            throw new Error('No active session available');
-        }
-
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/get-login-history`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-                user_id: userId,
-                limit: limit,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Error fetching login history:', errorData);
-            return [];
-        }
-
-        const data = await response.json();
-        const loginHistory = data.logins || [];
-
-        return loginHistory.slice(0, limit);
-    } catch (err) {
-        console.error('Exception fetching login history:', err);
-        return [];
+  try {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+    if (!session || sessionError) {
+      throw new Error("No active session available");
     }
+
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-login-history`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          limit: limit,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      // console.error('Error fetching login history:', errorData);
+      return [];
+    }
+
+    const data = await response.json();
+    const loginHistory = data.logins || [];
+
+    return loginHistory.slice(0, limit);
+  } catch (err) {
+    // console.error('Exception fetching login history:', err);
+    return [];
+  }
 };
 /**
  * Generate or retrieve a shortened share link for an asset
  */
 export const generateShareLink = async (assetId: string): Promise<string> => {
-    const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    // We use the anon key for public sharing generation too if needed, 
-    // but usually, it's better to have a session if possible.
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
-    };
+  // We use the anon key for public sharing generation too if needed,
+  // but usually, it's better to have a session if possible.
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`,
+  };
 
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/share`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ asset_id: assetId }),
-    });
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/share`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ asset_id: assetId }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate share link');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || "Failed to generate share link");
+  }
 
-    // Return the full URL for convenience
-    // In production, /a/:code should be handled by a proxy or redirect rule
-    return `${window.location.origin}/a/${result.short_code}`;
+  // Return the full URL for convenience
+  // In production, /a/:code should be handled by a proxy or redirect rule
+  return `${window.location.origin}/a/${result.short_code}`;
 };
