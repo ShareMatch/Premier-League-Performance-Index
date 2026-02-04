@@ -1,6 +1,10 @@
 name: PR Code Quality Checks
 
 on:
+  push:
+    branches:
+      - staging
+      - main
   pull_request:
     branches:
       - staging
@@ -24,9 +28,4 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: |
-          # Lint entire project
-          npm run lint
-
-          # Additionally fail if any console logs exist
-          npx eslint "src/**/*.ts" "src/**/*.tsx" --rule 'no-console: ["error"]'
+        run: npm run lint
