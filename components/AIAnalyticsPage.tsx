@@ -560,6 +560,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
     // In handleSendMessage, before the fetch:
     // console.log("📤 Sending message with session ID:", sessionIdRef.current);
+    // test
 
     const displayMarket =
       selectedMarket === "ALL_INDEX"
