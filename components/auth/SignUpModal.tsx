@@ -1017,7 +1017,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
         });
       }
     } catch (err) {
-      console.error("Error checking email:", err);
+      // console.error("Error checking email:", err);
       // Don't show error if check fails - will be caught on submit
     } finally {
       setEmailValidating(false);
@@ -1125,8 +1125,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
                 }));
               }
             }
-          })
-          .catch((err) => console.error("Failed to fetch location:", err));
+          });
+        // .catch((err) => console.error("Failed to fetch location:", err));
       }
     }
   }, [isOpen, isEditMode]);
@@ -1277,7 +1277,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({
       setIsButtonHovered(false);
     } catch (error: any) {
       // If check fails, still allow proceeding (don't block user flow)
-      console.error("Error checking email status:", error);
+      // console.error("Error checking email status:", error);
       setStep(2);
       setIsButtonHovered(false);
     } finally {

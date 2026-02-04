@@ -28,7 +28,7 @@ const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
       await onDelete();
       onClose();
     } catch (error) {
-      console.error("Failed to delete account:", error);
+      // console.error("Failed to delete account:", error);
     } finally {
       setDeleting(false);
     }

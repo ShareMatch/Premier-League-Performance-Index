@@ -200,7 +200,7 @@ const ShortAssetRouteWrapper: React.FC<{
           // Redirect to the canonical asset URL
           navigate(`/asset/${market}/${slug}`, { replace: true });
         } catch (err) {
-          console.error("Resolve error:", err);
+          // console.error("Resolve error:", err);
           setError("Failed to resolve link");
         } finally {
           setResolving(false);
@@ -410,7 +410,7 @@ const App: React.FC = () => {
       const transactionsData = await fetchTransactions(publicUserId);
       setTransactions(transactionsData);
     } catch (error) {
-      console.error("Error loading user data:", error);
+      // console.error("Error loading user data:", error);
     } finally {
       setUserDataLoading(false);
       setUserDataInitialized(true);
@@ -446,10 +446,10 @@ const App: React.FC = () => {
         .map((ta: any) => {
           const staticAsset = assetMap.get(ta.asset_id);
           if (!staticAsset) {
-            console.warn(
-              `Missing static asset data for asset_id: ${ta.asset_id}`,
-              ta,
-            );
+            // console.warn(
+            //   `Missing static asset data for asset_id: ${ta.asset_id}`,
+            //   ta,
+            // );
             return null;
           }
 
@@ -559,9 +559,9 @@ const App: React.FC = () => {
             is_settled: ta.is_settled || ta.status === "settled",
             settled_date: ta.market_index_seasons.settled_at
               ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                "en-US",
-                { month: "short", day: "numeric", year: "numeric" },
-              )
+                  "en-US",
+                  { month: "short", day: "numeric", year: "numeric" },
+                )
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
@@ -579,7 +579,7 @@ const App: React.FC = () => {
         .filter(Boolean) as Team[];
       setAllAssets(mappedAssets);
     } catch (error) {
-      console.error("Error loading assets:", error);
+      // console.error("Error loading assets:", error);
     } finally {
       setAssetsLoading(false);
     }
@@ -600,30 +600,28 @@ const App: React.FC = () => {
           } else if (retryCount < maxRetries) {
             // Retry on null result - might be a transient issue
             retryCount++;
-            console.warn(`Public user ID not found, retrying (${retryCount}/${maxRetries})...`);
+            // console.warn(`Public user ID not found, retrying (${retryCount}/${maxRetries})...`);
             setTimeout(attemptGetPublicUserId, retryDelay);
           } else {
             // After all retries failed, sign out
-            console.error("Public user ID not found after all retries - signing out");
-            supabase.auth
-              .signOut()
-              .catch((err) => console.error("Error signing out:", err));
+            // console.error("Public user ID not found after all retries - signing out");
+            supabase.auth.signOut();
+            // .catch((err) => console.error("Error signing out:", err));
             setPublicUserId(null);
             setKycStatus(null);
             setKycChecked(false);
           }
         } catch (error) {
-          console.error("Error checking user registration:", error);
+          // console.error("Error checking user registration:", error);
           if (retryCount < maxRetries) {
             // Retry on error - might be a network hiccup
             retryCount++;
-            console.warn(`Error getting public user ID, retrying (${retryCount}/${maxRetries})...`);
+            // console.warn(`Error getting public user ID, retrying (${retryCount}/${maxRetries})...`);
             setTimeout(attemptGetPublicUserId, retryDelay);
           } else {
             // After all retries failed, sign out
-            supabase.auth
-              .signOut()
-              .catch((err) => console.error("Error signing out:", err));
+            supabase.auth.signOut();
+            // .catch((err) => console.error("Error signing out:", err));
             setPublicUserId(null);
             setKycStatus(null);
             setKycChecked(false);
@@ -674,7 +672,7 @@ const App: React.FC = () => {
           setShowKycModal(true);
         }
       } catch (error) {
-        console.error("Failed to check KYC status:", error);
+        // console.error("Failed to check KYC status:", error);
         // Default to not_started if we can't fetch status
         setKycStatus("not_started");
         setShowKycModal(true);
@@ -740,7 +738,7 @@ const App: React.FC = () => {
         const status = await getKycUserStatus(publicUserId);
         setKycStatus(status.kyc_status);
       } catch (error) {
-        console.error("Failed to refresh KYC status:", error);
+        // console.error("Failed to refresh KYC status:", error);
       }
     }
   };
@@ -778,7 +776,7 @@ const App: React.FC = () => {
         fetchPortfolio(publicUserIdRef.current)
           .then(setPortfolio)
           .catch((error) => {
-            console.error("Error updating portfolio via subscription:", error);
+            // console.error("Error updating portfolio via subscription:", error);
           });
       }
     });
@@ -786,14 +784,14 @@ const App: React.FC = () => {
     const assetsSubscription = subscribeToAssets(() => {
       // Don't show loading for background updates
       loadAssets(false).catch((error) => {
-        console.error("Error updating assets via subscription:", error);
+        // console.error("Error updating assets via subscription:", error);
       });
     });
 
     const tradingAssetsSubscription = subscribeToTradingAssets(() => {
       // Don't show loading for background updates
       loadAssets(false).catch((error) => {
-        console.error("Error updating trading assets via subscription:", error);
+        // console.error("Error updating trading assets via subscription:", error);
       });
     });
 
@@ -806,7 +804,9 @@ const App: React.FC = () => {
   }, [loadUserData, loadAssets, user, publicUserId]);
 
   useEffect(() => {
-    const isAssetPage = location.pathname.includes("/asset/") || location.pathname.includes("/a/");
+    const isAssetPage =
+      location.pathname.includes("/asset/") ||
+      location.pathname.includes("/a/");
     if (!isAssetPage) {
       setSelectedOrder(null);
       setShowRightPanel(false);
@@ -1009,7 +1009,7 @@ const App: React.FC = () => {
       // Refresh data in the background (don't wait)
       loadUserData();
     } catch (error: any) {
-      console.error("Trade error:", error);
+      // console.error("Trade error:", error);
       setAlertMessage(error.message || "Trade failed. Please try again.");
       setAlertOpen(true);
     }
@@ -1077,21 +1077,21 @@ const App: React.FC = () => {
                   userData={
                     user
                       ? {
-                        name: user.user_metadata?.full_name || "",
-                        email: user.email || "",
-                        phone: user.user_metadata?.phone || "",
-                        whatsapp: user.user_metadata?.whatsapp_phone || "",
-                        address: user.user_metadata?.address_line || "",
-                        city: user.user_metadata?.city || "",
-                        state: user.user_metadata?.region || "",
-                        country: user.user_metadata?.country || "",
-                        postCode: user.user_metadata?.postal_code || "",
-                        accountName: "",
-                        accountNumber: "",
-                        iban: "",
-                        swiftBic: "",
-                        bankName: "",
-                      }
+                          name: user.user_metadata?.full_name || "",
+                          email: user.email || "",
+                          phone: user.user_metadata?.phone || "",
+                          whatsapp: user.user_metadata?.whatsapp_phone || "",
+                          address: user.user_metadata?.address_line || "",
+                          city: user.user_metadata?.city || "",
+                          state: user.user_metadata?.region || "",
+                          country: user.user_metadata?.country || "",
+                          postCode: user.user_metadata?.postal_code || "",
+                          accountName: "",
+                          accountNumber: "",
+                          iban: "",
+                          swiftBic: "",
+                          bankName: "",
+                        }
                       : undefined
                   }
                   onSignOut={async () => {
@@ -1596,126 +1596,128 @@ const LeagueRouteWrapper: React.FC<{
   handleViewAsset,
   loading,
 }) => {
-    const { user, loading: authLoading } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
-    // Use URL param for the league to prevent flash when navigating away
-    const { leagueId } = useParams();
-    const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Use URL param for the league to prevent flash when navigating away
+  const { leagueId } = useParams();
+  const displayLeague = (leagueId?.toUpperCase() || activeLeague) as League;
 
-    // Check if we should show the back button based on navigation source
-    const navigationSource = location.state?.from as
-      | "home"
-      | "all-markets"
-      | "new-markets"
-      | undefined;
-    const shouldShowBackButton = !!navigationSource;
+  // Check if we should show the back button based on navigation source
+  const navigationSource = location.state?.from as
+    | "home"
+    | "all-markets"
+    | "new-markets"
+    | undefined;
+  const shouldShowBackButton = !!navigationSource;
 
-    // Determine where to navigate back to
-    const handleBack = () => {
-      switch (navigationSource) {
-        case "home":
-          navigate("/");
-          break;
-        case "all-markets":
-          navigate("/markets");
-          break;
-        case "new-markets":
-          navigate("/new-markets");
-          break;
-        default:
-          navigate(-1);
-      }
-    };
-
-    // Redirect to home if not logged in
-    if (!authLoading && !user) {
-      return <Navigate to="/" replace />;
+  // Determine where to navigate back to
+  const handleBack = () => {
+    switch (navigationSource) {
+      case "home":
+        navigate("/");
+        break;
+      case "all-markets":
+        navigate("/markets");
+        break;
+      case "new-markets":
+        navigate("/new-markets");
+        break;
+      default:
+        navigate(-1);
     }
+  };
 
-    // Show skeleton when loading assets or when no teams available yet
-    const showSkeleton = loading || sortedTeams.length === 0;
+  // Redirect to home if not logged in
+  if (!authLoading && !user) {
+    return <Navigate to="/" replace />;
+  }
 
-    return (
-      <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
-        {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
-        <div className="w-full xl:flex-[2] flex flex-col">
-          {/* Header aligned with order book */}
-          <div className="flex-shrink-0">
-            {showSkeleton ? (
-              <HeaderSkeleton />
-            ) : (
-              <Header
-                title={getLeagueTitleUtil(displayLeague)}
-                market={displayLeague}
-                seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
-                seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
-                seasonStage={seasonDatesMap.get(displayLeague)?.stage || undefined}
-                onBack={shouldShowBackButton ? handleBack : undefined}
-              />
-            )}
-          </div>
+  // Show skeleton when loading assets or when no teams available yet
+  const showSkeleton = loading || sortedTeams.length === 0;
 
-          {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
-          <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
-            {/* Fixed Header - Responsive padding and text */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
-              <div className="text-left">Asset</div>
-              <div>Sell</div>
-              <div>Buy</div>
-            </div>
-
-            {/* Scrollable List */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
-              {showSkeleton ? (
-                <OrderBookRowSkeleton count={10} />
-              ) : (
-                sortedTeams.map((team) => (
-                  <OrderBookRow
-                    key={team.id}
-                    team={team}
-                    onSelectOrder={handleSelectOrder}
-                    onViewAsset={handleViewAsset}
-                  />
-                ))
-              )}
-            </div>
-          </div>
+  return (
+    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6 xl:items-stretch">
+      {/* Left Column: Header + Order Book (full width on mobile/tablet/laptop, 2/3 on desktop xl+) */}
+      <div className="w-full xl:flex-[2] flex flex-col">
+        {/* Header aligned with order book */}
+        <div className="flex-shrink-0">
+          {showSkeleton ? (
+            <HeaderSkeleton />
+          ) : (
+            <Header
+              title={getLeagueTitleUtil(displayLeague)}
+              market={displayLeague}
+              seasonStartDate={seasonDatesMap.get(displayLeague)?.start_date}
+              seasonEndDate={seasonDatesMap.get(displayLeague)?.end_date}
+              seasonStage={
+                seasonDatesMap.get(displayLeague)?.stage || undefined
+              }
+              onBack={shouldShowBackButton ? handleBack : undefined}
+            />
+          )}
         </div>
 
-        {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
-        <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
-          {/* AI Analysis */}
-          <div className="flex-shrink-0">
-            <AIAnalysis
-              teams={teams}
-              leagueName={getLeagueTitleUtil(displayLeague)}
-            />
+        {/* Order Book - Fixed height on mobile/tablet, flex on laptop+ with min-height */}
+        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-64 sm:h-72 md:h-80 xl:h-[36.6rem] 2xl:h-[36rem]">
+          {/* Fixed Header - Responsive padding and text */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4 bg-gray-800 border-b border-gray-700 text-[clamp(0.55rem,1.5vw,0.75rem)] font-medium text-gray-400 uppercase tracking-wider text-center flex-shrink-0">
+            <div className="text-left">Asset</div>
+            <div>Sell</div>
+            <div>Buy</div>
           </div>
 
-          {/* Did You Know (Index/League Context) */}
-          <div className="flex-shrink-0">
-            <DidYouKnow
-              assetName={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-            />
-          </div>
-
-          {/* On This Day (Index/League Context) */}
-          <div className="flex-shrink-0">
-            <OnThisDay
-              assetName={getLeagueTitleUtil(displayLeague)}
-              market={displayLeague}
-            />
-          </div>
-
-          {/* News Feed */}
-          <div className="flex-shrink-0 pb-4 xl:pb-0">
-            <NewsFeed topic={displayLeague as any} />
+          {/* Scrollable List */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-gray-700">
+            {showSkeleton ? (
+              <OrderBookRowSkeleton count={10} />
+            ) : (
+              sortedTeams.map((team) => (
+                <OrderBookRow
+                  key={team.id}
+                  team={team}
+                  onSelectOrder={handleSelectOrder}
+                  onViewAsset={handleViewAsset}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>
-    );
-  };
+
+      {/* Right Column: AI & News (full width on mobile/tablet/laptop, 1/3 on desktop xl+) */}
+      <div className="w-full xl:flex-1 flex flex-col gap-3 sm:gap-4 xl:overflow-y-auto scrollbar-hide xl:pr-2 mt-2 xl:mt-0">
+        {/* AI Analysis */}
+        <div className="flex-shrink-0">
+          <AIAnalysis
+            teams={teams}
+            leagueName={getLeagueTitleUtil(displayLeague)}
+          />
+        </div>
+
+        {/* Did You Know (Index/League Context) */}
+        <div className="flex-shrink-0">
+          <DidYouKnow
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+          />
+        </div>
+
+        {/* On This Day (Index/League Context) */}
+        <div className="flex-shrink-0">
+          <OnThisDay
+            assetName={getLeagueTitleUtil(displayLeague)}
+            market={displayLeague}
+          />
+        </div>
+
+        {/* News Feed */}
+        <div className="flex-shrink-0 pb-4 xl:pb-0">
+          <NewsFeed topic={displayLeague as any} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default App;

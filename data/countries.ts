@@ -35,7 +35,6 @@ const getCountryName = (iso2: string): string => {
   try {
     // Use built-in Intl data (no extra dataset dependency).
     // In environments without Intl.DisplayNames, fall back to ISO code.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const DisplayNames = (Intl as any).DisplayNames;
     if (!DisplayNames) return iso2;
     const dn = new DisplayNames(["en"], { type: "region" });

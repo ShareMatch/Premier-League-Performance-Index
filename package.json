@@ -14,7 +14,8 @@
     "test:report": "playwright show-report audit-reports",
     "test:e2e": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts",
     "test:ci": "playwright test tests/reference-signup-flow.spec.ts tests/seed.spec.ts --reporter=list",
-    "generate-tests": "npx tsx scripts/generate-tests.ts"
+    "generate-tests": "npx tsx scripts/generate-tests.ts",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx"
   },
   "dependencies": {
     "@google/genai": "^1.29.1",
@@ -37,13 +38,21 @@
     "twilio": "^5.11.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
     "@types/node": "^22.19.5",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",
+    "eslint": "^9.39.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "glob": "^13.0.0",
     "postcss": "^8.5.6",
     "supabase": "^2.72.8",

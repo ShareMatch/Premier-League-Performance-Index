@@ -103,7 +103,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       // → we just close the slip
       onClose();
     } catch (err: any) {
-      console.error("Trade failed:", err);
+      // console.error("Trade failed:", err);
       setError(err.message || "Trade failed. Please try again.");
       setAlertMessage(err.message || "Trade failed. Please try again.");
       setAlertOpen(true);
@@ -172,7 +172,9 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       className="bg-gray-800 rounded-lg p-4 flex flex-col gap-3 text-gray-300 shadow-lg shadow-gray-950/50 border border-gray-700"
     >
       <div className="flex justify-between items-center">
-        <h2 className="font-bold text-[clamp(1rem,3vw,1.125rem)] text-gray-200">Transaction Slip</h2>
+        <h2 className="font-bold text-[clamp(1rem,3vw,1.125rem)] text-gray-200">
+          Transaction Slip
+        </h2>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-white flex-shrink-0 text-2xl font-light py-1"
@@ -187,10 +189,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
         <button
           type="button"
           onClick={() => handleSideToggle("buy")}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${isBuy
-            ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
-            : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-            }`}
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
+            isBuy
+              ? "text-white bg-gray-800/20 border-b-2 border-[#005430]"
+              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+          }`}
           data-testid="trade-slip-buy-tab"
         >
           Buy
@@ -199,12 +202,13 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
           type="button"
           onClick={() => handleSideToggle("sell")}
           disabled={!canSell}
-          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${!isBuy
-            ? "text-white bg-gray-800/20 border-b-2 border-red-600"
-            : canSell
-              ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
-              : "text-gray-600 cursor-not-allowed"
-            } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
+          className={`flex-1 py-2 text-sm font-medium flex items-center justify-center transition-colors ${
+            !isBuy
+              ? "text-white bg-gray-800/20 border-b-2 border-red-600"
+              : canSell
+                ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/10"
+                : "text-gray-600 cursor-not-allowed"
+          } ${!canSell ? "cursor-not-allowed !text-gray-600" : ""}`}
           data-testid="trade-slip-sell-tab"
         >
           Sell
@@ -250,10 +254,11 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             </div>
           </div>
           <p
-            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${isBuy
-              ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
-              : "text-red-400"
-              }`}
+            className={`text-base font-bold flex-shrink-0 whitespace-nowrap ${
+              isBuy
+                ? "bg-[#005430] text-white px-1.5 py-0.5 rounded"
+                : "text-red-400"
+            }`}
           >
             {formatCurrency(currentPrice)}
           </p>
@@ -430,13 +435,14 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
           }
-          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${sharesNum <= 0 ||
+          className={`w-full font-bold py-3 rounded-full text-lg transition-colors duration-200 flex items-center justify-center gap-2 ${
+            sharesNum <= 0 ||
             isSubmitting ||
             !termsAccepted ||
             (!isBuy && sharesNum > holding)
-            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-            : "bg-[#005430] hover:bg-[#005430]/90 text-white"
-            }`}
+              ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+              : "bg-[#005430] hover:bg-[#005430]/90 text-white"
+          }`}
           data-testid="trade-slip-confirm-button"
         >
           {isSubmitting ? "Processing..." : "Confirm Transaction"}

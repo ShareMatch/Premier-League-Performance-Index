@@ -23,7 +23,9 @@ import assetTemplatesRaw from "../resources/asset-question-templates.txt?raw";
 import { deriveMarketConfig } from "../utils/marketUtils";
 
 // Parse text files into usable data
-const parseSuggestedQuestions = (raw: string): { text: string; market: string }[] => {
+const parseSuggestedQuestions = (
+  raw: string,
+): { text: string; market: string }[] => {
   return raw
     .split("\n")
     .filter((line) => line.trim())
@@ -418,9 +420,16 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const { categories, marketLabels } = useMemo(() => {
     const config = deriveMarketConfig(teams);
     return {
-      categories: config.categories.length > 0 ? config.categories : [
-        { id: "football", label: "Football", markets: ["EPL", "SPL", "UCL", "ISL"] },
-      ],
+      categories:
+        config.categories.length > 0
+          ? config.categories
+          : [
+              {
+                id: "football",
+                label: "Football",
+                markets: ["EPL", "SPL", "UCL", "ISL"],
+              },
+            ],
       marketLabels: config.marketLabels,
     };
   }, [teams]);
@@ -441,20 +450,17 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
   const randomQuestions = useMemo(() => {
     // Get list of open markets from teams data
     const openMarkets = new Set(
-      teams
-        .filter((t) => !t.is_settled && t.market)
-        .map((t) => t.market)
+      teams.filter((t) => !t.is_settled && t.market).map((t) => t.market),
     );
 
     // Filter questions to only show those for markets with active assets
-    const openMarketQuestions = suggestedQuestions.filter((q) => 
-      openMarkets.has(q.market)
+    const openMarketQuestions = suggestedQuestions.filter((q) =>
+      openMarkets.has(q.market),
     );
 
     // If no open market questions, show all questions as fallback
-    const questionsToUse = openMarketQuestions.length > 0 
-      ? openMarketQuestions 
-      : suggestedQuestions;
+    const questionsToUse =
+      openMarketQuestions.length > 0 ? openMarketQuestions : suggestedQuestions;
 
     return [...questionsToUse].sort(() => Math.random() - 0.5).slice(0, 4);
   }, [suggestedQuestions, teams]);
@@ -496,9 +502,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     const questions: { text: string; asset: Team }[] = [];
     marketAssets.forEach((asset) => {
       const template =
-        assetTemplates[
-          Math.floor(Math.random() * assetTemplates.length)
-        ];
+        assetTemplates[Math.floor(Math.random() * assetTemplates.length)];
       questions.push({
         text: template.replace("{asset}", asset.name),
         asset,
@@ -655,7 +659,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
       const parseSSEChunk = (data: string): string => {
         let extractedText = "";
         const lines = data.split("\n");
-        
+
         for (const line of lines) {
           const trimmed = line.trim();
           if (trimmed.startsWith("data:")) {
@@ -682,7 +686,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
 
       const typingInterval = setInterval(() => {
         if (displayedLength < fullContent.length) {
-          displayedLength = Math.min(displayedLength + CHARS_PER_FRAME, fullContent.length);
+          displayedLength = Math.min(
+            displayedLength + CHARS_PER_FRAME,
+            fullContent.length,
+          );
           const visibleContent = fullContent.slice(0, displayedLength);
 
           setMessages((prev) => {
@@ -739,7 +746,9 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
               // Ensure final state is complete
               setMessages((prev) => {
                 const updated = [...prev];
-                const idx = updated.findIndex((m) => m.id === assistantMessageId);
+                const idx = updated.findIndex(
+                  (m) => m.id === assistantMessageId,
+                );
                 if (idx !== -1) {
                   updated[idx] = { ...updated[idx], content: fullContent };
                 }
@@ -755,7 +764,7 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
         err instanceof Error
           ? err.message
           : "Unable to generate analysis at this time.";
-      console.error(err);
+      // console.error(err);
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         role: "assistant",
@@ -768,9 +777,10 @@ const AIAnalyticsPage: React.FC<AIAnalyticsPageProps> = ({ teams }) => {
     }
   };
 
-  const handleSuggestedQuestion = (
-    question: { text: string; market: string },
-  ) => {
+  const handleSuggestedQuestion = (question: {
+    text: string;
+    market: string;
+  }) => {
     // Update market if different
     const category = categories.find((c) =>
       c.markets.includes(question.market),

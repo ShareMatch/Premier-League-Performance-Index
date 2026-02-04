@@ -209,12 +209,12 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
               p_user_id: userId,
             });
             if (error) {
-              console.error("Error fetching preferences:", error);
+              // console.error("Error fetching preferences:", error);
               return null;
             }
             return { data: data || {} };
           } catch (err) {
-            console.error("Exception fetching preferences:", err);
+            // console.error("Exception fetching preferences:", err);
             return null;
           }
         };
@@ -289,7 +289,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
           setPreferencesLoaded(true);
         }
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        // console.error("Failed to fetch user data:", error);
         setKycStatus("not_verified");
       } finally {
         setLoading(false);
@@ -367,7 +367,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         setShowEmailVerification(true);
         return; // Wait for email verification before proceeding
       } catch (error: any) {
-        console.error("❌ Email OTP error:", error);
+        // console.error("❌ Email OTP error:", error);
         throw new Error(
           error.message || "Failed to send email verification code",
         );
@@ -391,7 +391,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
         setShowWhatsAppVerification(true);
         return; // Wait for WhatsApp verification before proceeding
       } catch (error: any) {
-        console.error("❌ WhatsApp OTP error:", error);
+        // console.error("❌ WhatsApp OTP error:", error);
         throw new Error(
           error.message || "Failed to send WhatsApp verification code",
         );
@@ -465,7 +465,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       }
       setPendingChanges(null);
     } catch (error: any) {
-      console.error("❌ Failed to update email:", error);
+      // console.error("❌ Failed to update email:", error);
       setShowEmailVerification(false);
       setAlertMessage("Failed to update email: " + (error?.message || ""));
       setAlertOpen(true);
@@ -506,7 +506,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       const details = await fetchUserDetails(userId);
       if (details) setUserDetails(details);
     } catch (error: any) {
-      console.error("Failed to update WhatsApp:", error);
+      // console.error("Failed to update WhatsApp:", error);
       setAlertMessage(
         "Failed to update WhatsApp number: " + (error?.message || ""),
       );
@@ -525,7 +525,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       const result = await verifyEmailOtp(currentEmail, code);
       return result.ok === true;
     } catch (error) {
-      console.error("Email OTP verification failed:", error);
+      // console.error("Email OTP verification failed:", error);
       return false;
     }
   };
@@ -548,7 +548,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       });
       return result.ok === true;
     } catch (error) {
-      console.error("WhatsApp OTP verification failed:", error);
+      // console.error("WhatsApp OTP verification failed:", error);
       return false;
     }
   };
@@ -566,7 +566,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       });
       return true;
     } catch (error) {
-      console.error("Failed to resend email OTP:", error);
+      // console.error("Failed to resend email OTP:", error);
       return false;
     }
   };
@@ -585,7 +585,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       });
       return true;
     } catch (error) {
-      console.error("Failed to resend WhatsApp OTP:", error);
+      // console.error("Failed to resend WhatsApp OTP:", error);
       return false;
     }
   };

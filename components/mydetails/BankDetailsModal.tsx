@@ -84,13 +84,13 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
           .order("sort_order", { ascending: true });
 
         if (error) {
-          console.error("Error fetching company bank accounts:", error);
+          // console.error("Error fetching company bank accounts:", error);
           setCompanyBankAccounts([]);
         } else {
           setCompanyBankAccounts(data || []);
         }
       } catch (err) {
-        console.error("Failed to fetch company bank accounts:", err);
+        // console.error("Failed to fetch company bank accounts:", err);
         setCompanyBankAccounts([]);
       } finally {
         setLoading(false);
@@ -108,7 +108,7 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
       setCopiedField(`${bankId}-${label}`);
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      // console.error("Failed to copy:", err);
     }
   };
 
@@ -277,7 +277,7 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
                                   handleCopy(
                                     bank.id,
                                     detail.label,
-                                    detail.value
+                                    detail.value,
                                   )
                                 }
                                 className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all ${

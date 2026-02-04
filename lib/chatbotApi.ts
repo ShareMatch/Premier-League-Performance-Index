@@ -1,10 +1,10 @@
 /**
  * Chatbot API - Frontend client for the RAG chatbot
- * 
+ *
  * Uses Supabase Edge Function for all environments
  */
 
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 export interface ChatRequest {
   message: string;
@@ -26,20 +26,22 @@ export interface ChatResponse {
 /**
  * Send a message to the chatbot and get a response
  */
-export const sendChatMessage = async (request: ChatRequest): Promise<ChatResponse> => {
+export const sendChatMessage = async (
+  request: ChatRequest,
+): Promise<ChatResponse> => {
   try {
-      return await sendViaSupabase(request);
+    return await sendViaSupabase(request);
   } catch (error) {
-    console.error('Chatbot API error:', error);
-    
+    // console.error('Chatbot API error:', error);
+
     // If backend is not available, return a helpful message
-    if (error instanceof TypeError && error.message.includes('fetch')) {
+    if (error instanceof TypeError && error.message.includes("fetch")) {
       return {
         message: "I'm currently offline. Please try again later.",
-        conversationId: 'offline',
+        conversationId: "offline",
       };
     }
-    
+
     throw error;
   }
 };
@@ -48,7 +50,7 @@ export const sendChatMessage = async (request: ChatRequest): Promise<ChatRespons
  * Send message via Supabase Edge Function
  */
 async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
-  const { data, error } = await supabase.functions.invoke('chatbot', {
+  const { data, error } = await supabase.functions.invoke("chatbot", {
     body: {
       message: request.message,
       conversation_id: request.conversationId,
@@ -56,8 +58,8 @@ async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
   });
 
   if (error) {
-    console.error('Supabase function error:', error);
-    throw new Error(error.message || 'Failed to get response from AI');
+    // console.error('Supabase function error:', error);
+    throw new Error(error.message || "Failed to get response from AI");
   }
 
   const response: ChatResponse = {
@@ -78,7 +80,7 @@ async function sendViaSupabase(request: ChatRequest): Promise<ChatResponse> {
  */
 export const checkChatbotHealth = async (): Promise<boolean> => {
   // Supabase Edge Functions are always "available"
-      return true;
+  return true;
 };
 
 /**
