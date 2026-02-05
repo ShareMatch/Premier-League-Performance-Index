@@ -1,7 +1,8 @@
-node_modules/*
-venv/*
-.git/*
-dist/*
-build/*
-*.lock
-*.map
+.*/node_modules/.*
+.*/venv/.*
+.*/\.git/.*
+.*/dist/.*
+.*/build/.*
+.*/__pycache__/.*
+.*\.lock$
+.*\.map$
