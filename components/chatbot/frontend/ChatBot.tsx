@@ -48,7 +48,7 @@ const ChatBot: React.FC = () => {
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Failed to get chatbot response:", error);
+      // console.error("Failed to get chatbot response:", error);
       const errorMessage: Message = {
         id: `error_${Date.now()}`,
         content: "Sorry, I encountered an error. Please try again.",
@@ -74,8 +74,11 @@ const ChatBot: React.FC = () => {
   return (
     <>
       <div
-        className={`fixed z-50 flex items-center gap-1 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${isOpen ? "scale-0 opacity-0 pointer-events-none" : "scale-100 opacity-100"
-          }`}
+        className={`fixed z-50 flex items-center gap-1 bottom-[clamp(5.5rem,10vh,6.5rem)] right-[clamp(1rem,3vw,1.5rem)] sm:bottom-[clamp(2.5rem,5vh,3rem)] sm:right-[clamp(1.5rem,4vw,2rem)] transition-all duration-300 origin-bottom-right ${
+          isOpen
+            ? "scale-0 opacity-0 pointer-events-none"
+            : "scale-100 opacity-100"
+        }`}
       >
         {/* Persistent Desktop Label - Improved Styling */}
         {/* Need Help Badge */}
@@ -99,8 +102,6 @@ const ChatBot: React.FC = () => {
         >
           <span>Need help?</span>
         </div>
-
-
 
         {/* Floating Action Button */}
         <button

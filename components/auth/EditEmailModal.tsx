@@ -71,7 +71,7 @@ export const EditEmailModal: React.FC<EditEmailModalProps> = ({
         setFieldError("An account with this email already exists");
       }
     } catch (e) {
-      console.error("Error checking email status on blur:", e);
+      // console.error("Error checking email status on blur:", e);
     }
   };
 
