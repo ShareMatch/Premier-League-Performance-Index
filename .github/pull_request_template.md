@@ -8,3 +8,4 @@
 - [ ] Proper environment variables referenced in code
 - [ ] No API keys or secrets committed in the code — automated secret scanning only detects supported patterns; some secrets must be manually checked in the code
 - [ ] PR has a proper title and description summarizing the changes
+- [ ] Delete the test user for the Audit Bot from Supabase to ensure the bot functions correctly
