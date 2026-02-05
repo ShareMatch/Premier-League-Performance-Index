@@ -14,6 +14,9 @@ function generateOtp(): string {
 serve(async (req: Request) => {
     const corsHeaders = publicCors(req.headers.get('origin'));
 
+    const requestStart = Date.now();
+    console.log("⏱️ [START] send-whatsapp-otp");
+
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
@@ -21,10 +24,12 @@ serve(async (req: Request) => {
 
     try {
         // Get environment variables
+        const envStart = Date.now();
         const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         const wabaProfileId = Deno.env.get("WABA_PROFILE_ID") ?? "";
         const wabaApiKey = Deno.env.get("WABA_API_KEY") ?? "";
+        console.log("⏱️ ENV load:", Date.now() - envStart, "ms");
 
         // Validate required env vars
         const missingVars: string[] = [];
@@ -47,7 +52,9 @@ serve(async (req: Request) => {
         });
 
         // Parse request body
+        const bodyStart = Date.now();
         const body = await req.json() as { phone?: string; email?: string; targetPhone?: string; forProfileChange?: boolean };
+        console.log("⏱️ Body parse:", Date.now() - bodyStart, "ms");
         const phone = body.phone ? String(body.phone).trim() : null;
         const email = body.email ? String(body.email).trim().toLowerCase() : null;
         const targetPhone = body.targetPhone ? String(body.targetPhone).trim() : null;
@@ -81,7 +88,9 @@ serve(async (req: Request) => {
             .eq("email_otp_state.channel", "email")
             .eq("whatsapp_otp_state.channel", "whatsapp");
         
+        const fetchStart = Date.now();
         const { data: userData, error: fetchErr } = await query.limit(1).single();
+        console.log("⏱️ DB fetch (user + otp):", Date.now() - fetchStart, "ms");
 
         if (fetchErr || !userData) {
             console.error("User or OTP record not found:", fetchErr);
@@ -127,6 +136,7 @@ serve(async (req: Request) => {
 
         // --- NEW LOGIC: UPSERT OTP state into user_otp_verification ---
         // For profile changes: reset verified_at and attempts
+        const otpStart = Date.now();
         const { error: updateErr } = await supabase
             .from("user_otp_verification")
             .upsert({
@@ -137,6 +147,7 @@ serve(async (req: Request) => {
                 otp_attempts: forProfileChange ? 1 : currentAttempts + 1,
                 verified_at: forProfileChange ? null : undefined, // Reset for profile change
             }, { onConflict: 'user_id, channel' }); // Conflict keys match the UNIQUE constraint
+        console.log("⏱️ OTP upsert:", Date.now() - otpStart, "ms");
 
         if (updateErr) {
             console.error("Error storing OTP:", updateErr);
@@ -157,12 +168,14 @@ serve(async (req: Request) => {
         }
 
         // Send WhatsApp OTP
+        const whatsappStart = Date.now();
         const sendResult = await sendWhatsAppOtp({
             mobileNumber: formatPhoneForWhatsApp(whatsappPhone),
             otpCode: otpCode,
             profileId: wabaProfileId,
             apiKey: wabaApiKey,
         });
+        console.log("⏱️ WhatsApp call:", Date.now() - whatsappStart, "ms");
 
         if (!sendResult.ok) {
             return new Response(
@@ -172,6 +185,8 @@ serve(async (req: Request) => {
         }
 
         const maskedPhone = maskPhone(whatsappPhone);
+
+        console.log("⏱️ TOTAL request time:", Date.now() - requestStart, "ms");
 
         return new Response(
             JSON.stringify({
@@ -184,6 +199,7 @@ serve(async (req: Request) => {
 
     } catch (error: unknown) {
         console.error("Error in send-whatsapp-otp:", error);
+        console.log("⏱️ TOTAL (error):", Date.now() - requestStart, "ms");
         const message = error instanceof Error ? error.message : "Server error";
         return new Response(
             JSON.stringify({ error: message }),
