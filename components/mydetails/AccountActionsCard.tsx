@@ -21,9 +21,7 @@ const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
 
   try {
     // ipapi.co supports HTTPS and works in production
-    const response = await fetch(
-      `https://ipapi.co/${ip}/country_code/`
-    );
+    const response = await fetch(`https://ipapi.co/${ip}/country_code/`);
     if (response.ok) {
       const countryCode = await response.text();
       if (countryCode && countryCode.length === 2) {
@@ -33,7 +31,7 @@ const getCountryCodeFromIP = async (ip: string): Promise<string | null> => {
       }
     }
   } catch (error) {
-    console.error("Failed to lookup country from IP:", error);
+    // console.error("Failed to lookup country from IP:", error);
   }
   return null;
 };
@@ -96,14 +94,20 @@ const AccountActionsCard: React.FC<AccountActionsCardProps> = ({
                 <div className="flex items-center justify-between font-sans">
                   {/* Left side - Login status and time */}
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className={`text-[9px] sm:text-sm font-medium ${activity.successful ? "text-white" : "text-red-500"}`}>
+                    <span
+                      className={`text-[9px] sm:text-sm font-medium ${activity.successful ? "text-white" : "text-red-500"}`}
+                    >
                       {activity.successful ? "Last Login" : "Failed"}
                     </span>
-                    <span className="text-gray-400 text-[9px] sm:text-xs">{activity.timestamp}</span>
+                    <span className="text-gray-400 text-[9px] sm:text-xs">
+                      {activity.timestamp}
+                    </span>
                   </div>
                   {/* Right side - IP and flag */}
                   <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="text-gray-500 text-[8px] sm:text-xs">IP: {activity.ip}</span>
+                    <span className="text-gray-500 text-[8px] sm:text-xs">
+                      IP: {activity.ip}
+                    </span>
                     {countryFlags[activity.id] ? (
                       <img
                         src={`https://flagcdn.com/w40/${countryFlags[activity.id]}.png`}

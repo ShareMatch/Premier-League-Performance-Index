@@ -16,7 +16,7 @@ interface EditMarketingPreferencesModalProps {
   personalizedMarketing: boolean;
   onSave: (
     preferences: MarketingPreference[],
-    personalizedMarketing: boolean
+    personalizedMarketing: boolean,
   ) => Promise<void>;
 }
 
@@ -45,7 +45,7 @@ const EditMarketingPreferencesModal: React.FC<
 
   const handleTogglePreference = (id: string) => {
     setPreferences((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p))
+      prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)),
     );
   };
 
@@ -55,7 +55,7 @@ const EditMarketingPreferencesModal: React.FC<
       await onSave(preferences, personalizedMarketing);
       onClose();
     } catch (error) {
-      console.error("Failed to save:", error);
+      // console.error("Failed to save:", error);
     } finally {
       setSaving(false);
     }
@@ -96,7 +96,7 @@ const EditMarketingPreferencesModal: React.FC<
             <button
               onClick={() => {
                 setPreferences((prev) =>
-                  prev.map((p) => ({ ...p, enabled: true }))
+                  prev.map((p) => ({ ...p, enabled: true })),
                 );
                 setPersonalizedMarketing(true);
               }}

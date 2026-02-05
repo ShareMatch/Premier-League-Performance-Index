@@ -350,16 +350,16 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
 }) => {
   const [language, setLanguage] = useState<Language>("en");
   const [expandedSections, setExpandedSections] = useState<Set<SectionId>>(
-    new Set()
+    new Set(),
   );
   const [expandedTopics, setExpandedTopics] = useState<Set<HelpTopicId>>(
-    new Set()
+    new Set(),
   );
   const [videoUrls, setVideoUrls] = useState<Partial<Record<string, string>>>(
-    {}
+    {},
   );
   const [loadingVideos, setLoadingVideos] = useState<Set<HelpTopicId>>(
-    new Set()
+    new Set(),
   );
   const [videoErrors, setVideoErrors] = useState<
     Partial<Record<HelpTopicId, string>>
@@ -387,14 +387,14 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
       try {
         const response = await fetch(
           `${SUPABASE_URL}/functions/v1/getVideo?name=${encodeURIComponent(
-            videoName
+            videoName,
           )}`,
           {
             headers: {
               Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -409,7 +409,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
           throw new Error(data.error || "Failed to get video URL");
         }
       } catch (error) {
-        console.error(`Error fetching video for ${topicId}:`, error);
+        // console.error(`Error fetching video for ${topicId}:`, error);
         setVideoErrors((prev) => ({
           ...prev,
           [topicId]:
@@ -423,7 +423,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         });
       }
     },
-    [videoUrls]
+    [videoUrls],
   );
 
   // Auto-expand section and topic when modal opens with default
@@ -449,7 +449,7 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
   // Get topics for a specific section
   const getTopicsForSection = (sectionId: SectionId): HelpTopicId[] => {
     return (Object.keys(HELP_TOPICS) as HelpTopicId[]).filter(
-      (key) => HELP_TOPICS[key].section === sectionId
+      (key) => HELP_TOPICS[key].section === sectionId,
     );
   };
 
@@ -520,10 +520,11 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                   onClick={() => setLanguage("ar")}
                   aria-label="Switch to Arabic"
                   data-testid="help-center-language-toggle-ar"
-                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${language === "ar"
-                    ? "bg-white text-[#005430]"
-                    : "text-white hover:bg-white/10"
-                    }`}
+                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "ar"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
                 >
                   AR
                 </button>
@@ -531,10 +532,11 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                   onClick={() => setLanguage("en")}
                   aria-label="Switch to English"
                   data-testid="help-center-language-toggle-en"
-                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${language === "en"
-                    ? "bg-white text-[#005430]"
-                    : "text-white hover:bg-white/10"
-                    }`}
+                  className={`px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "en"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
                 >
                   EN
                 </button>
@@ -545,10 +547,11 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                   onClick={() => setLanguage("en")}
                   aria-label="Switch to English"
                   data-testid="help-center-language-toggle-en"
-                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${language === "en"
-                    ? "bg-white text-[#005430]"
-                    : "text-white hover:bg-white/10"
-                    }`}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "en"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
                 >
                   EN
                 </button>
@@ -556,10 +559,11 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                   onClick={() => setLanguage("ar")}
                   aria-label="Switch to Arabic"
                   data-testid="help-center-language-toggle-ar"
-                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${language === "ar"
-                    ? "bg-white text-[#005430]"
-                    : "text-white hover:bg-white/10"
-                    }`}
+                  className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${
+                    language === "ar"
+                      ? "bg-white text-[#005430]"
+                      : "text-white hover:bg-white/10"
+                  }`}
                 >
                   AR
                 </button>
@@ -582,8 +586,9 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
         <div className="flex flex-col mt-5 rounded-xl p-3 sm:p-5 gap-3 sm:gap-4">
           {/* Header */}
           <div
-            className={`flex items-center gap-2 sm:gap-3 ${isRTL ? "pr-0 pl-6" : "pl-0 pr-6"
-              }`}
+            className={`flex items-center gap-2 sm:gap-3 ${
+              isRTL ? "pr-0 pl-6" : "pl-0 pr-6"
+            }`}
           >
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-brand-emerald500/20 flex items-center justify-center flex-shrink-0">
               <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-brand-primary" />
@@ -618,8 +623,9 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                         {/* Card Header - Clickable to expand/collapse */}
                         <button
                           onClick={() => toggleTopicExpanded(topicId)}
-                          aria-label={`${isExpanded ? "Collapse" : "Expand"} ${t[topic.titleKey]
-                            }`}
+                          aria-label={`${isExpanded ? "Collapse" : "Expand"} ${
+                            t[topic.titleKey]
+                          }`}
                           data-testid={`help-center-topic-toggle-${topicId}`}
                           className="w-full flex items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-3.5 bg-brand-emerald500/10 hover:bg-brand-emerald500/15 transition-colors"
                         >
@@ -637,14 +643,15 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                             </div>
                           </div>
                           <ChevronRight
-                            className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${isRTL
-                              ? isExpanded
-                                ? "rotate-90"
-                                : "rotate-180"
-                              : isExpanded
-                                ? "rotate-90"
-                                : ""
-                              }`}
+                            className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-200 ${
+                              isRTL
+                                ? isExpanded
+                                  ? "rotate-90"
+                                  : "rotate-180"
+                                : isExpanded
+                                  ? "rotate-90"
+                                  : ""
+                            }`}
                           />
                         </button>
 
@@ -673,8 +680,9 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                       onClick={() =>
                                         fetchVideoUrl(topicId, language)
                                       }
-                                      aria-label={`Retry loading ${t[topic.titleKey]
-                                        }`}
+                                      aria-label={`Retry loading ${
+                                        t[topic.titleKey]
+                                      }`}
                                       data-testid={`help-center-retry-video-${topicId}`}
                                       className="text-brand-primary text-sm hover:underline"
                                     >
@@ -775,14 +783,15 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                           </div>
                         </div>
                         <ChevronRight
-                          className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isRTL
-                            ? isSectionExpanded
-                              ? "rotate-90"
-                              : "rotate-180"
-                            : isSectionExpanded
-                              ? "rotate-90"
-                              : ""
-                            }`}
+                          className={`w-6 h-6 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                            isRTL
+                              ? isSectionExpanded
+                                ? "rotate-90"
+                                : "rotate-180"
+                              : isSectionExpanded
+                                ? "rotate-90"
+                                : ""
+                          }`}
                         />
                       </button>
 
@@ -822,14 +831,15 @@ const HelpCenterModal: React.FC<HelpCenterModalProps> = ({
                                     </div>
                                   </div>
                                   <ChevronRight
-                                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isRTL
-                                      ? isTopicExpanded
-                                        ? "rotate-90"
-                                        : "rotate-180"
-                                      : isTopicExpanded
-                                        ? "rotate-90"
-                                        : ""
-                                      }`}
+                                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                                      isRTL
+                                        ? isTopicExpanded
+                                          ? "rotate-90"
+                                          : "rotate-180"
+                                        : isTopicExpanded
+                                          ? "rotate-90"
+                                          : ""
+                                    }`}
                                   />
                                 </button>
 

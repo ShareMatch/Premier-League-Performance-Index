@@ -59,7 +59,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     // If we have a stable pool and excludeTeamIds didn't change, just filter it
     if (stableQuestionPoolRef.current.length > 0 && !hasExcludeChanged) {
       return stableQuestionPoolRef.current.filter(
-        (q) => !excludeTeamIds.includes(q.team.id)
+        (q) => !excludeTeamIds.includes(q.team.id),
       );
     }
 
@@ -79,7 +79,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         seasonData?.start_date,
         seasonData?.end_date,
         seasonData?.stage || undefined,
-        t.index_name
+        t.index_name,
       );
       return marketInfo.isOpen;
     });
@@ -97,7 +97,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
     const generated: Question[] = [];
 
     // Helper to generate questions for a market
-    const addQuestionsForMarket = (marketToken: string, marketTeams: Team[]) => {
+    const addQuestionsForMarket = (
+      marketToken: string,
+      marketTeams: Team[],
+    ) => {
       // Get display data dynamically from the first team's DB data
       const sampleTeam = marketTeams[0];
       const displayData = getMarketDisplayData(marketToken, {
@@ -113,7 +116,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         seasonData?.start_date,
         seasonData?.end_date,
         seasonData?.stage || undefined,
-        sampleTeam?.index_name
+        sampleTeam?.index_name,
       );
       if (!marketInfo.isOpen) return;
 
@@ -132,7 +135,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         generated.push({
           id: `${marketToken.toLowerCase()}-${team.id}`,
           market: marketToken as League,
-          question: `Will ${team.name} top the ${displayData.fullName} Index?`,
+          question: `Will ${team.name} top the ${displayData.fullName} ?`,
           yesPrice: team.offer,
           noPrice: team.bid,
           volume: volStr,
@@ -181,7 +184,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
           const slotToUpdate = Math.floor(Math.random() * limit);
           const currentIds = prev.map((q) => q?.id);
           const available = questionPool.filter(
-            (q) => !currentIds.includes(q.id)
+            (q) => !currentIds.includes(q.id),
           );
 
           if (available.length > 0) {
@@ -260,9 +263,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
                 group relative bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 p-2.5 sm:p-3 cursor-pointer
                 transition-all duration-300 hover:bg-gray-800 hover:shadow-xl hover:-translate-y-1 hover:z-10
                 ${q.borderColor}
-                ${animatingCard === index
-                  ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
-                  : ""
+                ${
+                  animatingCard === index
+                    ? "animate-pop z-20 ring-1 ring-[#00A651]/50 bg-gray-800"
+                    : ""
                 }
               `}
             >
@@ -274,9 +278,7 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
               <div className="relative z-10 flex flex-col h-full">
                 {/* Info Button - Top Right */}
                 <div className="absolute top-0 right-0">
-                  <InfoTooltip
-                    text={tooltipText}
-                  />
+                  <InfoTooltip text={tooltipText} />
                 </div>
 
                 {/* Header - Avatar + Question */}

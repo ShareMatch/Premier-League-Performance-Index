@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         }
       })
       .catch((error) => {
-        console.error("Failed to load market hierarchy", error);
+        // console.error("Failed to load market hierarchy", error);
       });
     return () => {
       mounted = false;
@@ -66,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setExpandedItems((prev) =>
       prev.includes(label)
         ? prev.filter((item) => item !== label)
-        : [...prev, label]
+        : [...prev, label],
     );
   };
 
@@ -94,7 +94,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     return entry?.label || fallback;
   };
 
-  const createSubItems = (tokens: string[], fallbackLabelMap: Record<string, string>) =>
+  const createSubItems = (
+    tokens: string[],
+    fallbackLabelMap: Record<string, string>,
+  ) =>
     tokens.reduce<any[]>((acc, token) => {
       if (!activeMarkets.has(token)) return acc;
       acc.push({
@@ -113,12 +116,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   const globalEventsOrder = ["EUROVISION"];
 
   // Labels come from DB via activeMarkets - token is used as fallback
-  const footballItems = useMemo(() => createSubItems(footballOrder, {}), [activeLeague, activeMarkets]);
-  const motorsportItems = useMemo(() => createSubItems(motorsportOrder, {}), [activeLeague, activeMarkets]);
-  const basketballItems = useMemo(() => createSubItems(basketballOrder, {}), [activeLeague, activeMarkets]);
-  const americanFootballItems = useMemo(() => createSubItems(americanFootballOrder, {}), [activeLeague, activeMarkets]);
-  const cricketItems = useMemo(() => createSubItems(cricketOrder, {}), [activeLeague, activeMarkets]);
-  const globalEventsItems = useMemo(() => createSubItems(globalEventsOrder, {}), [activeLeague, activeMarkets]);
+  const footballItems = useMemo(
+    () => createSubItems(footballOrder, {}),
+    [activeLeague, activeMarkets],
+  );
+  const motorsportItems = useMemo(
+    () => createSubItems(motorsportOrder, {}),
+    [activeLeague, activeMarkets],
+  );
+  const basketballItems = useMemo(
+    () => createSubItems(basketballOrder, {}),
+    [activeLeague, activeMarkets],
+  );
+  const americanFootballItems = useMemo(
+    () => createSubItems(americanFootballOrder, {}),
+    [activeLeague, activeMarkets],
+  );
+  const cricketItems = useMemo(
+    () => createSubItems(cricketOrder, {}),
+    [activeLeague, activeMarkets],
+  );
+  const globalEventsItems = useMemo(
+    () => createSubItems(globalEventsOrder, {}),
+    [activeLeague, activeMarkets],
+  );
 
   const menuItems: any[] = [
     {
@@ -189,7 +210,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}
       >
-
         <nav className="flex-1 overflow-y-auto px-[clamp(0.5rem,1.5vw,1rem)] py-[clamp(0.25rem,1vh,0.5rem)] space-y-[clamp(0.125rem,0.5vh,0.25rem)] mt-[clamp(0.5rem,2vh,1rem)] lg:mt-0 flex flex-col">
           <div className="flex-1 space-y-[clamp(0.125rem,0.5vh,0.25rem)]">
             {menuItems.map((item) => (
@@ -202,14 +222,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                       .replace(/\s+/g, "-")}`}
                     className={`
                     w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,0.8vh,0.5rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium transition-colors
-                    ${item.id === "AI_ANALYTICS"
+                    ${
+                      item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
                           : "text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20"
                         : item.active
                           ? "bg-brand-emerald500/10 text-brand-emerald500"
                           : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                      }
+                    }
                   `}
                   >
                     <div className="flex items-center gap-[clamp(0.5rem,1vw,0.75rem)]">
@@ -261,14 +282,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`
                     w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.35rem,0.8vh,0.5rem)] rounded-lg text-[clamp(0.75rem,0.9vw,0.85rem)] font-medium transition-colors
-                    ${item.id === "AI_ANALYTICS"
+                    ${
+                      item.id === "AI_ANALYTICS"
                         ? item.active
                           ? "bg-[#005430] text-white shadow-lg shadow-[#005430]/20 font-bold"
                           : "text-white bg-[#005430] hover:bg-[#005430]/90 font-bold shadow-lg shadow-[#005430]/20"
                         : item.active
                           ? "bg-brand-emerald500/10 text-brand-emerald500"
                           : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                      }
+                    }
                   `}
                     data-testid={item.testId}
                   >
@@ -289,10 +311,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                             onClick={() => toggleExpand(subItem.label)}
                             className={`
                             w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.5vh,0.4rem)] rounded-lg text-[clamp(0.7rem,0.85vw,0.8rem)] transition-colors
-                            ${(subItem as any).active
+                            ${
+                              (subItem as any).active
                                 ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
                                 : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-                              }
+                            }
                           `}
                           >
                             <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.5rem)]">
@@ -310,12 +333,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <Link
                             to={
                               (subItem as any).asset
-                                ? `/asset/${(subItem as any).asset.name.toLowerCase().replace(/\s+/g, '-')}`
+                                ? `/asset/${(subItem as any).asset.name.toLowerCase().replace(/\s+/g, "-")}`
                                 : `/market/${(subItem as any).id}`
                             }
                             onClick={(e) => {
                               e.preventDefault();
-                              if ((subItem as any).badge || (subItem as any).disabled) {
+                              if (
+                                (subItem as any).badge ||
+                                (subItem as any).disabled
+                              ) {
                                 return;
                               }
 
@@ -330,12 +356,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                             }}
                             className={`
                             w-full flex items-center justify-between px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.5vh,0.4rem)] rounded-lg text-[clamp(0.7rem,0.85vw,0.8rem)] transition-colors
-                            ${(subItem as any).badge || (subItem as any).disabled
+                            ${
+                              (subItem as any).badge ||
+                              (subItem as any).disabled
                                 ? "cursor-not-allowed opacity-60 text-gray-400"
                                 : (subItem as any).active
                                   ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
                                   : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-                              }
+                            }
                           `}
                           >
                             <div className="flex items-center gap-[clamp(0.25rem,0.5vw,0.5rem)]">
@@ -368,12 +396,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                                   }}
                                   className={`
                                 w-full text-left px-[clamp(0.5rem,1vw,0.75rem)] py-[clamp(0.25rem,0.4vh,0.35rem)] rounded-lg text-[clamp(0.65rem,0.75vw,0.75rem)] transition-colors block
-                                ${deepItem.active
-                                      ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
-                                      : (deepItem as any).badge
-                                        ? "text-gray-600 cursor-not-allowed"
-                                        : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
-                                    }
+                                ${
+                                  deepItem.active
+                                    ? "bg-[#005430] text-white font-medium shadow-lg shadow-[#005430]/20"
+                                    : (deepItem as any).badge
+                                      ? "text-gray-600 cursor-not-allowed"
+                                      : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                                }
                               `}
                                 >
                                   <div className="flex items-center justify-between">

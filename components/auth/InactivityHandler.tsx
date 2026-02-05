@@ -63,20 +63,20 @@ const HEARTBEAT_STALE_THRESHOLD = 5000; // 5 seconds
     // New tab (sessionStorage empty)
     if (wasLoggedIn === "1") {
       if (heartbeatTime > 0 && timeSinceHeartbeat < HEARTBEAT_STALE_THRESHOLD) {
-        console.log("[TabClose] Another tab is active, staying logged in");
+        // console.log("[TabClose] Another tab is active, staying logged in");
         return;
       }
 
-      console.log("[TabClose] All tabs were closed, signing out...");
+      // console.log("[TabClose] All tabs were closed, signing out...");
       localStorage.removeItem(WAS_LOGGED_IN_KEY);
       localStorage.removeItem(TAB_HEARTBEAT_KEY);
       const supabaseKeys = Object.keys(localStorage).filter(
-        (key) => key.startsWith("sb-") || key.includes("supabase")
+        (key) => key.startsWith("sb-") || key.includes("supabase"),
       );
       supabaseKeys.forEach((key) => localStorage.removeItem(key));
     }
   } catch (e) {
-    console.error("[TabClose] Error during tab close check:", e);
+    // console.error("[TabClose] Error during tab close check:", e);
   }
 })();
 
@@ -105,7 +105,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     const sessionId = `${Date.now()}-${Math.random()}`;
     sessionIdRef.current = sessionId;
 
-     // console.log("[Inactivity] 🚀 Initialized with timeout:", inactivityTimeout / 1000, "seconds");
+    // console.log("[Inactivity] 🚀 Initialized with timeout:", inactivityTimeout / 1000, "seconds");
 
     const now = Date.now();
     lastActivityRef.current = now;
@@ -118,7 +118,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       sessionStorage.setItem(SESSION_ID_KEY, sessionId);
       sessionStorage.setItem(SESSION_LAST_ACTIVITY_KEY, now.toString());
     } catch (e) {
-      // // console.warn("[Storage] sessionStorage write failed:", e);
+      // console.warn("[Storage] sessionStorage write failed:", e);
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       );
       localStorage.setItem(LOCAL_ACTIVITY_CHECK_KEY, now.toString());
     } catch (e) {
-      // // console.warn("[Storage] localStorage write failed:", e);
+      // console.warn("[Storage] localStorage write failed:", e);
     }
   }, [inactivityTimeout]);
 
@@ -151,13 +151,13 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       } = await supabase.auth.refreshSession();
 
       if (error) {
-        // // console.error("Token refresh failed:", error.message);
+        // console.error("Token refresh failed:", error.message);
         return false;
       }
 
       return !!session;
     } catch (err) {
-      // // console.error("Token refresh error:", err);
+      // console.error("Token refresh error:", err);
       return false;
     }
   }, [user]);
@@ -413,7 +413,12 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
       // console.error("Error during stay logged in:", error);
       await handleTimeout();
     }
-  }, [validateSessionWithSupabase, updateLastActivity, resetInactivityTimer, handleTimeout]);
+  }, [
+    validateSessionWithSupabase,
+    updateLastActivity,
+    resetInactivityTimer,
+    handleTimeout,
+  ]);
 
   // ─────────────────────────────────────────────────────────────────────
   // TAB CLOSE DETECTION - Heartbeat approach
@@ -496,7 +501,7 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
 
         if (!showWarning && isInactive) {
           // console.warn(`[Inactivity] 🔒 Session expired - showing logout modal`,);
-          
+
           warningShownRef.current = true;
           setShowWarning(true);
           setCountdownActive(true);
@@ -516,7 +521,6 @@ const InactivityHandler: React.FC<InactivityHandlerProps> = ({
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    
     const handleWindowFocus = () => {
       const now = Date.now();
       const lastCheck = lastActivityCheckRef.current;
