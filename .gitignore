@@ -21,6 +21,7 @@ components/chatbot/backend/venv/
 
 .env.local
 .env.example
+.trufflehog-exclude
 
 # Editor directories and files
 .vscode/*
