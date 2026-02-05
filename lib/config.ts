@@ -18,9 +18,6 @@ export const SUPABASE_ANON_KEY = getEnv("VITE_SUPABASE_ANON_KEY", "");
 // SendGrid API config
 export const SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send";
 
-export const SUPABASE_SERVICE_ROLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYnZ0dWpwZXNhdHV4emZrZGJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NjIyMDYyOCwiZXhwIjoyMDgxNzk2NjI4fQ.8T11ExzkKrpFk9GWollxrXclLWXKcpumpiY0To--92w";
-
 /**
  * Application Configuration
  *
