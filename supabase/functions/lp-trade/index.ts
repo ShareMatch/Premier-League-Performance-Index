@@ -9,6 +9,7 @@ const supabase = createClient(
 
 serve(async (req) => {
   try {
+    /* ---------- Auth ---------- */
     const auth = await verifyApiKey(req, "lp:trade");
 
     if (auth.ownerType !== "lp") {
@@ -18,22 +19,25 @@ serve(async (req) => {
       );
     }
 
+    /* ---------- Payload ---------- */
     const body = await req.json().catch(() => ({}));
-    const { market_index_season_code, assets } = body;
+    const { market_index_season_code } = body;
 
-    if (!Array.isArray(assets) || assets.length === 0) {
+    if (!market_index_season_code) {
       return new Response(
-        JSON.stringify({ error: "assets array is required" }),
+        JSON.stringify({
+          error: "market_index_season_code is required"
+        }),
         { status: 400 }
       );
     }
 
+    /* ---------- RPC ---------- */
     const { data, error } = await supabase.rpc(
       "lp_primary_trade",
       {
         p_lp_id: auth.ownerId,
-        p_market_index_season_code: market_index_season_code ?? null,
-        p_assets: assets
+        p_market_index_season_code: market_index_season_code
       }
     );
 
@@ -49,7 +53,7 @@ serve(async (req) => {
     );
 
   } catch (err: any) {
-    console.error("LP TRADE ERROR:", err);
+    console.error("LP PRIMARY TRADE ERROR:", err);
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 400 }

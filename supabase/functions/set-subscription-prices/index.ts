@@ -41,24 +41,60 @@ serve(async (req) => {
       throw new Error("Invalid market index season");
     }
 
+    /* ---------- Fetch all assets in this season ---------- */
+    const { data: seasonAssets, error: assetsError } = await supabase
+      .from("market_index_seasons_asset")
+      .select("external_ref_code, asset_id, assets(name)")
+      .eq("market_index_seasons_id", season.id);
+
+    if (assetsError) throw assetsError;
+
+    const providedRefCodes = new Set(
+      assets
+        .filter((a) => a?.asset_reference_code)
+        .map((a) => a.asset_reference_code)
+    );
+
+    /* ---------- Detect missing assets ---------- */
+    const missingAssets = seasonAssets.filter(
+      (a) => !providedRefCodes.has(a.external_ref_code)
+    );
+
+    if (missingAssets.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `Subscription prices missing for some assets in market index season ${market_index_season_code}`,
+          missing_assets: missingAssets.map((a) => ({
+            asset_reference_code: a.external_ref_code,
+            asset_name: a.assets?.name ?? null
+          }))
+        }),
+        { status: 400 }
+      );
+    }
+
     /* ---------- Update Subscription Prices ---------- */
     for (const item of assets) {
       if (
-        !item.misa_external_ref_code ||
+        !item.asset_reference_code ||
         typeof item.subscription_price !== "number"
       ) {
-        continue;
+        return new Response(
+          JSON.stringify({
+            error: "Invalid asset entry",
+            asset_reference_code: item?.asset_reference_code ?? null
+          }),
+          { status: 400 }
+        );
       }
 
       const { error: updateError } = await supabase
         .from("market_index_seasons_asset")
         .update({
           subscription_price: item.subscription_price,
-          min_value: item.min_value ?? null,
-          max_value: item.max_value ?? null,
           last_change: new Date().toISOString()
         })
-        .eq("external_ref_code", item.misa_external_ref_code)
+        .eq("external_ref_code", item.asset_reference_code)
         .eq("market_index_seasons_id", season.id);
 
       if (updateError) throw updateError;

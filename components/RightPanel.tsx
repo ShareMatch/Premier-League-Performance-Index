@@ -75,8 +75,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 holding:
                   portfolio.find(
                     (p) =>
-                      p.market_trading_asset_id ===
-                      selectedOrder.team.market_trading_asset_id
+                      p.market_index_seasons_asset_id ===
+                      selectedOrder.team.market_index_seasons_asset_id
                   )?.quantity || 0,
               }}
               onClose={onCloseTradeSlip}
@@ -161,7 +161,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
                   {transactions.map((tx) => {
                     const asset = allAssets.find(
                       (a) =>
-                        a.market_trading_asset_id === tx.market_trading_asset_id
+                        a.market_index_seasons_asset_id ===
+                        tx.market_index_seasons_asset_id
                     );
                     return (
                       <div

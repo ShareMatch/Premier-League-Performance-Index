@@ -9,6 +9,7 @@ const supabase = createClient(
 
 serve(async (req) => {
   try {
+    /* ---------- Auth ---------- */
     const auth = await verifyApiKey(req, "subscription:execute");
 
     if (auth.ownerType !== "subscriber") {
@@ -18,16 +19,27 @@ serve(async (req) => {
       );
     }
 
-    const body = await req.json();
-    const { market_index_season_code, assets } = body;
-
-    if (!market_index_season_code || !Array.isArray(assets)) {
+    /* ---------- Parse Payload ---------- */
+    let body;
+    try {
+      body = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Invalid payload" }),
+        JSON.stringify({ error: "Invalid JSON payload" }),
         { status: 400 }
       );
     }
 
+    const { market_index_season_code, assets } = body;
+
+    if (!market_index_season_code || !Array.isArray(assets)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid payload structure" }),
+        { status: 400 }
+      );
+    }
+
+    /* ---------- RPC ---------- */
     const { data, error } = await supabase.rpc(
       "subscriber_assets_subscription",
       {
@@ -37,12 +49,16 @@ serve(async (req) => {
       }
     );
 
-    if (error) throw error;
+    if (error) {
+      console.error("SUBSCRIBER RPC ERROR:", error);
+      throw error;
+    }
 
+    /* ---------- Success ---------- */
     return new Response(
       JSON.stringify({
         success: true,
-        subscribed_assets: data.length,
+        subscribed_assets: data?.length ?? 0,
         details: data
       }),
       { headers: { "Content-Type": "application/json" } }
@@ -50,8 +66,11 @@ serve(async (req) => {
 
   } catch (err: any) {
     console.error("SUBSCRIPTION ERROR:", err);
+
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({
+        error: err.message ?? "Subscription failed"
+      }),
       { status: 400 }
     );
   }

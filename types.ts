@@ -1,13 +1,9 @@
 export type League = 'EPL' | 'UCL' | 'WC' | 'SPL' | 'ISL' | 'F1' | 'NBA' | 'NFL' | 'T20' | 'Eurovision' | 'HOME' | 'AI_ANALYTICS' | 'ALL_MARKETS' | 'NEW_MARKETS' | 'MY_DETAILS';
 
 export interface Team {
-  id: string; // Now UUID from market_index_trading_assets
+  id: string; // Legacy trading asset ID (used for share links)
   asset_id?: string; // Reference to static assets table
   name: string;
-
-
-
-  
   team?: string;
   bid: number;
   offer: number;
@@ -16,7 +12,7 @@ export interface Team {
   logo_url?: string;
   category?: 'football' | 'f1' | 'basketball' | 'american_football' | 'cricket' | 'global_events' | 'other';
   market?: string; // EPL, UCL, WC, SPL, F1, NBA, NFL, T20, Eurovision
-  market_trading_asset_id?: string; // New field for trading asset reference
+  market_index_seasons_asset_id?: string; // New seasons asset reference
   is_settled?: boolean;
   settled_date?: string;
   // Additional fields for richer data
@@ -51,7 +47,7 @@ export interface Wallet {
 
 export interface Position {
   id: string;
-  market_trading_asset_id: string;
+  market_index_seasons_asset_id: string;
   quantity: number;
   average_buy_price: number;
   current_value?: number;
@@ -63,7 +59,7 @@ export interface Position {
 export interface Transaction {
   id: string;
   user_id: string;
-  market_trading_asset_id: string;
+  market_index_seasons_asset_id: string;
   type: 'buy' | 'sell' | 'settlement' | 'deposit' | 'withdrawal' | 'trade_entry';
   direction: 'buy' | 'sell';
   price_per_unit: number;

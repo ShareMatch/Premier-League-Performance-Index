@@ -429,13 +429,13 @@ const App: React.FC = () => {
 
           // Determine market from the hierarchy
           const marketGroup =
-            ta.market_index_seasons.market_indexes.markets.market_sub_groups
-              .market_groups.name;
+            ta.market_index_seasons?.market_indexes?.markets?.market_sub_groups
+              ?.market_groups?.name;
           const marketSubGroup =
-            ta.market_index_seasons.market_indexes.markets.market_sub_groups
-              .name;
+            ta.market_index_seasons?.market_indexes?.markets?.market_sub_groups
+              ?.name;
           const marketToken =
-            ta.market_index_seasons.market_indexes.markets.market_token;
+            ta.market_index_seasons?.market_indexes?.markets?.market_token;
 
           // Map to legacy market names used in the app
           let market: string;
@@ -444,7 +444,7 @@ const App: React.FC = () => {
           } else {
             // Fallback mapping based on names
             const marketName =
-              ta.market_index_seasons.market_indexes.markets.name;
+              ta.market_index_seasons?.market_indexes?.markets?.name;
             switch (marketName) {
               case "England Premier League":
                 market = "EPL";
@@ -515,38 +515,53 @@ const App: React.FC = () => {
               break;
           }
 
+          const tradingAssetId = ta.legacy_trading_asset_id || ta.id;
+          const settlementPrice =
+            ta.settlement_price ?? ta.market_index_seasons?.settlement_price;
+          const referencePrice =
+            ta.subscription_price ?? ta.nominal_value ?? settlementPrice ?? 0;
+          // LP POV -> User POV: LP buys from user => user's bid; LP sells to user => user's offer
+          const bidPrice = ta.lp_buy_price ?? referencePrice;
+          const offerPrice = ta.lp_sell_price ?? referencePrice;
+
           return {
-            id: ta.id, // Use trading asset ID as the primary ID
+            id: tradingAssetId, // Keep legacy trading asset ID for share links
+            market_index_seasons_asset_id: ta.id,
             asset_id: ta.asset_id, // Keep reference to static asset
             name: staticAsset.name,
             team: staticAsset.team,
-            bid: Number(ta.sell), // Sell price is bid
-            offer: Number(ta.buy), // Buy price is offer
+            bid: Number(bidPrice), // LP sell price is bid
+            offer: Number(offerPrice), // LP buy price is offer
             lastChange: "none" as const, // TODO: Calculate from price history
-            color: ta.primary_color || staticAsset.color,
+            color: staticAsset.color,
             logo_url:
-              getLogoUrl(staticAsset.name, category, ta.id) ||
+              getLogoUrl(staticAsset.name, category, tradingAssetId) ||
               staticAsset.logo_url,
             category: category,
             market: market,
-            market_trading_asset_id: ta.id,
-            is_settled: ta.is_settled || ta.status === "settled",
-            settled_date: ta.market_index_seasons.settled_at
-              ? new Date(ta.market_index_seasons.settled_at).toLocaleDateString(
-                "en-US",
-                { month: "short", day: "numeric", year: "numeric" },
-              )
+            is_settled:
+              ta.is_settled ||
+              ta.market_index_seasons?.is_settled ||
+              ta.status === "settled",
+            settled_date: (ta.settled_at || ta.market_index_seasons?.settled_at)
+              ? new Date(
+                ta.settled_at || ta.market_index_seasons?.settled_at,
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
               : undefined,
             // Additional fields for richer data
             market_group: marketGroup,
             market_sub_group: marketSubGroup,
-            index_name: ta.market_index_seasons.market_indexes.name,
-            index_token: ta.market_index_seasons.market_indexes.token,
-            season_status: ta.market_index_seasons.status,
-            season_start_date: ta.market_index_seasons.start_date,
-            season_end_date: ta.market_index_seasons.end_date,
-            season_stage: ta.stage || ta.market_index_seasons.stage,
-            units: Number(ta.units),
+            index_name: ta.market_index_seasons?.market_indexes?.name,
+            index_token: ta.market_index_seasons?.market_indexes?.token,
+            season_status: ta.market_index_seasons?.status,
+            season_start_date: ta.market_index_seasons?.start_date,
+            season_end_date: ta.market_index_seasons?.end_date,
+            season_stage: ta.market_index_seasons?.stage,
+            units: Number(ta.issued_units ?? 0),
             short_code: ta.short_code,
           };
         })
@@ -855,7 +870,7 @@ const App: React.FC = () => {
       maxQuantity = Math.floor(wallet.available_cents / 100 / team.offer);
     } else if (type === "sell") {
       const position = portfolio.find(
-        (p) => p.market_trading_asset_id === team.market_trading_asset_id,
+        (p) => p.market_index_seasons_asset_id === team.market_index_seasons_asset_id,
       );
       maxQuantity = position ? Number(position.quantity) : 0;
 
@@ -895,10 +910,11 @@ const App: React.FC = () => {
       // Execute real trade
       const result = await placeTrade(
         publicUserId,
-        team.market_trading_asset_id || team.id,
+        team.market_index_seasons_asset_id || team.id,
         side,
         priceForSide,
         quantity,
+        team.id,
       );
 
       // ── SUCCESS PATH ───────────────────────────────────────
@@ -948,7 +964,7 @@ const App: React.FC = () => {
     return portfolio.reduce((total, position) => {
       // Find current asset data to get price
       const asset = allAssets.find(
-        (a) => a.market_trading_asset_id === position.market_trading_asset_id,
+        (a) => a.market_index_seasons_asset_id === position.market_index_seasons_asset_id,
       );
       // Value at bid price (like Portfolio component)
       const price = asset ? asset.bid : 0;

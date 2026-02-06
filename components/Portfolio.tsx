@@ -39,7 +39,9 @@ const Portfolio: React.FC<PortfolioProps> = ({
       .map((position) => {
         // Find the asset from allAssets to get current price and market info
         const asset = allAssets.find(
-          (a) => a.market_trading_asset_id === position.market_trading_asset_id
+          (a) =>
+            a.market_index_seasons_asset_id ===
+            position.market_index_seasons_asset_id
         );
 
         return {

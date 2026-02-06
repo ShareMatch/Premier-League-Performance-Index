@@ -22,7 +22,7 @@ This isn't just a chatbot; it is a fully bespoke **Retrieval-Augmented Generatio
 ## 3. Core Architecture Overhaul (The "Hidden" Win)
 Our database infrastructure has been completely re-architected for scale.
 *   **Scalable Market Hierarchy:** We moved from a flat structure to a robust `Groups -> Markets -> Indexes -> Seasons` hierarchy. This allows us to spin up *any* new market (e.g., Cricket, Esports) without code changes.
-*   **Layered Data Availability:** Trading logic is now decoupled from display logic. Frontend calls are optimized to fetch specific market slices (`market_index_trading_assets`), ensuring lightning-fast load times even with thousands of assets.
+*   **Layered Data Availability:** Trading logic is now decoupled from display logic. Frontend calls are optimized to fetch specific market slices (`market_index_seasons_asset`), ensuring lightning-fast load times even with thousands of assets.
 *   **Environment Maturity:** We now have a true distinct pipeline:
     *   **Dev (`sm-core-dev`):** For local feature building.
     *   **Staging (`sm-core-stg`):** A persistent staging URL (`stg-rwa.sharematch.me`) for reliable partner demos.

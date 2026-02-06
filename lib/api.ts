@@ -63,23 +63,67 @@ export const fetchTransactions = async (userId: string) => {
     }
 
     const { data, error } = await supabase
-        .from('transactions')
+        .from('user_trade_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+
+    return (data || []).map((row: any) => {
+        const amount = Number(row.amount ?? 0);
+        const quantity = Number(row.quantity ?? 0);
+        const inferredDirection =
+            typeof row.type === 'string'
+                ? row.type.includes('sell')
+                    ? 'sell'
+                    : row.type.includes('buy')
+                        ? 'buy'
+                        : null
+                : null;
+
+        // System POV: lp_trade_direction reflects LP action.
+        // UI POV: user direction is the inverse (LP buys = user sells).
+        const lpDirection = row.lp_trade_direction || inferredDirection;
+        const direction =
+            lpDirection === 'buy'
+                ? 'sell'
+                : lpDirection === 'sell'
+                    ? 'buy'
+                    : (inferredDirection || 'buy');
+        const pricePerUnit =
+            row.lp_price_per_unit !== null && row.lp_price_per_unit !== undefined
+                ? Number(row.lp_price_per_unit)
+                : quantity
+                    ? amount / quantity
+                    : 0;
+
+        return {
+            id: row.id,
+            user_id: row.user_id,
+            market_index_seasons_asset_id: row.market_index_seasons_asset_id,
+            type: row.type || 'trade_entry',
+            direction,
+            price_per_unit: pricePerUnit,
+            quantity,
+            amount,
+            trade_status: row.trade_status || row.status || 'pending',
+            created_at: row.created_at,
+            asset_name: row.asset_name,
+            asset_id: row.asset_id,
+        };
+    });
 };
 
 import { TRADING_CONFIG } from './config';
 
 export const placeTrade = async (
     userId: string,
-    marketTradingAssetId: string,
+    marketIndexSeasonsAssetId: string,
     direction: 'buy' | 'sell',
     price: number,
-    quantity: number
+    quantity: number,
+    marketTradingAssetId?: string
 ) => {
     const subtotal = price * quantity;
     // Fee ONLY on sell - deducted from what user receives
@@ -104,7 +148,8 @@ export const placeTrade = async (
             Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-            marketTradingAssetId,
+            marketTradingAssetId: marketTradingAssetId || marketIndexSeasonsAssetId,
+            marketIndexSeasonsAssetId,
             direction,
             price,
             quantity,
@@ -245,27 +290,73 @@ export const saveAssetFact = async (assetName: string, market: string, fact: str
     }
 };
 
+const attachLegacyTradingAssets = async (rows: any[]) => {
+    if (!rows || rows.length === 0) return [];
+
+    const seasonIds = Array.from(
+        new Set(rows.map((row) => row.market_index_seasons_id).filter(Boolean))
+    );
+    const assetIds = Array.from(
+        new Set(rows.map((row) => row.asset_id).filter(Boolean))
+    );
+
+    if (seasonIds.length === 0 || assetIds.length === 0) {
+        return rows;
+    }
+
+    const { data: legacyTradingAssets, error: legacyError } = await supabase
+        .from('market_index_trading_assets')
+        .select('id, asset_id, market_index_season_id, short_code')
+        .in('market_index_season_id', seasonIds)
+        .in('asset_id', assetIds);
+
+    if (legacyError) throw legacyError;
+
+    const legacyMap = new Map<string, { id: string; short_code?: string }>();
+    for (const tradingAsset of legacyTradingAssets || []) {
+        const key = `${tradingAsset.asset_id}-${tradingAsset.market_index_season_id}`;
+        if (!legacyMap.has(key)) {
+            legacyMap.set(key, {
+                id: tradingAsset.id,
+                short_code: tradingAsset.short_code,
+            });
+        }
+    }
+
+    return rows.map((row) => {
+        const key = `${row.asset_id}-${row.market_index_seasons_id}`;
+        const legacy = legacyMap.get(key);
+        return {
+            ...row,
+            legacy_trading_asset_id: legacy?.id,
+            short_code: legacy?.short_code,
+        };
+    });
+};
+
 // NEW: Fetch active trading assets with full market hierarchy
 export const fetchTradingAssets = async () => {
     const { data, error } = await supabase
-        .from('market_index_trading_assets')
+        .from('market_index_seasons_asset')
         .select(`
             id,
             asset_id,
-            buy,
-            sell,
+            market_index_seasons_id,
             status,
-            units,
             is_settled,
+            settled_at,
             settlement_price,
-            stage,
+            nominal_value,
+            subscription_price,
+            subscribed_at,
+            min_value,
+            max_value,
+            lp_sell_price,
+            lp_buy_price,
+            issued_units,
             avatar_class,
-            primary_color,
-            secondary_color,
-            short_code,
+            last_change,
             created_at,
-            updated_at,
-            market_index_season_id,
             assets!inner (
                 name,
                 team,
@@ -303,11 +394,11 @@ export const fetchTradingAssets = async () => {
                 )
             )
         `)
-        .eq('status', 'active')
+        .or('status.eq.active,status.is.null')
         .order('created_at', { ascending: true });
 
     if (error) throw error;
-    return data;
+    return attachLegacyTradingAssets(data || []);
 };
 
 
@@ -394,34 +485,63 @@ export const fetchMarketHierarchy = async () => {
 
 // Function to fetch settled assets for historical display
 export const fetchSettledAssets = async () => {
-    // First get settled seasons
-    const { data: settledSeasons, error: seasonsError } = await supabase
-        .from('market_index_seasons')
+    const { data, error } = await supabase
+        .from('market_index_seasons_asset')
         .select(`
             id,
+            asset_id,
+            market_index_seasons_id,
             status,
             is_settled,
-            season_token,
-            start_date,
-            end_date,
-            settlement_price,
             settled_at,
+            settlement_price,
+            nominal_value,
+            subscription_price,
+            subscribed_at,
+            min_value,
+            max_value,
+            lp_sell_price,
+            lp_buy_price,
+            issued_units,
+            avatar_class,
+            last_change,
             created_at,
-            updated_at,
-            market_indexes!inner (
+            assets!inner (
                 id,
                 name,
-                token,
-                description,
-                markets!inner (
+                team,
+                logo_url,
+                color,
+                type,
+                status
+            ),
+            market_index_seasons!inner (
+                id,
+                status,
+                is_settled,
+                season_token,
+                start_date,
+                end_date,
+                stage,
+                settlement_price,
+                settled_at,
+                created_at,
+                updated_at,
+                market_indexes!inner (
                     id,
                     name,
-                    market_token,
-                    status,
-                    market_sub_groups!inner (
+                    token,
+                    description,
+                    markets!inner (
+                        id,
                         name,
-                        market_groups!inner (
-                            name
+                        market_token,
+                        status,
+                        market_sub_groups!inner (
+                            name,
+                            market_groups!inner (
+                                name
+                            )
                         )
                     )
                 )
@@ -430,64 +550,12 @@ export const fetchSettledAssets = async () => {
         .eq('is_settled', true)
         .order('settled_at', { ascending: false });
 
-    if (seasonsError) {
-        console.error('fetchSettledAssets seasons error:', seasonsError);
-        throw seasonsError;
+    if (error) {
+        console.error('fetchSettledAssets error:', error);
+        throw error;
     }
 
-    // For each settled season, get the actual trading assets with settlement prices
-    const settledAssets = [];
-
-    for (const season of settledSeasons || []) {
-        const marketName = season.market_indexes[0]?.markets?.[0]?.name || 'Unknown Market';
-
-        // Get actual trading assets for this settled season
-        const { data: tradingAssets, error: tradingError } = await supabase
-            .from('market_index_trading_assets')
-            .select(`
-                id,
-                asset_id,
-                settlement_price,
-                assets!inner (
-                    id,
-                    name,
-                    team,
-                    logo_url,
-                    color,
-                    type,
-                    status
-                )
-            `)
-            .eq('market_index_season_id', season.id)
-            .eq('is_settled', true);
-
-        if (tradingError) {
-            console.error('fetchSettledAssets trading error:', tradingError);
-            continue;
-        }
-
-        // Create settled asset objects using real trading asset data
-        for (const tradingAsset of tradingAssets || []) {
-            const settlementPrice = tradingAsset.settlement_price ? parseFloat(tradingAsset.settlement_price) : parseFloat(season.settlement_price || '0');
-
-            settledAssets.push({
-                id: `settled-${season.id}-${tradingAsset.id}`,
-                asset_id: tradingAsset.asset_id,
-                buy: settlementPrice,
-                sell: settlementPrice,
-                status: 'settled',
-                units: 0,
-                settled_at: season.settled_at,
-                created_at: season.created_at,
-                updated_at: season.settled_at || season.updated_at,
-                market_index_season_id: season.id,
-                assets: tradingAsset.assets,
-                market_index_seasons: season
-            });
-        }
-    }
-
-    return settledAssets;
+    return attachLegacyTradingAssets(data || []);
 };
 
 // NEW: Real-time subscriptions for trading assets
@@ -499,7 +567,7 @@ export const subscribeToTradingAssets = (callback: () => void) => {
             {
                 event: '*',
                 schema: 'public',
-                table: 'market_index_trading_assets'
+                table: 'market_index_seasons_asset'
             },
             () => {
                 callback();

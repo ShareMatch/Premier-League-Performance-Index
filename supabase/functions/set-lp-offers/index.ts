@@ -27,7 +27,7 @@ serve(async (req) => {
     /* ----------------------------------
        PAYLOAD
     ---------------------------------- */
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { market_index_season_code, offers } = body;
 
     if (
@@ -44,6 +44,9 @@ serve(async (req) => {
       );
     }
 
+    /* ----------------------------------
+       STRUCTURAL VALIDATION ONLY
+    ---------------------------------- */
     for (const o of offers) {
       if (
         typeof o.asset_reference_code !== "string" ||
@@ -53,7 +56,8 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: false,
-            error: "Invalid offer object"
+            error: "Invalid offer object",
+            invalid_offer: o ?? null
           }),
           { status: 400 }
         );
@@ -74,11 +78,25 @@ serve(async (req) => {
 
     if (error) {
       console.error("RPC ERROR:", error);
-      throw new Error(error.message);
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: error.message,
+          details: error.details ? JSON.parse(error.details) : null
+        }),
+        { status: 400 }
+      );
     }
 
+    /* ----------------------------------
+       SUCCESS
+    ---------------------------------- */
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({
+        success: true,
+        ...data
+      }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" }
@@ -91,7 +109,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: err.message ?? "Unknown error"
+        error: err?.message ?? "Unknown error"
       }),
       { status: 400 }
     );
