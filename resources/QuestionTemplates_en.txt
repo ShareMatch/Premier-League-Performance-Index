@@ -1,0 +1,10 @@
+assetQuestion=Will {teamName} top the {marketName} ?
+trendingTitle=Trending Markets
+viewAll=View All
+buy=Buy
+sell=Sell
+live=Live
+vol=Vol
+start=Start
+end=End
+topQuestion=Top {marketLabel}?

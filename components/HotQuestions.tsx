@@ -3,9 +3,40 @@ import { Team, League } from "../types";
 import InfoTooltip from "./InfoTooltip";
 import { getMarketInfo } from "../lib/marketInfo";
 import tooltipText from "../resources/ToolTip.txt?raw";
+import questionTemplatesRaw from "../resources/QuestionTemplates_en.txt?raw";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import { getMarketDisplayData } from "../utils/marketUtils";
 import type { SeasonDates } from "../lib/api";
+
+// Parse question templates text file (key=value format) into object
+const parseTemplates = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Helper to replace placeholders in template
+const formatTemplate = (
+  template: string,
+  replacements: Record<string, string>,
+): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+};
+
+const QUESTION_TEMPLATES = parseTemplates(questionTemplatesRaw);
 
 interface HotQuestionsProps {
   teams: Team[];
@@ -135,7 +166,10 @@ const HotQuestions: React.FC<HotQuestionsProps> = ({
         generated.push({
           id: `${marketToken.toLowerCase()}-${team.id}`,
           market: marketToken as League,
-          question: `Will ${team.name} top the ${displayData.fullName} ?`,
+          question: formatTemplate(QUESTION_TEMPLATES.assetQuestion || "Will {teamName} top the {marketName} ?", {
+            teamName: team.name,
+            marketName: displayData.fullName,
+          }),
           yesPrice: team.offer,
           noPrice: team.bid,
           volume: volStr,

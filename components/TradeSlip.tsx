@@ -5,6 +5,37 @@ import AlertModal from "./AlertModal";
 import { TRADING_CONFIG } from "../lib/config";
 import { formatCurrency, formatNumberWithCommas } from "../utils/currencyUtils";
 import OrderConfirmationModal from "./OrderConfirmationModal";
+import alertMessagesRaw from "../resources/AlertMessages_en.txt?raw";
+
+// Parse alert messages text file (key=value format) into object
+const parseMessages = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Helper to replace placeholders in template
+const formatMessage = (
+  template: string,
+  replacements: Record<string, string>,
+): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+};
+
+const ALERT_MESSAGES = parseMessages(alertMessagesRaw);
 
 interface TradeSlipProps {
   order: Order;
@@ -104,8 +135,8 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       onClose();
     } catch (err: any) {
       // console.error("Trade failed:", err);
-      setError(err.message || "Trade failed. Please try again.");
-      setAlertMessage(err.message || "Trade failed. Please try again.");
+      setError(err.message || ALERT_MESSAGES.tradeFailed);
+      setAlertMessage(err.message || ALERT_MESSAGES.tradeFailed);
       setAlertOpen(true);
     } finally {
       setIsSubmitting(false);
@@ -118,7 +149,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       const numValue = value === "" ? "" : parseInt(value);
       setShares(numValue);
       if (!isBuy && typeof numValue === "number" && numValue > holding) {
-        setError(`You don't own that many tokens. Max: ${holding}`);
+        setError(formatMessage(ALERT_MESSAGES.insufficientTokens, { max: String(holding) }));
       } else {
         setError(null);
       }
@@ -129,7 +160,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     setShares((current) => {
       const newVal = (current || 0) + amount;
       if (!isBuy && newVal > holding) {
-        setError(`You don't own that many tokens. Max: ${holding}`);
+        setError(formatMessage(ALERT_MESSAGES.insufficientTokens, { max: String(holding) }));
       } else {
         setError(null);
       }
@@ -148,14 +179,17 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
     if (shares && shares > 0) {
       // Sell-side validation: check if selling more than holding
       if (!isBuy && typeof shares === "number" && shares > holding) {
-        setError(`You don't own that many tokens. Max: ${holding}`);
+        setError(formatMessage(ALERT_MESSAGES.insufficientTokens, { max: String(holding) }));
         return;
       }
 
       // Buy-side validation: check for sufficient funds
       if (isBuy && subtotal > walletBalance) {
         setError(
-          `Insufficient funds. You need ${formatCurrency(subtotal)} but only have ${formatCurrency(walletBalance)}`,
+          formatMessage(ALERT_MESSAGES.insufficientFunds, {
+            required: formatCurrency(subtotal),
+            available: formatCurrency(walletBalance),
+          }),
         );
         return;
       }
@@ -458,7 +492,7 @@ const TradeSlip: React.FC<TradeSlipProps> = ({
       <AlertModal
         isOpen={alertOpen}
         onClose={() => setAlertOpen(false)}
-        title="Trade Error"
+        title={ALERT_MESSAGES.tradeError}
         message={alertMessage}
       />
     </div>

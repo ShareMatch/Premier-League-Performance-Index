@@ -70,6 +70,37 @@ import DidYouKnow from "./components/DidYouKnow";
 import OnThisDay from "./components/OnThisDay";
 import HelpCenterModal from "./components/HelpCenterModal";
 import HowItWorksModal from "./components/HowItWorksModal";
+import alertMessagesRaw from "./resources/AlertMessages_en.txt?raw";
+
+// Parse alert messages text file (key=value format) into object
+const parseMessages = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Helper to replace placeholders in template
+const formatMessage = (
+  template: string,
+  replacements: Record<string, string>,
+): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+};
+
+const ALERT_MESSAGES = parseMessages(alertMessagesRaw);
 
 const AssetRouteWrapper: React.FC<{
   allAssets: Team[];
@@ -695,7 +726,7 @@ const App: React.FC = () => {
   const handleViewAsset = (asset: Team, keepOrder: boolean = false) => {
     // Check if user is logged in
     if (!user) {
-      setAlertMessage("You need to login to continue");
+      setAlertMessage(ALERT_MESSAGES.loginRequired);
       setAlertOpen(true);
       return;
     }
@@ -846,7 +877,7 @@ const App: React.FC = () => {
       const publicLeagues: League[] = ["HOME"];
 
       if (!publicLeagues.includes(league)) {
-        setAlertMessage("You need to login to continue");
+        setAlertMessage(ALERT_MESSAGES.loginRequired);
         setAlertOpen(true);
         return;
       }
@@ -854,9 +885,7 @@ const App: React.FC = () => {
 
     if (league === "AI_ANALYTICS") {
       if (!portfolio || portfolio.length === 0) {
-        setAlertMessage(
-          "Exclusive Access: The AI Analytics Engine is available only to token holders.",
-        );
+        setAlertMessage(ALERT_MESSAGES.aiAnalyticsAccessDenied);
         setAlertOpen(true);
         return;
       }
@@ -888,16 +917,16 @@ const App: React.FC = () => {
     const status = isMarketOpen(team);
 
     if (!status.isOpen) {
-      let message =
-        "The market for this asset is currently closed. Trading is only available when the market is open.";
+      let message = ALERT_MESSAGES.marketClosed;
 
       if (status.reason === "settled") {
-        message =
-          "This market has been settled. Trading is no longer available.";
+        message = ALERT_MESSAGES.marketSettled;
       } else if (status.reason === "not_started" && team.season_start_date) {
-        message = `This market has not opened yet. Trading will be available starting ${new Date(team.season_start_date).toLocaleDateString("en-GB")}.`;
+        message = formatMessage(ALERT_MESSAGES.marketNotStarted, {
+          date: new Date(team.season_start_date).toLocaleDateString("en-GB"),
+        });
       } else if (status.reason === "missing_config") {
-        message = "This market is currently unavailable for trading.";
+        message = ALERT_MESSAGES.marketUnavailable;
       }
 
       setAlertMessage(message);
@@ -907,7 +936,7 @@ const App: React.FC = () => {
 
     // Check if user is logged in
     if (!user) {
-      setAlertMessage("You need to login to continue");
+      setAlertMessage(ALERT_MESSAGES.loginRequired);
       setAlertOpen(true);
       return;
     }
@@ -1010,7 +1039,7 @@ const App: React.FC = () => {
       loadUserData();
     } catch (error: any) {
       // console.error("Trade error:", error);
-      setAlertMessage(error.message || "Trade failed. Please try again.");
+      setAlertMessage(error.message || ALERT_MESSAGES.tradeFailed);
       setAlertOpen(true);
     }
   };

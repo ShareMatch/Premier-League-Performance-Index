@@ -26,131 +26,36 @@ import {
   GiFullMotorcycleHelmet,
 } from "react-icons/gi";
 
+// Import translation text files
+import translationsEnRaw from "../resources/HelpCenterTranslations_en.txt?raw";
+import translationsArRaw from "../resources/HelpCenterTranslations_ar.txt?raw";
+
 // Supabase Edge Function URL for fetching video signed URLs
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
   "https://lbmixnhxerrmecfxdfkx.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
-// Translation strings
+// Parse translation text file (key=value format) into object
+const parseTranslations = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Translation strings parsed from text files
 const TRANSLATIONS = {
-  en: {
-    helpCenter: "Help Center",
-    videoTutorials: "Video tutorials to get you started",
-    onboarding: "User Onboarding",
-    onboardingDesc: "Get started with ShareMatch",
-    customerSettings: "User Settings",
-    customerSettingsDesc: "Manage your account and preferences",
-    tradingIndexes: "Trading & Indices",
-    tradingIndexesDesc: "Learn how to trade and explore our indices",
-    howToLogin: "How to Login",
-    howToLoginDesc:
-      "Step-by-step guide to logging into your ShareMatch account",
-    howToSignUp: "How to Sign Up",
-    howToSignUpDesc: "Create your ShareMatch account in a few easy steps",
-    kycVerification: "KYC Verification",
-    kycVerificationDesc:
-      "Complete your identity verification to unlock all features",
-    howToResetPassword: "How to Reset Password",
-    howToResetPasswordDesc: "Easily reset your password if you've forgotten it",
-    howToUpdateUserDetails: "How to Update User Details",
-    howToUpdateUserDetailsDesc:
-      "Learn how to update your user details on ShareMatch",
-    howToEditMarketingPreferences: "How to Edit Marketing Preferences",
-    howToEditMarketingPreferencesDesc:
-      "Learn how to edit your marketing preferences on ShareMatch",
-    howToChangePassword: "How to Change Password",
-    howToChangePasswordDesc: "Learn how to change your password on ShareMatch",
-    howToBuyAssets: "How to Buy Assets",
-    howToBuyAssetsDesc: "Learn how to purchase assets on ShareMatch",
-    howToSellAssets: "How to Sell Assets",
-    howToSellAssetsDesc: "Learn how to sell assets on ShareMatch",
-    eplIndex: "EPL Index",
-    eplIndexDesc: "Learn about the English Premier League Index",
-    splIndex: "SPL Index",
-    splIndexDesc: "Learn about the Saudi Pro League Index",
-    uefaIndex: "UEFA Champions League Index",
-    uefaIndexDesc: "Learn about the UEFA Champions League Index",
-    fifaIndex: "FIFA World Cup Index",
-    fifaIndexDesc: "Learn about the FIFA World Cup Index",
-    islIndex: "ISL Index",
-    islIndexDesc: "Learn about the Indonesia Super League Index",
-    f1Index: "F1 Index",
-    f1IndexDesc: "Learn about the F1 Index",
-    nbaIndex: "NBA Index",
-    nbaIndexDesc: "Learn about the NBA Index",
-    nflIndex: "NFL Index",
-    nflIndexDesc: "Learn about the NFL Index",
-    t20Index: "T20 Cricket Index",
-    t20IndexDesc: "Learn about the T20 Cricket Index",
-    unableToLoadVideo: "Unable to load video",
-    tryAgain: "Try again",
-    readyToLogin: "Ready to",
-    readyToSignUp: "Ready to",
-    readyToVerify: "Ready to",
-    login: "login",
-    signUp: "sign up",
-    verify: "verify",
-  },
-  ar: {
-    helpCenter: "مركز المساعدة",
-    videoTutorials: "دروس فيديو لمساعدتك على البدء",
-    onboarding: "التسجيل",
-    onboardingDesc: "ابدأ مع ShareMatch",
-    customerSettings: "إعدادات العميل",
-    customerSettingsDesc: "إدارة حسابك وتفضيلاتك",
-    tradingIndexes: "التداول والمؤشرات",
-    tradingIndexesDesc: "تعلم كيفية التداول واستكشاف مؤشراتنا",
-    howToLogin: "كيفية تسجيل الدخول",
-    howToLoginDesc:
-      "دليل خطوة بخطوة لتسجيل الدخول إلى حساب ShareMatch الخاص بك",
-    howToSignUp: "كيفية التسجيل",
-    howToSignUpDesc: "إنشاء حساب ShareMatch الخاص بك في خطوات سهلة",
-    kycVerification: "التحقق من الهوية",
-    kycVerificationDesc: "أكمل التحقق من هويتك لفتح جميع الميزات",
-    howToResetPassword: "كيفية إعادة تعيين كلمة المرور",
-    howToResetPasswordDesc:
-      "إعادة تعيين كلمة المرور الخاصة بك بسهولة إذا نسيتها",
-    howToUpdateUserDetails: "كيفية تحديث تفاصيل المستخدم",
-    howToUpdateUserDetailsDesc:
-      "تعلم كيفية تحديث تفاصيل المستخدم الخاصة بك على ShareMatch",
-    howToEditMarketingPreferences: "كيفية تعديل تفضيلات التسويق",
-    howToEditMarketingPreferencesDesc:
-      "تعلم كيفية تعديل تفضيلات التسويق الخاصة بك على ShareMatch",
-    howToChangePassword: "كيفية تغيير كلمة المرور",
-    howToChangePasswordDesc:
-      "تعلم كيفية تغيير كلمة المرور الخاصة بك على ShareMatch",
-    howToBuyAssets: "كيفية شراء الأصول",
-    howToBuyAssetsDesc: "تعلم كيفية شراء الأصول على ShareMatch",
-    howToSellAssets: "كيفية بيع الأصول",
-    howToSellAssetsDesc: "تعلم كيفية بيع الأصول على ShareMatch",
-    eplIndex: "مؤشر الدوري الإنجليزي الممتاز",
-    eplIndexDesc: "تعرف على مؤشر الدوري الإنجليزي الممتاز",
-    splIndex: "مؤشر دوري روشن السعودي",
-    splIndexDesc: "تعرف على مؤشر دوري روشن السعودي",
-    uefaIndex: "مؤشر دوري أبطال أوروبا",
-    uefaIndexDesc: "تعرف على مؤشر دوري أبطال أوروبا",
-    fifaIndex: "مؤشر كأس العالم",
-    fifaIndexDesc: "تعرف على مؤشر كأس العالم",
-    islIndex: "مؤشر الدوري الإندونيسي",
-    islIndexDesc: "تعرف على مؤشر الدوري الإندونيسي الممتاز",
-    f1Index: "مؤشر الفورمولا 1",
-    f1IndexDesc: "تعرف على مؤشر الفورمولا 1",
-    nbaIndex: "مؤشر NBA",
-    nbaIndexDesc: "تعرف على مؤشر NBA",
-    nflIndex: "مؤشر NFL",
-    nflIndexDesc: "تعرف على مؤشر NFL",
-    t20Index: "مؤشر كريكيت T20",
-    t20IndexDesc: "تعرف على مؤشر كريكيت T20",
-    unableToLoadVideo: "تعذر تحميل الفيديو",
-    tryAgain: "حاول مرة أخرى",
-    readyToLogin: "هل أنت مستعد",
-    readyToSignUp: "هل أنت مستعد",
-    readyToVerify: "هل أنت مستعد",
-    login: "لتسجيل الدخول",
-    signUp: "للتسجيل",
-    verify: "للتحقق",
-  },
+  en: parseTranslations(translationsEnRaw),
+  ar: parseTranslations(translationsArRaw),
 };
 
 const HELP_TOPICS = {

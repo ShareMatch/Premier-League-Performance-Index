@@ -34,6 +34,37 @@ import {
 } from "../../lib/api";
 import { supabase } from "../../lib/supabase";
 import AlertModal from "../AlertModal";
+import alertMessagesRaw from "../../resources/AlertMessages_en.txt?raw";
+
+// Parse alert messages text file (key=value format) into object
+const parseMessages = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Helper to replace placeholders in template
+const formatMessage = (
+  template: string,
+  replacements: Record<string, string>,
+): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+};
+
+const ALERT_MESSAGES = parseMessages(alertMessagesRaw);
 
 // Pending changes interface for verification flows
 interface PendingAboutYouChanges {
@@ -369,7 +400,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       } catch (error: any) {
         // console.error("❌ Email OTP error:", error);
         throw new Error(
-          error.message || "Failed to send email verification code",
+          error.message || ALERT_MESSAGES.failedToSendEmailOtp,
         );
       }
     }
@@ -393,7 +424,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       } catch (error: any) {
         // console.error("❌ WhatsApp OTP error:", error);
         throw new Error(
-          error.message || "Failed to send WhatsApp verification code",
+          error.message || ALERT_MESSAGES.failedToSendWhatsAppOtp,
         );
       }
     }
@@ -467,7 +498,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     } catch (error: any) {
       // console.error("❌ Failed to update email:", error);
       setShowEmailVerification(false);
-      setAlertMessage("Failed to update email: " + (error?.message || ""));
+      setAlertMessage(formatMessage(ALERT_MESSAGES.failedToUpdateEmail, { error: error?.message || "" }));
       setAlertOpen(true);
       setPendingChanges(null);
     }
@@ -508,7 +539,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     } catch (error: any) {
       // console.error("Failed to update WhatsApp:", error);
       setAlertMessage(
-        "Failed to update WhatsApp number: " + (error?.message || ""),
+        formatMessage(ALERT_MESSAGES.failedToUpdateWhatsApp, { error: error?.message || "" }),
       );
       setAlertOpen(true);
     }
@@ -604,7 +635,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     });
 
     if (!result.ok) {
-      throw new Error("Failed to update address");
+      throw new Error(ALERT_MESSAGES.failedToUpdateAddress);
     }
 
     // Refresh user details
@@ -667,25 +698,23 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   ) => {
     // Input validation
     if (!currentPassword?.trim()) {
-      throw new Error("Current password is required");
+      throw new Error(ALERT_MESSAGES.currentPasswordRequired);
     }
     if (!newPassword?.trim()) {
-      throw new Error("New password is required");
+      throw new Error(ALERT_MESSAGES.newPasswordRequired);
     }
     if (newPassword.length < 8) {
-      throw new Error("New password must be at least 8 characters long");
+      throw new Error(ALERT_MESSAGES.passwordMinLength);
     }
     if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
-      throw new Error(
-        "New password must contain at least one uppercase letter, one lowercase letter, and one number",
-      );
+      throw new Error(ALERT_MESSAGES.passwordComplexity);
     }
 
     // Get current user
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
-    if (!authUser?.email) throw new Error("No user email found");
+    if (!authUser?.email) throw new Error(ALERT_MESSAGES.noUserEmailFound);
 
     // Verify current password by attempting to sign in
     // This validates the password without creating a new session
@@ -697,9 +726,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
     if (verifyError) {
       // Check for specific error messages
       if (verifyError.message.includes("Invalid login credentials")) {
-        throw new Error("The current password you entered is incorrect.");
+        throw new Error(ALERT_MESSAGES.incorrectPassword);
       }
-      throw new Error("Failed to verify current password");
+      throw new Error(ALERT_MESSAGES.failedToVerifyPassword);
     }
 
     // Current password is correct, now update to new password
@@ -709,9 +738,9 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
 
     if (updateError) {
       if (updateError.message.includes("should be different")) {
-        throw new Error("New password must be different from current password");
+        throw new Error(ALERT_MESSAGES.passwordMustBeDifferent);
       }
-      throw new Error(updateError.message || "Failed to update password");
+      throw new Error(updateError.message || ALERT_MESSAGES.failedToUpdatePassword);
     }
 
     // Password updated successfully - modal will show success message
@@ -721,9 +750,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
   const handleDeleteAccount = async () => {
     // TODO: Implement account deletion
     // This should call a backend function to properly delete the user
-    setAlertMessage(
-      "Account deletion feature coming soon. Please contact support.",
-    );
+    setAlertMessage(ALERT_MESSAGES.accountDeletionComingSoon);
     setAlertOpen(true);
   };
 
@@ -1112,7 +1139,7 @@ const MyDetailsPage: React.FC<MyDetailsPageProps> = ({
       <AlertModal
         isOpen={alertOpen}
         onClose={() => setAlertOpen(false)}
-        title="Notification"
+        title={ALERT_MESSAGES.notification}
         message={alertMessage || ""}
       />
     </div>

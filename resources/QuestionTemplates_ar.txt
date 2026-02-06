@@ -1,0 +1,10 @@
+assetQuestion=هل سيتصدر {teamName} {marketName} ؟
+trendingTitle=الأسواق الرائجة
+viewAll=عرض الكل
+buy=شراء
+sell=بيع
+live=مباشر
+vol=الحجم
+start=البداية
+end=النهاية
+topQuestion=أفضل {marketLabel}؟

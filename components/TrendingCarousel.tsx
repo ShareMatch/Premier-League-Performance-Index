@@ -18,6 +18,37 @@ import { getMarketInfo } from "../lib/marketInfo";
 import { getMarketDisplayData, getUniqueMarkets } from "../utils/marketUtils";
 import { getIndexAvatarUrl } from "../lib/logoHelper";
 import tooltipText from "../resources/ToolTip.txt?raw";
+import questionTemplatesRaw from "../resources/QuestionTemplates_en.txt?raw";
+
+// Parse question templates text file (key=value format) into object
+const parseTemplates = (rawText: string): Record<string, string> => {
+  const result: Record<string, string> = {};
+  const lines = rawText.split("\n");
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine && trimmedLine.includes("=")) {
+      const separatorIndex = trimmedLine.indexOf("=");
+      const key = trimmedLine.substring(0, separatorIndex);
+      const value = trimmedLine.substring(separatorIndex + 1);
+      result[key] = value;
+    }
+  }
+  return result;
+};
+
+// Helper to replace placeholders in template
+const formatTemplate = (
+  template: string,
+  replacements: Record<string, string>,
+): string => {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+  }
+  return result;
+};
+
+const QUESTION_TEMPLATES = parseTemplates(questionTemplatesRaw);
 
 interface IndexToken {
   id: string;
@@ -267,7 +298,9 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
           id: `${market.token.toLowerCase()}-index`,
           market: market.token,
           fullName: displayData.fullName,
-          question: `Top ${displayData.label}?`,
+          question: formatTemplate(QUESTION_TEMPLATES.topQuestion || "Top {marketLabel}?", {
+            marketLabel: displayData.label,
+          }),
           icon: displayData.icon,
           color: displayData.color,
           borderColor: displayData.borderColor,
@@ -308,7 +341,10 @@ const TrendingCarousel: React.FC<TrendingCarouselProps> = ({
         return {
           ...m,
           topTokens,
-          question: `Will ${topTeam?.name} top the ${m.fullName} ?`,
+          question: formatTemplate(QUESTION_TEMPLATES.assetQuestion || "Will {teamName} top the {marketName} ?", {
+            teamName: topTeam?.name || "",
+            marketName: m.fullName,
+          }),
           volume: volStr,
         };
       })
