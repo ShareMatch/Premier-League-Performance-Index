@@ -1,0 +1,22 @@
+# Ignore Node dependencies (including nested node_modules)
+
+\*\*/node_modules/
+
+# Ignore build outputs
+
+dist/
+build/
+.vite/
+
+# Ignore any Python virtual environments (nested included)
+
+\*\*/venv/
+
+# Ignore Git objects/history
+
+\*\*/.git/
+
+# Ignore maps, locks, and other common generated files
+
+_.map
+_.lock
